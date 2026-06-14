@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { HomePage } from "@/features/dashboard/pages/HomePage";
+import { authRoutes } from "@/features/auth/routes/router";
 
 export const router = createBrowserRouter([
     {
@@ -11,6 +12,8 @@ export const router = createBrowserRouter([
                 index: true,
                 element: <HomePage />,
             },
+
+            ...authRoutes,
         ],
     },
-]);
+]); 

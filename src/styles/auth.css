@@ -1,0 +1,130 @@
+.auth-container {
+    height: 100vh;
+    display: flex;
+    font-family: "Segoe UI", sans-serif;
+    background: #f8fafc;
+}
+
+/* LEFT - SALON IMAGE */
+.auth-left {
+    flex: 1;
+    position: relative;
+    background: url("https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f")
+        center/cover no-repeat;
+}
+
+.auth-left::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(236, 72, 153, 0.75),
+        rgba(168, 85, 247, 0.75)
+    );
+}
+
+.auth-brand {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    color: white;
+}
+
+.auth-brand h1 {
+    font-size: 32px;
+    margin: 0;
+}
+
+.auth-brand p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* RIGHT */
+.auth-right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* CARD */
+.auth-card {
+    width: 380px;
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+/* TITLE */
+.auth-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+/* INPUT */
+.auth-card input {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    outline: none;
+    transition: 0.2s;
+}
+
+.auth-card input:focus {
+    border-color: #ec4899;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
+}
+
+/* BUTTON */
+.auth-card button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ec4899, #a855f7);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.auth-card button:hover {
+    transform: translateY(-2px);
+}
+
+/* SWITCH TEXT */
+.auth-switch {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.auth-switch span {
+    color: #ec4899;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .auth-left {
+        display: none;
+    }
+
+    .auth-right {
+        flex: 1;
+    }
+}
