@@ -1,77 +1,111 @@
 import { useState } from "react";
-import { registerApi } from "../api/authApi";
 import { useNavigate } from "react-router-dom";
-import AuthForm from "../components/AuthForm";
 
-export function RegisterPage() {
+import AuthForm from "../components/AuthForm";
+import { useAuth } from "../hooks/useAuth";
+
+export default function RegisterPage() {
+
     const navigate = useNavigate();
 
-    const [loading, setLoading] = useState(false);
+    const { register } = useAuth();
 
-    const handleRegister = async (form) => {
-        setLoading(true);
+    const [loading, setLoading] =
+        useState(false);
 
-        try {
-            const res = await registerApi(form);
-            const data = res.data || res;
+    const [error, setError] =
+        useState("");
 
-            console.log("Register success:", data);
+    const handleRegister =
+        async (form) => {
 
-            alert("Đăng ký thành công");
+            try {
 
-            navigate("/login");
-        } catch (error) {
-            alert(
-                error?.response?.data?.message ||
-                "Đăng ký thất bại"
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+                setLoading(true);
+                setError("");
+
+                await register({
+                    username: form.username,
+                    email: form.email,
+                    password: form.password,
+                    fullName: form.fullName,
+                    phone: form.phone,
+                });
+
+                alert(
+                    "Đăng ký thành công"
+                );
+
+                navigate("/login");
+
+            } catch (err) {
+
+                setError(
+                    err?.response?.data?.message ||
+                    "Đăng ký thất bại"
+                );
+
+            } finally {
+
+                setLoading(false);
+            }
+        };
 
     return (
         <AuthForm
-            title="Create account 💇‍♀️"
-            subtitle="Đăng ký để quản lý salon của bạn"
-            buttonText={loading ? "Creating..." : "Đăng ký"}
-            onSubmit={handleRegister}
+            title="Đăng ký"
+            subtitle="Tạo tài khoản SalonFlow"
+            buttonText="Đăng ký"
             switchText="Đã có tài khoản?"
-            onSwitch={() => navigate("/login")}
+            onSwitch={() =>
+                navigate("/login")
+            }
+            loading={loading}
+            error={error}
+            onSubmit={handleRegister}
         >
             {(handleChange) => (
                 <>
+
                     <input
+                        type="text"
                         name="username"
                         placeholder="Tên đăng nhập"
                         onChange={handleChange}
+                        required
                     />
 
                     <input
-                        name="email"
-                        type="email"
-                        placeholder="Email"
-                        onChange={handleChange}
-                    />
-
-                    <input
-                        name="password"
-                        type="password"
-                        placeholder="Mật khẩu"
-                        onChange={handleChange}
-                    />
-
-                    <input
+                        type="text"
                         name="fullName"
                         placeholder="Họ và tên"
                         onChange={handleChange}
                     />
 
                     <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        onChange={handleChange}
+                        required
+                    />
+
+                    <input
+                        type="text"
                         name="phone"
                         placeholder="Số điện thoại"
                         onChange={handleChange}
                     />
+
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Mật khẩu (ít nhất 8 ký tự)"
+                        minLength={8}
+                        onChange={handleChange}
+                        required
+                    />
+
                 </>
             )}
         </AuthForm>

@@ -1,63 +1,120 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginApi } from "../api/authApi";
-import AuthForm from "../components/AuthForm";
 
-export function LoginPage() {
+import AuthForm from "../components/AuthForm";
+import SocialLogin from "../components/SocialLogin";
+
+import { useAuth } from "../hooks/useAuth";
+
+import ROLES from "@/core/constants/roles";
+
+export default function LoginPage() {
+
     const navigate = useNavigate();
 
-    const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
+
+    const [loading, setLoading] =
+        useState(false);
+
+    const [error, setError] =
+        useState("");
 
     const handleLogin = async (form) => {
-        setLoading(true);
 
         try {
-            const res = await loginApi(form);
-            const data = res.data || res;
 
-            localStorage.setItem("accessToken", data.accessToken);
-            localStorage.setItem("refreshToken", data.refreshToken);
-            localStorage.setItem("roles", JSON.stringify(data.roles));
-            localStorage.setItem("userEmail", data.email);
+            setLoading(true);
+            setError("");
 
-            alert("Login success");
-            navigate("/");
-        } catch (error) {
-            alert(
-                error?.response?.data?.message ||
-                "Login failed"
+            const response =
+                await login(
+                    form.email,
+                    form.password
+                );
+
+            const role =
+                response.roles?.[0];
+
+            switch (role) {
+
+                case ROLES.ADMIN:
+                    navigate("/admin");
+                    break;
+
+                case ROLES.OWNER:
+                    navigate("/owner");
+                    break;
+
+                case ROLES.STAFF:
+                    navigate("/staff");
+                    break;
+
+                default:
+                    navigate("/");
+            }
+
+        } catch (err) {
+
+            setError(
+                err?.response?.data?.message ||
+                "Email hoặc mật khẩu không đúng"
             );
+
         } finally {
+
             setLoading(false);
         }
     };
 
     return (
+
         <AuthForm
-            title="Welcome back 💇‍♀️"
-            subtitle="Đăng nhập để quản lý salon của bạn"
-            buttonText={loading ? "Logging in..." : "Login"}
-            onSubmit={handleLogin}
+            title="Đăng nhập"
+            subtitle="Chào mừng quay lại SalonFlow"
+            buttonText="Đăng nhập"
             switchText="Chưa có tài khoản?"
-            onSwitch={() => navigate("/register")}
+            onSwitch={() =>
+                navigate("/register")
+            }
+            loading={loading}
+            error={error}
+            onSubmit={handleLogin}
+            extraContent={
+                <>
+                    <div className="oauth-divider">
+                        <span>
+                            Hoặc đăng nhập bằng
+                        </span>
+                    </div>
+
+                    <SocialLogin />
+                </>
+            }
         >
+
             {(handleChange) => (
                 <>
+
                     <input
-                        name="email"
                         type="email"
+                        name="email"
                         placeholder="Email"
                         onChange={handleChange}
+                        required
                     />
 
                     <input
-                        name="password"
                         type="password"
-                        placeholder="Password"
+                        name="password"
+                        placeholder="Mật khẩu"
                         onChange={handleChange}
+                        required
                     />
+
                 </>
             )}
+
         </AuthForm>
     );
 }
