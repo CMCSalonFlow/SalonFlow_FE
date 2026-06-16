@@ -9,6 +9,15 @@ import RegisterPage from
 "@/features/auth/pages/RegisterPage";
 import OAuth2SuccessPage from
 "@/features/auth/pages/OAuth2SuccessPage";
+import VerifyEmailPage
+from "@/features/auth/pages/VerifyEmailPage";
+
+import ForgotPasswordPage
+from "@/features/auth/pages/ForgotPasswordPage";
+
+import ResetPasswordPage
+from "@/features/auth/pages/ResetPasswordPage";
+
 const router =
     createBrowserRouter([
         {
@@ -26,6 +35,18 @@ const router =
         {
             path: "/oauth2/success",
             element: <OAuth2SuccessPage />
+        },
+        {
+            path: "/verify-email",
+            element: <VerifyEmailPage />,
+        },
+        {
+            path: "/forgot-password",
+            element: <ForgotPasswordPage />,
+        },
+        {
+            path: "/reset-password",
+            element: <ResetPasswordPage />,
         },
     ]);
 

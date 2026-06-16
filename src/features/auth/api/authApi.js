@@ -43,3 +43,61 @@ export const logoutApi = async (
         `${ENDPOINTS.LOGOUT}/${userId}`
     );
 };
+
+export const sendOtpApi = async (email) => {
+
+    const response = await api.post(
+        ENDPOINTS.SEND_OTP,
+        {
+            email,
+        }
+    );
+
+    return response.data;
+};
+
+export const verifyEmailApi = async (
+    email,
+    otp
+) => {
+
+    const response = await api.post(
+        ENDPOINTS.VERIFY_EMAIL,
+        {
+            email,
+            otp,
+        }
+    );
+
+    return response.data;
+};
+
+export const forgotPasswordApi =
+    async (email) => {
+
+        const response = await api.post(
+            ENDPOINTS.FORGOT_PASSWORD,
+            {
+                email,
+            }
+        );
+
+        return response.data;
+    };
+
+export const resetPasswordApi =
+    async (
+        token,
+        newPassword
+    ) => {
+
+        const response = await api.post(
+            ENDPOINTS.RESET_PASSWORD,
+            {
+                token,
+                newPassword,
+            }
+        );
+
+        return response.data;
+    };

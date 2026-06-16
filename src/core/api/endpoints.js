@@ -5,4 +5,9 @@ export const ENDPOINTS = {
     REGISTER: "/api/v1/auth/register",
     REFRESH_TOKEN: "/api/v1/auth/refresh-token",
     LOGOUT: "/api/v1/auth/logout",
+
+    SEND_OTP: "/auth/send-otp",
+    VERIFY_EMAIL: "/auth/verify-email",
+    FORGOT_PASSWORD: "/auth/forgot-password",
+    RESET_PASSWORD: "/auth/reset-password",
 };

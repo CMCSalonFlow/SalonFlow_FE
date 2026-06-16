@@ -1,6 +1,10 @@
 import {
     loginApi,
     registerApi,
+    sendOtpApi,
+    verifyEmailApi,
+    forgotPasswordApi,
+    resetPasswordApi,
 } from "../api/authApi";
 
 export const useAuth = () => {
@@ -67,8 +71,48 @@ export const useAuth = () => {
             return response;
         };
 
+    const sendOtp = async (email) => {
+
+        return await sendOtpApi(email);
+    };
+
+    const verifyEmail = async (
+        email,
+        otp
+    ) => {
+
+        return await verifyEmailApi(
+            email,
+            otp
+        );
+    };
+
+    const forgotPassword =
+        async (email) => {
+
+            return await forgotPasswordApi(
+                email
+            );
+        };
+
+    const resetPassword =
+        async (
+            token,
+            newPassword
+        ) => {
+
+            return await resetPasswordApi(
+                token,
+                newPassword
+            );
+        };
+
     return {
         login,
         register,
+        sendOtp,
+        verifyEmail,
+        forgotPassword,
+        resetPassword
     };
 };
