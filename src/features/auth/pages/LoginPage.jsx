@@ -112,6 +112,14 @@ export default function LoginPage() {
                         required
                     />
 
+                    <div className="forgot-password">
+                        <span
+                            onClick={() => navigate("/forgot-password")}
+                        >
+                            Quên mật khẩu?
+                        </span>
+                    </div>
+
                 </>
             )}
 

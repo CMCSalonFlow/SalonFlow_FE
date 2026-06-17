@@ -11,6 +11,7 @@ export default function AuthForm({
     onSwitch,
     loading = false,
     error = "",
+    success = "",
     extraContent,
 }) {
 
@@ -38,7 +39,7 @@ export default function AuthForm({
             <div className="auth-left">
                 <div className="auth-brand">
 
-                    <h1>SalonFlow ✂️</h1>
+                    <h1>SalonFlow</h1>
 
                     <p>
                         Quản lý salon hiện đại,
@@ -65,6 +66,12 @@ export default function AuthForm({
                     {error && (
                         <div className="auth-error">
                             {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="auth-success">
+                            {success}
                         </div>
                     )}
 

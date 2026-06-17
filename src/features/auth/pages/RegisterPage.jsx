@@ -32,11 +32,11 @@ export default function RegisterPage() {
                     phone: form.phone,
                 });
 
-                alert(
-                    "Đăng ký thành công"
-                );
-
-                navigate("/login");
+                navigate("/verify-email", {
+                    state: {
+                        email: form.email,
+                    },
+                });
 
             } catch (err) {
 

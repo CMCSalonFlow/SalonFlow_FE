@@ -6,8 +6,8 @@ export const ENDPOINTS = {
     REFRESH_TOKEN: "/api/v1/auth/refresh-token",
     LOGOUT: "/api/v1/auth/logout",
 
-    SEND_OTP: "/auth/send-otp",
-    VERIFY_EMAIL: "/auth/verify-email",
-    FORGOT_PASSWORD: "/auth/forgot-password",
-    RESET_PASSWORD: "/auth/reset-password",
+    SEND_OTP: "/api/v1/auth/send-otp",
+    VERIFY_EMAIL: "/api/v1/auth/verify-email",
+    FORGOT_PASSWORD: "/api/v1/auth/forgot-password",
+    RESET_PASSWORD: "/api/v1/auth/reset-password",
 };
