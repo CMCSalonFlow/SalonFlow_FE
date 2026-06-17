@@ -51,7 +51,7 @@ export default function LoginPage() {
                     break;
 
                 default:
-                    navigate("/");
+                    navigate("/home");
             }
 
         } catch (err) {

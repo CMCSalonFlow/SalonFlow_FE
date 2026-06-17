@@ -18,6 +18,8 @@ from "@/features/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage
 from "@/features/auth/pages/ResetPasswordPage";
 
+import HomePage from "@/features/auth/pages/HomePage";
+
 const router =
     createBrowserRouter([
         {
@@ -48,6 +50,10 @@ const router =
             path: "/reset-password",
             element: <ResetPasswordPage />,
         },
+        {
+            path: "/home",
+            element: <HomePage />,
+        }
     ]);
 
 export default router;
