@@ -1,93 +1,55 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function OAuth2SuccessPage() {
 
+    const navigate = useNavigate();
+
     useEffect(() => {
 
-        const params = new URLSearchParams(
+    const params =
+        new URLSearchParams(
             window.location.search
         );
 
-        const roles =
+    const userId =
+        params.get("userId");
+
+    if (!userId) {
+        return;
+    }
+
+    const authData = {
+        userId,
+        username:
+            params.get("username"),
+        email:
+            params.get("email"),
+        accessToken:
+            params.get("accessToken"),
+        refreshToken:
+            params.get("refreshToken"),
+        roles:
             params.get("roles")
-                ?.split(",") || [];
+                ?.split(",") || []
+    };
 
-        localStorage.setItem(
-            "userId",
-            params.get("userId")
-        );
-
-        localStorage.setItem(
-            "username",
-            params.get("username")
-        );
-
-        localStorage.setItem(
-            "email",
-            params.get("email")
-        );
-
-        localStorage.setItem(
-            "accessToken",
-            params.get("accessToken")
-        );
-
-        localStorage.setItem(
-            "refreshToken",
-            params.get("refreshToken")
-        );
-
-        localStorage.setItem(
-            "roles",
-            JSON.stringify(roles)
-        );
-
-        console.log("===== OAUTH SUCCESS =====");
-
-        console.log(
-            "userId:",
-            localStorage.getItem("userId")
-        );
-
-        console.log(
-            "username:",
-            localStorage.getItem("username")
-        );
-
-        console.log(
-            "email:",
-            localStorage.getItem("email")
-        );
-
-        console.log(
-            "accessToken:",
-            localStorage.getItem("accessToken")
-        );
-
-        console.log(
-            "refreshToken:",
-            localStorage.getItem("refreshToken")
-        );
-
-        console.log(
-            "roles:",
-            localStorage.getItem("roles")
-        );
-
-    }, []);
-
-    return (
-        <div>
-            <h2>OAuth Login Success</h2>
-
-            <p>
-                Kiểm tra Console (F12)
-            </p>
-
-            <p>
-                Kiểm tra Application →
-                Local Storage
-            </p>
-        </div>
+    console.log(
+        "Saving auth:",
+        authData
     );
+
+    localStorage.setItem(
+        "auth",
+        JSON.stringify(authData)
+    );
+
+    navigate(
+        "/home",
+        { replace: true }
+    );
+
+}, [navigate]);
+
+    return <div>Loading...</div>;
 }

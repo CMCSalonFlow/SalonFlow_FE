@@ -24,6 +24,11 @@ from "@/core/components/ProtectedRoute";
 import AdminLayout
 from "@/layouts/AdminLayout/AdminLayout";
 
+import CustomerLayout
+from "@/layouts/CustomerLayout/CustomerLayout";
+import HomePage
+from "@/features/auth/pages/HomePage";
+
 import AdminDashboardPage
 from "@/features/dashboard/pages/AdminDashboardPage";
 
@@ -94,6 +99,20 @@ const router = createBrowserRouter([
                 path: "branches",
                 element: <BranchListPage />
             }
+        ]
+    },
+    ///USER AREA///
+        {
+        element:
+            <CustomerLayout />,
+        children: [
+
+            {
+                path: "/home",
+                element:
+                    <HomePage />
+            },
+
         ]
     }
 ]);

@@ -7,16 +7,16 @@ export default function HomePage() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const userData = {
-            userId: localStorage.getItem("userId"),
-            username: localStorage.getItem("username"),
-            email: localStorage.getItem("email"),
-            roles: JSON.parse(localStorage.getItem("roles") || "[]"),
-        };
 
-        if (userData.userId) {
-            setUser(userData);
-        }
+        const auth =
+            JSON.parse(
+                localStorage.getItem(
+                    "auth"
+                ) || "{}"
+            );
+
+        setUser(auth);
+
     }, []);
 
     const { logout } = useAuth();
