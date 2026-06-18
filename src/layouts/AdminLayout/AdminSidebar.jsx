@@ -1,64 +1,68 @@
 import {
-    NavLink
-}
-from "react-router-dom";
+    Menu
+} from "antd";
+
+import {
+    DashboardOutlined,
+    UserOutlined,
+    TeamOutlined,
+    ApartmentOutlined
+} from "@ant-design/icons";
+
+import {
+    useNavigate,
+    useLocation
+} from "react-router-dom";
 
 export default function AdminSidebar() {
 
+    const navigate =
+        useNavigate();
+
+    const location =
+        useLocation();
+
+    const items = [
+        {
+            key: "/admin",
+            icon:
+                <DashboardOutlined />,
+            label: "Dashboard"
+        },
+        {
+            key: "/admin/users",
+            icon:
+                <UserOutlined />,
+            label: "Users"
+        },
+        {
+            key: "/admin/roles",
+            icon:
+                <TeamOutlined />,
+            label: "Roles"
+        },
+        {
+            key: "/admin/branches",
+            icon:
+                <ApartmentOutlined />,
+            label: "Branches"
+        }
+    ];
+
     return (
-        <aside
+
+        <Menu
+            mode="inline"
+            selectedKeys={[
+                location.pathname
+            ]}
+            items={items}
+            onClick={({ key }) =>
+                navigate(key)
+            }
             style={{
-                width: "250px",
-                borderRight:
-                    "1px solid #ddd",
-                minHeight: "100vh",
-                padding: "20px"
+                height: "100%"
             }}
-        >
-            <h2>
-                SalonFlow
-            </h2>
-
-            <nav>
-
-                <ul>
-
-                    <li>
-                        <NavLink
-                            to="/admin"
-                        >
-                            Dashboard
-                        </NavLink>
-                    </li>
-
-                    <li>
-                        <NavLink
-                            to="/admin/users"
-                        >
-                            Users
-                        </NavLink>
-                    </li>
-
-                    <li>
-                        <NavLink
-                            to="/admin/roles"
-                        >
-                            Roles
-                        </NavLink>
-                    </li>
-
-                    <li>
-                        <NavLink
-                            to="/admin/branches"
-                        >
-                            Branches
-                        </NavLink>
-                    </li>
-
-                </ul>
-
-            </nav>
-
-        </aside>
+        />
     );
 }

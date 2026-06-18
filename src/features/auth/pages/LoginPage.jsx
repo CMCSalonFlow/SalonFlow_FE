@@ -33,25 +33,22 @@ export default function LoginPage() {
                     form.password
                 );
 
-            const role =
-                response.roles?.[0];
+           const roles = response.roles || [];
 
-            switch (role) {
-
-                case ROLES.ADMIN:
-                    navigate("/admin");
-                    break;
-
-                case ROLES.OWNER:
-                    navigate("/owner");
-                    break;
-
-                case ROLES.STAFF:
-                    navigate("/staff");
-                    break;
-
-                default:
-                    navigate("/home");
+            if (roles.includes(ROLES.SUPER_ADMIN)) {
+                navigate("/admin");
+            }
+            else if (roles.includes(ROLES.SALON_OWNER)) {
+                navigate("/owner");
+            }
+            else if (roles.includes(ROLES.STAFF)) {
+                navigate("/staff");
+            }
+            else if (roles.includes(ROLES.CUSTOMER)) {
+                navigate("/customer");
+            }
+            else {
+                navigate("/login");
             }
 
         } catch (err) {

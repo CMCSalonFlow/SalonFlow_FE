@@ -1,3 +1,7 @@
+import {
+    Layout
+} from "antd";
+
 import { Outlet }
 from "react-router-dom";
 
@@ -7,36 +11,74 @@ from "./AdminSidebar";
 import AdminHeader
 from "./AdminHeader";
 
+const {
+    Sider,
+    Header,
+    Content
+} = Layout;
+
 export default function AdminLayout() {
 
     return (
 
-        <div
+        <Layout
             style={{
-                display: "flex"
+                minHeight: "100vh"
             }}
         >
 
-            <AdminSidebar />
-
-            <div
-                style={{
-                    flex: 1
-                }}
+            <Sider
+                width={250}
             >
-
-                <AdminHeader />
 
                 <div
                     style={{
-                        padding: "20px"
+                        height: 64,
+                        color: "#fff",
+                        display: "flex",
+                        alignItems:
+                            "center",
+                        justifyContent:
+                            "center",
+                        fontSize: 20,
+                        fontWeight: 600
                     }}
                 >
-                    <Outlet />
+                    SalonFlow
                 </div>
 
-            </div>
+                <AdminSidebar />
 
-        </div>
+            </Sider>
+
+            <Layout>
+
+                <Header
+                    style={{
+                        padding: 0,
+                        background:
+                            "#fff"
+                    }}
+                >
+                    <AdminHeader />
+                </Header>
+
+                <Content
+                    style={{
+                        margin: 24,
+                        padding: 24,
+                        background:
+                            "#fff",
+                        borderRadius: 12
+                    }}
+                >
+
+                    <Outlet />
+
+                </Content>
+
+            </Layout>
+
+        </Layout>
     );
 }

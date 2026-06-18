@@ -1,8 +1,8 @@
 const ROLES = {
-    ADMIN: "ADMIN",
-    OWNER: "OWNER",
+    SUPER_ADMIN: "SUPER_ADMIN",
+    SALON_OWNER: "SALON_OWNER",
     STAFF: "STAFF",
-    CUSTOMER: "CUSTOMER",
+    CUSTOMER: "CUSTOMER"
 };
 
 export default ROLES;

@@ -1,20 +1,19 @@
-import {
-    Navigate
-} from "react-router-dom";
-
-import {
-    isAuthenticated,
-    getRoles
-}
-from "@/core/utils/auth";
+import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({
     children,
-    allowedRoles = []
+    allowedRoles = [],
 }) {
 
-    if (!isAuthenticated()) {
+    const token =
+        localStorage.getItem("accessToken");
 
+    const roles =
+        JSON.parse(
+            localStorage.getItem("roles") || "[]"
+        );
+
+    if (!token) {
         return (
             <Navigate
                 to="/login"
@@ -23,23 +22,14 @@ export default function ProtectedRoute({
         );
     }
 
-    const roles =
-        getRoles();
-
-    if (
-        allowedRoles.length > 0
-    ) {
+    if (allowedRoles.length > 0) {
 
         const hasAccess =
-            allowedRoles.some(
-                role =>
-                    roles.includes(
-                        role
-                    )
+            allowedRoles.some(role =>
+                roles.includes(role)
             );
 
         if (!hasAccess) {
-
             return (
                 <Navigate
                     to="/login"

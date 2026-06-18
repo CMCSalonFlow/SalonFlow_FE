@@ -18,8 +18,6 @@ from "@/features/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage
 from "@/features/auth/pages/ResetPasswordPage";
 
-import HomePage from "@/features/auth/pages/HomePage";
-
 import ProtectedRoute
 from "@/core/components/ProtectedRoute";
 
@@ -30,47 +28,74 @@ import AdminDashboardPage
 from "@/features/dashboard/pages/AdminDashboardPage";
 
 import UserListPage
-from "@/features/users/pages/UserListPage";
+from "@/features/user/pages/UserListPage";
 
 import RoleListPage
-from "@/features/roles/pages/RoleListPage";
+from "@/features/role/pages/RoleListPage";
 
 import BranchListPage
 from "@/features/branch/pages/BranchListPage";
-const router =
-    createBrowserRouter([
-        {
-            path: "/",
-            element: <LoginPage />,
-        },
-        {
-            path: "/login",
-            element: <LoginPage />,
-        },
-        {
-            path: "/register",
-            element: <RegisterPage />,
-        },
-        {
-            path: "/oauth2/success",
-            element: <OAuth2SuccessPage />
-        },
-        {
-            path: "/verify-email",
-            element: <VerifyEmailPage />,
-        },
-        {
-            path: "/forgot-password",
-            element: <ForgotPasswordPage />,
-        },
-        {
-            path: "/reset-password",
-            element: <ResetPasswordPage />,
-        },
-        {
-            path: "/home",
-            element: <HomePage />,
-        }
-    ]);
+const router = createBrowserRouter([
+    {
+        path: "/",
+        element: <LoginPage />,
+    },
+    {
+        path: "/login",
+        element: <LoginPage />,
+    },
+    {
+        path: "/register",
+        element: <RegisterPage />,
+    },
+    {
+        path: "/oauth2/success",
+        element: <OAuth2SuccessPage />
+    },
+    {
+        path: "/verify-email",
+        element: <VerifyEmailPage />,
+    },
+    {
+        path: "/forgot-password",
+        element: <ForgotPasswordPage />,
+    },
+    {
+        path: "/reset-password",
+        element: <ResetPasswordPage />,
+    },
+
+    // ADMIN AREA
+    {
+        path: "/admin",
+        element: (
+            <ProtectedRoute
+                allowedRoles={[
+                    "SUPER_ADMIN"
+                ]}
+            >
+                <AdminLayout />
+            </ProtectedRoute>
+        ),
+        children: [
+            {
+                index: true,
+                element: <AdminDashboardPage />
+            },
+            {
+                path: "users",
+                element: <UserListPage />
+            },
+            {
+                path: "roles",
+                element: <RoleListPage />
+            },
+            {
+                path: "branches",
+                element: <BranchListPage />
+            }
+        ]
+    }
+]);
 
 export default router;

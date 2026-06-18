@@ -1,7 +1,18 @@
 import {
+    Avatar,
+    Button,
+    Dropdown,
+    Space
+} from "antd";
+
+import {
+    UserOutlined,
+    LogoutOutlined
+} from "@ant-design/icons";
+
+import {
     logout
-}
-from "@/core/utils/auth";
+} from "@/core/utils/auth";
 
 export default function AdminHeader() {
 
@@ -10,29 +21,54 @@ export default function AdminHeader() {
             "username"
         );
 
+    const items = [
+        {
+            key: "logout",
+            label: "Logout",
+            icon: <LogoutOutlined />,
+            onClick: logout
+        }
+    ];
+
     return (
-        <header
+        <div
             style={{
                 display: "flex",
                 justifyContent:
                     "space-between",
-                alignItems:
-                    "center",
-                padding: "20px",
-                borderBottom:
-                    "1px solid #ddd"
+                alignItems: "center",
+                height: "64px",
+                padding: "0 24px",
+                background: "#fff"
             }}
         >
-            <div>
-                Welcome {username}
-            </div>
-
-            <button
-                onClick={logout}
+            <h3
+                style={{
+                    margin: 0
+                }}
             >
-                Logout
-            </button>
+                SalonFlow Admin
+            </h3>
 
-        </header>
+            <Dropdown
+                menu={{
+                    items
+                }}
+            >
+                <Button
+                    type="text"
+                >
+                    <Space>
+                        <Avatar
+                            icon={
+                                <UserOutlined />
+                            }
+                        />
+
+                        {username}
+                    </Space>
+                </Button>
+            </Dropdown>
+        </div>
     );
 }
