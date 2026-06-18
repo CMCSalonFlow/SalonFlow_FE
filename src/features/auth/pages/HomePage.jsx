@@ -1,18 +1,28 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 export default function HomePage() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        setUser(storedUser);
+        const userData = {
+            userId: localStorage.getItem("userId"),
+            username: localStorage.getItem("username"),
+            email: localStorage.getItem("email"),
+            roles: JSON.parse(localStorage.getItem("roles") || "[]"),
+        };
+
+        if (userData.userId) {
+            setUser(userData);
+        }
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+    const { logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
         navigate("/login");
     };
 
@@ -22,7 +32,7 @@ export default function HomePage() {
 
             {user ? (
                 <div>
-                    <h3>Xin chào, {user.name || user.email}</h3>
+                    <h3>Xin chào, {user.username || user.email}</h3>
                     <p>Vai trò: {user.roles?.[0]}</p>
                 </div>
             ) : (

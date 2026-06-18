@@ -251,14 +251,25 @@
 ========================= */
 
 .auth-link-button {
-    background: transparent !important;
-    color: #ec4899 !important;
-    box-shadow: none !important;
+    display: inline-flex;
+    justify-content: center;
+
+    width: 100%;
     margin-top: 10px;
+    margin-bottom: 16px;
+
+    background: none !important;
+    border: none;
+    padding: 0;
+
+    color: #ec4899;
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
 }
 
 .auth-link-button:hover {
-    transform: none !important;
     text-decoration: underline;
 }
 

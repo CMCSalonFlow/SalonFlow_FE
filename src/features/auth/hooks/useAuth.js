@@ -5,6 +5,7 @@ import {
     verifyEmailApi,
     forgotPasswordApi,
     resetPasswordApi,
+    logoutApi
 } from "../api/authApi";
 
 export const useAuth = () => {
@@ -107,12 +108,28 @@ export const useAuth = () => {
             );
         };
 
+        const logout = async () => {
+
+            const userId = localStorage.getItem("userId");
+
+            try {
+                if (userId) {
+                    await logoutApi(userId);
+                }
+            } finally {
+                localStorage.clear();
+            }
+        };
+
     return {
         login,
+        logout,
         register,
         sendOtp,
         verifyEmail,
         forgotPassword,
         resetPassword
     };
+
+    
 };
