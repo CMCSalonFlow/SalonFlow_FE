@@ -20,6 +20,23 @@ from "@/features/auth/pages/ResetPasswordPage";
 
 import HomePage from "@/features/auth/pages/HomePage";
 
+import ProtectedRoute
+from "@/core/components/ProtectedRoute";
+
+import AdminLayout
+from "@/layouts/AdminLayout/AdminLayout";
+
+import AdminDashboardPage
+from "@/features/dashboard/pages/AdminDashboardPage";
+
+import UserListPage
+from "@/features/users/pages/UserListPage";
+
+import RoleListPage
+from "@/features/roles/pages/RoleListPage";
+
+import BranchListPage
+from "@/features/branch/pages/BranchListPage";
 const router =
     createBrowserRouter([
         {
