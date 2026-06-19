@@ -40,6 +40,10 @@ from "@/features/role/pages/RoleListPage";
 
 import BranchListPage
 from "@/features/branch/pages/BranchListPage";
+
+import { CategoryListPage }
+from "@/features/category/pages/CategoryListPage";
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -98,6 +102,11 @@ const router = createBrowserRouter([
             {
                 path: "branches",
                 element: <BranchListPage />
+            },
+
+            {
+                path: "categories",
+                element: <CategoryListPage />
             }
         ]
     },
