@@ -4,16 +4,32 @@ export function attachInterceptors(api) {
         (config) => {
 
             const token =
-                localStorage.getItem("accessToken");
+                localStorage.getItem(
+                    "accessToken"
+                );
+
+            const branchId =
+                localStorage.getItem(
+                    "currentBranchId"
+                );
 
             if (token) {
+
                 config.headers.Authorization =
                     `Bearer ${token}`;
             }
 
+            if (branchId) {
+
+                config.headers[
+                    "X-Branch-Id"
+                ] = branchId;
+            }
+
             return config;
         },
-        (error) => Promise.reject(error)
+        (error) =>
+            Promise.reject(error)
     );
 
     api.interceptors.response.use(

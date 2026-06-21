@@ -1,6 +1,5 @@
 import api from "@/core/api/axios";
 import { ENDPOINTS } from "@/core/api/endpoints";
-
 export const getUsersApi = async () => {
     const res = await api.get(
         ENDPOINTS.USERS

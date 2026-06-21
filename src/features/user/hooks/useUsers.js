@@ -5,6 +5,7 @@ import {
     deleteUserApi
 }
 from "../api/userApi";
+import { getRolesApi } from "../api/roleApi";
 
 export const useUsers = () => {
 
@@ -28,5 +29,14 @@ export const useUsers = () => {
         createUser,
         updateUser,
         deleteUser
+    };
+};
+
+export const useRoles = () => {
+
+    const getRoles = () => getRolesApi();
+
+    return {
+        getRoles
     };
 };

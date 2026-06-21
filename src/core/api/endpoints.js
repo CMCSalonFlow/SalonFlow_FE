@@ -16,4 +16,9 @@ export const ENDPOINTS = {
 
     // Roles
     ROLES: "/api/v1/roles",
+    BRANCHES:
+        "/api/v1/branches",
+
+    MY_BRANCHES:
+        "/api/v1/branches/my-branches"
 };

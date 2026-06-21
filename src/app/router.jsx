@@ -40,6 +40,9 @@ from "@/features/role/pages/RoleListPage";
 
 import BranchListPage
 from "@/features/branch/pages/BranchListPage";
+import OwnerLayout from "@/layouts/OwnerLayout/OwnerLayout";
+
+import OwnerDashboardPage from "@/features/dashboard/pages/OwnerDashboardPage";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -94,6 +97,29 @@ const router = createBrowserRouter([
             {
                 path: "roles",
                 element: <RoleListPage />
+            },
+            {
+                path: "branches",
+                element: <BranchListPage />
+            }
+        ]
+    },
+        ///OWNER AREA///
+    {
+        path: "/owner",
+        element: (
+            <ProtectedRoute
+                allowedRoles={[
+                    "SALON_OWNER"
+                ]}
+            >
+                <OwnerLayout />
+            </ProtectedRoute>
+        ),
+        children: [
+            {
+                index: true,
+                element: <OwnerDashboardPage />
             },
             {
                 path: "branches",

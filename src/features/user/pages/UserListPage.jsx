@@ -9,177 +9,125 @@ import {
     message
 } from "antd";
 
-import UserTable
-from "../components/UserTable";
-
-import UserModal
-from "../components/UserModal";
+import UserTable from "../components/UserTable";
+import UserModal from "../components/UserModal";
 
 import {
     getUsersApi,
     createUserApi,
     updateUserApi,
     deleteUserApi
-}
-from "../api/userApi";
+} from "../api/userApi";
+import { getRolesApi } from "@/features/role/api/roleApi";
 
 export default function UserListPage() {
 
-    const [users, setUsers] =
-        useState([]);
+    const [users, setUsers] = useState([]);
+    const [roles, setRoles] = useState([]);
 
-    const [open,
-        setOpen] =
-        useState(false);
+    const [open, setOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
 
-    const [editingUser,
-        setEditingUser] =
-        useState(null);
+    // LOAD USERS
+    const loadUsers = async () => {
+        try {
+            const data = await getUsersApi();
+            setUsers(data);
+        } catch {
+            message.error("Load users failed");
+        }
+    };
 
-    const loadUsers =
-        async () => {
-
-            try {
-
-                const data =
-                    await getUsersApi();
-
-                setUsers(data);
-
-            } catch {
-
-                message.error(
-                    "Load users failed"
-                );
-            }
-        };
+    // LOAD ROLES
+    const loadRoles = async () => {
+        try {
+            const data = await getRolesApi();
+            setRoles(data);
+        } catch {
+            message.error("Load roles failed");
+        }
+    };
 
     useEffect(() => {
         loadUsers();
+        loadRoles();
     }, []);
 
-    const handleCreate =
-        () => {
+    // CREATE
+    const handleCreate = () => {
+        setEditingUser(null);
+        setOpen(true);
+    };
 
-            setEditingUser(
-                null
-            );
+    // EDIT (🔥 IMPORTANT PART)
+    const handleEdit = (user) => {
+        setEditingUser({
+            ...user,
 
-            setOpen(true);
-        };
+            // 🔥 convert backend roles ["ADMIN"] -> frontend roleIds
+            roles: user.roles || []
+        });
 
-    const handleEdit =
-        (user) => {
+        setOpen(true);
+    };
 
-            setEditingUser(
-                user
-            );
+    // SUBMIT
+    const handleSubmit = async (values) => {
+        try {
 
-            setOpen(true);
-        };
-
-    const handleSubmit =
-        async (values) => {
-
-            try {
-
-                if (
-                    editingUser
-                ) {
-
-                    await updateUserApi(
-                        editingUser.id,
-                        values
-                    );
-
-                } else {
-
-                    await createUserApi(
-                        values
-                    );
-                }
-
-                message.success(
-                    "Success"
-                );
-
-                setOpen(false);
-
-                loadUsers();
-
-            } catch {
-
-                message.error(
-                    "Save failed"
-                );
+            if (editingUser) {
+                await updateUserApi(editingUser.id, values);
+            } else {
+                await createUserApi(values);
             }
-        };
 
-    const handleDelete =
-        async (id) => {
+            message.success("Success");
 
-            try {
+            setOpen(false);
+            setEditingUser(null);
 
-                await deleteUserApi(
-                    id
-                );
+            loadUsers();
 
-                message.success(
-                    "Deleted"
-                );
+        } catch {
+            message.error("Save failed");
+        }
+    };
 
-                loadUsers();
-
-            } catch {
-
-                message.error(
-                    "Delete failed"
-                );
-            }
-        };
+    // DELETE
+    const handleDelete = async (id) => {
+        try {
+            await deleteUserApi(id);
+            message.success("Deleted");
+            loadUsers();
+        } catch {
+            message.error("Delete failed");
+        }
+    };
 
     return (
-
         <div>
 
-            <Space
-                style={{
-                    marginBottom: 20
-                }}
-            >
-
+            <Space style={{ marginBottom: 20 }}>
                 <Button
                     type="primary"
-                    onClick={
-                        handleCreate
-                    }
+                    onClick={handleCreate}
                 >
                     Create User
                 </Button>
-
             </Space>
 
             <UserTable
                 users={users}
-                onEdit={
-                    handleEdit
-                }
-                onDelete={
-                    handleDelete
-                }
+                onEdit={handleEdit}
+                onDelete={handleDelete}
             />
 
             <UserModal
                 open={open}
-                initialValues={
-                    editingUser
-                }
-                onCancel={() =>
-                    setOpen(false)
-                }
-                onSubmit={
-                    handleSubmit
-                }
+                initialValues={editingUser}
+                roles={roles}
+                onCancel={() => setOpen(false)}
+                onSubmit={handleSubmit}
             />
 
         </div>
