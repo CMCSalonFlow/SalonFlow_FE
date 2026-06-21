@@ -44,6 +44,9 @@ from "@/features/branch/pages/BranchListPage";
 import { CategoryListPage }
 from "@/features/category/pages/CategoryListPage";
 
+import CategoryListUserPage 
+from "@/features/category/pages/CategoryListUserPage";
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -121,6 +124,15 @@ const router = createBrowserRouter([
                 element:
                     <HomePage />
             },
+
+            {
+                path: "/services",           // ← Trang xem danh mục cho khách hàng
+                element: <CategoryListUserPage />
+            },
+            {
+                path: "/categories",         // Có thể thêm route này nữa cho dễ truy cập
+                element: <CategoryListUserPage />
+            }
 
         ]
     }

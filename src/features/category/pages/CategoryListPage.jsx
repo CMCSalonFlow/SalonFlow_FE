@@ -30,7 +30,7 @@ export function CategoryListPage() {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);   // Quản lý picker
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -70,12 +70,7 @@ export function CategoryListPage() {
             });
             setEditingCategory(category);
         } else {
-            setFormData({
-                name: "",
-                icon: "",
-                color: "#3b82f6",
-                description: "",
-            });
+            setFormData({ name: "", icon: "", color: "#3b82f6", description: "" });
             setEditingCategory(null);
         }
         setShowForm(true);
@@ -89,15 +84,12 @@ export function CategoryListPage() {
     };
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const onEmojiClick = (emojiObject) => {
         setFormData({ ...formData, icon: emojiObject.emoji });
-        setShowEmojiPicker(false);   // Tắt picker sau khi chọn
+        setShowEmojiPicker(false);
     };
 
     const handleSubmit = async () => {
@@ -114,17 +106,16 @@ export function CategoryListPage() {
                 await createCategory(formData);
                 alert("✅ Thêm danh mục thành công!");
             }
-
             fetchCategories();
             closeForm();
         } catch (error) {
-            console.error("❌ Lỗi:", error);
+            console.error(error);
             alert("❌ Thất bại: " + (error.response?.data?.message || error.message));
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm("Xóa danh mục này?")) return;
+        if (!window.confirm("Bạn có chắc muốn xóa?")) return;
         try {
             await deleteCategory(id);
             fetchCategories();
@@ -157,91 +148,95 @@ export function CategoryListPage() {
         <div style={{ padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
                 <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>Danh mục dịch vụ</h1>
-                <button onClick={() => openForm()} style={{ padding: "12px 20px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "8px", cursor: "pointer" }}>
+                <button 
+                    onClick={() => openForm()}
+                    style={{ padding: "12px 24px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "16px" }}
+                >
                     + Thêm danh mục
                 </button>
             </div>
 
-            {/* ================= FORM ================= */}
+            {/* FORM */}
             {showForm && (
                 <div style={{ 
-                    border: "1px solid #ddd", 
-                    padding: "24px", 
-                    marginBottom: "30px", 
-                    borderRadius: "12px", 
-                    backgroundColor: "#fff",
-                    position: "relative"
+                    backgroundColor: "white", 
+                    padding: "32px", 
+                    borderRadius: "16px", 
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                    marginBottom: "40px",
+                    maxWidth: "600px",
+                    marginLeft: "auto",
+                    marginRight: "auto"
                 }}>
-                    <h3>{editingCategory?.id ? "Sửa danh mục" : "Thêm danh mục mới"}</h3><br />
+                    <h3 style={{ fontSize: "24px", marginBottom: "24px" }}>
+                        {editingCategory?.id ? "Sửa danh mục" : "Thêm danh mục mới"}
+                    </h3>
 
-                    <input 
-                        name="name" 
-                        placeholder="Tên danh mục" 
-                        value={formData.name} 
-                        onChange={handleChange} 
-                        style={{ width: "100%", padding: "10px", marginBottom: "12px" }} 
+                    <input
+                        name="name"
+                        placeholder="Tên danh mục"
+                        value={formData.name}
+                        onChange={handleChange}
+                        style={{ width: "100%", padding: "14px", border: "1px solid #ddd", borderRadius: "8px", marginBottom: "16px" }}
                     />
 
-                    {/* Icon Picker */}
-                    <div style={{ marginBottom: "12px" }}>
-                        <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>
-                            Icon:
-                        </label>
+                    <div style={{ marginBottom: "16px" }}>
+                        <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>Icon</label>
                         <div 
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            style={{
-                                padding: "12px",
-                                border: "2px dashed #ccc",
-                                borderRadius: "8px",
-                                textAlign: "center",
-                                fontSize: "42px",
+                            style={{ 
+                                padding: "20px", 
+                                border: "2px dashed #ccc", 
+                                borderRadius: "12px", 
+                                textAlign: "center", 
+                                fontSize: "50px", 
                                 cursor: "pointer",
-                                minHeight: "70px",
-                                backgroundColor: "#f9f9f9"
+                                minHeight: "80px"
                             }}
                         >
                             {formData.icon || "Click để chọn emoji"}
                         </div>
-
                         {showEmojiPicker && (
-                            <div style={{ position: "absolute", zIndex: 1000, marginTop: "8px" }}>
-                                <EmojiPicker 
-                                    onEmojiClick={onEmojiClick}
-                                    width={350}
-                                    height={400}
-                                />
+                            <div style={{ marginTop: "10px" }}>
+                                <EmojiPicker onEmojiClick={onEmojiClick} width={350} height={400} />
                             </div>
                         )}
                     </div>
 
-                    <input 
-                        name="color" 
-                        type="color" 
-                        value={formData.color} 
-                        onChange={handleChange} 
-                        style={{ marginBottom: "12px", width: "100px", height: "40px" }} 
-                    />
-                    <textarea 
-                        name="description" 
-                        placeholder="Mô tả" 
-                        value={formData.description} 
-                        onChange={handleChange} 
-                        style={{ width: "100%", padding: "10px", height: "80px", marginBottom: "16px" }} 
+                    <div style={{ marginBottom: "16px" }}>
+                        <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>Màu sắc</label>
+                        <input 
+                            name="color" 
+                            type="color" 
+                            value={formData.color} 
+                            onChange={handleChange} 
+                            style={{ width: "80px", height: "50px", border: "1px solid #ddd", borderRadius: "8px" }}
+                        />
+                    </div>
+
+                    <textarea
+                        name="description"
+                        placeholder="Mô tả"
+                        value={formData.description}
+                        onChange={handleChange}
+                        style={{ width: "100%", padding: "14px", border: "1px solid #ddd", borderRadius: "8px", height: "100px", marginBottom: "20px" }}
                     />
 
-                    <button onClick={handleSubmit} style={{ padding: "10px 20px", backgroundColor: "#10b981", color: "white", border: "none", borderRadius: "6px", marginRight: "10px" }}>
-                        {editingCategory?.id ? "Cập nhật" : "Tạo mới"}
-                    </button>
-                    <button onClick={closeForm} style={{ padding: "10px 20px", backgroundColor: "#6b7280", color: "white", border: "none", borderRadius: "6px" }}>
-                        Hủy
-                    </button>
+                    <div style={{ display: "flex", gap: "12px" }}>
+                        <button onClick={handleSubmit} style={{ flex: 1, padding: "14px", backgroundColor: "#10b981", color: "white", border: "none", borderRadius: "8px", fontSize: "16px" }}>
+                            {editingCategory?.id ? "Cập nhật" : "Tạo mới"}
+                        </button>
+                        <button onClick={closeForm} style={{ flex: 1, padding: "14px", backgroundColor: "#6b7280", color: "white", border: "none", borderRadius: "8px", fontSize: "16px" }}>
+                            Hủy
+                        </button>
+                    </div>
                 </div>
             )}
 
-            {/* Grid Drag & Drop */}
+            {/* Grid */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={categories.map(c => c.id)} strategy={rectSortingStrategy}>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "20px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
                         {categories.map((category) => (
                             <CategoryCard
                                 key={category.id}
