@@ -20,5 +20,9 @@ export const ENDPOINTS = {
         "/api/v1/branches",
 
     MY_BRANCHES:
-        "/api/v1/branches/my-branches"
+        "/api/v1/branches/my-branches",
+
+    // Salons
+    SALONS: "/api/v1/salons",
+    MY_SALON: "/api/v1/salons/me"
 };

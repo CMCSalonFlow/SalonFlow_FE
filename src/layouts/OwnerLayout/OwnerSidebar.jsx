@@ -3,7 +3,8 @@ import {
     ShopOutlined,
     TeamOutlined,
     CalendarOutlined,
-    AppstoreOutlined
+    AppstoreOutlined,
+    HomeOutlined
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
@@ -28,6 +29,13 @@ export default function OwnerSidebar() {
                 <DashboardOutlined />,
             label:
                 "Dashboard"
+        },
+        {
+            key: "/owner/salon",
+            icon:
+                <HomeOutlined />,
+            label:
+                "My Salon"
         },
         {
             key:
