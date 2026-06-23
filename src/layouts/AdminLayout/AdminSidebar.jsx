@@ -6,7 +6,8 @@ import {
     DashboardOutlined,
     UserOutlined,
     TeamOutlined,
-    ApartmentOutlined
+    ApartmentOutlined,
+    ShopOutlined
 } from "@ant-design/icons";
 
 import {
@@ -28,6 +29,12 @@ export default function AdminSidebar() {
             icon:
                 <DashboardOutlined />,
             label: "Dashboard"
+        },
+        {
+            key: "/admin/salons",
+            icon:
+                <ShopOutlined />,
+            label: "Salons"
         },
         {
             key: "/admin/users",
