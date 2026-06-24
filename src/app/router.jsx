@@ -40,11 +40,11 @@ from "@/features/role/pages/RoleListPage";
 
 import BranchListPage
 from "@/features/branch/pages/BranchListPage";
-import OwnerLayout from "@/layouts/OwnerLayout/OwnerLayout";
+import  CategoryListPage 
+from "@/features/category/pages/CategoryListPage";
 
-import OwnerDashboardPage from "@/features/dashboard/pages/OwnerDashboardPage";
-import MySalonPage from "@/features/salon/pages/MySalonPage";
-import SalonListPage from "@/features/salon/pages/SalonListPage";
+import CategoryListUserPage 
+from "@/features/category/pages/CategoryListUserPage";
 
 const router = createBrowserRouter([
     {
@@ -106,35 +106,8 @@ const router = createBrowserRouter([
                 element: <BranchListPage />
             },
             {
-                path: "salons",
-                element: <SalonListPage />
-            }
-        ]
-    },
-        ///OWNER AREA///
-    {
-        path: "/owner",
-        element: (
-            <ProtectedRoute
-                allowedRoles={[
-                    "SALON_OWNER"
-                ]}
-            >
-                <OwnerLayout />
-            </ProtectedRoute>
-        ),
-        children: [
-            {
-                index: true,
-                element: <OwnerDashboardPage />
-            },
-            {
-                path: "branches",
-                element: <BranchListPage />
-            },
-            {
-                path: "salon",
-                element: <MySalonPage />
+                path: "categories",
+                element: <CategoryListPage />
             }
         ]
     },
@@ -149,6 +122,15 @@ const router = createBrowserRouter([
                 element:
                     <HomePage />
             },
+
+            {
+                path: "/services",           // ← Trang xem danh mục cho khách hàng
+                element: <CategoryListUserPage />
+            },
+            {
+                path: "/categories",         // Có thể thêm route này nữa cho dễ truy cập
+                element: <CategoryListUserPage />
+            }
 
         ]
     }
