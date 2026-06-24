@@ -45,6 +45,7 @@ import OwnerLayout from "@/layouts/OwnerLayout/OwnerLayout";
 import OwnerDashboardPage from "@/features/dashboard/pages/OwnerDashboardPage";
 import MySalonPage from "@/features/salon/pages/MySalonPage";
 import SalonListPage from "@/features/salon/pages/SalonListPage";
+import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
 
 const router = createBrowserRouter([
     {
@@ -135,6 +136,10 @@ const router = createBrowserRouter([
             {
                 path: "salon",
                 element: <MySalonPage />
+            },
+            {
+                path: "services",
+                element: <ServiceManagementPage />
             }
         ]
     },
