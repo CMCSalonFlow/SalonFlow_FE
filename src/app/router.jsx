@@ -23,6 +23,8 @@ from "@/core/components/ProtectedRoute";
 
 import AdminLayout
 from "@/layouts/AdminLayout/AdminLayout";
+import OwnerLayout
+from "@/layouts/OwnerLayout/OwnerLayout";
 
 import CustomerLayout
 from "@/layouts/CustomerLayout/CustomerLayout";
@@ -31,7 +33,8 @@ from "@/features/auth/pages/HomePage";
 
 import AdminDashboardPage
 from "@/features/dashboard/pages/AdminDashboardPage";
-
+import OwnerDashboardPage
+from "@/features/dashboard/pages/OwnerDashboardPage";
 import UserListPage
 from "@/features/user/pages/UserListPage";
 
@@ -45,7 +48,7 @@ from "@/features/category/pages/CategoryListPage";
 
 import CategoryListUserPage 
 from "@/features/category/pages/CategoryListUserPage";
-
+import MySalonPage from "@/features/salon/pages/MySalonPage";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -108,6 +111,32 @@ const router = createBrowserRouter([
             {
                 path: "categories",
                 element: <CategoryListPage />
+            }
+        ]
+    },
+    {
+        path: "/owner",
+        element: (
+            <ProtectedRoute
+                allowedRoles={[
+                    "SALON_OWNER"
+                ]}
+            >
+                <OwnerLayout />
+            </ProtectedRoute>
+        ),
+        children: [
+            {
+                index: true,
+                element: <OwnerDashboardPage />
+            },
+            {
+                path: "branches",
+                element: <BranchListPage />
+            },
+            {
+                path: "salon",
+                element: <MySalonPage />
             }
         ]
     },
