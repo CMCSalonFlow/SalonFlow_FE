@@ -41,7 +41,7 @@ from "@/features/role/pages/RoleListPage";
 import BranchListPage
 from "@/features/branch/pages/BranchListPage";
 
-import { CategoryListPage }
+import  CategoryListPage 
 from "@/features/category/pages/CategoryListPage";
 
 import CategoryListUserPage 

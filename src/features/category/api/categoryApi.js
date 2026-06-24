@@ -32,3 +32,17 @@ export const updateCategoryOrder = async (orderedIds) => {
     });
     return response.data;
 };
+export const uploadMedia = async (file) => {
+
+    const formData = new FormData();
+
+    formData.append("file", file); // ❗ KHÔNG dùng originFileObj nếu đã unwrap
+
+    const res = await api.post("/api/v1/media/upload", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+
+    return res.data;
+};
