@@ -23,6 +23,8 @@ from "@/core/components/ProtectedRoute";
 
 import AdminLayout
 from "@/layouts/AdminLayout/AdminLayout";
+import OwnerLayout
+from "@/layouts/OwnerLayout/OwnerLayout";
 
 import CustomerLayout
 from "@/layouts/CustomerLayout/CustomerLayout";
@@ -31,7 +33,8 @@ from "@/features/auth/pages/HomePage";
 
 import AdminDashboardPage
 from "@/features/dashboard/pages/AdminDashboardPage";
-
+import OwnerDashboardPage
+from "@/features/dashboard/pages/OwnerDashboardPage";
 import UserListPage
 from "@/features/user/pages/UserListPage";
 
@@ -40,9 +43,11 @@ from "@/features/role/pages/RoleListPage";
 
 import BranchListPage
 from "@/features/branch/pages/BranchListPage";
-import OwnerLayout from "@/layouts/OwnerLayout/OwnerLayout";
+import  CategoryListPage 
+from "@/features/category/pages/CategoryListPage";
 
-import OwnerDashboardPage from "@/features/dashboard/pages/OwnerDashboardPage";
+import CategoryListUserPage 
+from "@/features/category/pages/CategoryListUserPage";
 import MySalonPage from "@/features/salon/pages/MySalonPage";
 import SalonListPage from "@/features/salon/pages/SalonListPage";
 import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
@@ -107,12 +112,11 @@ const router = createBrowserRouter([
                 element: <BranchListPage />
             },
             {
-                path: "salons",
-                element: <SalonListPage />
+                path: "categories",
+                element: <CategoryListPage />
             }
         ]
     },
-        ///OWNER AREA///
     {
         path: "/owner",
         element: (
@@ -154,6 +158,15 @@ const router = createBrowserRouter([
                 element:
                     <HomePage />
             },
+
+            {
+                path: "/services",           // ← Trang xem danh mục cho khách hàng
+                element: <CategoryListUserPage />
+            },
+            {
+                path: "/categories",         // Có thể thêm route này nữa cho dễ truy cập
+                element: <CategoryListUserPage />
+            }
 
         ]
     }

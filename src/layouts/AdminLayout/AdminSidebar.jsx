@@ -7,7 +7,8 @@ import {
     UserOutlined,
     TeamOutlined,
     ApartmentOutlined,
-    ShopOutlined
+    ShopOutlined,
+    TagsOutlined
 } from "@ant-design/icons";
 
 import {
@@ -24,37 +25,44 @@ export default function AdminSidebar() {
         useLocation();
 
     const items = [
-        {
-            key: "/admin",
-            icon:
-                <DashboardOutlined />,
-            label: "Dashboard"
-        },
-        {
-            key: "/admin/salons",
-            icon:
-                <ShopOutlined />,
-            label: "Salons"
-        },
-        {
-            key: "/admin/users",
-            icon:
-                <UserOutlined />,
-            label: "Users"
-        },
-        {
-            key: "/admin/roles",
-            icon:
-                <TeamOutlined />,
-            label: "Roles"
-        },
-        {
-            key: "/admin/branches",
-            icon:
-                <ApartmentOutlined />,
-            label: "Branches"
-        }
-    ];
+    {
+        type: "group",
+        label: "SYSTEM",
+        children: [
+            {
+                key: "/admin",
+                icon: <DashboardOutlined />,
+                label: "Dashboard"
+            }
+        ]
+    },
+    {
+        type: "group",
+        label: "MANAGEMENT",
+        children: [
+            {
+                key: "/admin/users",
+                icon: <UserOutlined />,
+                label: "Users"
+            },
+            {
+                key: "/admin/roles",
+                icon: <TeamOutlined />,
+                label: "Roles"
+            },
+            {
+                key: "/admin/branches",
+                icon: <ApartmentOutlined />,
+                label: "Branches"
+            },
+            {
+                key: "/admin/categories",
+                icon: <TagsOutlined />,
+                label: "Categories"
+            }
+        ]
+    }
+];
 
     return (
 
