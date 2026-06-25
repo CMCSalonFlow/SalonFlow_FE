@@ -146,8 +146,15 @@ export default function MySalonPage() {
 
     const handleCreateSalon = async () => {
         try {
-            const basicInfo = onboardingForm.getFieldsValue();
+            const basicInfo = onboardingForm.getFieldsValue(true);
             
+            // Clean up optional fields so empty strings become null (to avoid backend validation errors, e.g. @Email)
+            const cleanedInfo = {};
+            Object.keys(basicInfo).forEach(key => {
+                const val = basicInfo[key];
+                cleanedInfo[key] = (typeof val === "string" && val.trim() === "") ? null : val;
+            });
+
             // Format hours for backend
             const hoursPayload = onboardingHours.map(h => ({
                 dayOfWeek: h.dayOfWeek,
@@ -157,7 +164,7 @@ export default function MySalonPage() {
             }));
 
             const payload = {
-                ...basicInfo,
+                ...cleanedInfo,
                 hours: hoursPayload,
                 photos: onboardingPhotos
             };
@@ -171,7 +178,15 @@ export default function MySalonPage() {
             onboardingForm.resetFields();
             setOnboardingPhotos([]);
         } catch (error) {
-            message.error(error.response?.data?.message || "Lỗi khi tạo salon.");
+            const errData = error.response?.data;
+            if (errData?.details && typeof errData.details === "object") {
+                const detailsStr = Object.entries(errData.details)
+                    .map(([field, msg]) => `${field}: ${msg}`)
+                    .join(", ");
+                message.error(`Lỗi validation: ${detailsStr}`);
+            } else {
+                message.error(errData?.message || "Lỗi khi tạo salon.");
+            }
             setLoading(false);
         }
     };
@@ -235,6 +250,13 @@ export default function MySalonPage() {
         try {
             const basicInfo = editForm.getFieldsValue();
             
+            // Clean up optional fields so empty strings become null (to avoid backend validation errors, e.g. @Email)
+            const cleanedInfo = {};
+            Object.keys(basicInfo).forEach(key => {
+                const val = basicInfo[key];
+                cleanedInfo[key] = (typeof val === "string" && val.trim() === "") ? null : val;
+            });
+
             const hoursPayload = editHours.map(h => ({
                 dayOfWeek: h.dayOfWeek,
                 openTime: h.isClosed ? null : h.openTime.format("HH:mm:ss"),
@@ -243,7 +265,7 @@ export default function MySalonPage() {
             }));
 
             const payload = {
-                ...basicInfo,
+                ...cleanedInfo,
                 hours: hoursPayload,
                 photos: editPhotos
             };
@@ -254,7 +276,15 @@ export default function MySalonPage() {
             setEditDrawerVisible(false);
             loadSalon();
         } catch (error) {
-            message.error(error.response?.data?.message || "Lỗi khi cập nhật salon.");
+            const errData = error.response?.data;
+            if (errData?.details && typeof errData.details === "object") {
+                const detailsStr = Object.entries(errData.details)
+                    .map(([field, msg]) => `${field}: ${msg}`)
+                    .join(", ");
+                message.error(`Lỗi validation: ${detailsStr}`);
+            } else {
+                message.error(errData?.message || "Lỗi khi cập nhật salon.");
+            }
             setLoading(false);
         }
     };
