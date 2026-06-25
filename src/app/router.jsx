@@ -46,6 +46,7 @@ from "@/features/category/pages/CategoryListPage";
 
 import CategoryListUserPage 
 from "@/features/category/pages/CategoryListUserPage";
+import SchedulePage from "@/features/schedule/pages/SchedulePage";
 
 const router = createBrowserRouter([
     {
@@ -110,7 +111,11 @@ const router = createBrowserRouter([
             {
                 path: "categories",
                 element: <CategoryListPage />
-            }
+            },
+            {
+                path: "schedule",
+                element: <SchedulePage />
+            },
         ]
     },
     ///USER AREA///
