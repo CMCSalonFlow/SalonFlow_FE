@@ -49,6 +49,9 @@ from "@/features/category/pages/CategoryListPage";
 import CategoryListUserPage 
 from "@/features/category/pages/CategoryListUserPage";
 import MySalonPage from "@/features/salon/pages/MySalonPage";
+import SalonListPage from "@/features/salon/pages/SalonListPage";
+import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -137,6 +140,10 @@ const router = createBrowserRouter([
             {
                 path: "salon",
                 element: <MySalonPage />
+            },
+            {
+                path: "services",
+                element: <ServiceManagementPage />
             }
         ]
     },
