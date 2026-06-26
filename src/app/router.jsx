@@ -114,7 +114,11 @@ const router = createBrowserRouter([
             {
                 path: "categories",
                 element: <CategoryListPage />
-            }
+            },
+            {
+                path: "schedule",
+                element: <SchedulePage />
+            },
         ]
     },
     {

@@ -8,82 +8,57 @@ import {
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
-
-import {
-    useNavigate,
-    useLocation
-} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function OwnerSidebar() {
-
-    const navigate =
-        useNavigate();
-
-    const location =
-        useLocation();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const items = [
         {
             key: "/owner",
-            icon:
-                <DashboardOutlined />,
-            label:
-                "Dashboard"
+            icon: <DashboardOutlined />,
+            label: "Dashboard"
         },
         {
             key: "/owner/salon",
-            icon:
-                <HomeOutlined />,
-            label:
-                "My Salon"
+            icon: <HomeOutlined />,
+            label: "My Salon"
         },
         {
-            key:
-                "/owner/branches",
-            icon:
-                <ShopOutlined />,
-            label:
-                "Branches"
+            key: "/owner/branches",
+            icon: <ShopOutlined />,
+            label: "Branches"
         },
         {
-            key:
-                "/owner/staff",
-            icon:
-                <TeamOutlined />,
-            label:
-                "Staff"
+            key: "/owner/staff",
+            icon: <TeamOutlined />,
+            label: "Staff"
         },
         {
-            key:
-                "/owner/services",
-            icon:
-                <AppstoreOutlined />,
-            label:
-                "Services"
+            key: "/owner/services",
+            icon: <AppstoreOutlined />,
+            label: "Services"
         },
         {
-            key:
-                "/owner/appointments",
-            icon:
-                <CalendarOutlined />,
-            label:
-                "Appointments"
+            key: "/owner/schedule",
+            icon: <CalendarOutlined />,
+            label: "Schedule"
         }
     ];
+
+    const selectedKey =
+        items.find(item =>
+            location.pathname.startsWith(item.key)
+        )?.key;
 
     return (
         <Menu
             mode="inline"
-            selectedKeys={[
-                location.pathname
-            ]}
+            selectedKeys={[selectedKey]}
             items={items}
-            onClick={(e) =>
-                navigate(e.key)
-            }
-            style={{
-                height: "100%"
-            }}
+            onClick={(e) => navigate(e.key)}
+            style={{ height: "100%" }}
         />
     );
 }
