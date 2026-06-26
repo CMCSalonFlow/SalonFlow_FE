@@ -43,3 +43,43 @@ export const useSchedule = () => {
     reload: loadData,
   };
 };
+
+export const useBookingUpdate = () => {
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState(null);
+
+  const updateTime = async (id, start, end, resourceId) => {
+    setUpdating(true);
+    setError(null);
+    try {
+      const res = await scheduleApi.moveBooking(id, start, end, resourceId);
+      setUpdating(false);
+      return res;
+    } catch (err) {
+      setError(err);
+      setUpdating(false);
+      throw err;
+    }
+  };
+
+  const cancelBooking = async (id) => {
+    setUpdating(true);
+    setError(null);
+    try {
+      const res = await scheduleApi.cancelBooking(id);
+      setUpdating(false);
+      return res;
+    } catch (err) {
+      setError(err);
+      setUpdating(false);
+      throw err;
+    }
+  };
+
+  return {
+    updateTime,
+    cancelBooking,
+    updating,
+    error,
+  };
+};

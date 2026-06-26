@@ -17,7 +17,7 @@ const STATUS_ICONS = {
   PENDING: "⏳",
   CANCELLED: "✕",
 };
-export default function BookingDetailModal({ open, onClose, booking, anchorPos }) {
+export default function BookingDetailModal({ open, onClose, booking, anchorPos, onCancelBooking }) {
   const popupRef = useRef(null);
   const [pos, setPos] = useState({ top: 100, left: 200 });
   useEffect(() => {
@@ -162,7 +162,14 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos }
         {/* Footer */}
         <div className="booking-popup-footer">
           {booking.status !== "CANCELLED" && (
-            <button className="popup-btn popup-btn-danger">
+            <button
+              className="popup-btn popup-btn-danger"
+              onClick={() => {
+                if (window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này không?")) {
+                  onCancelBooking?.(booking.id);
+                }
+              }}
+            >
               Hủy lịch
             </button>
           )}

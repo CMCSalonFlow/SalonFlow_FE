@@ -51,7 +51,7 @@ from "@/features/category/pages/CategoryListUserPage";
 import MySalonPage from "@/features/salon/pages/MySalonPage";
 import SalonListPage from "@/features/salon/pages/SalonListPage";
 import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
-
+import SchedulePage from "@/features/schedule/pages/SchedulePage";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -148,7 +148,10 @@ const router = createBrowserRouter([
             {
                 path: "services",
                 element: <ServiceManagementPage />
-            }
+            },{
+                path: "schedule",
+                element: <SchedulePage />
+            },
         ]
     },
     ///USER AREA///

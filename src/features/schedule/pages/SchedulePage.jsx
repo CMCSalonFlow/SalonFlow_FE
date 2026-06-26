@@ -2,9 +2,7 @@ import { useRef, useState, useCallback } from "react";
 
 import "../schedule.css";
 
-import { useSchedule } from "../hooks/useSchedule";
-
-import { useBookingUpdate } from "../hooks/useBookingUpdate";
+import { useSchedule, useBookingUpdate } from "../hooks/useBookingUpdate";
 
 import ScheduleSidebar from "../components/ScheduleSidebar";
 
@@ -22,7 +20,7 @@ export default function SchedulePage() {
 
   const { bookings, resources, loading, reload } = useSchedule();
 
-  const { updateTime } = useBookingUpdate();
+  const { updateTime, cancelBooking } = useBookingUpdate();
 
   // Calendar state
 
@@ -167,6 +165,16 @@ export default function SchedulePage() {
     setPopupOpen(false);
 
     setSelectedBooking(null);
+
+  };
+
+  const handleCancelBooking = async (id) => {
+
+    await cancelBooking(id);
+
+    await reload();
+
+    handleClosePopup();
 
   };
 
@@ -343,6 +351,8 @@ export default function SchedulePage() {
         booking={selectedBooking}
 
         anchorPos={anchorPos}
+
+        onCancelBooking={handleCancelBooking}
 
       />
 
