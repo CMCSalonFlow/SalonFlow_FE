@@ -1,8 +1,0 @@
-const ROLES = {
-    SUPER_ADMIN: "SUPER_ADMIN",
-    SALON_OWNER: "SALON_OWNER",
-    STAFF: "STAFF",
-    CUSTOMER: "CUSTOMER"
-};
-
-export default ROLES;
