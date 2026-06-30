@@ -51,6 +51,9 @@ from "@/features/category/pages/CategoryListUserPage";
 import MySalonPage from "@/features/salon/pages/MySalonPage";
 import SalonListPage from "@/features/salon/pages/SalonListPage";
 import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
+import StaffManagementPage from "@/features/staff/pages/StaffManagementPage";
+import BookingPage from "@/features/booking/pages/BookingPage";
+import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
 
 const router = createBrowserRouter([
     {
@@ -144,6 +147,10 @@ const router = createBrowserRouter([
             {
                 path: "services",
                 element: <ServiceManagementPage />
+            },
+            {
+                path: "staff",
+                element: <StaffManagementPage />
             }
         ]
     },
@@ -166,6 +173,14 @@ const router = createBrowserRouter([
             {
                 path: "/categories",         // Có thể thêm route này nữa cho dễ truy cập
                 element: <CategoryListUserPage />
+            },
+            {
+                path: "/booking",
+                element: <BookingPage />
+            },
+            {
+                path: "/appointments",
+                element: <AppointmentsPage />
             }
 
         ]
