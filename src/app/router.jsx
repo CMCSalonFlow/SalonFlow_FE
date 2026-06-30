@@ -52,6 +52,7 @@ import MySalonPage from "@/features/salon/pages/MySalonPage";
 import SalonListPage from "@/features/salon/pages/SalonListPage";
 import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
 import SchedulePage from "@/features/schedule/pages/SchedulePage";
+import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -119,6 +120,7 @@ const router = createBrowserRouter([
                 path: "schedule",
                 element: <SchedulePage />
             },
+            
         ]
     },
     {
@@ -151,6 +153,10 @@ const router = createBrowserRouter([
             },{
                 path: "schedule",
                 element: <SchedulePage />
+            },
+            {
+                path: "shifts",
+                element: <ShiftTemplatePage />
             },
         ]
     },
