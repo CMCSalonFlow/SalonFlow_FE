@@ -14,7 +14,7 @@ export default function ShiftTemplateFormModal({
     const [loading, setLoading] = useState(false);
     const [details, setDetails] = useState([]); // [{ dayOfWeek, startTime, endTime }]
 
-    const isEditing = !!initialValues;
+    const isEditing = !!(initialValues && initialValues.id);
 
     useEffect(() => {
         if (open) {
@@ -25,6 +25,7 @@ export default function ShiftTemplateFormModal({
                     name: initialValues.name,
                     description: initialValues.description,
                 });
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setDetails(
                     (initialValues.details || []).map((d) => ({
                         dayOfWeek: d.dayOfWeek,
@@ -37,6 +38,7 @@ export default function ShiftTemplateFormModal({
                 setDetails([]);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, initialValues]);
 
     const handleOk = async () => {
@@ -103,6 +105,7 @@ export default function ShiftTemplateFormModal({
                 >
                     <Select
                         placeholder="Chọn chi nhánh"
+                        disabled={true}
                         options={branches.map((b) => ({
                             value: b.id,
                             label: b.name,

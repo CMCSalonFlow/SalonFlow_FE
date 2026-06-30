@@ -15,6 +15,7 @@ import {
     Col,
     Empty,
     Spin,
+    Select,
 } from "antd";
 import {
     PlusOutlined,
@@ -22,6 +23,8 @@ import {
     DeleteOutlined,
     CalendarOutlined,
     CheckOutlined,
+    ShopOutlined,
+    TeamOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
@@ -35,7 +38,7 @@ import {
 } from "../api/shiftApi";
 
 import ShiftTemplateFormModal from "../components/ShiftTemplateFormModal";
-
+import { getMyBranchesApi, getBranchUsersApi } from "@/features/branch/api/branchApi";
 dayjs.extend(isoWeek);
 
 const { Title, Text } = Typography;
@@ -55,14 +58,14 @@ const DAY_NAMES = {
  *   users    — danh sách staff để hiện dropdown
  *   branches — danh sách chi nhánh
  */
-export default function ShiftTemplatePage({
-    userId = 1,
-    branchId = 1,
-    users = [],
-    branches = [],
-}) {
+export default function ShiftTemplatePage() {
     const [templates, setTemplates] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    const [branches, setBranches] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [branchId, setBranchId] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
 
     // Modal tạo/sửa template
     const [formOpen, setFormOpen] = useState(false);
@@ -75,14 +78,33 @@ export default function ShiftTemplatePage({
     const [applyOverwrite, setApplyOverwrite] = useState(false);
     const [applyLoading, setApplyLoading] = useState(false);
 
-    useEffect(() => {
-        loadTemplates();
-    }, [userId, branchId]);
+    const loadBranches = async () => {
+        try {
+            const data = await getMyBranchesApi();
+            setBranches(data);
+            if (data.length > 0) {
+                setBranchId(data[0].id);
+            }
+        } catch {
+            message.error("Không thể tải danh sách chi nhánh");
+        }
+    };
+
+    const loadUsers = async () => {
+        try {
+            const data = await getBranchUsersApi(branchId);
+            setUsers(data);
+        } catch {
+            message.error("Không thể tải nhân viên");
+        }
+    };
 
     const loadTemplates = async () => {
+        if (!branchId) return;
+
         setLoading(true);
         try {
-            const data = await getTemplates(userId, branchId);
+            const data = await getTemplates(selectedUserId || undefined, branchId);
             setTemplates(data);
         } catch {
             message.error("Không thể tải danh sách template");
@@ -91,8 +113,27 @@ export default function ShiftTemplatePage({
         }
     };
 
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadBranches();
+    }, []);
+
+    useEffect(() => {
+        if (!branchId) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadUsers();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [branchId]);
+
+    useEffect(() => {
+        if (!branchId) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadTemplates();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [branchId, selectedUserId]);
+
     const openCreate = () => {
-        setEditingTemplate(null);
+        setEditingTemplate({ branchId });
         setFormOpen(true);
     };
 
@@ -103,7 +144,7 @@ export default function ShiftTemplatePage({
 
     const handleFormSubmit = async (payload) => {
         try {
-            if (editingTemplate) {
+            if (editingTemplate && editingTemplate.id) {
                 await updateTemplate(editingTemplate.id, payload);
                 message.success("Cập nhật template thành công");
             } else {
@@ -162,7 +203,11 @@ export default function ShiftTemplatePage({
                 weekStartDate,
                 applyOverwrite
             );
-            message.success(`Đã tạo ${shifts.length} ca làm việc`);
+            message.success(
+                Array.isArray(shifts)
+                    ? `Đã tạo ${shifts.length} ca làm việc`
+                    : "Áp dụng template thành công"
+            );
             setApplyOpen(false);
         } catch (err) {
             const msg = err?.response?.data?.message || "Áp dụng thất bại";
@@ -195,11 +240,13 @@ export default function ShiftTemplatePage({
             title: "Nhân viên",
             dataIndex: "userName",
             key: "userName",
+            render: (userName, record) => record.user?.fullName || record.user?.username || userName || "N/A"
         },
         {
             title: "Chi nhánh",
             dataIndex: "branchName",
             key: "branchName",
+            render: (branchName, record) => record.branch?.name || branchName || "N/A"
         },
         {
             title: "Lịch trong tuần",
@@ -257,25 +304,56 @@ export default function ShiftTemplatePage({
 
     return (
         <div style={{ padding: 24 }}>
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 24,
-                }}
-            >
-                <Title level={3} style={{ margin: 0 }}>
-                    Template ca làm việc
-                </Title>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={openCreate}
-                >
-                    Tạo template mới
-                </Button>
-            </div>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }} gutter={[16, 16]}>
+                <Col xs={24} md={8}>
+                    <Title level={3} style={{ margin: 0 }}>
+                        Template ca làm việc
+                    </Title>
+                    <Text type="secondary">Quản lý các template ca làm việc cố định theo tuần của nhân viên.</Text>
+                </Col>
+                <Col xs={24} md={16} style={{ textAlign: "right" }}>
+                    <Space wrap style={{ display: "inline-flex", justifyContent: "flex-end" }}>
+                        <Space>
+                            <ShopOutlined style={{ color: "#1890ff" }} />
+                            <Text strong>Chi nhánh:</Text>
+                            <Select
+                                style={{ width: 180 }}
+                                value={branchId}
+                                onChange={(val) => {
+                                    setBranchId(val);
+                                    setSelectedUserId(null);
+                                }}
+                                options={branches.map((b) => ({
+                                    label: b.name,
+                                    value: b.id,
+                                }))}
+                            />
+                        </Space>
+                        <Space>
+                            <TeamOutlined style={{ color: "#1890ff" }} />
+                            <Text strong>Nhân viên:</Text>
+                            <Select
+                                style={{ width: 180 }}
+                                value={selectedUserId}
+                                onChange={setSelectedUserId}
+                                placeholder="Tất cả nhân viên"
+                                allowClear
+                                options={users.map((u) => ({
+                                    label: u.fullName || u.username,
+                                    value: u.id,
+                                }))}
+                            />
+                        </Space>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={openCreate}
+                        >
+                            Tạo template mới
+                        </Button>
+                    </Space>
+                </Col>
+            </Row>
 
             <Spin spinning={loading}>
                 <Table
