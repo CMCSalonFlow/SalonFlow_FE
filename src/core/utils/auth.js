@@ -79,4 +79,23 @@ export const logout = () => {
 
     window.location.href =
         "/login";
+};
+
+export const setupGlobalAuthListener = () => {
+    const handleAuthCheck = () => {
+        const token = localStorage.getItem("accessToken");
+        const isLoginPage = window.location.pathname === "/login" || window.location.pathname === "/";
+        
+        if (!token && !isLoginPage) {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+    };
+
+    window.addEventListener("focus", handleAuthCheck);
+    window.addEventListener("storage", (e) => {
+        if (e.key === "accessToken" || e.key === null) {
+            handleAuthCheck();
+        }
+    });
 };
