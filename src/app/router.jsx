@@ -115,15 +115,6 @@ const router = createBrowserRouter([
                 path: "branches",
                 element: <BranchListPage />
             },
-            {
-                path: "categories",
-                element: <CategoryListPage />
-            },
-            {
-                path: "schedule",
-                element: <SchedulePage />
-            },
-
         ]
     },
     {
@@ -164,6 +155,10 @@ const router = createBrowserRouter([
             {
                 path: "shifts",
                 element: <ShiftTemplatePage />
+            },
+                        {
+                path: "categories",
+                element: <CategoryListPage />
             },
         ]
     },

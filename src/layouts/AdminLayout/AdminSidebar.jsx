@@ -54,11 +54,6 @@ export default function AdminSidebar() {
                 key: "/admin/branches",
                 icon: <ApartmentOutlined />,
                 label: "Branches"
-            },
-            {
-                key: "/admin/categories",
-                icon: <TagsOutlined />,
-                label: "Categories"
             }
         ]
     }

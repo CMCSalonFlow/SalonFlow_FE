@@ -343,35 +343,19 @@ export default function SchedulePage() {
       {/* Booking Detail Popup */}
 
       <BookingDetailModal
-
         open={popupOpen}
-
         onClose={handleClosePopup}
-
         booking={selectedBooking}
-
         anchorPos={anchorPos}
-
         onCancelBooking={handleCancelBooking}
-
       />
-
       {/* Confirm move toast */}
-
       <ConfirmMoveModal
-
         open={confirmOpen}
-
         onOk={handleConfirmMove}
-
         onCancel={handleCancelMove}
-
       />
-
     </div>
-
     </div>
-
   );
-
 }

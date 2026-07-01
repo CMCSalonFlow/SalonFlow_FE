@@ -127,11 +127,14 @@ export default function ShiftTemplatePage() {
 
     useEffect(() => {
         if (!branchId) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        loadTemplates();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [branchId, selectedUserId]);
 
+        loadUsers();
+    }, [branchId]);
+    useEffect(() => {
+        if (!selectedUserId) return;
+
+        loadTemplates();
+    }, [selectedUserId]);
     const openCreate = () => {
         setEditingTemplate({ branchId });
         setFormOpen(true);

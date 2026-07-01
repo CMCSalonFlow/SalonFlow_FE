@@ -5,7 +5,8 @@ import {
     CalendarOutlined,
     AppstoreOutlined,
     HomeOutlined,
-    ClockCircleOutlined
+    ClockCircleOutlined,
+    TagsOutlined
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
@@ -50,7 +51,12 @@ export default function OwnerSidebar() {
             key: "/owner/shifts",
             icon: <ClockCircleOutlined />,
             label: "Shift Templates"
-        }
+        },
+            {
+                key: "/owner/categories",
+                icon: <TagsOutlined />,
+                label: "Categories"
+            }
     ];
 
     const selectedKey =
