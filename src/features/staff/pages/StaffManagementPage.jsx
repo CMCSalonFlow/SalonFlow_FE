@@ -122,9 +122,22 @@ export default function StaffManagementPage() {
                     />
                     <div>
                         <Text strong style={{ fontSize: 16 }}>{record.name}</Text>
+                        {record.email && (
+                            <>
+                                <br />
+                                <Text type="secondary" style={{ fontSize: 13 }}>📧 {record.email}</Text>
+                            </>
+                        )}
+                        {record.phone && (
+                            <>
+                                <br />
+                                <Text type="secondary" style={{ fontSize: 12 }}>📞 {record.phone}</Text>
+                            </>
+                        )}
                         <br />
-                        <Text type="secondary" style={{ fontSize: 12 }}>ID: #{record.id}</Text>
+                        <Text type="secondary" style={{ fontSize: 11 }}>ID: #{record.id}</Text>
                     </div>
+
                 </Space>
             )
         },

@@ -11,22 +11,6 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
     const [form] = Form.useForm();
     const [uploading, setUploading] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState("");
-    const [usersList, setUsersList] = useState([]);
-
-    // Tải danh sách người dùng để liên kết tài khoản
-    useEffect(() => {
-        if (visible) {
-            const fetchUsers = async () => {
-                try {
-                    const data = await getUsersApi();
-                    setUsersList(data || []);
-                } catch (error) {
-                    message.error("Lỗi khi tải danh sách người dùng");
-                }
-            };
-            fetchUsers();
-        }
-    }, [visible]);
 
     // Đồng bộ dữ liệu khi mở Modal
     useEffect(() => {
@@ -48,7 +32,9 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                     bio: initialValues.bio,
                     specialties: specialtiesArray,
                     serviceIds: serviceIds,
-                    userId: initialValues.userId || undefined
+                    email: initialValues.email || "",
+                    phone: initialValues.phone || "",
+                    password: ""
                 });
                 setAvatarPreview(initialValues.avatarUrl || "");
             } else {
@@ -95,10 +81,18 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                 : "";
 
             const payload = {
-                ...values,
+                name: values.name,
+                avatarUrl: values.avatarUrl,
+                bio: values.bio,
                 specialties: specialtiesString,
-                serviceIds: values.serviceIds || []
+                serviceIds: values.serviceIds || [],
+                email: values.email,
+                phone: values.phone
             };
+
+            if (values.password && values.password.trim() !== "") {
+                payload.password = values.password;
+            }
 
             onSubmit(payload);
         } catch (error) {
@@ -191,23 +185,42 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                     />
                 </Form.Item>
 
-                <Form.Item
-                    name="userId"
-                    label="Tài khoản người dùng liên kết"
-                    tooltip="Liên kết nhân viên này với một tài khoản người dùng để họ đăng nhập và xem lịch làm việc."
-                >
-                    <Select
-                        placeholder="Chọn tài khoản người dùng..."
-                        allowClear
-                        showSearch
-                        optionFilterProp="label"
-                        options={usersList.map(u => ({
-                            label: `${u.fullName} (${u.email})`,
-                            value: u.id
-                        }))}
-                        size="large"
-                    />
-                </Form.Item>
+                {!initialValues ? (
+                    <div style={{ border: "1px solid #e6f7ff", padding: "16px", borderRadius: "8px", marginBottom: "20px", backgroundColor: "#f0f5ff" }}>
+                        <div style={{ fontWeight: 600, marginBottom: 12, color: "#1890ff" }}>Tài khoản đăng nhập</div>
+                        <Form.Item
+                            name="email"
+                            label="Email đăng nhập"
+                            rules={[
+                                { required: true, message: "Vui lòng nhập Email!" },
+                                { type: "email", message: "Email không đúng định dạng!" }
+                            ]}
+                            extra={<div style={{ color: "#8c8c8c", fontSize: 12, marginTop: 4 }}>Tài khoản đăng nhập của nhân viên sẽ được tạo với mật khẩu mặc định là <strong>Staff@123</strong></div>}
+                        >
+                            <Input placeholder="vi-du@email.com" size="large" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="phone"
+                            label="Số điện thoại"
+                        >
+                            <Input placeholder="Ví dụ: 0987654321" size="large" />
+                        </Form.Item>
+                    </div>
+                ) : (
+                    initialValues.email && (
+                        <div style={{ border: "1px solid #f5f5f5", padding: "12px 16px", borderRadius: "8px", marginBottom: "20px", backgroundColor: "#fafafa" }}>
+                            <span style={{ color: "#8c8c8c" }}>Tài khoản liên kết: </span>
+                            <strong style={{ color: "#595959" }}>{initialValues.email}</strong>
+                            {initialValues.phone && (
+                                <span style={{ marginLeft: 24 }}>
+                                    <span style={{ color: "#8c8c8c" }}>SĐT: </span>
+                                    <strong style={{ color: "#595959" }}>{initialValues.phone}</strong>
+                                </span>
+                            )}
+                        </div>
+                    )
+                )}
 
                 <Form.Item name="bio" label="Tiểu sử / Mô tả thêm">
                     <Input.TextArea 
