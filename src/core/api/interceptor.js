@@ -36,6 +36,15 @@ export function attachInterceptors(api) {
         (response) => response,
         (error) => {
             if (error.response && error.response.status === 401) {
+                const errorInfo = {
+                    url: error.config?.url,
+                    method: error.config?.method,
+                    status: error.response?.status,
+                    data: error.response?.data,
+                    timestamp: new Date().toISOString()
+                };
+                sessionStorage.setItem("lastAuthError", JSON.stringify(errorInfo));
+                
                 localStorage.clear();
                 if (window.location.pathname !== "/login") {
                     window.location.href = "/login";

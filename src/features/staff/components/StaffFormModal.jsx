@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal, Form, Input, Select, Upload, Button, message, Space, Avatar } from "antd";
 import { UploadOutlined, UserOutlined } from "@ant-design/icons";
 import { uploadMediaApi } from "@/features/media/api/mediaApi";
+import { getUsersApi } from "@/features/user/api/userApi";
 
 /**
  * Modal Form dùng chung cho việc Thêm mới và Chỉnh sửa thông tin nhân viên.
@@ -10,6 +11,22 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
     const [form] = Form.useForm();
     const [uploading, setUploading] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState("");
+    const [usersList, setUsersList] = useState([]);
+
+    // Tải danh sách người dùng để liên kết tài khoản
+    useEffect(() => {
+        if (visible) {
+            const fetchUsers = async () => {
+                try {
+                    const data = await getUsersApi();
+                    setUsersList(data || []);
+                } catch (error) {
+                    message.error("Lỗi khi tải danh sách người dùng");
+                }
+            };
+            fetchUsers();
+        }
+    }, [visible]);
 
     // Đồng bộ dữ liệu khi mở Modal
     useEffect(() => {
@@ -30,7 +47,8 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                     avatarUrl: initialValues.avatarUrl,
                     bio: initialValues.bio,
                     specialties: specialtiesArray,
-                    serviceIds: serviceIds
+                    serviceIds: serviceIds,
+                    userId: initialValues.userId || undefined
                 });
                 setAvatarPreview(initialValues.avatarUrl || "");
             } else {
@@ -168,6 +186,24 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                         options={services.map(s => ({
                             label: `${s.name} (${parseFloat(s.price).toLocaleString()} đ - ${s.durationMinutes} phút)`,
                             value: s.id
+                        }))}
+                        size="large"
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    name="userId"
+                    label="Tài khoản người dùng liên kết"
+                    tooltip="Liên kết nhân viên này với một tài khoản người dùng để họ đăng nhập và xem lịch làm việc."
+                >
+                    <Select
+                        placeholder="Chọn tài khoản người dùng..."
+                        allowClear
+                        showSearch
+                        optionFilterProp="label"
+                        options={usersList.map(u => ({
+                            label: `${u.fullName} (${u.email})`,
+                            value: u.id
                         }))}
                         size="large"
                     />
