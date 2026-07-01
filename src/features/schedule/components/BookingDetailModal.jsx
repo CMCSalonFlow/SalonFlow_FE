@@ -122,18 +122,22 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos, 
                   ({duration()})
                 </span>
               </div>
-              <div className="popup-row-label">{formatDate(booking.start)}</div>
+              <div className="popup-row-label">
+                {formatDate(booking.start || booking.shiftDate)}
+              </div>
             </div>
           </div>
-          {/* Customer */}
+          {/* Staff */}
           <div className="popup-row">
             <span className="popup-row-icon">👤</span>
             <div className="popup-row-content">
-              <div className="popup-row-label">Khách hàng</div>
-              <div className="popup-row-value">{booking.customerName}</div>
-              {booking.phone && (
+              <div className="popup-row-label">Nhân viên</div>
+              <div className="popup-row-value">
+                {booking.userName || booking.title}
+              </div>
+              {booking.branchName && (
                 <div className="popup-row-label" style={{ marginTop: 2 }}>
-                  📞 {booking.phone}
+                  Chi nhánh: {booking.branchName}
                 </div>
               )}
             </div>
@@ -161,20 +165,8 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos, 
         </div>
         {/* Footer */}
         <div className="booking-popup-footer">
-          {booking.status !== "CANCELLED" && (
-            <button
-              className="popup-btn popup-btn-danger"
-              onClick={() => {
-                if (window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này không?")) {
-                  onCancelBooking?.(booking.id);
-                }
-              }}
-            >
-              Hủy lịch
-            </button>
-          )}
           <button className="popup-btn popup-btn-primary" onClick={onClose}>
-            Chỉnh sửa
+            Đóng
           </button>
         </div>
       </div>

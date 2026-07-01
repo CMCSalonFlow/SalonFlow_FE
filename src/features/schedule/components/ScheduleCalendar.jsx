@@ -3,30 +3,24 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { forwardRef } from "react";
-const STATUS_COLORS = {
-  CONFIRMED: { bg: "#34a853", text: "#fff" },
-  PENDING: { bg: "#f29900", text: "#fff" },
-  CANCELLED: { bg: "#c5221f", text: "#fff" },
-  default: { bg: "#1a73e8", text: "#fff" },
-};
+
 function renderEventContent(eventInfo) {
   const { event, view } = eventInfo;
   const props = event.extendedProps;
-  const status = props?.status || "default";
-  const colors = STATUS_COLORS[status] || STATUS_COLORS.default;
   const startStr = event.start
     ? event.start.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
     : "";
   const endStr = event.end
     ? event.end.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
     : "";
+  const backgroundColor = event.backgroundColor || "#1a73e8";
   // Month view: compact
   if (view.type === "dayGridMonth") {
     return (
       <div
         style={{
-          background: colors.bg,
-          color: colors.text,
+          background: backgroundColor,
+          color: "#fff",
           borderRadius: 3,
           padding: "1px 6px",
           fontSize: 11,
@@ -44,14 +38,14 @@ function renderEventContent(eventInfo) {
   return (
     <div
       className="gc-event-inner"
-      style={{ color: colors.text }}
+      style={{ color: "#fff" }}
     >
       <div className="gc-event-time">
         {startStr} – {endStr}
       </div>
-      <div className="gc-event-title">{event.title.split(" - ")[0]}</div>
-      {props?.customerName && (
-        <div className="gc-event-customer">{props.customerName}</div>
+      <div className="gc-event-title">{event.title}</div>
+      {props?.branchName && (
+        <div className="gc-event-customer">{props.branchName}</div>
       )}
     </div>
   );
@@ -78,27 +72,10 @@ const ScheduleCalendar = forwardRef(function ScheduleCalendar(
     currentView,
     currentDate,
     onEventClick,
-    onEventDrop,
     onDateChange,
   },
   ref
 ) {
-  const STATUS_COLORS_MAP = {
-    CONFIRMED: { bg: "#34a853", border: "#2d8f45" },
-    PENDING: { bg: "#f29900", border: "#d08600" },
-    CANCELLED: { bg: "#c5221f", border: "#a31b18" },
-    default: { bg: "#1a73e8", border: "#1557b0" },
-  };
-  const styledEvents = events.map((ev) => {
-    const status = ev.extendedProps?.status || "default";
-    const colors = STATUS_COLORS_MAP[status] || STATUS_COLORS_MAP.default;
-    return {
-      ...ev,
-      backgroundColor: colors.bg,
-      borderColor: colors.border,
-      textColor: "#fff",
-    };
-  });
   return (
     <div className="schedule-calendar-wrapper">
       <FullCalendar
@@ -112,11 +89,10 @@ const ScheduleCalendar = forwardRef(function ScheduleCalendar(
         height="100%"
         allDaySlot={false}
         nowIndicator={true}
-        events={styledEvents}
-        editable={true}
-        selectable={true}
+        events={events}
+        editable={false}
+        selectable={false}
         eventClick={onEventClick}
-        eventDrop={onEventDrop}
         eventContent={renderEventContent}
         dayHeaderContent={renderDayHeader}
         slotLabelFormat={{
@@ -125,7 +101,7 @@ const ScheduleCalendar = forwardRef(function ScheduleCalendar(
           hour12: false,
         }}
         datesSet={(info) => {
-          onDateChange && onDateChange(info.start);
+          onDateChange && onDateChange(info.start, info.end);
         }}
         locale="vi"
         firstDay={1}

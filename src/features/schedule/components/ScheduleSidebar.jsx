@@ -114,7 +114,7 @@ export default function ScheduleSidebar({
       {/* Create button */}
       <button className="sidebar-create-btn" onClick={onCreateNew}>
         <span className="plus-icon">＋</span>
-        <span>Thêm lịch hẹn</span>
+        <span>Làm mới lịch</span>
       </button>
       {/* Mini Calendar */}
       <MiniCalendar selectedDate={selectedDate} onDateClick={onDateClick} />
