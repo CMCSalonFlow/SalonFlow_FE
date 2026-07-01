@@ -16,6 +16,18 @@ export default function LoginPage() {
     const { login } = useAuth();
 
     useEffect(() => {
+        const lastError = sessionStorage.getItem("lastAuthError");
+        if (lastError) {
+            try {
+                console.error("Last Authentication/Redirect Error:", JSON.parse(lastError));
+            } catch (e) {
+                console.error("Last Authentication/Redirect Error:", lastError);
+            }
+            sessionStorage.removeItem("lastAuthError");
+        }
+    }, []);
+
+    useEffect(() => {
         if (checkAuthSession()) {
             try {
                 const rolesStr = localStorage.getItem("roles");
