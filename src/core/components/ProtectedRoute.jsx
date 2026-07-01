@@ -1,17 +1,26 @@
 import { Navigate } from "react-router-dom";
+import { checkAuthSession, getToken, getRoles } from "../utils/auth";
 
 export default function ProtectedRoute({
     children,
     allowedRoles = [],
 }) {
 
-    const token =
-        localStorage.getItem("accessToken");
+    const isSessionValid = checkAuthSession();
 
-    const roles =
-        JSON.parse(
-            localStorage.getItem("roles") || "[]"
+    if (!isSessionValid) {
+        return (
+            <Navigate
+                to="/login"
+                replace
+            />
         );
+    }
+
+    const token = getToken();
+
+    const roles = getRoles();
+
 
     if (!token) {
         return (

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import AuthForm from "../components/AuthForm";
 import SocialLogin from "../components/SocialLogin";
 
 import { useAuth } from "../hooks/useAuth";
+import { checkAuthSession } from "@/core/utils/auth";
 
 import ROLES from "@/core/constants/roles";
 
@@ -13,6 +14,28 @@ export default function LoginPage() {
     const navigate = useNavigate();
 
     const { login } = useAuth();
+
+    useEffect(() => {
+        if (checkAuthSession()) {
+            try {
+                const rolesStr = localStorage.getItem("roles");
+                if (rolesStr) {
+                    const roles = JSON.parse(rolesStr);
+                    if (roles.includes(ROLES.SUPER_ADMIN)) {
+                        navigate("/admin");
+                    } else if (roles.includes(ROLES.SALON_OWNER)) {
+                        navigate("/owner");
+                    } else if (roles.includes(ROLES.STAFF)) {
+                        navigate("/staff");
+                    } else if (roles.includes(ROLES.CUSTOMER)) {
+                        navigate("/customer");
+                    }
+                }
+            } catch (e) {
+                localStorage.clear();
+            }
+        }
+    }, [navigate]);
 
     const [loading, setLoading] =
         useState(false);

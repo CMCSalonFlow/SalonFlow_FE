@@ -7,45 +7,9 @@ import {
     resetPasswordApi,
     logoutApi
 } from "../api/authApi";
+import { saveAuthData } from "@/core/utils/auth";
 
 export const useAuth = () => {
-
-    const saveAuthData = (
-        response
-    ) => {
-
-        localStorage.setItem(
-            "accessToken",
-            response.accessToken
-        );
-
-        localStorage.setItem(
-            "refreshToken",
-            response.refreshToken
-        );
-
-        localStorage.setItem(
-            "userId",
-            response.userId
-        );
-
-        localStorage.setItem(
-            "username",
-            response.username
-        );
-
-        localStorage.setItem(
-            "email",
-            response.email
-        );
-
-        localStorage.setItem(
-            "roles",
-            JSON.stringify(
-                response.roles
-            )
-        );
-    };
 
     const login = async (
         email,

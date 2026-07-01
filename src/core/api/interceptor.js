@@ -34,6 +34,14 @@ export function attachInterceptors(api) {
 
     api.interceptors.response.use(
         (response) => response,
-        (error) => Promise.reject(error)
+        (error) => {
+            if (error.response && error.response.status === 401) {
+                localStorage.clear();
+                if (window.location.pathname !== "/login") {
+                    window.location.href = "/login";
+                }
+            }
+            return Promise.reject(error);
+        }
     );
 }
