@@ -47,6 +47,11 @@ export default function OwnerSidebar() {
             label: "Schedule"
         },
         {
+            key: "/owner/off-days",
+            icon: <CalendarOutlined />,
+            label: "Off Days"
+        },
+        {
             key: "/owner/shifts",
             icon: <ClockCircleOutlined />,
             label: "Shift Templates"
