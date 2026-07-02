@@ -6,6 +6,9 @@ import {
 } from "react-router-dom";
 import "antd/dist/reset.css";
 import router from "./app/router";
+import { setupGlobalAuthListener } from "./core/utils/auth";
+
+setupGlobalAuthListener();
 
 ReactDOM
     .createRoot(
