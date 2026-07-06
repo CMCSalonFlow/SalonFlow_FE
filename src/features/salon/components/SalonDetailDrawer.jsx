@@ -109,15 +109,6 @@ export default function SalonDetailDrawer({ open, salonId, onClose }) {
                     {/* Basic Info Details */}
                     <Title level={5} style={{ marginBottom: 15 }}>Thông tin cơ bản</Title>
                     <Row gutter={[16, 16]}>
-                        <Col span={24}>
-                            <Space align="start">
-                                <EnvironmentOutlined style={{ color: "#1890ff", marginTop: 4 }} />
-                                <div>
-                                    <Text type="secondary" style={{ fontSize: 12, display: "block" }}>Địa chỉ</Text>
-                                    <Text strong>{salon.address}</Text>
-                                </div>
-                            </Space>
-                        </Col>
                         <Col xs={12} sm={8}>
                             <Space>
                                 <PhoneOutlined style={{ color: "#1890ff" }} />
@@ -157,38 +148,7 @@ export default function SalonDetailDrawer({ open, salonId, onClose }) {
 
                     <Divider />
 
-                    {/* Operating Hours */}
-                    <Title level={5} style={{ marginBottom: 15 }}>
-                        <ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Lịch làm việc trong tuần
-                    </Title>
-                    <List
-                        size="small"
-                        bordered
-                        dataSource={DAYS_OF_WEEK}
-                        renderItem={day => {
-                            const workHour = salon.hours?.find(h => h.dayOfWeek === day.key);
-                            return (
-                                <List.Item style={{ padding: "8px 16px" }}>
-                                    <Row style={{ width: "100%" }} justify="space-between" align="middle">
-                                        <Col><Text>{day.name}</Text></Col>
-                                        <Col>
-                                            {workHour && !workHour.isClosed ? (
-                                                <Space>
-                                                    <Tag color="blue">{workHour.openTime?.substring(0, 5)}</Tag>
-                                                    <Text>-</Text>
-                                                    <Tag color="blue">{workHour.closeTime?.substring(0, 5)}</Tag>
-                                                </Space>
-                                            ) : (
-                                                <Tag color="red">Đóng cửa</Tag>
-                                            )}
-                                        </Col>
-                                    </Row>
-                                </List.Item>
-                            );
-                        }}
-                    />
 
-                    <Divider />
 
                     {/* Photo Gallery */}
                     <Title level={5} style={{ marginBottom: 15 }}>

@@ -10,9 +10,6 @@ import {
     LogoutOutlined
 } from "@ant-design/icons";
 
-import BranchSelector
-from "@/features/branch/components/BranchSelector";
-
 import {
     logout
 } from "@/core/utils/auth";
@@ -61,8 +58,6 @@ export default function OwnerHeader() {
                     gap: 16
                 }}
             >
-                <BranchSelector />
-
                 <Dropdown
                     menu={{
                         items

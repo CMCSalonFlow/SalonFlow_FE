@@ -3,6 +3,7 @@ import { Modal, Form, Input, Select, Upload, Button, message, Space, Avatar } fr
 import { UploadOutlined, UserOutlined } from "@ant-design/icons";
 import { uploadMediaApi } from "@/features/media/api/mediaApi";
 import { getUsersApi } from "@/features/user/api/userApi";
+import { getCategoriesApi } from "@/features/service/api/serviceApi";
 
 /**
  * Modal Form dùng chung cho việc Thêm mới và Chỉnh sửa thông tin nhân viên.
@@ -11,6 +12,21 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
     const [form] = Form.useForm();
     const [uploading, setUploading] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState("");
+    const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const data = await getCategoriesApi();
+                setCategories(data || []);
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+            }
+        };
+        if (visible) {
+            fetchCategories();
+        }
+    }, [visible]);
 
     // Đồng bộ dữ liệu khi mở Modal
     useEffect(() => {
@@ -65,10 +81,7 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
         }
     };
 
-    // Khi người dùng thay đổi thủ công ô nhập URL ảnh
-    const handleAvatarUrlChange = (e) => {
-        setAvatarPreview(e.target.value);
-    };
+
 
     const handleOk = async () => {
         try {
@@ -141,14 +154,8 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                             <Input placeholder="Ví dụ: Nguyễn Văn A" size="large" />
                         </Form.Item>
 
-                        <Form.Item
-                            name="avatarUrl"
-                            label="Đường dẫn ảnh đại diện (URL)"
-                        >
-                            <Input 
-                                placeholder="https://example.com/avatar.jpg" 
-                                onChange={handleAvatarUrlChange}
-                            />
+                        <Form.Item name="avatarUrl" noStyle>
+                            <Input type="hidden" />
                         </Form.Item>
                     </div>
                 </div>
@@ -156,13 +163,18 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                 <Form.Item
                     name="specialties"
                     label="Chuyên môn / Tag kỹ năng"
-                    tooltip="Nhập kỹ năng nổi bật rồi nhấn Enter để tạo tag (Ví dụ: Cắt tóc nam, Uốn phồng, Gội đầu)"
+                    tooltip="Chọn chuyên môn tương ứng với các danh mục dịch vụ"
                 >
                     <Select
                         mode="tags"
                         style={{ width: "100%" }}
-                        placeholder="Thêm kỹ năng nổi bật của nhân viên..."
+                        placeholder="Chọn hoặc thêm chuyên môn..."
                         tokenSeparators={[","]}
+                        options={categories.map(cat => ({
+                            label: cat.name,
+                            value: cat.name
+                        }))}
+                        size="large"
                     />
                 </Form.Item>
 
