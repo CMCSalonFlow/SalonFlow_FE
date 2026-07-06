@@ -31,11 +31,18 @@ export default function CustomerLayout() {
 
             <Content
                 style={{
-                    padding:
-                        "24px 50px"
+                    padding: "24px",
+                    background: "#f5f5f5"
                 }}
             >
-                <Outlet />
+                <div
+                    style={{
+                        maxWidth: 1300,
+                        margin: "0 auto"
+                    }}
+                >
+                    <Outlet />
+                </div>
             </Content>
 
             <CustomerFooter />

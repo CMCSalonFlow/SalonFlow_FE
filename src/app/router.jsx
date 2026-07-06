@@ -45,7 +45,8 @@ import BranchListPage
     from "@/features/branch/pages/BranchListPage";
 import CategoryListPage
     from "@/features/category/pages/CategoryListPage";
-
+import PublicLayout from "@/layouts/PublicLayout/PublicLayout";
+import SearchPage from "@/features/search/pages/SearchPage";
 import CategoryListUserPage
     from "@/features/category/pages/CategoryListUserPage";
 import MySalonPage from "@/features/salon/pages/MySalonPage";
@@ -194,10 +195,39 @@ const router = createBrowserRouter([
             {
                 path: "/appointments",
                 element: <AppointmentsPage />
+            },
+            {
+                path: "/search",
+                element: <SearchPage />
             }
-
         ]
-    }
+    },
+    {
+    element: <PublicLayout />,
+    children: [
+        {
+            path: "/",
+            element: <HomePage />
+        },
+        {
+            path: "/home",
+            element: <HomePage />
+        },
+        {
+            path: "/search",
+            element: <SearchPage />
+        },
+        {
+            path: "/services",
+            element: <CategoryListUserPage />
+        },
+        {
+            path: "/booking",
+            element: <BookingPage />
+        },
+
+    ]
+}
 ]);
 
 export default router;

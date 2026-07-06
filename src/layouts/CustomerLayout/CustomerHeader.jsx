@@ -38,8 +38,8 @@ export default function CustomerHeader() {
             label: "Trang chủ"
         },
         {
-            key: "/services",
-            label: "Dịch vụ"
+            key: "/search",
+            label: "Tìm salon"
         },
         {
             key: "/branches",

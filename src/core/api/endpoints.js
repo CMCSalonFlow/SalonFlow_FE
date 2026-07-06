@@ -21,5 +21,6 @@ export const ENDPOINTS = {
 
     // Salons
     SALONS: "/api/v1/salons",
-    MY_SALON: "/api/v1/salons/me"
+    MY_SALON: "/api/v1/salons/me",
+    SEARCH_BRANCHES: "/api/v1/branches/search"
 };
