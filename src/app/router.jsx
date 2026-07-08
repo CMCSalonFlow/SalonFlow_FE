@@ -58,6 +58,8 @@ import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
 import SchedulePage from "@/features/schedule/pages/SchedulePage";
 import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
 import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
+import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -166,6 +168,10 @@ const router = createBrowserRouter([
                 path: "categories",
                 element: <CategoryListPage />
             },
+            {
+                path: "cancellation-policy",
+                element: <CancellationPolicyPage />
+            }
         ]
     },
     ///USER AREA///
