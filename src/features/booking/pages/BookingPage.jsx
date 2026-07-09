@@ -7,6 +7,7 @@ import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getAvailabilityApi, createBookingApi } from "../api/bookingApi";
+import { API_BASE_URL } from "@/core/api/endpoints";
 
 const { Title, Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -45,6 +46,63 @@ export default function BookingPage() {
     // Khung giờ rảnh
     const [availableTimes, setAvailableTimes] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
+    const [refreshCounter, setRefreshCounter] = useState(0);
+
+    // WebSocket listener for real-time slot updates
+    useEffect(() => {
+        let socket = null;
+        let reconnectTimer = null;
+
+        const connectWS = () => {
+            const wsBase = API_BASE_URL.replace(/^http/, "ws");
+            const socketUrl = `${wsBase}/ws/bookings`;
+
+            socket = new WebSocket(socketUrl);
+
+            socket.onopen = () => {
+                console.log("WebSocket connected to bookings room.");
+            };
+
+            socket.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === "BOOKING_UPDATE") {
+                        console.log("Booking update notification received:", msg);
+                        const matchBranch = String(msg.branchId) === String(selectedBranchId);
+                        const matchDate = selectedDate && msg.date === selectedDate.format("YYYY-MM-DD");
+                        const matchStaff = !selectedStaff || !msg.staffId || String(msg.staffId) === String(selectedStaff.id);
+
+                        if (matchBranch && matchDate && matchStaff) {
+                            console.log("Refreshing availability slots...");
+                            setRefreshCounter(prev => prev + 1);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error parsing WebSocket message:", e);
+                }
+            };
+
+            socket.onclose = () => {
+                console.log("WebSocket connection closed. Reconnecting in 3s...");
+                reconnectTimer = setTimeout(connectWS, 3000);
+            };
+
+            socket.onerror = (err) => {
+                console.error("WebSocket error:", err);
+                socket.close();
+            };
+        };
+
+        connectWS();
+
+        return () => {
+            if (socket) {
+                socket.onclose = null;
+                socket.close();
+            }
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+        };
+    }, [selectedBranchId, selectedDate, selectedStaff]);
 
     // 1. Tải danh sách Salon khi vào trang
     useEffect(() => {
@@ -160,7 +218,7 @@ export default function BookingPage() {
         };
 
         fetchSlots();
-    }, [selectedBranchId, selectedDate, selectedServices, selectedBundle, selectedStaff, bookingType]);
+    }, [selectedBranchId, selectedDate, selectedServices, selectedBundle, selectedStaff, bookingType, refreshCounter]);
 
     // Lọc danh sách nhân viên có đủ kỹ năng thực hiện các dịch vụ đã chọn
     const getQualifiedStaff = () => {
