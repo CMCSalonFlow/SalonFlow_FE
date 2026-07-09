@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, DatePicker, message, Spin, Grid, Radio, Avatar, Tag, Input, Result } from "antd";
 import { ShopOutlined, AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, SmileOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
-import { getMyBranchesApi } from "@/features/branch/api/branchApi";
+import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
+import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getAvailabilityApi, createBookingApi } from "../api/bookingApi";
@@ -23,6 +24,8 @@ export default function BookingPage() {
     const [bookingSuccess, setBookingSuccess] = useState(null);
 
     // Dữ liệu nguồn
+    const [salons, setSalons] = useState([]);
+    const [selectedSalonId, setSelectedSalonId] = useState(null);
     const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState(null);
     const [services, setServices] = useState([]);
@@ -43,24 +46,49 @@ export default function BookingPage() {
     const [availableTimes, setAvailableTimes] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
 
-    // 1. Tải danh sách chi nhánh khi vào trang
+    // 1. Tải danh sách Salon khi vào trang
     useEffect(() => {
-        const loadBranches = async () => {
+        const loadSalons = async () => {
             try {
                 setLoading(true);
-                const data = await getMyBranchesApi();
-                setBranches(data);
+                const data = await getPublicSalonsApi();
+                setSalons(data);
                 if (data && data.length > 0) {
-                    setSelectedBranchId(data[0].id);
+                    setSelectedSalonId(data[0].id);
                 }
             } catch (error) {
-                message.error("Không thể tải danh sách chi nhánh.");
+                message.error("Không thể tải danh sách Salon.");
             } finally {
                 setLoading(false);
             }
         };
-        loadBranches();
+        loadSalons();
     }, []);
+
+    // 2. Tải danh sách chi nhánh khi thay đổi Salon
+    useEffect(() => {
+        if (!selectedSalonId) return;
+
+        const loadBranches = async () => {
+            try {
+                setLoading(true);
+                const data = await getPublicBranchesApi(selectedSalonId);
+                setBranches(data);
+                if (data && data.length > 0) {
+                    setSelectedBranchId(data[0].id);
+                } else {
+                    setSelectedBranchId(null);
+                    setBranches([]);
+                }
+            } catch (error) {
+                message.error("Lỗi tải danh sách chi nhánh của Salon này.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadBranches();
+    }, [selectedSalonId]);
 
     // 2. Tải thông tin dịch vụ, combo và nhân viên khi thay đổi chi nhánh
     useEffect(() => {
@@ -300,17 +328,31 @@ export default function BookingPage() {
                                 {/* ── BƯỚC 1: CHỌN CHI NHÁNH & DỊCH VỤ ──────────────── */}
                                 {currentStep === 0 && (
                                     <div>
-                                        <div style={{ marginBottom: 24 }}>
-                                            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Bước 1: Chọn Chi nhánh</label>
-                                            <Select
-                                                style={{ width: "100%" }}
-                                                size="large"
-                                                value={selectedBranchId}
-                                                onChange={setSelectedBranchId}
-                                                options={branches.map(b => ({ label: b.name, value: b.id }))}
-                                                placeholder="Chọn chi nhánh gần bạn..."
-                                            />
-                                        </div>
+                                        <Row gutter={16} style={{ marginBottom: 24 }}>
+                                            <Col xs={24} sm={12}>
+                                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Bước 1a: Chọn Hệ thống Salon</label>
+                                                <Select
+                                                    style={{ width: "100%" }}
+                                                    size="large"
+                                                    value={selectedSalonId}
+                                                    onChange={setSelectedSalonId}
+                                                    options={salons.map(s => ({ label: s.name, value: s.id }))}
+                                                    placeholder="Chọn hệ thống Salon..."
+                                                />
+                                            </Col>
+                                            <Col xs={24} sm={12}>
+                                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Bước 1b: Chọn Chi nhánh</label>
+                                                <Select
+                                                    style={{ width: "100%" }}
+                                                    size="large"
+                                                    value={selectedBranchId}
+                                                    onChange={setSelectedBranchId}
+                                                    options={branches.map(b => ({ label: b.name, value: b.id }))}
+                                                    placeholder="Chọn chi nhánh..."
+                                                    disabled={!selectedSalonId || branches.length === 0}
+                                                />
+                                            </Col>
+                                        </Row>
 
                                         <Divider style={{ margin: "24px 0" }} />
 
