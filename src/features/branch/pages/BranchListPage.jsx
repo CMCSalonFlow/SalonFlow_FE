@@ -125,46 +125,44 @@ export default function BranchListPage() {
     };
 
     const handleSubmit = async (values) => {
-
-        if (editing) {
-
-            await updateBranch(
-                editing.id,
-                values
-            );
-
-            message.success(
-                "Cập nhật thành công"
-            );
-
-        } else {
-
-            await createBranch(
-                values
-            );
-
-            message.success(
-                "Thêm thành công"
-            );
-
+        try {
+            if (editing) {
+                await updateBranch(
+                    editing.id,
+                    values
+                );
+                message.success(
+                    "Cập nhật thành công"
+                );
+            } else {
+                await createBranch(
+                    values
+                );
+                message.success(
+                    "Thêm thành công"
+                );
+            }
+            setOpen(false);
+            loadBranches();
+        } catch (error) {
+            console.error("Submit error:", error);
+            const errorMsg = error.response?.data?.message || error.message || "Đã xảy ra lỗi khi lưu!";
+            message.error(errorMsg);
         }
-
-        setOpen(false);
-
-        loadBranches();
-
     };
 
     const handleDelete = async (id) => {
-
-        await deleteBranch(id);
-
-        message.success(
-            "Đã xóa"
-        );
-
-        loadBranches();
-
+        try {
+            await deleteBranch(id);
+            message.success(
+                "Đã xóa"
+            );
+            loadBranches();
+        } catch (error) {
+            console.error("Delete error:", error);
+            const errorMsg = error.response?.data?.message || error.message || "Không thể xóa chi nhánh!";
+            message.error(errorMsg);
+        }
     };
 
     const handleUsers = (branch) => {

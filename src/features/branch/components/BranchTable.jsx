@@ -44,8 +44,8 @@ export default function BranchTable({
                         Hoạt động
                     </Tag>
                 ) : (
-                    <Tag color="red">
-                        Đã khóa
+                    <Tag color="volcano">
+                        Đóng cửa
                     </Tag>
                 )
         },
