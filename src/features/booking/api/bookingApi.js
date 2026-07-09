@@ -18,11 +18,44 @@ export const getBookingByIdApi = async (branchId, bookingId) => {
     return response.data;
 };
 
-// Lấy danh sách các khung giờ rảnh khả dụng thời gian thực
-// Query params bao gồm: date (YYYY-MM-DD), serviceIds (mảng hoặc chuỗi phân tách bởi dấu phẩy), bundleId, staffId (nếu có)
+// Lấy danh sách các khung giờ rảnh
 export const getAvailabilityApi = async (branchId, params) => {
-    const response = await api.get(`/api/v1/branches/${branchId}/bookings/availability`, {
-        params
-    });
+    const response = await api.get(
+        `/api/v1/branches/${branchId}/bookings/availability`,
+        { params }
+    );
+
+    return response.data;
+};
+
+// ======================
+// Hủy booking
+// ======================
+export const cancelBookingApi = async (bookingId, reason = "") => {
+    const response = await api.post(
+        `/api/v1/bookings/${bookingId}/cancel`,
+        reason || null
+    );
+
+    return response.data;
+};
+
+// ======================
+// Chính sách hủy
+// ======================
+export const getCancellationPolicyApi = async (salonId) => {
+    const response = await api.get(
+        `/api/v1/salons/${salonId}/cancellation-policy`
+    );
+
+    return response.data;
+};
+
+export const updateCancellationPolicyApi = async (salonId, payload) => {
+    const response = await api.put(
+        `/api/v1/salons/${salonId}/cancellation-policy`,
+        payload
+    );
+
     return response.data;
 };

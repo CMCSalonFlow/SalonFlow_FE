@@ -6,7 +6,8 @@ import {
     AppstoreOutlined,
     HomeOutlined,
     ClockCircleOutlined,
-    TagsOutlined
+    TagsOutlined,
+    DollarOutlined
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
@@ -41,6 +42,11 @@ export default function OwnerSidebar() {
             key: "/owner/services",
             icon: <AppstoreOutlined />,
             label: "Services"
+        },
+        {
+            key: "/owner/cancellation-policy",
+            icon: <DollarOutlined />,
+            label: "Cancellation Policy"
         },
         {
             key: "/owner/schedule",
