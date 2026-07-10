@@ -59,3 +59,12 @@ export const updateCancellationPolicyApi = async (salonId, payload) => {
 
     return response.data;
 };
+
+export const createWalkInBookingApi = async (branchId, payload) => {
+    const response = await api.post(
+        `/api/v1/branches/${branchId}/walk-in-bookings`,
+        payload
+    );
+
+    return response.data;
+};

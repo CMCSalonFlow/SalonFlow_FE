@@ -59,6 +59,7 @@ import SchedulePage from "@/features/schedule/pages/SchedulePage";
 import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
 import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
 import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
+import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
 
 const router = createBrowserRouter([
     {
@@ -155,6 +156,10 @@ const router = createBrowserRouter([
             }, {
                 path: "schedule",
                 element: <SchedulePage />
+            },
+            {
+                path: "walk-in-booking",
+                element: <WalkInBookingPage />
             },
             {
                 path: "shifts",
