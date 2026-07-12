@@ -1,25 +1,30 @@
 
 import { useEffect, useRef, useState } from "react";
+import CashPaymentModal from "./CashPaymentModal";
 
 const STATUS_COLORS = {
   CONFIRMED: "#34a853",
   PENDING: "#f29900",
   CANCELLED: "#c5221f",
+  COMPLETED: "#b5865a",
   default: "#1a73e8",
 };
 const STATUS_LABELS = {
   CONFIRMED: "Đã xác nhận",
   PENDING: "Chờ xử lý",
   CANCELLED: "Đã hủy",
+  COMPLETED: "Hoàn thành",
 };
 const STATUS_ICONS = {
   CONFIRMED: "✓",
   PENDING: "⏳",
   CANCELLED: "✕",
+  COMPLETED: "✅",
 };
-export default function BookingDetailModal({ open, onClose, booking, anchorPos, onCancelBooking }) {
+export default function BookingDetailModal({ open, onClose, booking, anchorPos, onCancelBooking, onPaymentSuccess, branchId, staffId }) {
   const popupRef = useRef(null);
   const [pos, setPos] = useState({ top: 100, left: 200 });
+  const [cashPaymentOpen, setCashPaymentOpen] = useState(false);
   useEffect(() => {
     if (!open || !anchorPos) return;
     // Smart positioning - avoid going off screen
@@ -165,11 +170,33 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos, 
         </div>
         {/* Footer */}
         <div className="booking-popup-footer">
+          {booking?.status === "COMPLETED" && !booking?.isPaid && (
+            <button
+              className="popup-btn popup-btn-primary"
+              style={{ background: "#b5865a", borderColor: "#b5865a", marginRight: 8 }}
+              onClick={() => setCashPaymentOpen(true)}
+            >
+              💰 Thanh toán tiền mặt
+            </button>
+          )}
           <button className="popup-btn popup-btn-primary" onClick={onClose}>
             Đóng
           </button>
         </div>
       </div>
+
+      {/* Modal xác nhận thanh toán tiền mặt */}
+      <CashPaymentModal
+        open={cashPaymentOpen}
+        onClose={() => setCashPaymentOpen(false)}
+        onSuccess={() => {
+          setCashPaymentOpen(false);
+          onPaymentSuccess?.();
+        }}
+        booking={booking}
+        branchId={branchId}
+        staffId={staffId}
+      />
     </>
   );
 }

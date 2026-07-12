@@ -32,7 +32,7 @@ export default function SchedulePage() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [anchorPos, setAnchorPos] = useState(null);
 
-  const { events, resources, loading, reload } = useScheduleData(
+  const staffId = localStorage.getItem("userId"); // ID nhân viên đang đăng nhập
     branchId,
     visibleRange
   );
@@ -239,6 +239,12 @@ export default function SchedulePage() {
           onClose={handleClosePopup}
           booking={selectedBooking}
           anchorPos={anchorPos}
+          branchId={branchId}
+          staffId={staffId}
+          onPaymentSuccess={() => {
+            handleClosePopup();
+            reload();
+          }}
         />
       </div>
     </div>
