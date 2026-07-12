@@ -9,6 +9,7 @@ import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getAvailabilityApi, createBookingApi } from "../api/bookingApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
+import dayjs from "dayjs";
 
 const { Title, Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -47,6 +48,8 @@ export default function BookingPage() {
 
     // Khung giờ rảnh
     const [availableTimes, setAvailableTimes] = useState([]);
+    const [openTime, setOpenTime] = useState(null);
+    const [closeTime, setCloseTime] = useState(null);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [refreshCounter, setRefreshCounter] = useState(0);
 
@@ -113,9 +116,7 @@ export default function BookingPage() {
                 setLoading(true);
                 const data = await getPublicSalonsApi();
                 setSalons(data);
-                if (data && data.length > 0) {
-                    setSelectedSalonId(data[0].id);
-                }
+                // Bỏ tự động chọn salon đầu tiên để bắt người dùng phải chọn thủ công
             } catch (error) {
                 message.error("Không thể tải danh sách Salon.");
             } finally {
@@ -127,19 +128,19 @@ export default function BookingPage() {
 
     // 2. Tải danh sách chi nhánh khi thay đổi Salon
     useEffect(() => {
-        if (!selectedSalonId) return;
+        if (!selectedSalonId) {
+            setBranches([]);
+            setSelectedBranchId(null);
+            return;
+        }
 
         const loadBranches = async () => {
             try {
                 setLoading(true);
                 const data = await getPublicBranchesApi(selectedSalonId);
                 setBranches(data);
-                if (data && data.length > 0) {
-                    setSelectedBranchId(data[0].id);
-                } else {
-                    setSelectedBranchId(null);
-                    setBranches([]);
-                }
+                // Bỏ tự động chọn chi nhánh đầu tiên, bắt chọn thủ công
+                setSelectedBranchId(null);
             } catch (error) {
                 message.error("Lỗi tải danh sách chi nhánh của Salon này.");
             } finally {
@@ -212,6 +213,8 @@ export default function BookingPage() {
 
                 const data = await getAvailabilityApi(selectedBranchId, params);
                 setAvailableTimes(data.availableStartTimes || []);
+                setOpenTime(data.openTime || null);
+                setCloseTime(data.closeTime || null);
             } catch (error) {
                 message.error("Không thể quét lịch trống lúc này.");
             } finally {
@@ -221,6 +224,21 @@ export default function BookingPage() {
 
         fetchSlots();
     }, [selectedBranchId, selectedDate, selectedServices, selectedBundle, selectedStaff, bookingType, refreshCounter]);
+
+    // Sinh tất cả các khung giờ hoạt động trong ngày (cách nhau 15 phút) từ openTime đến closeTime
+    const generateAllTimeSlots = () => {
+        if (!openTime || !closeTime) return [];
+
+        const slots = [];
+        let current = dayjs(`2020-01-01T${openTime}`);
+        const end = dayjs(`2020-01-01T${closeTime}`);
+
+        while (current.isBefore(end)) {
+            slots.push(current.format("HH:mm:ss"));
+            current = current.add(15, "minute");
+        }
+        return slots;
+    };
 
     // Lọc danh sách nhân viên có đủ kỹ năng thực hiện các dịch vụ đã chọn
     const getQualifiedStaff = () => {
@@ -429,8 +447,8 @@ export default function BookingPage() {
                                                     value={selectedBranchId}
                                                     onChange={setSelectedBranchId}
                                                     options={branches.map(b => ({ label: b.name, value: b.id }))}
-                                                    placeholder="Chọn chi nhánh..."
-                                                    disabled={!selectedSalonId || branches.length === 0}
+                                                    placeholder={selectedSalonId ? "Chọn chi nhánh..." : "Vui lòng chọn hệ thống Salon trước"}
+                                                    disabled={!selectedSalonId}
                                                 />
                                             </Col>
                                         </Row>
@@ -606,34 +624,59 @@ export default function BookingPage() {
                                             </div>
                                         ) : (
                                             <div>
-                                                {availableTimes.length > 0 ? (
-                                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
-                                                        {availableTimes.map(time => {
-                                                            const displayTime = time.substring(0, 5); // Chuyển "09:00:00" thành "09:00"
-                                                            const isSelected = selectedTime === time;
-                                                            return (
-                                                                <Button
-                                                                    key={time}
-                                                                    size="large"
-                                                                    type={isSelected ? "primary" : "default"}
-                                                                    style={{
-                                                                        borderRadius: 8,
-                                                                        fontWeight: isSelected ? "600" : "400"
-                                                                    }}
-                                                                    onClick={() => setSelectedTime(time)}
-                                                                >
-                                                                    {displayTime}
-                                                                </Button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                ) : (
-                                                    <div style={{ padding: "30px 10px", background: "#fff2e8", borderRadius: 8, border: "1px solid #ffbb96", marginBottom: 24, textAlign: "center" }}>
-                                                        <Text type="danger" strong>Không có khung giờ hoạt động/giờ rảnh khả dụng nào vào ngày này.</Text>
-                                                        <br />
-                                                        <Text size="small" type="secondary">Vui lòng thay đổi Ngày hẹn ở bước trước hoặc chọn nhân sự khác.</Text>
-                                                    </div>
-                                                )}
+                                                {(() => {
+                                                    const allSlots = generateAllTimeSlots();
+                                                    if (allSlots.length > 0) {
+                                                        return (
+                                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
+                                                                {allSlots.map(time => {
+                                                                    const displayTime = time.substring(0, 5);
+                                                                    const isAvailable = availableTimes.includes(time);
+                                                                    const isSelected = selectedTime === time;
+                                                                    
+                                                                    return (
+                                                                        <Button
+                                                                            key={time}
+                                                                            size="large"
+                                                                            disabled={!isAvailable}
+                                                                            style={{
+                                                                                borderRadius: 8,
+                                                                                fontWeight: isSelected ? "600" : "500",
+                                                                                backgroundColor: isSelected 
+                                                                                    ? "#52c41a" // Selected
+                                                                                    : isAvailable 
+                                                                                        ? "#f6ffed" // Available green
+                                                                                        : "#fff1f0", // Busy red
+                                                                                borderColor: isSelected 
+                                                                                    ? "#52c41a" 
+                                                                                    : isAvailable 
+                                                                                        ? "#b7eb8f" 
+                                                                                        : "#ffa39e",
+                                                                                color: isSelected 
+                                                                                    ? "#fff" 
+                                                                                    : isAvailable 
+                                                                                        ? "#389e0d" 
+                                                                                        : "#cf1322",
+                                                                                transition: "all 0.3s",
+                                                                                opacity: isAvailable ? 1 : 0.65,
+                                                                                cursor: isAvailable ? "pointer" : "not-allowed"
+                                                                            }}
+                                                                            onClick={() => isAvailable && setSelectedTime(time)}
+                                                                        >
+                                                                            {displayTime}
+                                                                        </Button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <div style={{ padding: "30px 10px", background: "#fff2e8", borderRadius: 8, border: "1px solid #ffbb96", marginBottom: 24, textAlign: "center" }}>
+                                                                <Text type="warning" strong>Vui lòng hoàn thành chọn chi nhánh, dịch vụ và ngày hẹn ở các bước trước để quét giờ hoạt động.</Text>
+                                                            </div>
+                                                        );
+                                                    }
+                                                })()}
                                             </div>
                                         )}
 
