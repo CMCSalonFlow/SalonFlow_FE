@@ -59,6 +59,7 @@ import SchedulePage from "@/features/schedule/pages/SchedulePage";
 import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
 import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
 import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
+import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
 
 const router = createBrowserRouter([
     {
@@ -201,6 +202,10 @@ const router = createBrowserRouter([
             {
                 path: "/appointments",
                 element: <AppointmentsPage />
+            },
+            {
+                path: "/payment/callback",
+                element: <PaymentCallbackPage />
             },
             {
                 path: "/search",

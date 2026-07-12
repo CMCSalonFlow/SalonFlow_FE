@@ -7,6 +7,7 @@ import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getAvailabilityApi, createBookingApi } from "../api/bookingApi";
+import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
 
 const { Title, Text, Paragraph } = Typography;
@@ -23,6 +24,7 @@ export default function BookingPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState("PAY_AT_COUNTER");
 
     // Dữ liệu nguồn
     const [salons, setSalons] = useState([]);
@@ -298,10 +300,31 @@ export default function BookingPage() {
             }
 
             const res = await createBookingApi(selectedBranchId, payload);
-            setBookingSuccess(res);
-            message.success("Đặt lịch hẹn thành công!");
+
+            if (paymentMethod === "PAY_AT_COUNTER") {
+                setBookingSuccess(res);
+                message.success("Đặt lịch hẹn thành công!");
+            } else {
+                // Sinh idempotency key duy nhất cho transaction
+                const idempotencyKey = `pay_${res.id}_${Date.now()}`;
+                message.loading({ content: "Đang tạo liên kết thanh toán...", key: "payment_redirect" });
+                
+                const paymentRes = await createPaymentUrlApi({
+                    bookingId: res.id,
+                    paymentMethod: paymentMethod,
+                    idempotencyKey: idempotencyKey,
+                    returnUrl: window.location.origin + "/payment/callback?bookingId=" + res.id
+                });
+
+                if (paymentRes && paymentRes.paymentUrl) {
+                    message.success({ content: "Đang chuyển hướng sang cổng thanh toán...", key: "payment_redirect", duration: 2 });
+                    window.location.href = paymentRes.paymentUrl;
+                } else {
+                    throw new Error("Không lấy được link thanh toán từ hệ thống.");
+                }
+            }
         } catch (error) {
-            message.error(error.response?.data?.message || "Lỗi khi tạo đặt lịch hẹn.");
+            message.error({ content: error.response?.data?.message || error.message || "Lỗi khi tạo đặt lịch hẹn.", key: "payment_redirect" });
         } finally {
             setLoading(false);
         }
@@ -613,6 +636,77 @@ export default function BookingPage() {
                                                 )}
                                             </div>
                                         )}
+
+                                        <Divider style={{ margin: "24px 0" }} />
+
+                                        <FormLayoutItem label="Chọn Phương thức Thanh toán">
+                                            <Radio.Group 
+                                                value={paymentMethod} 
+                                                onChange={(e) => setPaymentMethod(e.target.value)}
+                                                style={{ width: "100%" }}
+                                            >
+                                                <Row gutter={[16, 16]}>
+                                                    <Col xs={24} sm={12}>
+                                                        <Radio.Button 
+                                                            value="PAY_AT_COUNTER" 
+                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
+                                                        >
+                                                            <Space>
+                                                                <span style={{ fontSize: 20 }}>💵</span>
+                                                                <div style={{ textAlign: "left" }}>
+                                                                    <div style={{ fontWeight: 600 }}>Thanh toán tại quầy</div>
+                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Trả tiền sau khi hoàn thành dịch vụ</div>
+                                                                </div>
+                                                            </Space>
+                                                        </Radio.Button>
+                                                    </Col>
+                                                    <Col xs={24} sm={12}>
+                                                        <Radio.Button 
+                                                            value="VNPAY" 
+                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
+                                                        >
+                                                            <Space>
+                                                                <img src="https://sandbox.vnpayment.vn/paymentv2/Images/brands/logo-vnpay.png" alt="VNPay" style={{ height: 24, objectFit: "contain" }} />
+                                                                <div style={{ textAlign: "left" }}>
+                                                                    <div style={{ fontWeight: 600 }}>Cổng VNPay</div>
+                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Tài khoản ngân hàng hoặc ví VNPay</div>
+                                                                </div>
+                                                            </Space>
+                                                        </Radio.Button>
+                                                    </Col>
+                                                    <Col xs={24} sm={12}>
+                                                        <Radio.Button 
+                                                            value="MOMO" 
+                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
+                                                        >
+                                                            <Space>
+                                                                <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" style={{ height: 24, width: 24, objectFit: "contain" }} />
+                                                                <div style={{ textAlign: "left" }}>
+                                                                    <div style={{ fontWeight: 600 }}>Ví MoMo</div>
+                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Ví điện tử hoặc mã QR MoMo</div>
+                                                                </div>
+                                                            </Space>
+                                                        </Radio.Button>
+                                                    </Col>
+                                                    <Col xs={24} sm={12}>
+                                                        <Radio.Button 
+                                                            value="ZALOPAY" 
+                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
+                                                        >
+                                                            <Space>
+                                                                <img src="https://images.vietnamworks.com/pictureprofile/vng-zalopay/zalopay_200.jpg" alt="ZaloPay" style={{ height: 24, width: 24, objectFit: "contain", borderRadius: 4 }} />
+                                                                <div style={{ textAlign: "left" }}>
+                                                                    <div style={{ fontWeight: 600 }}>Ví ZaloPay</div>
+                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Ứng dụng hoặc mã QR ZaloPay</div>
+                                                                </div>
+                                                            </Space>
+                                                        </Radio.Button>
+                                                    </Col>
+                                                </Row>
+                                            </Radio.Group>
+                                        </FormLayoutItem>
+
+                                        <Divider style={{ margin: "24px 0" }} />
 
                                         <FormLayoutItem label="Ghi chú thêm (Không bắt buộc)">
                                             <Input.TextArea
