@@ -24,6 +24,7 @@ export default function StaffManagementPage() {
 
     const [staffList, setStaffList] = useState([]);
     const [services, setServices] = useState([]);
+    const [selectedSpecialties, setSelectedSpecialties] = useState([]);
 
     // Trạng thái hiển thị modal form
     const [modalVisible, setModalVisible] = useState(false);
@@ -70,6 +71,7 @@ export default function StaffManagementPage() {
     useEffect(() => {
         if (selectedBranchId) {
             loadData(selectedBranchId);
+            setSelectedSpecialties([]); // Reset bộ lọc chuyên môn (mảng rỗng) khi đổi chi nhánh
         }
     }, [selectedBranchId]);
 
@@ -134,8 +136,6 @@ export default function StaffManagementPage() {
                                 <Text type="secondary" style={{ fontSize: 12 }}>📞 {record.phone}</Text>
                             </>
                         )}
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 11 }}>ID: #{record.id}</Text>
                     </div>
 
                 </Space>
@@ -212,6 +212,23 @@ export default function StaffManagementPage() {
         }
     ];
 
+    // Lấy danh sách các chuyên môn duy nhất từ danh sách nhân viên
+    const uniqueSpecialties = Array.from(
+        new Set(
+            staffList
+                .flatMap(s => (s.specialties || "").split(","))
+                .map(t => t.trim())
+                .filter(Boolean)
+        )
+    );
+
+    // Lọc danh sách nhân viên hiển thị theo nhiều chuyên môn được chọn (AND match)
+    const filteredStaffList = staffList.filter(s => {
+        if (selectedSpecialties.length === 0) return true;
+        const specs = (s.specialties || "").split(",").map(t => t.trim().toLowerCase());
+        return selectedSpecialties.every(selected => specs.includes(selected.toLowerCase()));
+    });
+
     if (loadingBranches) {
         return (
             <div style={{ textAlign: "center", padding: "100px 0" }}>
@@ -270,23 +287,38 @@ export default function StaffManagementPage() {
                     </div>
                 ) : (
                     <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, alignItems: "center" }}>
-                            <Title level={4} style={{ margin: 0 }}>Đội ngũ nhân sự ({staffList.length})</Title>
-                            <Button
-                                type="primary"
-                                icon={<UserAddOutlined />}
-                                size="large"
-                                onClick={() => {
-                                    setEditingStaff(null);
-                                    setModalVisible(true);
-                                }}
-                            >
-                                Thêm nhân viên mới
-                            </Button>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                            <Title level={4} style={{ margin: 0 }}>Đội ngũ nhân sự ({filteredStaffList.length})</Title>
+                            <Space size="middle" style={{ flexWrap: "wrap" }}>
+                                <Space>
+                                    <Text strong>Chuyên môn:</Text>
+                                    <Select
+                                        mode="multiple"
+                                        style={{ minWidth: 200, maxWidth: 350 }}
+                                        value={selectedSpecialties}
+                                        onChange={setSelectedSpecialties}
+                                        options={uniqueSpecialties.map(spec => ({ label: spec, value: spec }))}
+                                        placeholder="Tất cả chuyên môn"
+                                        maxTagCount="responsive"
+                                        allowClear
+                                    />
+                                </Space>
+                                <Button
+                                    type="primary"
+                                    icon={<UserAddOutlined />}
+                                    size="large"
+                                    onClick={() => {
+                                        setEditingStaff(null);
+                                        setModalVisible(true);
+                                    }}
+                                >
+                                    Thêm nhân viên mới
+                                </Button>
+                            </Space>
                         </div>
                         <Table
                             columns={columns}
-                            dataSource={staffList}
+                            dataSource={filteredStaffList}
                             rowKey="id"
                             pagination={{ pageSize: 6 }}
                             bordered

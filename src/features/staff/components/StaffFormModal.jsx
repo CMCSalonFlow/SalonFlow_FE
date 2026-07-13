@@ -14,6 +14,31 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
     const [avatarPreview, setAvatarPreview] = useState("");
     const [categories, setCategories] = useState([]);
 
+    const selectedSpecialties = Form.useWatch("specialties", form) || [];
+    const currentServiceIds = Form.useWatch("serviceIds", form) || [];
+
+    // Lọc danh sách dịch vụ dựa trên chuyên môn/tag kỹ năng đã chọn
+    const filteredServices = (services || []).filter(s => {
+        if (selectedSpecialties.length === 0) return false;
+        return selectedSpecialties.some(spec => spec && spec.trim().toLowerCase() === (s.categoryName || "").trim().toLowerCase());
+    });
+
+    // Tự động bỏ chọn các dịch vụ không còn thuộc nhóm chuyên môn đã chọn
+    useEffect(() => {
+        if (visible && selectedSpecialties.length > 0) {
+            const matchedServiceIds = currentServiceIds.filter(id => {
+                const s = services.find(item => item.id === id);
+                if (!s) return false;
+                return selectedSpecialties.some(spec => spec && spec.trim().toLowerCase() === (s.categoryName || "").trim().toLowerCase());
+            });
+            if (matchedServiceIds.length !== currentServiceIds.length) {
+                form.setFieldsValue({ serviceIds: matchedServiceIds });
+            }
+        } else if (visible && selectedSpecialties.length === 0 && currentServiceIds.length > 0) {
+            form.setFieldsValue({ serviceIds: [] });
+        }
+    }, [selectedSpecialties, services, form, visible]);
+
     useEffect(() => {
         const fetchCategories = async () => {
             try {
@@ -187,10 +212,11 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                         mode="multiple"
                         allowClear
                         style={{ width: "100%" }}
-                        placeholder="Chọn danh sách dịch vụ..."
+                        placeholder={selectedSpecialties.length === 0 ? "Vui lòng chọn chuyên môn / tag kỹ năng trước..." : "Chọn danh sách dịch vụ..."}
+                        disabled={selectedSpecialties.length === 0}
                         optionFilterProp="label"
-                        options={services.map(s => ({
-                            label: `${s.name} (${parseFloat(s.price).toLocaleString()} đ - ${s.durationMinutes} phút)`,
+                        options={filteredServices.map(s => ({
+                            label: `${s.name} (Danh mục: ${s.categoryName || "Chưa phân loại"} - ${parseFloat(s.price).toLocaleString()} đ - ${s.durationMinutes} phút)`,
                             value: s.id
                         }))}
                         size="large"

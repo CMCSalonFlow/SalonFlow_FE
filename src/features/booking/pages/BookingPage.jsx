@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, DatePicker, message, Spin, Grid, Radio, Avatar, Tag, Input, Result } from "antd";
 import { ShopOutlined, AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, SmileOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
-import { getMyBranchesApi } from "@/features/branch/api/branchApi";
+import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
+import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getAvailabilityApi, createBookingApi } from "../api/bookingApi";
+import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
+import { API_BASE_URL } from "@/core/api/endpoints";
+import dayjs from "dayjs";
 
 const { Title, Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -21,8 +25,11 @@ export default function BookingPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState("PAY_AT_COUNTER");
 
     // Dữ liệu nguồn
+    const [salons, setSalons] = useState([]);
+    const [selectedSalonId, setSelectedSalonId] = useState(null);
     const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState(null);
     const [services, setServices] = useState([]);
@@ -41,29 +48,108 @@ export default function BookingPage() {
 
     // Khung giờ rảnh
     const [availableTimes, setAvailableTimes] = useState([]);
+    const [openTime, setOpenTime] = useState(null);
+    const [closeTime, setCloseTime] = useState(null);
     const [loadingSlots, setLoadingSlots] = useState(false);
+    const [refreshCounter, setRefreshCounter] = useState(0);
 
-    const formatCurrency = (value) =>
-        Number(value || 0).toLocaleString("vi-VN");
-
-    // 1. Tải danh sách chi nhánh khi vào trang
+    // WebSocket listener for real-time slot updates
     useEffect(() => {
-        const loadBranches = async () => {
+        let socket = null;
+        let reconnectTimer = null;
+
+        const connectWS = () => {
+            const wsBase = API_BASE_URL.replace(/^http/, "ws");
+            const socketUrl = `${wsBase}/ws/bookings`;
+
+            socket = new WebSocket(socketUrl);
+
+            socket.onopen = () => {
+                console.log("WebSocket connected to bookings room.");
+            };
+
+            socket.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === "BOOKING_UPDATE") {
+                        console.log("Booking update notification received:", msg);
+                        const matchBranch = String(msg.branchId) === String(selectedBranchId);
+                        const matchDate = selectedDate && msg.date === selectedDate.format("YYYY-MM-DD");
+                        const matchStaff = !selectedStaff || !msg.staffId || String(msg.staffId) === String(selectedStaff.id);
+
+                        if (matchBranch && matchDate && matchStaff) {
+                            console.log("Refreshing availability slots...");
+                            setRefreshCounter(prev => prev + 1);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error parsing WebSocket message:", e);
+                }
+            };
+
+            socket.onclose = () => {
+                console.log("WebSocket connection closed. Reconnecting in 3s...");
+                reconnectTimer = setTimeout(connectWS, 3000);
+            };
+
+            socket.onerror = (err) => {
+                console.error("WebSocket error:", err);
+                socket.close();
+            };
+        };
+
+        connectWS();
+
+        return () => {
+            if (socket) {
+                socket.onclose = null;
+                socket.close();
+            }
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+        };
+    }, [selectedBranchId, selectedDate, selectedStaff]);
+
+    // 1. Tải danh sách Salon khi vào trang
+    useEffect(() => {
+        const loadSalons = async () => {
             try {
                 setLoading(true);
-                const data = await getMyBranchesApi();
-                setBranches(data);
-                if (data && data.length > 0) {
-                    setSelectedBranchId(data[0].id);
-                }
+                const data = await getPublicSalonsApi();
+                setSalons(data);
+                // Bỏ tự động chọn salon đầu tiên để bắt người dùng phải chọn thủ công
             } catch (error) {
-                message.error("Không thể tải danh sách chi nhánh.");
+                message.error("Không thể tải danh sách Salon.");
             } finally {
                 setLoading(false);
             }
         };
-        loadBranches();
+        loadSalons();
     }, []);
+
+    // 2. Tải danh sách chi nhánh khi thay đổi Salon
+    useEffect(() => {
+        if (!selectedSalonId) {
+            setBranches([]);
+            setSelectedBranchId(null);
+            return;
+        }
+
+        const loadBranches = async () => {
+            try {
+                setLoading(true);
+                const data = await getPublicBranchesApi(selectedSalonId);
+                setBranches(data);
+                // Bỏ tự động chọn chi nhánh đầu tiên, bắt chọn thủ công
+                setSelectedBranchId(null);
+            } catch (error) {
+                message.error("Lỗi tải danh sách chi nhánh của Salon này.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadBranches();
+    }, [selectedSalonId]);
 
     // 2. Tải thông tin dịch vụ, combo và nhân viên khi thay đổi chi nhánh
     useEffect(() => {
@@ -127,6 +213,8 @@ export default function BookingPage() {
 
                 const data = await getAvailabilityApi(selectedBranchId, params);
                 setAvailableTimes(data.availableStartTimes || []);
+                setOpenTime(data.openTime || null);
+                setCloseTime(data.closeTime || null);
             } catch (error) {
                 message.error("Không thể quét lịch trống lúc này.");
             } finally {
@@ -135,7 +223,22 @@ export default function BookingPage() {
         };
 
         fetchSlots();
-    }, [selectedBranchId, selectedDate, selectedServices, selectedBundle, selectedStaff, bookingType]);
+    }, [selectedBranchId, selectedDate, selectedServices, selectedBundle, selectedStaff, bookingType, refreshCounter]);
+
+    // Sinh tất cả các khung giờ hoạt động trong ngày (cách nhau 15 phút) từ openTime đến closeTime
+    const generateAllTimeSlots = () => {
+        if (!openTime || !closeTime) return [];
+
+        const slots = [];
+        let current = dayjs(`2020-01-01T${openTime}`);
+        const end = dayjs(`2020-01-01T${closeTime}`);
+
+        while (current.isBefore(end)) {
+            slots.push(current.format("HH:mm:ss"));
+            current = current.add(15, "minute");
+        }
+        return slots;
+    };
 
     // Lọc danh sách nhân viên có đủ kỹ năng thực hiện các dịch vụ đã chọn
     const getQualifiedStaff = () => {
@@ -215,10 +318,31 @@ export default function BookingPage() {
             }
 
             const res = await createBookingApi(selectedBranchId, payload);
-            setBookingSuccess(res);
-            message.success("Đặt lịch hẹn thành công!");
+
+            if (paymentMethod === "PAY_AT_COUNTER") {
+                setBookingSuccess(res);
+                message.success("Đặt lịch hẹn thành công!");
+            } else {
+                // Sinh idempotency key duy nhất cho transaction
+                const idempotencyKey = `pay_${res.id}_${Date.now()}`;
+                message.loading({ content: "Đang tạo liên kết thanh toán...", key: "payment_redirect" });
+                
+                const paymentRes = await createPaymentUrlApi({
+                    bookingId: res.id,
+                    paymentMethod: paymentMethod,
+                    idempotencyKey: idempotencyKey,
+                    returnUrl: window.location.origin + "/payment/callback?bookingId=" + res.id
+                });
+
+                if (paymentRes && paymentRes.paymentUrl) {
+                    message.success({ content: "Đang chuyển hướng sang cổng thanh toán...", key: "payment_redirect", duration: 2 });
+                    window.location.href = paymentRes.paymentUrl;
+                } else {
+                    throw new Error("Không lấy được link thanh toán từ hệ thống.");
+                }
+            }
         } catch (error) {
-            message.error(error.response?.data?.message || "Lỗi khi tạo đặt lịch hẹn.");
+            message.error({ content: error.response?.data?.message || error.message || "Lỗi khi tạo đặt lịch hẹn.", key: "payment_redirect" });
         } finally {
             setLoading(false);
         }
@@ -306,17 +430,31 @@ export default function BookingPage() {
                                 {/* ── BƯỚC 1: CHỌN CHI NHÁNH & DỊCH VỤ ──────────────── */}
                                 {currentStep === 0 && (
                                     <div>
-                                        <div style={{ marginBottom: 24 }}>
-                                            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Bước 1: Chọn Chi nhánh</label>
-                                            <Select
-                                                style={{ width: "100%" }}
-                                                size="large"
-                                                value={selectedBranchId}
-                                                onChange={setSelectedBranchId}
-                                                options={branches.map(b => ({ label: b.name, value: b.id }))}
-                                                placeholder="Chọn chi nhánh gần bạn..."
-                                            />
-                                        </div>
+                                        <Row gutter={16} style={{ marginBottom: 24 }}>
+                                            <Col xs={24} sm={12}>
+                                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Bước 1a: Chọn Hệ thống Salon</label>
+                                                <Select
+                                                    style={{ width: "100%" }}
+                                                    size="large"
+                                                    value={selectedSalonId}
+                                                    onChange={setSelectedSalonId}
+                                                    options={salons.map(s => ({ label: s.name, value: s.id }))}
+                                                    placeholder="Chọn hệ thống Salon..."
+                                                />
+                                            </Col>
+                                            <Col xs={24} sm={12}>
+                                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Bước 1b: Chọn Chi nhánh</label>
+                                                <Select
+                                                    style={{ width: "100%" }}
+                                                    size="large"
+                                                    value={selectedBranchId}
+                                                    onChange={setSelectedBranchId}
+                                                    options={branches.map(b => ({ label: b.name, value: b.id }))}
+                                                    placeholder={selectedSalonId ? "Chọn chi nhánh..." : "Vui lòng chọn hệ thống Salon trước"}
+                                                    disabled={!selectedSalonId}
+                                                />
+                                            </Col>
+                                        </Row>
 
                                         <Divider style={{ margin: "24px 0" }} />
 
@@ -489,36 +627,132 @@ export default function BookingPage() {
                                             </div>
                                         ) : (
                                             <div>
-                                                {availableTimes.length > 0 ? (
-                                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
-                                                        {availableTimes.map(time => {
-                                                            const displayTime = time.substring(0, 5); // Chuyển "09:00:00" thành "09:00"
-                                                            const isSelected = selectedTime === time;
-                                                            return (
-                                                                <Button
-                                                                    key={time}
-                                                                    size="large"
-                                                                    type={isSelected ? "primary" : "default"}
-                                                                    style={{
-                                                                        borderRadius: 8,
-                                                                        fontWeight: isSelected ? "600" : "400"
-                                                                    }}
-                                                                    onClick={() => setSelectedTime(time)}
-                                                                >
-                                                                    {displayTime}
-                                                                </Button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                ) : (
-                                                    <div style={{ padding: "30px 10px", background: "#fff2e8", borderRadius: 8, border: "1px solid #ffbb96", marginBottom: 24, textAlign: "center" }}>
-                                                        <Text type="danger" strong>Không có khung giờ hoạt động/giờ rảnh khả dụng nào vào ngày này.</Text>
-                                                        <br />
-                                                        <Text size="small" type="secondary">Vui lòng thay đổi Ngày hẹn ở bước trước hoặc chọn nhân sự khác.</Text>
-                                                    </div>
-                                                )}
+                                                {(() => {
+                                                    const allSlots = generateAllTimeSlots();
+                                                    if (allSlots.length > 0) {
+                                                        return (
+                                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
+                                                                {allSlots.map(time => {
+                                                                    const displayTime = time.substring(0, 5);
+                                                                    const isAvailable = availableTimes.includes(time);
+                                                                    const isSelected = selectedTime === time;
+                                                                    
+                                                                    return (
+                                                                        <Button
+                                                                            key={time}
+                                                                            size="large"
+                                                                            disabled={!isAvailable}
+                                                                            style={{
+                                                                                borderRadius: 8,
+                                                                                fontWeight: isSelected ? "600" : "500",
+                                                                                backgroundColor: isSelected 
+                                                                                    ? "#52c41a" // Selected
+                                                                                    : isAvailable 
+                                                                                        ? "#f6ffed" // Available green
+                                                                                        : "#fff1f0", // Busy red
+                                                                                borderColor: isSelected 
+                                                                                    ? "#52c41a" 
+                                                                                    : isAvailable 
+                                                                                        ? "#b7eb8f" 
+                                                                                        : "#ffa39e",
+                                                                                color: isSelected 
+                                                                                    ? "#fff" 
+                                                                                    : isAvailable 
+                                                                                        ? "#389e0d" 
+                                                                                        : "#cf1322",
+                                                                                transition: "all 0.3s",
+                                                                                opacity: isAvailable ? 1 : 0.65,
+                                                                                cursor: isAvailable ? "pointer" : "not-allowed"
+                                                                            }}
+                                                                            onClick={() => isAvailable && setSelectedTime(time)}
+                                                                        >
+                                                                            {displayTime}
+                                                                        </Button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <div style={{ padding: "30px 10px", background: "#fff2e8", borderRadius: 8, border: "1px solid #ffbb96", marginBottom: 24, textAlign: "center" }}>
+                                                                <Text type="warning" strong>Vui lòng hoàn thành chọn chi nhánh, dịch vụ và ngày hẹn ở các bước trước để quét giờ hoạt động.</Text>
+                                                            </div>
+                                                        );
+                                                    }
+                                                })()}
                                             </div>
                                         )}
+
+                                        <Divider style={{ margin: "24px 0" }} />
+
+                                        <FormLayoutItem label="Chọn Phương thức Thanh toán">
+                                            <Radio.Group 
+                                                value={paymentMethod} 
+                                                onChange={(e) => setPaymentMethod(e.target.value)}
+                                                style={{ width: "100%" }}
+                                            >
+                                                <Row gutter={[16, 16]}>
+                                                    <Col xs={24} sm={12}>
+                                                        <Radio.Button 
+                                                            value="PAY_AT_COUNTER" 
+                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
+                                                        >
+                                                            <Space>
+                                                                <span style={{ fontSize: 20 }}>💵</span>
+                                                                <div style={{ textAlign: "left" }}>
+                                                                    <div style={{ fontWeight: 600 }}>Thanh toán tại quầy</div>
+                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Trả tiền sau khi hoàn thành dịch vụ</div>
+                                                                </div>
+                                                            </Space>
+                                                        </Radio.Button>
+                                                    </Col>
+                                                    <Col xs={24} sm={12}>
+                                                        <Radio.Button 
+                                                            value="VNPAY" 
+                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
+                                                        >
+                                                            <Space>
+                                                                <img src="https://sandbox.vnpayment.vn/paymentv2/Images/brands/logo-vnpay.png" alt="VNPay" style={{ height: 24, objectFit: "contain" }} />
+                                                                <div style={{ textAlign: "left" }}>
+                                                                    <div style={{ fontWeight: 600 }}>Cổng VNPay</div>
+                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Tài khoản ngân hàng hoặc ví VNPay</div>
+                                                                </div>
+                                                            </Space>
+                                                        </Radio.Button>
+                                                    </Col>
+                                                    <Col xs={24} sm={12}>
+                                                        <Radio.Button 
+                                                            value="MOMO" 
+                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
+                                                        >
+                                                            <Space>
+                                                                <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" style={{ height: 24, width: 24, objectFit: "contain" }} />
+                                                                <div style={{ textAlign: "left" }}>
+                                                                    <div style={{ fontWeight: 600 }}>Ví MoMo</div>
+                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Ví điện tử hoặc mã QR MoMo</div>
+                                                                </div>
+                                                            </Space>
+                                                        </Radio.Button>
+                                                    </Col>
+                                                    <Col xs={24} sm={12}>
+                                                        <Radio.Button 
+                                                            value="ZALOPAY" 
+                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
+                                                        >
+                                                            <Space>
+                                                                <img src="https://images.vietnamworks.com/pictureprofile/vng-zalopay/zalopay_200.jpg" alt="ZaloPay" style={{ height: 24, width: 24, objectFit: "contain", borderRadius: 4 }} />
+                                                                <div style={{ textAlign: "left" }}>
+                                                                    <div style={{ fontWeight: 600 }}>Ví ZaloPay</div>
+                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Ứng dụng hoặc mã QR ZaloPay</div>
+                                                                </div>
+                                                            </Space>
+                                                        </Radio.Button>
+                                                    </Col>
+                                                </Row>
+                                            </Radio.Group>
+                                        </FormLayoutItem>
+
+                                        <Divider style={{ margin: "24px 0" }} />
 
                                         <FormLayoutItem label="Ghi chú thêm (Không bắt buộc)">
                                             <Input.TextArea
