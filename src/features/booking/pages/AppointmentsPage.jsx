@@ -36,6 +36,9 @@ export default function AppointmentsPage() {
     const [loading, setLoading] = useState(false);
     const [myBookings, setMyBookings] = useState([]);
 
+    const formatCurrency = (value) =>
+        Number(value || 0).toLocaleString("vi-VN");
+
     useEffect(() => {
         loadMyBookings();
     }, []);
@@ -226,7 +229,16 @@ export default function AppointmentsPage() {
             dataIndex: "totalPrice",
             render: (value) => (
                 <Text strong style={{ color: "#faad14" }}>
-                    {Number(value).toLocaleString()} đ
+                    {formatCurrency(value)} đ
+                </Text>
+            )
+        },
+        {
+            title: "Tiền cọc",
+            dataIndex: "depositAmount",
+            render: (value) => (
+                <Text strong style={{ color: "#f5222d" }}>
+                    {formatCurrency(value)} đ
                 </Text>
             )
         },

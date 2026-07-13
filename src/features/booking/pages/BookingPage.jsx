@@ -43,6 +43,9 @@ export default function BookingPage() {
     const [availableTimes, setAvailableTimes] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
 
+    const formatCurrency = (value) =>
+        Number(value || 0).toLocaleString("vi-VN");
+
     // 1. Tải danh sách chi nhánh khi vào trang
     useEffect(() => {
         const loadBranches = async () => {
@@ -259,6 +262,9 @@ export default function BookingPage() {
                                 </Col>
                                 <Col span={24}>
                                     <Text type="secondary">Tổng chi phí:</Text> <Text strong style={{ color: "#faad14", fontSize: 18 }}>{parseFloat(bookingSuccess.totalPrice).toLocaleString()} đ</Text>
+                                </Col>
+                                <Col span={24}>
+                                    <Text type="secondary">Tiền cọc:</Text> <Text strong style={{ color: "#f5222d", fontSize: 18 }}>{formatCurrency(bookingSuccess.depositAmount)} đ</Text>
                                 </Col>
                             </Row>
                         </div>
