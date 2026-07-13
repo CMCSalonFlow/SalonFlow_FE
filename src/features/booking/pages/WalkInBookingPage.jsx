@@ -6,7 +6,6 @@ import {
     Form,
     Input,
     Select,
-    TimePicker,
     message,
 } from "antd";
 import dayjs from "dayjs";
@@ -14,7 +13,10 @@ import dayjs from "dayjs";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getServicesByBranchApi } from "@/features/service/api/serviceApi";
-import { createWalkInBookingApi } from "../api/bookingApi";
+import {
+    createWalkInBookingApi,
+    getAvailabilityApi,
+} from "../api/bookingApi";
 
 const { TextArea } = Input;
 
@@ -23,10 +25,12 @@ export default function WalkInBookingPage() {
     const [form] = Form.useForm();
 
     const [branches, setBranches] = useState([]);
-    const [branchId, setBranchId] = useState(null);
+    const [branchId, setBranchId] = useState();
 
     const [staffs, setStaffs] = useState([]);
     const [services, setServices] = useState([]);
+
+    const [availableSlots, setAvailableSlots] = useState([]);
 
     const [loading, setLoading] = useState(false);
 
@@ -43,20 +47,21 @@ export default function WalkInBookingPage() {
 
             if (branchData.length > 0) {
 
-                const firstBranch = branchData[0];
+                const first = branchData[0];
 
-                setBranchId(firstBranch.id);
+                setBranchId(first.id);
 
-                form.setFieldValue("branchId", firstBranch.id);
+                form.setFieldValue("branchId", first.id);
 
-                await loadData(firstBranch.id);
+                await loadData(first.id);
+
             }
 
         } catch (e) {
 
             console.error(e);
 
-            message.error("Không lấy được danh sách chi nhánh.");
+            message.error("Không lấy được chi nhánh.");
 
         }
     };
@@ -80,23 +85,71 @@ export default function WalkInBookingPage() {
         }
     };
 
-    const handleBranchChange = async (value) => {
+    const handleBranchChange = async (id) => {
 
-        setBranchId(value);
+        setBranchId(id);
 
-        form.setFieldValue("staffId", undefined);
-        form.setFieldValue("serviceIds", []);
+        form.setFieldsValue({
+            staffId: undefined,
+            serviceIds: [],
+            bookingDate: undefined,
+            startTime: undefined,
+        });
 
-        await loadData(value);
+        setAvailableSlots([]);
+
+        await loadData(id);
+
+    };
+
+    const loadAvailability = async () => {
+
+        const values = form.getFieldsValue();
+
+        if (
+            !branchId ||
+            !values.bookingDate ||
+            !values.serviceIds ||
+            values.serviceIds.length === 0
+        ) {
+            setAvailableSlots([]);
+            return;
+        }
+
+        try {
+
+            const response = await getAvailabilityApi(branchId, {
+
+                date: values.bookingDate.format("YYYY-MM-DD"),
+
+                serviceIds: values.serviceIds,
+
+                staffId: values.staffId,
+
+            });
+
+            console.log("Availability:", response);
+
+            const slots = response.availableStartTimes || [];
+
+            setAvailableSlots(
+                slots.map((time) => ({
+                    value: time,
+                    label: time.substring(0, 5), // 08:30:00 -> 08:30
+                }))
+            );
+
+        } catch (e) {
+
+            console.error(e);
+
+            setAvailableSlots([]);
+
+        }
 
     };
 
     const onFinish = async (values) => {
-
-        if (!branchId) {
-            message.error("Vui lòng chọn chi nhánh.");
-            return;
-        }
 
         try {
 
@@ -105,17 +158,18 @@ export default function WalkInBookingPage() {
             const payload = {
 
                 customerName: values.customerName,
+
                 customerPhone: values.customerPhone,
 
                 staffId: values.staffId,
 
                 bookingDate: values.bookingDate.format("YYYY-MM-DD"),
 
-                startTime: values.startTime.format("HH:mm:ss"),
+                startTime: values.startTime,
 
                 serviceIds: values.serviceIds,
 
-                note: values.note
+                note: values.note,
 
             };
 
@@ -123,11 +177,13 @@ export default function WalkInBookingPage() {
 
             await createWalkInBookingApi(branchId, payload);
 
-            message.success("Tạo booking thành công.");
+            message.success("Tạo booking thành công");
 
             form.resetFields();
 
             form.setFieldValue("branchId", branchId);
+
+            setAvailableSlots([]);
 
         } catch (e) {
 
@@ -135,7 +191,7 @@ export default function WalkInBookingPage() {
 
             message.error(
                 e?.response?.data?.message ??
-                "Có lỗi xảy ra."
+                "Có lỗi xảy ra"
             );
 
         } finally {
@@ -147,14 +203,18 @@ export default function WalkInBookingPage() {
     };
 
     return (
+
         <Card
             title="Đặt lịch Walk-in"
-            style={{ maxWidth: 800, margin: "0 auto" }}
+            style={{
+                maxWidth: 800,
+                margin: "0 auto"
+            }}
         >
 
             <Form
-                layout="vertical"
                 form={form}
+                layout="vertical"
                 onFinish={onFinish}
             >
 
@@ -164,18 +224,20 @@ export default function WalkInBookingPage() {
                     rules={[
                         {
                             required: true,
-                            message: "Vui lòng chọn chi nhánh"
+                            message: "Chọn chi nhánh"
                         }
                     ]}
                 >
+
                     <Select
                         placeholder="Chọn chi nhánh"
                         onChange={handleBranchChange}
-                        options={branches.map(branch => ({
-                            value: branch.id,
-                            label: branch.name
+                        options={branches.map((b) => ({
+                            value: b.id,
+                            label: b.name
                         }))}
                     />
+
                 </Form.Item>
 
                 <Form.Item
@@ -184,49 +246,53 @@ export default function WalkInBookingPage() {
                     rules={[
                         {
                             required: true,
-                            message: "Vui lòng nhập tên khách hàng"
+                            message: "Nhập tên khách hàng"
                         }
                     ]}
                 >
                     <Input />
                 </Form.Item>
 
-               <Form.Item
-            label="Số điện thoại"
-             name="customerPhone"
-              rules={[
-             {
-                        required: true,
-                        message: "Vui lòng nhập số điện thoại"
-             },
-             {
-                        pattern: /^0\d{9}$/,
-                         message: "Số điện thoại phải gồm 10 số và bắt đầu bằng 0"
-             }
-            ]}
->
-              <Input
-                       placeholder="Nhập số điện thoại"
-                     maxLength={10}
-                     inputMode="numeric"
-                     onInput={(e) => {
-                     e.target.value = e.target.value.replace(/\D/g, "");
-                  }}
-            />
+                <Form.Item
+                    label="Số điện thoại"
+                    name="customerPhone"
+                    rules={[
+                        {
+                            required: true,
+                            message: "Nhập số điện thoại"
+                        },
+                        {
+                            pattern: /^0\d{9}$/,
+                            message: "SĐT không hợp lệ"
+                        }
+                    ]}
+                >
+                    <Input
+                        maxLength={10}
+                        inputMode="numeric"
+                        placeholder="09xxxxxxxx"
+                        onInput={(e) =>
+                            e.target.value =
+                                e.target.value.replace(/\D/g, "")
+                        }
+                    />
                 </Form.Item>
 
                 <Form.Item
                     label="Nhân viên"
                     name="staffId"
                 >
+
                     <Select
                         allowClear
                         placeholder="Bất kỳ nhân viên"
-                        options={staffs.map(staff => ({
-                            value: staff.id,
-                            label: staff.name
+                        onChange={loadAvailability}
+                        options={staffs.map((s) => ({
+                            value: s.id,
+                            label: s.name
                         }))}
                     />
+
                 </Form.Item>
 
                 <Form.Item
@@ -235,56 +301,65 @@ export default function WalkInBookingPage() {
                     rules={[
                         {
                             required: true,
-                            message: "Vui lòng chọn dịch vụ"
+                            message: "Chọn dịch vụ"
                         }
                     ]}
                 >
+
                     <Select
                         mode="multiple"
                         placeholder="Chọn dịch vụ"
-                        options={services.map(service => ({
-                            value: service.id,
-                            label: service.name
+                        onChange={loadAvailability}
+                        options={services.map((s) => ({
+                            value: s.id,
+                            label: s.name
                         }))}
                     />
+
                 </Form.Item>
 
                 <Form.Item
-                    label="Ngày đặt"
+                    label="Ngày"
                     name="bookingDate"
                     rules={[
                         {
                             required: true,
-                            message: "Vui lòng chọn ngày"
+                            message: "Chọn ngày"
                         }
                     ]}
                 >
+
                     <DatePicker
-                        style={{ width: "100%" }}
+                        style={{
+                            width: "100%"
+                        }}
                         format="DD/MM/YYYY"
+                        onChange={loadAvailability}
                         disabledDate={(current) =>
                             current &&
                             current < dayjs().startOf("day")
                         }
                     />
+
                 </Form.Item>
 
                 <Form.Item
-                    label="Giờ bắt đầu"
+                    label="Khung giờ còn trống"
                     name="startTime"
                     rules={[
                         {
                             required: true,
-                            message: "Vui lòng chọn giờ"
+                            message: "Chọn giờ"
                         }
                     ]}
                 >
-                    <TimePicker
-                        style={{ width: "100%" }}
-                        format="HH:mm"
-                        use12Hours={false}
-                        minuteStep={15}
+
+                    <Select
+                        placeholder="Chọn khung giờ"
+                        options={availableSlots}
+                        notFoundContent="Chưa có khung giờ"
                     />
+
                 </Form.Item>
 
                 <Form.Item
@@ -306,5 +381,7 @@ export default function WalkInBookingPage() {
             </Form>
 
         </Card>
+
     );
+
 }
