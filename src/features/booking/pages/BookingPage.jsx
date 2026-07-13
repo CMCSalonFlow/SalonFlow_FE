@@ -388,6 +388,9 @@ export default function BookingPage() {
                                 <Col span={24}>
                                     <Text type="secondary">Tổng chi phí:</Text> <Text strong style={{ color: "#faad14", fontSize: 18 }}>{parseFloat(bookingSuccess.totalPrice).toLocaleString()} đ</Text>
                                 </Col>
+                                <Col span={24}>
+                                    <Text type="secondary">Tiền cọc:</Text> <Text strong style={{ color: "#f5222d", fontSize: 18 }}>{formatCurrency(bookingSuccess.depositAmount)} đ</Text>
+                                </Col>
                             </Row>
                         </div>
                     </Result>
