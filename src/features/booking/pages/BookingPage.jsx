@@ -318,28 +318,29 @@ export default function BookingPage() {
             }
 
             const res = await createBookingApi(selectedBranchId, payload);
-
-            if (paymentMethod === "PAY_AT_COUNTER") {
-                setBookingSuccess(res);
-                message.success("Đặt lịch hẹn thành công!");
-            } else {
-                // Sinh idempotency key duy nhất cho transaction
-                const idempotencyKey = `pay_${res.id}_${Date.now()}`;
-                message.loading({ content: "Đang tạo liên kết thanh toán...", key: "payment_redirect" });
+            
+            if (paymentMethod === "VNPAY") {
+                message.loading({ content: "Đang chuyển hướng sang cổng thanh toán VNPay...", key: "payment_redirect" });
                 
-                const paymentRes = await createPaymentUrlApi({
+                const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
+                const returnUrl = window.location.origin + "/payment/callback";
+                
+                const paymentPayload = {
                     bookingId: res.id,
-                    paymentMethod: paymentMethod,
+                    paymentMethod: "VNPAY",
                     idempotencyKey: idempotencyKey,
-                    returnUrl: window.location.origin + "/payment/callback?bookingId=" + res.id
-                });
-
-                if (paymentRes && paymentRes.paymentUrl) {
-                    message.success({ content: "Đang chuyển hướng sang cổng thanh toán...", key: "payment_redirect", duration: 2 });
+                    returnUrl: returnUrl
+                };
+                
+                const paymentRes = await createPaymentUrlApi(paymentPayload);
+                if (paymentRes.paymentUrl) {
                     window.location.href = paymentRes.paymentUrl;
                 } else {
-                    throw new Error("Không lấy được link thanh toán từ hệ thống.");
+                    throw new Error("Không thể tạo liên kết thanh toán VNPay.");
                 }
+            } else {
+                setBookingSuccess(res);
+                message.success("Đặt lịch hẹn thành công!");
             }
         } catch (error) {
             message.error({ content: error.response?.data?.message || error.message || "Lỗi khi tạo đặt lịch hẹn.", key: "payment_redirect" });
@@ -682,75 +683,6 @@ export default function BookingPage() {
 
                                         <Divider style={{ margin: "24px 0" }} />
 
-                                        <FormLayoutItem label="Chọn Phương thức Thanh toán">
-                                            <Radio.Group 
-                                                value={paymentMethod} 
-                                                onChange={(e) => setPaymentMethod(e.target.value)}
-                                                style={{ width: "100%" }}
-                                            >
-                                                <Row gutter={[16, 16]}>
-                                                    <Col xs={24} sm={12}>
-                                                        <Radio.Button 
-                                                            value="PAY_AT_COUNTER" 
-                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
-                                                        >
-                                                            <Space>
-                                                                <span style={{ fontSize: 20 }}>💵</span>
-                                                                <div style={{ textAlign: "left" }}>
-                                                                    <div style={{ fontWeight: 600 }}>Thanh toán tại quầy</div>
-                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Trả tiền sau khi hoàn thành dịch vụ</div>
-                                                                </div>
-                                                            </Space>
-                                                        </Radio.Button>
-                                                    </Col>
-                                                    <Col xs={24} sm={12}>
-                                                        <Radio.Button 
-                                                            value="VNPAY" 
-                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
-                                                        >
-                                                            <Space>
-                                                                <img src="https://sandbox.vnpayment.vn/paymentv2/Images/brands/logo-vnpay.png" alt="VNPay" style={{ height: 24, objectFit: "contain" }} />
-                                                                <div style={{ textAlign: "left" }}>
-                                                                    <div style={{ fontWeight: 600 }}>Cổng VNPay</div>
-                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Tài khoản ngân hàng hoặc ví VNPay</div>
-                                                                </div>
-                                                            </Space>
-                                                        </Radio.Button>
-                                                    </Col>
-                                                    <Col xs={24} sm={12}>
-                                                        <Radio.Button 
-                                                            value="MOMO" 
-                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
-                                                        >
-                                                            <Space>
-                                                                <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" style={{ height: 24, width: 24, objectFit: "contain" }} />
-                                                                <div style={{ textAlign: "left" }}>
-                                                                    <div style={{ fontWeight: 600 }}>Ví MoMo</div>
-                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Ví điện tử hoặc mã QR MoMo</div>
-                                                                </div>
-                                                            </Space>
-                                                        </Radio.Button>
-                                                    </Col>
-                                                    <Col xs={24} sm={12}>
-                                                        <Radio.Button 
-                                                            value="ZALOPAY" 
-                                                            style={{ width: "100%", height: "auto", padding: "12px", borderRadius: "10px", display: "flex", alignItems: "center" }}
-                                                        >
-                                                            <Space>
-                                                                <img src="https://images.vietnamworks.com/pictureprofile/vng-zalopay/zalopay_200.jpg" alt="ZaloPay" style={{ height: 24, width: 24, objectFit: "contain", borderRadius: 4 }} />
-                                                                <div style={{ textAlign: "left" }}>
-                                                                    <div style={{ fontWeight: 600 }}>Ví ZaloPay</div>
-                                                                    <div style={{ fontSize: 11, color: "#8c8c8c" }}>Ứng dụng hoặc mã QR ZaloPay</div>
-                                                                </div>
-                                                            </Space>
-                                                        </Radio.Button>
-                                                    </Col>
-                                                </Row>
-                                            </Radio.Group>
-                                        </FormLayoutItem>
-
-                                        <Divider style={{ margin: "24px 0" }} />
-
                                         <FormLayoutItem label="Ghi chú thêm (Không bắt buộc)">
                                             <Input.TextArea
                                                 rows={4}
@@ -758,6 +690,25 @@ export default function BookingPage() {
                                                 value={notes}
                                                 onChange={(e) => setNotes(e.target.value)}
                                             />
+                                        </FormLayoutItem>
+
+                                        <Divider style={{ margin: "24px 0" }} />
+
+                                        <FormLayoutItem label="Phương thức thanh toán">
+                                            <Radio.Group 
+                                                value={paymentMethod} 
+                                                onChange={(e) => setPaymentMethod(e.target.value)}
+                                                style={{ width: "100%" }}
+                                            >
+                                                <Space direction="vertical" style={{ width: "100%" }}>
+                                                    <Radio value="PAY_AT_COUNTER" style={{ padding: "4px 0", fontSize: 15 }}>
+                                                        <Text strong>Thanh toán tại quầy</Text> (Thanh toán trực tiếp sau dịch vụ)
+                                                    </Radio>
+                                                    <Radio value="VNPAY" style={{ padding: "4px 0", fontSize: 15 }}>
+                                                        <Text strong>Thanh toán qua cổng VNPay</Text> (Thanh toán trực tuyến bằng Thẻ nội địa/QR Code)
+                                                    </Radio>
+                                                </Space>
+                                            </Radio.Group>
                                         </FormLayoutItem>
                                     </div>
                                 )}

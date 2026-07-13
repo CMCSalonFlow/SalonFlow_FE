@@ -11,14 +11,19 @@ import {
     message,
     Empty,
     Modal,
-    Input
+    Input,
+    List,
+    Alert
 } from "antd";
 import {
     CalendarOutlined,
     PlusOutlined,
     ClockCircleOutlined,
     ShopOutlined,
-    UserOutlined
+    UserOutlined,
+    InfoCircleOutlined,
+    FileTextOutlined,
+    DollarCircleOutlined
 } from "@ant-design/icons";
 
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
@@ -26,6 +31,7 @@ import {
     getBookingsByBranchApi,
     cancelBookingApi
 } from "../api/bookingApi";
+import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -35,6 +41,8 @@ export default function AppointmentsPage() {
 
     const [loading, setLoading] = useState(false);
     const [myBookings, setMyBookings] = useState([]);
+    const [selectedBooking, setSelectedBooking] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
     useEffect(() => {
         loadMyBookings();
@@ -69,10 +77,33 @@ export default function AppointmentsPage() {
                             String(booking.customerId) === String(currentUserId)
                     );
 
+                const now = new Date();
+
+                const isUpcoming = (booking) => {
+                    if (booking.status !== "PENDING" && booking.status !== "CONFIRMED") {
+                        return false;
+                    }
+                    const bookingDateTime = new Date(`${booking.bookingDate}T${booking.startTime}`);
+                    return bookingDateTime >= now;
+                };
+
                 mergedBookings.sort((a, b) => {
+                    const aUpcoming = isUpcoming(a);
+                    const bUpcoming = isUpcoming(b);
+
+                    if (aUpcoming && !bUpcoming) return -1;
+                    if (!aUpcoming && bUpcoming) return 1;
+
                     const dateA = new Date(`${a.bookingDate}T${a.startTime}`);
                     const dateB = new Date(`${b.bookingDate}T${b.startTime}`);
-                    return dateB - dateA;
+
+                    if (aUpcoming && bUpcoming) {
+                        // Sắp diễn ra: tăng dần (gần hiện tại nhất ở đầu)
+                        return dateA - dateB;
+                    } else {
+                        // Quá khứ: giảm dần (mới diễn ra gần đây ở đầu)
+                        return dateB - dateA;
+                    }
                 });
 
                 setMyBookings(mergedBookings);
@@ -101,7 +132,83 @@ export default function AppointmentsPage() {
                 return <Tag>{status}</Tag>;
         }
     };
+
+    const getStatusText = (status) => {
+        switch (status) {
+            case "PENDING":
+                return "Đang chờ xử lý / Thanh toán";
+            case "CONFIRMED":
+                return "Đã xác nhận";
+            case "COMPLETED":
+                return "Đã hoàn thành";
+            case "CANCELLED":
+                return "Đã hủy";
+            case "NO_SHOW":
+                return "Vắng mặt";
+            default:
+                return status;
+        }
+    };
+
+    const getStatusDescription = (booking) => {
+        switch (booking?.status) {
+            case "PENDING":
+                return "Lịch hẹn đã được khóa giữ chỗ thành công trên hệ thống. Trạng thái 'Đang chờ' này có nghĩa là hệ thống đang chờ bạn hoàn tất thanh toán VNPay (nếu đặt trực tuyến) hoặc đang chờ cửa hàng xác nhận và duyệt lịch hẹn của bạn (nếu chọn thanh toán tại quầy).";
+            case "CONFIRMED":
+                return "Lịch hẹn của bạn đã được xác nhận thành công và sẵn sàng để phục vụ. Vui lòng đến đúng giờ hẹn đã chọn.";
+            case "COMPLETED":
+                return "Lịch hẹn đã được thực hiện thành công. Cảm ơn bạn đã lựa chọn dịch vụ của chúng tôi!";
+            case "CANCELLED":
+                return `Lịch hẹn này đã bị hủy. ${booking.notes ? `Lý do hủy: "${booking.notes}"` : "Không có lý do cụ thể."}`;
+            case "NO_SHOW":
+                return "Bạn đã không đến đúng giờ hẹn theo lịch đặt trước.";
+            default:
+                return "";
+        }
+    };
+
+    const getAlertType = (status) => {
+        switch (status) {
+            case "PENDING":
+                return "warning";
+            case "CONFIRMED":
+                return "info";
+            case "COMPLETED":
+                return "success";
+            case "CANCELLED":
+                return "error";
+            case "NO_SHOW":
+                return "info";
+            default:
+                return "info";
+        }
+    };
     
+
+    const handlePayNow = async (booking) => {
+        try {
+            message.loading({ content: "Đang chuyển hướng sang cổng thanh toán VNPay...", key: "payment_redirect" });
+            
+            const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
+            const returnUrl = window.location.origin + "/payment/callback";
+            
+            const paymentPayload = {
+                bookingId: booking.id,
+                paymentMethod: "VNPAY",
+                idempotencyKey: idempotencyKey,
+                returnUrl: returnUrl
+            };
+            
+            const paymentRes = await createPaymentUrlApi(paymentPayload);
+            if (paymentRes.paymentUrl) {
+                window.location.href = paymentRes.paymentUrl;
+            } else {
+                throw new Error("Không thể tạo liên kết thanh toán VNPay.");
+            }
+        } catch (error) {
+            message.error({ content: error.message || "Lỗi khi tạo liên kết thanh toán.", key: "payment_redirect" });
+        }
+    };
 
     const handleCancelBooking = (bookingId) => {
 
@@ -296,6 +403,23 @@ export default function AppointmentsPage() {
                         pagination={{
                             pageSize: 8
                         }}
+                        onRow={(record) => {
+                            return {
+                                onClick: (event) => {
+                                    // Bỏ qua sự kiện click dòng nếu bấm vào các button (ví dụ: Hủy lịch)
+                                    if (
+                                        event.target.tagName === "BUTTON" ||
+                                        event.target.closest("button") ||
+                                        event.target.closest(".ant-btn")
+                                    ) {
+                                        return;
+                                    }
+                                    setSelectedBooking(record);
+                                    setIsDetailModalOpen(true);
+                                },
+                                style: { cursor: "pointer" }
+                            };
+                        }}
                         locale={{
                             emptyText: (
                                 <Empty
@@ -316,6 +440,133 @@ export default function AppointmentsPage() {
                 )}
 
             </Card>
+
+            {/* Modal Chi tiết lịch hẹn */}
+            <Modal
+                title={
+                    <Space style={{ fontSize: "18px" }}>
+                        <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                        <span>Chi tiết lịch hẹn #{selectedBooking?.id}</span>
+                    </Space>
+                }
+                open={isDetailModalOpen}
+                onCancel={() => {
+                    setIsDetailModalOpen(false);
+                    setSelectedBooking(null);
+                }}
+                footer={[
+                    selectedBooking?.status === "PENDING" && (
+                        <Button
+                            key="pay"
+                            type="primary"
+                            style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+                            onClick={() => handlePayNow(selectedBooking)}
+                        >
+                            Thanh toán ngay qua VNPay
+                        </Button>
+                    ),
+                    <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
+                        Đóng
+                    </Button>
+                ]}
+                width={650}
+                centered
+            >
+                {selectedBooking && (
+                    <div style={{ padding: "10px 0" }}>
+                        {/* Status detail alert box */}
+                        <Alert
+                            message={
+                                <span style={{ fontWeight: "bold" }}>
+                                    Trạng thái: {getStatusText(selectedBooking.status)}
+                                </span>
+                            }
+                            description={getStatusDescription(selectedBooking)}
+                            type={getAlertType(selectedBooking.status)}
+                            showIcon
+                            style={{ marginBottom: 20, borderRadius: "8px" }}
+                        />
+
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: 20, padding: "8px 12px", backgroundColor: "#f5f5f5", borderRadius: "6px" }}>
+                            <ShopOutlined style={{ fontSize: 18, color: "#1890ff" }} />
+                            <span style={{ fontSize: 14, fontWeight: "500" }}>Chi nhánh:</span>
+                            <span style={{ fontSize: 14, fontWeight: "bold" }}>{selectedBooking.branchName}</span>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: 20 }}>
+                            <Card size="small" title="Thông tin lịch hẹn" style={{ borderRadius: "8px" }}>
+                                <Space direction="vertical" style={{ width: "100%" }}>
+                                    <div>
+                                        <ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+                                        <Text type="secondary">Thời gian: </Text>
+                                        <Text strong>
+                                            {selectedBooking.startTime.substring(0, 5)} - {selectedBooking.endTime.substring(0, 5)}, {selectedBooking.bookingDate}
+                                        </Text>
+                                    </div>
+                                    <div>
+                                        <UserOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+                                        <Text type="secondary">Nhân viên: </Text>
+                                        <Text strong>{selectedBooking.assignedStaffName || "Hệ thống tự động phân bổ"}</Text>
+                                    </div>
+                                </Space>
+                            </Card>
+
+                            <Card size="small" title="Thông tin khách hàng" style={{ borderRadius: "8px" }}>
+                                <Space direction="vertical" style={{ width: "100%" }}>
+                                    <div>
+                                        <Text type="secondary">Tên khách hàng: </Text>
+                                        <Text strong>{selectedBooking.customerName || "N/A"}</Text>
+                                    </div>
+                                    <div>
+                                        <Text type="secondary">Số điện thoại: </Text>
+                                        <Text strong>{selectedBooking.customerPhone || "N/A"}</Text>
+                                    </div>
+                                </Space>
+                            </Card>
+                        </div>
+
+                        <div style={{ marginBottom: 20 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", fontWeight: "bold" }}>
+                                <FileTextOutlined style={{ color: "#1890ff" }} />
+                                <span>Dịch vụ đã đặt</span>
+                            </div>
+                            <List
+                                bordered
+                                size="small"
+                                dataSource={selectedBooking.items || []}
+                                renderItem={(item) => (
+                                    <List.Item style={{ display: "flex", justifyContent: "space-between" }}>
+                                        <Space direction="vertical" size={0}>
+                                            <Text strong>{item.serviceName || item.bundleName}</Text>
+                                            <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                Thời lượng: {item.durationMinutes} phút
+                                            </Text>
+                                        </Space>
+                                        <Text strong>{Number(item.price).toLocaleString()} đ</Text>
+                                    </List.Item>
+                                )}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", backgroundColor: "#fafafa", borderRadius: "8px", border: "1px solid #f0f0f0", marginBottom: 20 }}>
+                            <Space>
+                                <DollarCircleOutlined style={{ color: "#faad14", fontSize: 18 }} />
+                                <span style={{ fontWeight: "500" }}>Tổng tiền thanh toán:</span>
+                            </Space>
+                            <Text strong style={{ fontSize: "18px", color: "#faad14" }}>
+                                {Number(selectedBooking.totalPrice).toLocaleString()} đ
+                            </Text>
+                        </div>
+
+                        {selectedBooking.notes && selectedBooking.status !== "CANCELLED" && (
+                            <div style={{ marginBottom: 20, backgroundColor: "#f9f9f9", padding: "12px", borderRadius: "8px", border: "1px solid #f0f0f0" }}>
+                                <div style={{ fontWeight: "500", marginBottom: "4px" }}>Ghi chú từ khách hàng:</div>
+                                <Text type="secondary" style={{ fontStyle: "italic" }}>{selectedBooking.notes}</Text>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </Modal>
 
         </div>
     );

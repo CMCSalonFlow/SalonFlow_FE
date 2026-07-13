@@ -1,21 +1,13 @@
 import api from "@/core/api/axios";
 
-/**
- * Gọi API sinh URL thanh toán trực tuyến.
- *
- * @param {Object} payload { bookingId, paymentMethod, idempotencyKey, returnUrl }
- */
+// Khởi tạo giao dịch thanh toán trực tuyến, trả về URL thanh toán VNPay
 export const createPaymentUrlApi = async (payload) => {
     const response = await api.post("/api/v1/payments/create-url", payload);
     return response.data;
 };
 
-/**
- * Lấy trạng thái thanh toán mới nhất của một lịch hẹn.
- *
- * @param {number|string} bookingId
- */
-export const getPaymentStatusApi = async (bookingId) => {
-    const response = await api.get(`/api/v1/payments/status/${bookingId}`);
+// Xác thực chữ ký thanh toán và lấy kết quả trả về từ VNPay
+export const verifyPaymentApi = async (params) => {
+    const response = await api.get("/api/v1/payments/vnpay-callback", { params });
     return response.data;
 };
