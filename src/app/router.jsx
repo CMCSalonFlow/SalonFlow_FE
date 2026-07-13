@@ -63,10 +63,6 @@ import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
 
 const router = createBrowserRouter([
     {
-        path: "/",
-        element: <LoginPage />,
-    },
-    {
         path: "/login",
         element: <LoginPage />,
     },
@@ -177,22 +173,45 @@ const router = createBrowserRouter([
     },
     ///USER AREA///
     {
+        element: <PublicLayout />,
+        children: [
+            {
+                index: true,
+                element: <HomePage />
+            },
+            {
+                path: "home",
+                element: <HomePage />
+            },
+            {
+                path: "search",
+                element: <SearchPage />
+            },
+            {
+                path: "services",
+                element: <CategoryListUserPage />
+            },
+            {
+                path: "booking",
+                element: <BookingPage />
+            },
+        ]
+    },
+    {
         element:
             <CustomerLayout />,
         children: [
-
             {
                 path: "/home",
                 element:
                     <HomePage />
             },
-
             {
-                path: "/services",           // ← Trang xem danh mục cho khách hàng
+                path: "/services",
                 element: <CategoryListUserPage />
             },
             {
-                path: "/categories",         // Có thể thêm route này nữa cho dễ truy cập
+                path: "/categories",
                 element: <CategoryListUserPage />
             },
             {
@@ -212,33 +231,7 @@ const router = createBrowserRouter([
                 element: <SearchPage />
             }
         ]
-    },
-    {
-    element: <PublicLayout />,
-    children: [
-        {
-            path: "/",
-            element: <HomePage />
-        },
-        {
-            path: "/home",
-            element: <HomePage />
-        },
-        {
-            path: "/search",
-            element: <SearchPage />
-        },
-        {
-            path: "/services",
-            element: <CategoryListUserPage />
-        },
-        {
-            path: "/booking",
-            element: <BookingPage />
-        },
-
-    ]
-}
+    }
 ]);
 
 export default router;
