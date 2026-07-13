@@ -60,6 +60,7 @@ import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
 import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
 import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
 import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
+import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
 
 const router = createBrowserRouter([
     {
@@ -206,6 +207,10 @@ const router = createBrowserRouter([
             {
                 path: "/appointments",
                 element: <AppointmentsPage />
+            },
+            {
+                path: "/payment/callback",
+                element: <PaymentCallbackPage />
             },
             {
                 path: "/search",
