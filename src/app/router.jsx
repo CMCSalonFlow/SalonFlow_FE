@@ -3,55 +3,62 @@ import {
 } from "react-router-dom";
 
 import LoginPage from
-"@/features/auth/pages/LoginPage";
+    "@/features/auth/pages/LoginPage";
 
 import RegisterPage from
-"@/features/auth/pages/RegisterPage";
+    "@/features/auth/pages/RegisterPage";
 import OAuth2SuccessPage from
-"@/features/auth/pages/OAuth2SuccessPage";
+    "@/features/auth/pages/OAuth2SuccessPage";
 import VerifyEmailPage
-from "@/features/auth/pages/VerifyEmailPage";
+    from "@/features/auth/pages/VerifyEmailPage";
 
 import ForgotPasswordPage
-from "@/features/auth/pages/ForgotPasswordPage";
+    from "@/features/auth/pages/ForgotPasswordPage";
 
 import ResetPasswordPage
-from "@/features/auth/pages/ResetPasswordPage";
+    from "@/features/auth/pages/ResetPasswordPage";
 
 import ProtectedRoute
-from "@/core/components/ProtectedRoute";
+    from "@/core/components/ProtectedRoute";
 
 import AdminLayout
-from "@/layouts/AdminLayout/AdminLayout";
+    from "@/layouts/AdminLayout/AdminLayout";
 import OwnerLayout
-from "@/layouts/OwnerLayout/OwnerLayout";
+    from "@/layouts/OwnerLayout/OwnerLayout";
 
 import CustomerLayout
-from "@/layouts/CustomerLayout/CustomerLayout";
+    from "@/layouts/CustomerLayout/CustomerLayout";
 import HomePage
-from "@/features/auth/pages/HomePage";
+    from "@/features/auth/pages/HomePage";
 
 import AdminDashboardPage
-from "@/features/dashboard/pages/AdminDashboardPage";
+    from "@/features/dashboard/pages/AdminDashboardPage";
 import OwnerDashboardPage
-from "@/features/dashboard/pages/OwnerDashboardPage";
+    from "@/features/dashboard/pages/OwnerDashboardPage";
 import UserListPage
-from "@/features/user/pages/UserListPage";
+    from "@/features/user/pages/UserListPage";
 
 import RoleListPage
-from "@/features/role/pages/RoleListPage";
+    from "@/features/role/pages/RoleListPage";
 
 import BranchListPage
-from "@/features/branch/pages/BranchListPage";
-import  CategoryListPage 
-from "@/features/category/pages/CategoryListPage";
-
-import CategoryListUserPage 
-from "@/features/category/pages/CategoryListUserPage";
+    from "@/features/branch/pages/BranchListPage";
+import CategoryListPage
+    from "@/features/category/pages/CategoryListPage";
+import PublicLayout from "@/layouts/PublicLayout/PublicLayout";
+import SearchPage from "@/features/search/pages/SearchPage";
+import CategoryListUserPage
+    from "@/features/category/pages/CategoryListUserPage";
 import MySalonPage from "@/features/salon/pages/MySalonPage";
 import SalonListPage from "@/features/salon/pages/SalonListPage";
 import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
-
+import StaffManagementPage from "@/features/staff/pages/StaffManagementPage";
+import BookingPage from "@/features/booking/pages/BookingPage";
+import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
+import SchedulePage from "@/features/schedule/pages/SchedulePage";
+import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
+import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
+import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPage";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -112,12 +119,8 @@ const router = createBrowserRouter([
                 element: <BranchListPage />
             },
             {
-                path: "categories",
-                element: <CategoryListPage />
-            },
-            {
-                path: "schedule",
-                element: <SchedulePage />
+                path: "vouchers",
+                element: <VoucherManagementPage />
             },
         ]
     },
@@ -148,11 +151,30 @@ const router = createBrowserRouter([
             {
                 path: "services",
                 element: <ServiceManagementPage />
-            }
+            },
+            {
+                path: "staff",
+                element: <StaffManagementPage />
+            }, {
+                path: "schedule",
+                element: <SchedulePage />
+            },
+            {
+                path: "shifts",
+                element: <ShiftTemplatePage />
+            },
+            {
+                path: "off-days",
+                element: <OffDayManagementPage />
+            },
+            {
+                path: "categories",
+                element: <CategoryListPage />
+            },
         ]
     },
     ///USER AREA///
-        {
+    {
         element:
             <CustomerLayout />,
         children: [
@@ -170,10 +192,47 @@ const router = createBrowserRouter([
             {
                 path: "/categories",         // Có thể thêm route này nữa cho dễ truy cập
                 element: <CategoryListUserPage />
+            },
+            {
+                path: "/booking",
+                element: <BookingPage />
+            },
+            {
+                path: "/appointments",
+                element: <AppointmentsPage />
+            },
+            {
+                path: "/search",
+                element: <SearchPage />
             }
-
         ]
-    }
+    },
+    {
+    element: <PublicLayout />,
+    children: [
+        {
+            path: "/",
+            element: <HomePage />
+        },
+        {
+            path: "/home",
+            element: <HomePage />
+        },
+        {
+            path: "/search",
+            element: <SearchPage />
+        },
+        {
+            path: "/services",
+            element: <CategoryListUserPage />
+        },
+        {
+            path: "/booking",
+            element: <BookingPage />
+        },
+
+    ]
+}
 ]);
 
 export default router;
