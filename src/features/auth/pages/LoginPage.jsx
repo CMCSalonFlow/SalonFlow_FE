@@ -40,7 +40,7 @@ export default function LoginPage() {
                     } else if (roles.includes(ROLES.STAFF)) {
                         navigate("/staff");
                     } else if (roles.includes(ROLES.CUSTOMER)) {
-                        navigate("/customer");
+                        navigate("/home");
                     }
                 }
             } catch (e) {
@@ -80,7 +80,7 @@ export default function LoginPage() {
                 navigate("/staff");
             }
             else if (roles.includes(ROLES.CUSTOMER)) {
-                navigate("/customer");
+                navigate("/home");
             }
             else {
                 navigate("/login");

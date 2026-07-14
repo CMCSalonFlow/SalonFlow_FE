@@ -1,176 +1,150 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { Card, Button, Result, Spin, Typography, Space, Divider, Row, Col, Tag } from "antd";
-import { CheckCircleFilled, CloseCircleFilled, InfoCircleFilled, LoadingOutlined, HomeOutlined, CalendarOutlined } from "@ant-design/icons";
-import { getPaymentStatusApi } from "../api/paymentApi";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Card, Result, Button, Spin, Typography, Space, Descriptions, Divider } from "antd";
+import { CalendarOutlined, HomeOutlined, RedoOutlined } from "@ant-design/icons";
+import { verifyPaymentApi } from "../api/paymentApi";
 
 const { Title, Text } = Typography;
 
 export default function PaymentCallbackPage() {
-    const [searchParams] = useSearchParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    
     const [loading, setLoading] = useState(true);
-    const [paymentInfo, setPaymentInfo] = useState(null);
-    const [errorMsg, setErrorMsg] = useState("");
-
-    const bookingId = searchParams.get("bookingId");
+    const [result, setResult] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
 
     useEffect(() => {
-        if (!bookingId) {
-            setErrorMsg("Không tìm thấy thông tin lịch hẹn (bookingId) trong liên kết callback.");
-            setLoading(false);
-            return;
-        }
+        const verifyPayment = async () => {
+            try {
+                // Lấy tất cả query params từ URL do VNPay redirect về
+                const params = {};
+                const searchParams = new URLSearchParams(location.search);
+                for (const [key, value] of searchParams.entries()) {
+                    params[key] = value;
+                }
 
-        // Đợi 2 giây trước khi call API để đảm bảo Webhook (IPN) đã được xử lý xong
-        const timer = setTimeout(() => {
-            fetchPaymentStatus();
-        }, 2000);
+                if (Object.keys(params).length === 0) {
+                    setErrorMsg("Không tìm thấy thông tin phản hồi từ cổng thanh toán VNPay.");
+                    setLoading(false);
+                    return;
+                }
 
-        return () => clearTimeout(timer);
-    }, [bookingId]);
+                const response = await verifyPaymentApi(params);
+                setResult(response);
+            } catch (err) {
+                console.error("Xác minh thanh toán thất bại:", err);
+                setErrorMsg(err.response?.data?.message || err.message || "Xác thực chữ ký giao dịch thất bại.");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const fetchPaymentStatus = async () => {
-        try {
-            setLoading(true);
-            const data = await getPaymentStatusApi(bookingId);
-            setPaymentInfo(data);
-        } catch (error) {
-            console.error("Lỗi lấy trạng thái thanh toán:", error);
-            setErrorMsg("Không thể đồng bộ trạng thái thanh toán từ hệ thống. Vui lòng liên hệ hỗ trợ.");
-        } finally {
-            setLoading(false);
-        }
-    };
+        verifyPayment();
+    }, [location]);
 
     if (loading) {
         return (
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
-                <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: "#1890ff" }} spin />} />
-                <Title level={4} style={{ marginTop: 24, color: "#595959" }}>Đang xác thực giao dịch thanh toán...</Title>
-                <Text type="secondary">Vui lòng không tắt hoặc tải lại trang này</Text>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh", flexDirection: "column" }}>
+                <Spin size="large" tip="Đang xác minh kết quả thanh toán..." />
+                <Title level={4} style={{ marginTop: 24, color: "#1890ff" }}>Vui lòng giữ kết nối, hệ thống đang cập nhật trạng thái đặt lịch</Title>
             </div>
         );
     }
 
-    if (errorMsg) {
-        return (
-            <div style={{ maxWidth: 600, margin: "60px auto", padding: "0 20px" }}>
-                <Card style={{ borderRadius: 20, boxShadow: "0 10px 30px rgba(0,0,0,0.08)" }}>
-                    <Result
-                        status="error"
-                        title="Đã xảy ra lỗi"
-                        subTitle={errorMsg}
-                        extra={[
-                            <Button type="primary" key="home" icon={<HomeOutlined />} size="large" onClick={() => navigate("/home")}>
-                                Quay về Trang chủ
-                            </Button>
-                        ]}
-                    />
-                </Card>
-            </div>
-        );
-    }
-
-    const { status, amount, paymentMethod, paymentId } = paymentInfo || {};
-
-    const renderResult = () => {
-        if (status === "SUCCESS") {
-            return (
-                <Result
-                    icon={<CheckCircleFilled style={{ fontSize: 72, color: "#52c41a" }} />}
-                    title={<Title level={2} style={{ color: "#237804" }}>Thanh toán thành công!</Title>}
-                    subTitle={`Lịch hẹn #${bookingId} của bạn đã được xác nhận.`}
-                    extra={[
-                        <Button type="primary" key="appointments" icon={<CalendarOutlined />} size="large" onClick={() => navigate("/appointments")}>
-                            Lịch hẹn của tôi
-                        </Button>,
-                        <Button key="home" icon={<HomeOutlined />} size="large" onClick={() => navigate("/home")}>
-                            Trang chủ
-                        </Button>
-                    ]}
-                >
-                    <div style={{ background: "#f6ffed", border: "1px solid #b7eb8f", padding: "24px", borderRadius: 16, marginTop: 16 }}>
-                        <Row gutter={[16, 12]} style={{ textAlign: "left" }}>
-                            <Col span={12}><Text type="secondary">Mã thanh toán:</Text></Col>
-                            <Col span={12} style={{ textAlign: "right" }}><Text strong>#{paymentId}</Text></Col>
-                            
-                            <Col span={12}><Text type="secondary">Cổng thanh toán:</Text></Col>
-                            <Col span={12} style={{ textAlign: "right" }}><Tag color="cyan">{paymentMethod}</Tag></Col>
-                            
-                            <Col span={12}><Text type="secondary">Số tiền thanh toán:</Text></Col>
-                            <Col span={12} style={{ textAlign: "right" }}>
-                                <Text strong style={{ color: "#52c41a", fontSize: 18 }}>
-                                    {parseFloat(amount).toLocaleString()} đ
-                                </Text>
-                            </Col>
-
-                            <Col span={12}><Text type="secondary">Trạng thái:</Text></Col>
-                            <Col span={12} style={{ textAlign: "right" }}><Tag color="success">ĐÃ THANH TOÁN</Tag></Col>
-                        </Row>
-                    </div>
-                </Result>
-            );
-        } else if (status === "PENDING") {
-            return (
-                <Result
-                    icon={<InfoCircleFilled style={{ fontSize: 72, color: "#faad14" }} />}
-                    title={<Title level={2} style={{ color: "#ad6800" }}>Giao dịch đang xử lý</Title>}
-                    subTitle="Hệ thống đang chờ cập nhật kết quả từ ví/cổng thanh toán."
-                    extra={[
-                        <Button type="primary" key="refresh" size="large" onClick={fetchPaymentStatus}>
-                            Tải lại trạng thái
-                        </Button>,
-                        <Button key="appointments" size="large" onClick={() => navigate("/appointments")}>
-                            Xem lịch hẹn
-                        </Button>
-                    ]}
-                >
-                    <div style={{ background: "#fffbe6", border: "1px solid #ffe58f", padding: "24px", borderRadius: 16, marginTop: 16 }}>
-                        <Text type="secondary">Mã lịch hẹn của bạn là </Text><Text strong>#{bookingId}</Text>
-                        <br />
-                        <Text type="secondary">Nếu tài khoản của bạn đã bị trừ tiền nhưng trạng thái chưa cập nhật, vui lòng đợi vài phút hoặc bấm nút **Tải lại trạng thái**.</Text>
-                    </div>
-                </Result>
-            );
-        } else {
-            // FAILED hoặc CANCELLED
-            return (
-                <Result
-                    icon={<CloseCircleFilled style={{ fontSize: 72, color: "#f5222d" }} />}
-                    title={<Title level={2} style={{ color: "#a8071a" }}>Thanh toán thất bại</Title>}
-                    subTitle="Giao dịch thanh toán không thành công hoặc đã bị hủy từ phía người dùng."
-                    extra={[
-                        <Button type="primary" key="retry" size="large" onClick={() => navigate("/booking")}>
-                            Đặt lịch lại
-                        </Button>,
-                        <Button key="home" icon={<HomeOutlined />} size="large" onClick={() => navigate("/home")}>
-                            Quay về Trang chủ
-                        </Button>
-                    ]}
-                >
-                    <div style={{ background: "#fff1f0", border: "1px solid #ffa39e", padding: "24px", borderRadius: 16, marginTop: 16 }}>
-                        <Text type="secondary">Mã đặt lịch liên quan: </Text><Text strong>#{bookingId}</Text>
-                        <br />
-                        <Text type="secondary">Bạn có thể thực hiện đặt lại lịch hẹn mới và thanh toán lại qua các phương thức khác.</Text>
-                    </div>
-                </Result>
-            );
-        }
-    };
+    const isSuccess = result && result.status === "SUCCESS";
 
     return (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh", padding: "20px" }}>
+        <div style={{ maxWidth: 700, margin: "60px auto", padding: "0 16px" }}>
             <Card 
                 style={{ 
-                    width: "100%", 
-                    maxWidth: 600, 
-                    borderRadius: 24, 
-                    boxShadow: "0 15px 40px rgba(0,0,0,0.06)",
-                    background: "#ffffff"
+                    borderRadius: 20, 
+                    boxShadow: "0 15px 40px rgba(0, 0, 0, 0.08)",
+                    border: "none",
+                    background: "rgba(255, 255, 255, 0.95)"
                 }}
             >
-                {renderResult()}
+                {isSuccess ? (
+                    <Result
+                        status="success"
+                        title={<Title level={2} style={{ color: "#52c41a", margin: 0 }}>Thanh toán thành công!</Title>}
+                        subTitle="Hệ thống đã ghi nhận thanh toán trực tuyến của bạn."
+                        extra={[
+                            <Button 
+                                type="primary" 
+                                size="large" 
+                                icon={<CalendarOutlined />} 
+                                onClick={() => navigate("/appointments")}
+                                style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
+                                key="appointments"
+                            >
+                                Lịch hẹn của tôi
+                            </Button>,
+                            <Button 
+                                size="large" 
+                                icon={<HomeOutlined />} 
+                                onClick={() => navigate("/home")}
+                                style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
+                                key="home"
+                            >
+                                Trang chủ
+                            </Button>
+                        ]}
+                    >
+                        <div style={{ background: "#f6ffed", border: "1px solid #b7eb8f", padding: "20px", borderRadius: 12, marginTop: 16 }}>
+                            <Descriptions title="Chi tiết giao dịch" column={1} size="small" layout="horizontal">
+                                <Descriptions.Item label={<Text strong>Mã đặt lịch</Text>}>
+                                    <Text copyable strong>#{result.bookingId}</Text>
+                                </Descriptions.Item>
+                                <Descriptions.Item label={<Text strong>Số tiền đã thanh toán</Text>}>
+                                    <Text type="success" strong style={{ fontSize: 16 }}>
+                                        {parseFloat(result.amount).toLocaleString()} đ
+                                    </Text>
+                                </Descriptions.Item>
+                                <Descriptions.Item label={<Text strong>Phương thức thanh toán</Text>}>
+                                    VNPay Online
+                                </Descriptions.Item>
+                                <Descriptions.Item label={<Text strong>Trạng thái</Text>}>
+                                    <Text type="success" strong>ĐÃ XÁC NHẬN (PAID)</Text>
+                                </Descriptions.Item>
+                            </Descriptions>
+                        </div>
+                    </Result>
+                ) : (
+                    <Result
+                        status="error"
+                        title={<Title level={2} style={{ color: "#f5222d", margin: 0 }}>Thanh toán không thành công</Title>}
+                        subTitle={errorMsg || "Giao dịch thanh toán đã bị hủy hoặc gặp lỗi trong quá trình xử lý."}
+                        extra={[
+                            <Button 
+                                type="primary" 
+                                danger
+                                size="large" 
+                                icon={<RedoOutlined />} 
+                                onClick={() => navigate("/booking")}
+                                style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
+                                key="retry"
+                            >
+                                Đặt lịch lại
+                            </Button>,
+                            <Button 
+                                size="large" 
+                                icon={<HomeOutlined />} 
+                                onClick={() => navigate("/home")}
+                                style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
+                                key="home"
+                            >
+                                Trang chủ
+                            </Button>
+                        ]}
+                    >
+                        <div style={{ background: "#fff2e8", border: "1px solid #ffbb96", padding: "16px", borderRadius: 12, marginTop: 16, textAlign: "center" }}>
+                            <Text type="secondary">
+                                Lịch hẹn của bạn chưa được xác nhận thanh toán. Bạn có thể thực hiện lại quy trình đặt lịch hoặc liên hệ Hotline salon để được hỗ trợ.
+                            </Text>
+                        </div>
+                    </Result>
+                )}
             </Card>
         </div>
     );
