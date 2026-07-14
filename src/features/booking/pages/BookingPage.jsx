@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, DatePicker, message, Spin, Grid, Radio, Avatar, Tag, Input, Result } from "antd";
+import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, DatePicker, message, Spin, Grid, Radio, Avatar, Tag, Input } from "antd";
 import { ShopOutlined, AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, SmileOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
 import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
@@ -11,7 +11,7 @@ import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
 import dayjs from "dayjs";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
 const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
@@ -26,7 +26,6 @@ export default function BookingPage() {
 
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [bookingSuccess, setBookingSuccess] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState("PAY_AT_COUNTER");
 
     // Dữ liệu nguồn
@@ -119,7 +118,7 @@ export default function BookingPage() {
                 const data = await getPublicSalonsApi();
                 setSalons(data);
                 // Bỏ tự động chọn salon đầu tiên để bắt người dùng phải chọn thủ công
-            } catch (error) {
+            } catch {
                 message.error("Không thể tải danh sách Salon.");
             } finally {
                 setLoading(false);
@@ -130,11 +129,7 @@ export default function BookingPage() {
 
     // 2. Tải danh sách chi nhánh khi thay đổi Salon
     useEffect(() => {
-        if (!selectedSalonId) {
-            setBranches([]);
-            setSelectedBranchId(null);
-            return;
-        }
+        if (!selectedSalonId) return;
 
         const loadBranches = async () => {
             try {
@@ -143,7 +138,7 @@ export default function BookingPage() {
                 setBranches(data);
                 // Bỏ tự động chọn chi nhánh đầu tiên, bắt chọn thủ công
                 setSelectedBranchId(null);
-            } catch (error) {
+            } catch {
                 message.error("Lỗi tải danh sách chi nhánh của Salon này.");
             } finally {
                 setLoading(false);
@@ -177,7 +172,7 @@ export default function BookingPage() {
                 setServices(servicesData.filter(s => s.isActive));
                 setBundles(bundlesData);
                 setStaffList(staffData);
-            } catch (error) {
+            } catch {
                 message.error("Lỗi tải thông tin dịch vụ và nhân viên.");
             } finally {
                 setLoading(false);
@@ -217,7 +212,7 @@ export default function BookingPage() {
                 setAvailableTimes(data.availableStartTimes || []);
                 setOpenTime(data.openTime || null);
                 setCloseTime(data.closeTime || null);
-            } catch (error) {
+            } catch {
                 message.error("Không thể quét lịch trống lúc này.");
             } finally {
                 setLoadingSlots(false);
@@ -374,8 +369,9 @@ export default function BookingPage() {
                     throw new Error("Không thể tạo liên kết thanh toán VNPay.");
                 }
             } else {
-                setBookingSuccess(res);
+                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(res));
                 message.success("Đặt lịch hẹn thành công!");
+                navigate("/booking/pay-at-counter-success", { state: { booking: res } });
             }
         } catch (error) {
             message.error({ content: error.response?.data?.message || error.message || "Lỗi khi tạo đặt lịch hẹn.", key: "payment_redirect" });
@@ -384,61 +380,9 @@ export default function BookingPage() {
         }
     };
 
-    // Màn hình thông báo đặt lịch thành công
-    if (bookingSuccess) {
-        return (
-            <div style={{ maxWidth: 800, margin: "40px auto" }}>
-                <Card style={{ borderRadius: 20, boxShadow: "0 10px 30px rgba(0,0,0,0.06)" }}>
-                    <Result
-                        status="success"
-                        title={<Title level={2}>Đặt lịch thành công!</Title>}
-                        subTitle={`Mã số lịch hẹn của bạn là #${bookingSuccess.id}. Chúng tôi đã nhận lịch hẹn và chuẩn bị đón tiếp bạn.`}
-                        extra={[
-                            <Button type="primary" key="home" size="large" onClick={() => navigate("/home")}>
-                                Quay về Trang chủ
-                            </Button>,
-                            <Button key="appointments" size="large" onClick={() => navigate("/appointments")}>
-                                Lịch hẹn của tôi
-                            </Button>
-                        ]}
-                    >
-                        <div style={{ background: "#fafafa", padding: "24px", borderRadius: 12, marginTop: 16 }}>
-                            <Title level={4}>Chi tiết lịch hẹn</Title>
-                            <Divider style={{ margin: "12px 0" }} />
-                            <Row gutter={[16, 12]}>
-                                <Col span={12}><Text type="secondary">Chi nhánh:</Text> <Text strong>{bookingSuccess.branchName}</Text></Col>
-                                <Col span={12}><Text type="secondary">Ngày hẹn:</Text> <Text strong>{bookingSuccess.bookingDate}</Text></Col>
-                                <Col span={12}><Text type="secondary">Giờ hẹn:</Text> <Text strong>{bookingSuccess.startTime.substring(0, 5)} - {bookingSuccess.endTime.substring(0, 5)}</Text></Col>
-                                <Col span={12}><Text type="secondary">Nhân viên phục vụ:</Text> <Text strong>{bookingSuccess.assignedStaffName || "Bất kỳ nhân viên"}</Text></Col>
-                                <Col span={24}>
-                                    <Text type="secondary">Dịch vụ đã chọn:</Text>
-                                    <div style={{ marginTop: 8 }}>
-                                        {bookingSuccess.items?.map(item => (
-                                            <Tag color="blue" key={item.id}>
-                                                {item.serviceName || item.bundleName}
-                                            </Tag>
-                                        ))}
-                                    </div>
-                                </Col>
-                                <Col span={24}>
-                                    <Text type="secondary">Tổng giá trị đơn:</Text> <Text strong style={{ color: "#faad14", fontSize: 18 }}>{parseFloat(bookingSuccess.totalPrice).toLocaleString()} đ</Text>
-                                </Col>
-                                <Col span={24}>
-                                    <Text type="secondary">Tiền cọc đã thanh toán:</Text> <Text strong style={{ color: "#f5222d", fontSize: 18 }}>{formatCurrency(bookingSuccess.depositAmount)} đ</Text>
-                                </Col>
-                            </Row>
-                        </div>
-                    </Result>
-                </Card>
-            </div>
-        );
-    }
-
     const { price: totalPrice, duration: totalDuration } = getBookingSummary();
     const depositAmount = getBookingDepositAmount();
-    const payableAmount = paymentMethod === "VNPAY"
-        ? (depositAmount > 0 ? depositAmount : totalPrice)
-        : totalPrice;
+    const payableAmount = depositAmount > 0 ? depositAmount : totalPrice;
 
     return (
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 0" }}>
@@ -477,7 +421,11 @@ export default function BookingPage() {
                                                     style={{ width: "100%" }}
                                                     size="large"
                                                     value={selectedSalonId}
-                                                    onChange={setSelectedSalonId}
+                                                    onChange={(value) => {
+                                                        setSelectedSalonId(value);
+                                                        setBranches([]);
+                                                        setSelectedBranchId(null);
+                                                    }}
                                                     options={salons.map(s => ({ label: s.name, value: s.id }))}
                                                     placeholder="Chọn hệ thống Salon..."
                                                 />
@@ -744,10 +692,10 @@ export default function BookingPage() {
                                             >
                                                 <Space direction="vertical" style={{ width: "100%" }}>
                                                     <Radio value="PAY_AT_COUNTER" style={{ padding: "4px 0", fontSize: 15 }}>
-                                                        <Text strong>Thanh toán tại quầy</Text> (Thanh toán trực tiếp sau dịch vụ)
+                                                        <Text strong>Thanh toán tại quầy</Text> (Thanh toán cọc online, phần còn lại thanh toán tại salon)
                                                     </Radio>
                                                     <Radio value="VNPAY" style={{ padding: "4px 0", fontSize: 15 }}>
-                                                        <Text strong>Thanh toán qua cổng VNPay</Text> (Thanh toán trực tuyến bằng Thẻ nội địa/QR Code)
+                                                        <Text strong>Thanh toán qua cổng VNPay</Text> (Thanh toán cọc online bằng thẻ nội địa/QR Code)
                                                     </Radio>
                                                 </Space>
                                             </Radio.Group>
@@ -878,18 +826,28 @@ export default function BookingPage() {
 
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                             <Text type="secondary" style={{ fontSize: 16 }}>
-                                {paymentMethod === "VNPAY" ? "Tiền cọc phải thanh toán:" : "Tổng giá trị đơn:"}
+                                Tiền cọc phải thanh toán:
                             </Text>
                             <Text strong style={{ color: "#faad14", fontSize: 22 }}>
                                 {payableAmount.toLocaleString()} đ
                             </Text>
                         </div>
+                        <div style={{ marginTop: 8 }}>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                {paymentMethod === "PAY_AT_COUNTER"
+                                    ? (depositAmount > 0
+                                        ? `Với lựa chọn thanh toán tại quầy, bạn vẫn cần thanh toán tiền cọc online để giữ lịch: ${formatCurrency(depositAmount)} đ. Phần còn lại sẽ thanh toán tại salon.`
+                                        : "Hiện chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên.")
+                                    : (depositAmount > 0
+                                        ? `Tiền cọc sẽ được thanh toán online qua VNPay: ${formatCurrency(depositAmount)} đ.`
+                                        : "Hiện chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên.")
+                                }
+                            </Text>
+                        </div>
                         {paymentMethod === "VNPAY" && (
                             <div style={{ marginTop: 8 }}>
                                 <Text type="secondary" style={{ fontSize: 12 }}>
-                                    {depositAmount > 0
-                                        ? `Cọc được tính từ cấu hình của từng dịch vụ: ${formatCurrency(depositAmount)} đ`
-                                        : "Chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên."}
+                                    Thanh toán trực tuyến sẽ được xử lý qua VNPay ngay sau khi tạo booking.
                                 </Text>
                             </div>
                         )}

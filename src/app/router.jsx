@@ -50,10 +50,10 @@ import SearchPage from "@/features/search/pages/SearchPage";
 import CategoryListUserPage
     from "@/features/category/pages/CategoryListUserPage";
 import MySalonPage from "@/features/salon/pages/MySalonPage";
-import SalonListPage from "@/features/salon/pages/SalonListPage";
 import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
 import StaffManagementPage from "@/features/staff/pages/StaffManagementPage";
 import BookingPage from "@/features/booking/pages/BookingPage";
+import PayAtCounterSuccessPage from "@/features/booking/pages/PayAtCounterSuccessPage";
 import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
 import SchedulePage from "@/features/schedule/pages/SchedulePage";
 import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
@@ -195,6 +195,10 @@ const router = createBrowserRouter([
                 path: "booking",
                 element: <BookingPage />
             },
+            {
+                path: "booking/pay-at-counter-success",
+                element: <PayAtCounterSuccessPage />
+            },
         ]
     },
     {
@@ -217,6 +221,10 @@ const router = createBrowserRouter([
             {
                 path: "/booking",
                 element: <BookingPage />
+            },
+            {
+                path: "/booking/pay-at-counter-success",
+                element: <PayAtCounterSuccessPage />
             },
             {
                 path: "/appointments",
