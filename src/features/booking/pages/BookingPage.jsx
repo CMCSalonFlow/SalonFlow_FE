@@ -14,6 +14,8 @@ import dayjs from "dayjs";
 const { Title, Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
+const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
+
 /**
  * Trang Đặt lịch hẹn dành cho Khách hàng (BookingPage).
  * Triển khai quy trình Step Wizard 3 bước: Chọn Dịch vụ -> Chọn Thợ & Ngày -> Chọn Giờ & Đặt lịch.
@@ -269,6 +271,37 @@ export default function BookingPage() {
         }
     };
 
+    // Tính tiền cọc dựa trên cấu hình từng dịch vụ.
+    const getServiceDepositAmount = (service) => {
+        const price = Number(service?.price || 0);
+        const depositRequired = service?.depositRequired;
+        const depositPercentage = Number(service?.depositPercentage || 0);
+
+        if (!depositRequired || !depositPercentage) {
+            return 0;
+        }
+
+        return Math.round((price * depositPercentage) / 100);
+    };
+
+    const getBookingDepositAmount = () => {
+        if (bookingType === "service") {
+            return selectedServices.reduce(
+                (sum, service) => sum + getServiceDepositAmount(service),
+                0
+            );
+        }
+
+        if (!selectedBundle) {
+            return 0;
+        }
+
+        return (selectedBundle.items || []).reduce((sum, item) => {
+            const service = services.find(s => String(s.id) === String(item.serviceId));
+            return sum + getServiceDepositAmount(service);
+        }, 0);
+    };
+
     // Xử lý chuyển bước tiếp theo
     const handleNext = () => {
         if (currentStep === 0) {
@@ -324,10 +357,12 @@ export default function BookingPage() {
                 
                 const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
                 const returnUrl = window.location.origin + "/payment/callback";
+                const depositAmount = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
                 
                 const paymentPayload = {
                     bookingId: res.id,
                     paymentMethod: "VNPAY",
+                    amount: depositAmount,
                     idempotencyKey: idempotencyKey,
                     returnUrl: returnUrl
                 };
@@ -386,10 +421,10 @@ export default function BookingPage() {
                                     </div>
                                 </Col>
                                 <Col span={24}>
-                                    <Text type="secondary">Tổng chi phí:</Text> <Text strong style={{ color: "#faad14", fontSize: 18 }}>{parseFloat(bookingSuccess.totalPrice).toLocaleString()} đ</Text>
+                                    <Text type="secondary">Tổng giá trị đơn:</Text> <Text strong style={{ color: "#faad14", fontSize: 18 }}>{parseFloat(bookingSuccess.totalPrice).toLocaleString()} đ</Text>
                                 </Col>
                                 <Col span={24}>
-                                    <Text type="secondary">Tiền cọc:</Text> <Text strong style={{ color: "#f5222d", fontSize: 18 }}>{formatCurrency(bookingSuccess.depositAmount)} đ</Text>
+                                    <Text type="secondary">Tiền cọc đã thanh toán:</Text> <Text strong style={{ color: "#f5222d", fontSize: 18 }}>{formatCurrency(bookingSuccess.depositAmount)} đ</Text>
                                 </Col>
                             </Row>
                         </div>
@@ -400,6 +435,10 @@ export default function BookingPage() {
     }
 
     const { price: totalPrice, duration: totalDuration } = getBookingSummary();
+    const depositAmount = getBookingDepositAmount();
+    const payableAmount = paymentMethod === "VNPAY"
+        ? (depositAmount > 0 ? depositAmount : totalPrice)
+        : totalPrice;
 
     return (
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 0" }}>
@@ -838,11 +877,22 @@ export default function BookingPage() {
                         </div>
 
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                            <Text type="secondary" style={{ fontSize: 16 }}>Tổng thanh toán:</Text>
+                            <Text type="secondary" style={{ fontSize: 16 }}>
+                                {paymentMethod === "VNPAY" ? "Tiền cọc phải thanh toán:" : "Tổng giá trị đơn:"}
+                            </Text>
                             <Text strong style={{ color: "#faad14", fontSize: 22 }}>
-                                {totalPrice.toLocaleString()} đ
+                                {payableAmount.toLocaleString()} đ
                             </Text>
                         </div>
+                        {paymentMethod === "VNPAY" && (
+                            <div style={{ marginTop: 8 }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    {depositAmount > 0
+                                        ? `Cọc được tính từ cấu hình của từng dịch vụ: ${formatCurrency(depositAmount)} đ`
+                                        : "Chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên."}
+                                </Text>
+                            </div>
+                        )}
                     </Card>
                 </Col>
             </Row>

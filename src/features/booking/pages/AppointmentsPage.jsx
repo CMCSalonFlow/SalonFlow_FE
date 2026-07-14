@@ -139,7 +139,7 @@ export default function AppointmentsPage() {
     const getStatusText = (status) => {
         switch (status) {
             case "PENDING":
-                return "Đang chờ xử lý / Thanh toán";
+                return "Đang chờ xử lý / Chờ cọc";
             case "CONFIRMED":
                 return "Đã xác nhận";
             case "COMPLETED":
@@ -156,7 +156,7 @@ export default function AppointmentsPage() {
     const getStatusDescription = (booking) => {
         switch (booking?.status) {
             case "PENDING":
-                return "Lịch hẹn đã được khóa giữ chỗ thành công trên hệ thống. Trạng thái 'Đang chờ' này có nghĩa là hệ thống đang chờ bạn hoàn tất thanh toán VNPay (nếu đặt trực tuyến) hoặc đang chờ cửa hàng xác nhận và duyệt lịch hẹn của bạn (nếu chọn thanh toán tại quầy).";
+                return "Lịch hẹn đã được khóa giữ chỗ thành công trên hệ thống. Trạng thái 'Đang chờ' này có nghĩa là hệ thống đang chờ bạn hoàn tất thanh toán tiền cọc VNPay (nếu đặt trực tuyến) hoặc đang chờ cửa hàng xác nhận và duyệt lịch hẹn của bạn (nếu chọn thanh toán tại quầy).";
             case "CONFIRMED":
                 return "Lịch hẹn của bạn đã được xác nhận thành công và sẵn sàng để phục vụ. Vui lòng đến đúng giờ hẹn đã chọn.";
             case "COMPLETED":
@@ -194,10 +194,12 @@ export default function AppointmentsPage() {
             
             const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
             const returnUrl = window.location.origin + "/payment/callback";
+            const amount = Number(booking.depositAmount || booking.totalPrice || 0);
             
             const paymentPayload = {
                 bookingId: booking.id,
                 paymentMethod: "VNPAY",
+                amount,
                 idempotencyKey: idempotencyKey,
                 returnUrl: returnUrl
             };
@@ -332,7 +334,7 @@ export default function AppointmentsPage() {
             )
         },
         {
-            title: "Tổng tiền",
+            title: "Tổng giá trị",
             dataIndex: "totalPrice",
             render: (value) => (
                 <Text strong style={{ color: "#faad14" }}>
@@ -474,7 +476,7 @@ export default function AppointmentsPage() {
                             style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
                             onClick={() => handlePayNow(selectedBooking)}
                         >
-                            Thanh toán ngay qua VNPay
+                            Thanh toán tiền cọc qua VNPay
                         </Button>
                     ),
                     <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
@@ -563,7 +565,7 @@ export default function AppointmentsPage() {
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", backgroundColor: "#fafafa", borderRadius: "8px", border: "1px solid #f0f0f0", marginBottom: 20 }}>
                             <Space>
                                 <DollarCircleOutlined style={{ color: "#faad14", fontSize: 18 }} />
-                                <span style={{ fontWeight: "500" }}>Tổng tiền thanh toán:</span>
+                                <span style={{ fontWeight: "500" }}>Tổng giá trị đơn:</span>
                             </Space>
                             <Text strong style={{ fontSize: "18px", color: "#faad14" }}>
                                 {Number(selectedBooking.totalPrice).toLocaleString()} đ
