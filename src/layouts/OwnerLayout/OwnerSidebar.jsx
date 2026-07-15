@@ -7,7 +7,8 @@ import {
     HomeOutlined,
     ClockCircleOutlined,
     TagsOutlined,
-    DollarOutlined
+    DollarOutlined,
+    PlusCircleOutlined
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
@@ -54,10 +55,16 @@ export default function OwnerSidebar() {
             label: "Schedule"
         },
         {
+            key: "/owner/walk-in-booking",
+            icon: <PlusCircleOutlined />,
+            label: "Walk-in Booking"
+        },
+        {
             key: "/owner/off-days",
             icon: <CalendarOutlined />,
             label: "Off Days"
         },
+        
         {
             key: "/owner/shifts",
             icon: <ClockCircleOutlined />,
@@ -68,6 +75,7 @@ export default function OwnerSidebar() {
                 icon: <TagsOutlined />,
                 label: "Categories"
             }
+
     ];
 
     const selectedKey =
