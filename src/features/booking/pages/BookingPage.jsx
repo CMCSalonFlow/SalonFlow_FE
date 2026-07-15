@@ -8,6 +8,7 @@ import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/servic
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getAvailabilityApi, createBookingApi } from "../api/bookingApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
+import { getAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
 import dayjs from "dayjs";
 
@@ -53,6 +54,8 @@ export default function BookingPage() {
     const [closeTime, setCloseTime] = useState(null);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [refreshCounter, setRefreshCounter] = useState(0);
+    const [workingStaffIds, setWorkingStaffIds] = useState([]);
+    const [loadingStaff, setLoadingStaff] = useState(false);
 
     // WebSocket listener for real-time slot updates
     useEffect(() => {
@@ -182,7 +185,32 @@ export default function BookingPage() {
         loadBranchData();
     }, [selectedBranchId]);
 
-    // 3. Tải danh sách khung giờ rảnh khi có đủ Ngày, Dịch vụ/Combo, và Thợ
+    // Tải danh sách nhân viên làm việc vào ngày đã chọn
+    useEffect(() => {
+        if (!selectedBranchId || !selectedDate) {
+            setWorkingStaffIds([]);
+            return;
+        }
+
+        const fetchWorkingStaff = async () => {
+            try {
+                setLoadingStaff(true);
+                const dateStr = selectedDate.format("YYYY-MM-DD");
+                const slots = await getAvailabilitySlots(selectedBranchId, dateStr);
+                // Lấy ra danh sách userId duy nhất của các ca làm việc
+                const userIds = [...new Set(slots.map(s => s.userId))];
+                setWorkingStaffIds(userIds);
+            } catch (error) {
+                console.error("Lỗi khi tải lịch làm việc của nhân viên:", error);
+            } finally {
+                setLoadingStaff(false);
+            }
+        };
+
+        fetchWorkingStaff();
+    }, [selectedBranchId, selectedDate]);
+
+    // 3. Tải danh sách khung giờ rảnh khi có đóng Ngày, Dịch vụ/Combo, và Thợ
     useEffect(() => {
         if (!selectedBranchId || !selectedDate) return;
         if (bookingType === "service" && selectedServices.length === 0) return;
@@ -237,18 +265,28 @@ export default function BookingPage() {
         return slots;
     };
 
-    // Lọc danh sách nhân viên có đủ kỹ năng thực hiện các dịch vụ đã chọn
+    // Lọc danh sách nhân viên có đủ kỹ năng thực hiện các dịch vụ đã chọn và có lịch làm việc
     const getQualifiedStaff = () => {
         return staffList.filter(staff => {
             const allowedIds = (staff.services || []).map(s => s.id);
+            let hasSkill = false;
             if (bookingType === "bundle") {
                 if (!selectedBundle) return false;
                 const reqIds = (selectedBundle.items || []).map(item => item.serviceId);
-                return reqIds.every(id => allowedIds.includes(id));
+                hasSkill = reqIds.every(id => allowedIds.includes(id));
             } else {
                 if (selectedServices.length === 0) return false;
-                return selectedServices.every(s => allowedIds.includes(s.id));
+                hasSkill = selectedServices.every(s => allowedIds.includes(s.id));
             }
+
+            if (!hasSkill) return false;
+
+            // Nếu đã chọn ngày hẹn, chỉ hiển thị nhân viên có ca làm việc vào ngày đó
+            if (selectedDate) {
+                return workingStaffIds.includes(staff.userId);
+            }
+
+            return true;
         });
     };
 
@@ -539,66 +577,97 @@ export default function BookingPage() {
                                                 format="YYYY-MM-DD"
                                                 disabledDate={current => current && current.valueOf() < Date.now() - 24*60*60*1000}
                                                 value={selectedDate}
-                                                onChange={setSelectedDate}
+                                                onChange={(date) => {
+                                                    setSelectedDate(date);
+                                                    setSelectedStaff(null); // Reset nhân viên khi đổi ngày
+                                                }}
                                                 placeholder="Chọn ngày bạn muốn hẹn lịch..."
                                             />
                                         </div>
 
                                         <Divider style={{ margin: "24px 0" }} />
 
-                                        <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>Chọn Nhân viên thực hiện</label>
-                                        <Row gutter={[16, 16]}>
-                                            {/* Thẻ chọn "Bất kỳ ai" */}
-                                            <Col xs={24} sm={12}>
-                                                <Card
-                                                    hoverable
-                                                    style={{
-                                                        borderRadius: 12,
-                                                        border: selectedStaff === null ? "2px solid #1890ff" : "1px solid #f0f0f0",
-                                                        backgroundColor: selectedStaff === null ? "#e6f7ff" : "#fff"
-                                                    }}
-                                                    onClick={() => setSelectedStaff(null)}
-                                                >
-                                                    <Space size="middle">
-                                                        <Avatar size={48} icon={<SmileOutlined />} style={{ backgroundColor: "#87d068" }} />
-                                                        <div>
-                                                            <Text strong style={{ fontSize: 16 }}>Bất kỳ ai</Text>
-                                                            <br />
-                                                            <Text type="secondary" style={{ fontSize: 12 }}>Tự động phân bổ thợ đang rảnh</Text>
-                                                        </div>
-                                                    </Space>
-                                                </Card>
-                                            </Col>
-
-                                            {/* Danh sách thợ đủ điều kiện kỹ năng */}
-                                            {getQualifiedStaff().map(staff => {
-                                                const isSelected = selectedStaff?.id === staff.id;
-                                                return (
-                                                    <Col xs={24} sm={12} key={staff.id}>
+                                        {!selectedDate ? (
+                                            <div style={{ 
+                                                padding: "40px 20px", 
+                                                background: "#fafafa", 
+                                                borderRadius: 16, 
+                                                textAlign: "center",
+                                                border: "1px dashed #d9d9d9"
+                                            }}>
+                                                <CalendarOutlined style={{ fontSize: 32, color: "#bfbfbf", marginBottom: 12 }} />
+                                                <div>
+                                                    <Text type="secondary" style={{ fontSize: 16, fontWeight: 500 }}>
+                                                        Vui lòng chọn ngày hẹn trước để hiển thị danh sách nhân viên khả dụng.
+                                                    </Text>
+                                                </div>
+                                            </div>
+                                        ) : loadingStaff ? (
+                                            <div style={{ textAlign: "center", padding: "40px 0" }}>
+                                                <Spin tip="Đang kiểm tra lịch làm việc của nhân viên..." />
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>Chọn Nhân viên thực hiện</label>
+                                                <Row gutter={[16, 16]}>
+                                                    {/* Thẻ chọn "Bất kỳ ai" */}
+                                                    <Col xs={24} sm={12}>
                                                         <Card
                                                             hoverable
                                                             style={{
                                                                 borderRadius: 12,
-                                                                border: isSelected ? "2px solid #1890ff" : "1px solid #f0f0f0",
-                                                                backgroundColor: isSelected ? "#e6f7ff" : "#fff"
+                                                                border: selectedStaff === null ? "2px solid #1890ff" : "1px solid #f0f0f0",
+                                                                backgroundColor: selectedStaff === null ? "#e6f7ff" : "#fff"
                                                             }}
-                                                            onClick={() => setSelectedStaff(staff)}
+                                                            onClick={() => setSelectedStaff(null)}
                                                         >
                                                             <Space size="middle">
-                                                                <Avatar size={48} src={staff.avatarUrl} icon={<TeamOutlined />} style={{ backgroundColor: "#1890ff" }} />
+                                                                <Avatar size={48} icon={<SmileOutlined />} style={{ backgroundColor: "#87d068" }} />
                                                                 <div>
-                                                                    <Text strong style={{ fontSize: 16 }}>{staff.name}</Text>
+                                                                    <Text strong style={{ fontSize: 16 }}>Bất kỳ ai</Text>
                                                                     <br />
-                                                                    <Text type="secondary" style={{ fontSize: 12, display: "inline-block", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                                        {staff.specialties || "Thợ làm tóc chuyên nghiệp"}
-                                                                    </Text>
+                                                                    <Text type="secondary" style={{ fontSize: 12 }}>Tự động phân bổ thợ đang rảnh</Text>
                                                                 </div>
                                                             </Space>
                                                         </Card>
                                                     </Col>
-                                                );
-                                            })}
-                                        </Row>
+
+                                                    {/* Danh sách thợ đủ điều kiện kỹ năng */}
+                                                    {getQualifiedStaff().map(staff => {
+                                                        const isSelected = selectedStaff?.id === staff.id;
+                                                        return (
+                                                            <Col xs={24} sm={12} key={staff.id}>
+                                                                <Card
+                                                                    hoverable
+                                                                    style={{
+                                                                        borderRadius: 12,
+                                                                        border: isSelected ? "2px solid #1890ff" : "1px solid #f0f0f0",
+                                                                        backgroundColor: isSelected ? "#e6f7ff" : "#fff"
+                                                                    }}
+                                                                    onClick={() => setSelectedStaff(staff)}
+                                                                >
+                                                                    <Space size="middle">
+                                                                        <Avatar size={48} src={staff.avatarUrl} icon={<TeamOutlined />} style={{ backgroundColor: "#1890ff" }} />
+                                                                        <div>
+                                                                            <Text strong style={{ fontSize: 16 }}>{staff.name}</Text>
+                                                                            <br />
+                                                                            <Text type="secondary" style={{ fontSize: 12, display: "inline-block", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                                                {staff.specialties || "Thợ làm tóc chuyên nghiệp"}
+                                                                            </Text>
+                                                                        </div>
+                                                                    </Space>
+                                                                </Card>
+                                                            </Col>
+                                                        );
+                                                    })}
+                                                </Row>
+                                                {getQualifiedStaff().length === 0 && (
+                                                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                                                        <Text type="secondary">Không có nhân viên nào hoạt động hoặc có ca làm việc vào ngày này.</Text>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
