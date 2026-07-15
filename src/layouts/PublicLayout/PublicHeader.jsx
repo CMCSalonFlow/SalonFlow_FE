@@ -37,7 +37,7 @@ export default function PublicHeader() {
             label: "Tìm salon"
         },
         {
-            key: "/booking",
+            key: isLogin ? "/booking" : "/guest-booking",
             label: "Đặt lịch"
         },
         {
@@ -121,7 +121,7 @@ export default function PublicHeader() {
                     <Space>
                         <Button
                             type="primary"
-                            onClick={() => navigate("/booking")}
+                            onClick={() => navigate("/guest-booking")}
                         >
                             Đặt lịch ngay
                         </Button>

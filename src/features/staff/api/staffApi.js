@@ -6,6 +6,14 @@ export const getStaffByBranchApi = async (branchId) => {
     return response.data;
 };
 
+// Lấy danh sách nhân viên public của một chi nhánh
+export const getPublicStaffByBranchApi = async (branchId) => {
+    const response = await api.get(`/api/v1/branches/${branchId}/staff/public`, {
+        skipAuth: true
+    });
+    return response.data;
+};
+
 // Lấy chi tiết thông tin một nhân viên
 export const getStaffByIdApi = async (branchId, staffId) => {
     const response = await api.get(`/api/v1/branches/${branchId}/staff/${staffId}`);

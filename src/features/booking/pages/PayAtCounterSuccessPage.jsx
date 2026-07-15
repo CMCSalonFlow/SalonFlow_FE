@@ -6,12 +6,42 @@ import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 const { Title, Text, Paragraph } = Typography;
 
 const STORAGE_KEY = "salonflow_last_pay_at_counter_booking";
+const BOOKING_CONTEXT_KEY = "salonflow_last_booking_context";
 
 const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
 
 export default function PayAtCounterSuccessPage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const bookingContext = (() => {
+        if (location.state?.bookingMode) {
+            return {
+                bookingMode: location.state.bookingMode,
+                returnPath: location.state.bookingMode === "public" ? "/guest-booking" : "/booking"
+            };
+        }
+
+        const storedContext = sessionStorage.getItem(BOOKING_CONTEXT_KEY);
+        if (!storedContext) {
+            return {
+                bookingMode: "authenticated",
+                returnPath: "/booking"
+            };
+        }
+
+        try {
+            const parsed = JSON.parse(storedContext);
+            return {
+                bookingMode: parsed.bookingMode || "authenticated",
+                returnPath: parsed.returnPath || (parsed.bookingMode === "public" ? "/guest-booking" : "/booking")
+            };
+        } catch {
+            return {
+                bookingMode: "authenticated",
+                returnPath: "/booking"
+            };
+        }
+    })();
 
     const booking = location.state?.booking || (() => {
         const stored = sessionStorage.getItem(STORAGE_KEY);
@@ -48,13 +78,16 @@ export default function PayAtCounterSuccessPage() {
             const idempotencyKey = "deposit_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
             const returnUrl = window.location.origin + "/payment/callback";
 
-            const paymentRes = await createPaymentUrlApi({
-                bookingId: booking.id,
-                paymentMethod: "VNPAY",
-                amount,
-                idempotencyKey,
-                returnUrl
-            });
+            const paymentRes = await createPaymentUrlApi(
+                {
+                    bookingId: booking.id,
+                    paymentMethod: "VNPAY",
+                    amount,
+                    idempotencyKey,
+                    returnUrl
+                },
+                bookingContext.bookingMode === "public" ? { skipAuth: true } : {}
+            );
 
             if (paymentRes.paymentUrl) {
                 window.location.href = paymentRes.paymentUrl;
@@ -79,7 +112,7 @@ export default function PayAtCounterSuccessPage() {
                         title={<Title level={2}>Không tìm thấy thông tin đặt lịch</Title>}
                         subTitle="Trang này dùng để nhắc bạn thanh toán cọc online sau khi chọn phương thức thanh toán tại quầy."
                         extra={[
-                            <Button key="booking" type="primary" size="large" onClick={() => navigate("/booking")}>
+                            <Button key="booking" type="primary" size="large" onClick={() => navigate(bookingContext.returnPath)}>
                                 Quay lại đặt lịch
                             </Button>
                         ]}
@@ -103,19 +136,25 @@ export default function PayAtCounterSuccessPage() {
             >
                 <Result
                     status="info"
-                    title={<Title level={2} style={{ marginBottom: 0 }}>Đặt lịch đã được ghi nhận</Title>}
-                    subTitle="Bạn đã chọn thanh toán tại quầy, nhưng vẫn cần thanh toán tiền cọc online để giữ lịch."
-                    extra={[
-                        <Button key="pay" type="primary" size="large" onClick={handlePayDeposit}>
-                            Thanh toán cọc ngay
-                        </Button>,
-                        <Button key="appointments" type="primary" size="large" onClick={() => navigate("/appointments")}>
-                            Xem lịch hẹn
-                        </Button>,
-                        <Button key="home" size="large" onClick={() => navigate("/home")}>
-                            Về trang chủ
-                        </Button>
-                    ]}
+                        title={<Title level={2} style={{ marginBottom: 0 }}>Đặt lịch đã được ghi nhận</Title>}
+                        subTitle="Bạn đã chọn thanh toán tại quầy, nhưng vẫn cần thanh toán tiền cọc online để giữ lịch."
+                        extra={[
+                            <Button key="pay" type="primary" size="large" onClick={handlePayDeposit}>
+                                Thanh toán cọc ngay
+                            </Button>,
+                            bookingContext.bookingMode === "public" ? (
+                                <Button key="booking" type="primary" size="large" onClick={() => navigate(bookingContext.returnPath)}>
+                                    Đặt lịch mới
+                                </Button>
+                            ) : (
+                                <Button key="appointments" type="primary" size="large" onClick={() => navigate("/appointments")}>
+                                    Xem lịch hẹn
+                                </Button>
+                            ),
+                            <Button key="home" size="large" onClick={() => navigate(bookingContext.bookingMode === "public" ? "/" : "/home")}>
+                                Về trang chủ
+                            </Button>
+                        ]}
                 >
                     <div style={{ background: "#ffffff", margin: "0 24px 24px", borderRadius: 16, padding: 24, border: "1px solid #f0f0f0" }}>
                         <Space direction="vertical" size="middle" style={{ width: "100%" }}>

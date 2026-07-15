@@ -25,8 +25,7 @@ const { useBreakpoint } = Grid;
 const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
 
 /**
- * Trang Đặt lịch hẹn dành cho Khách hàng (BookingPage).
- * Triển khai quy trình Step Wizard 3 bước: Chọn Dịch vụ -> Chọn Thợ & Ngày -> Chọn Giờ & Đặt lịch.
+ * Trang Đặt lịch hẹn dành cho Customer đã đăng nhập.
  */
 export default function BookingPage() {
     const navigate = useNavigate();
@@ -378,7 +377,7 @@ export default function BookingPage() {
                 bookingDate: selectedDate.format("YYYY-MM-DD"),
                 startTime: selectedTime,
                 preferredStaffId: selectedStaff ? selectedStaff.id : null,
-                notes: notes
+                notes
             };
 
             if (bookingType === "service") {
@@ -413,7 +412,11 @@ export default function BookingPage() {
             } else {
                 sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(res));
                 message.success("Đặt lịch hẹn thành công!");
-                navigate("/booking/pay-at-counter-success", { state: { booking: res } });
+                navigate("/booking/pay-at-counter-success", {
+                    state: {
+                        booking: res
+                    }
+                });
             }
         } catch (error) {
             message.error({ content: error.response?.data?.message || error.message || "Lỗi khi tạo đặt lịch hẹn.", key: "payment_redirect" });

@@ -6,6 +6,14 @@ export const createBookingApi = async (branchId, payload) => {
     return response.data;
 };
 
+// Tạo booking public không gắn Authorization header
+export const createPublicBookingApi = async (branchId, payload) => {
+    const response = await api.post(`/api/v1/branches/${branchId}/guest-bookings`, payload, {
+        skipAuth: true
+    });
+    return response.data;
+};
+
 // Lấy danh sách lịch hẹn đặt chỗ của một chi nhánh
 export const getBookingsByBranchApi = async (branchId) => {
     const response = await api.get(`/api/v1/branches/${branchId}/bookings`);
@@ -23,6 +31,16 @@ export const getAvailabilityApi = async (branchId, params) => {
     const response = await api.get(
         `/api/v1/branches/${branchId}/bookings/availability`,
         { params }
+    );
+
+    return response.data;
+};
+
+// Lấy danh sách các khung giờ rảnh cho luồng public theo staff được chọn
+export const getPublicAvailabilityApi = async (branchId, staffId, params) => {
+    const response = await api.get(
+        `/api/v1/branches/${branchId}/staff/${staffId}/availability`,
+        { params, skipAuth: true }
     );
 
     return response.data;
@@ -59,7 +77,6 @@ export const updateCancellationPolicyApi = async (salonId, payload) => {
 
     return response.data;
 };
-
 export const createWalkInBookingApi = async (branchId, payload) => {
     const response = await api.post(
         `/api/v1/branches/${branchId}/walk-in-bookings`,

@@ -31,6 +31,8 @@ export const getSalonByIdApi = async (id) => {
 };
 
 export const getPublicSalonsApi = async () => {
-    const res = await api.get(`${ENDPOINTS.SALONS}/public`);
+    const res = await api.get(`${ENDPOINTS.SALONS}/public`, {
+        skipAuth: true
+    });
     return res.data;
 };
