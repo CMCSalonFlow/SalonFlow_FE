@@ -53,22 +53,16 @@ import MySalonPage from "@/features/salon/pages/MySalonPage";
 import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
 import StaffManagementPage from "@/features/staff/pages/StaffManagementPage";
 import BookingPage from "@/features/booking/pages/BookingPage";
-<<<<<<< HEAD
 import PayAtCounterSuccessPage from "@/features/booking/pages/PayAtCounterSuccessPage";
-=======
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
 import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
 import SchedulePage from "@/features/schedule/pages/SchedulePage";
 import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
 import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
-<<<<<<< HEAD
 import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
 import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
 import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
-
-=======
 import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPage";
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
+
 const router = createBrowserRouter([
     {
         path: "/login",
@@ -124,13 +118,10 @@ const router = createBrowserRouter([
                 path: "branches",
                 element: <BranchListPage />
             },
-<<<<<<< HEAD
-=======
             {
                 path: "vouchers",
                 element: <VoucherManagementPage />
             },
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
         ]
     },
     {
@@ -169,13 +160,10 @@ const router = createBrowserRouter([
                 element: <SchedulePage />
             },
             {
-<<<<<<< HEAD
                 path: "walk-in-booking",
                 element: <WalkInBookingPage />
             },
             {
-=======
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
                 path: "shifts",
                 element: <ShiftTemplatePage />
             },
@@ -187,18 +175,14 @@ const router = createBrowserRouter([
                 path: "categories",
                 element: <CategoryListPage />
             },
-<<<<<<< HEAD
             {
                 path: "cancellation-policy",
                 element: <CancellationPolicyPage />
             }
-=======
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
         ]
     },
     ///USER AREA///
     {
-<<<<<<< HEAD
         element: <PublicLayout />,
         children: [
             {
@@ -228,8 +212,6 @@ const router = createBrowserRouter([
         ]
     },
     {
-=======
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
         element:
             <CustomerLayout />,
         children: [
@@ -251,55 +233,49 @@ const router = createBrowserRouter([
                 element: <BookingPage />
             },
             {
-<<<<<<< HEAD
                 path: "/booking/pay-at-counter-success",
                 element: <PayAtCounterSuccessPage />
             },
             {
-=======
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
                 path: "/appointments",
                 element: <AppointmentsPage />
             },
             {
-<<<<<<< HEAD
                 path: "/payment/callback",
                 element: <PaymentCallbackPage />
             },
             {
-=======
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
                 path: "/search",
                 element: <SearchPage />
             }
         ]
     },
     {
-    element: <PublicLayout />,
-    children: [
-        {
-            path: "/",
-            element: <HomePage />
-        },
-        {
-            path: "/home",
-            element: <HomePage />
-        },
-        {
-            path: "/search",
-            element: <SearchPage />
-        },
-        {
-            path: "/services",
-            element: <CategoryListUserPage />
-        },
-        {
-            path: "/booking",
-            element: <BookingPage />
-        },
+        element: <PublicLayout />,
+        children: [
+            {
+                path: "/",
+                element: <HomePage />
+            },
+            {
+                path: "/home",
+                element: <HomePage />
+            },
+            {
+                path: "/search",
+                element: <SearchPage />
+            },
+            {
+                path: "/services",
+                element: <CategoryListUserPage />
+            },
+            {
+                path: "/booking",
+                element: <BookingPage />
+            },
 
-    ]
-}
+        ]
+    }
 ]);
 
 export default router;

@@ -22,14 +22,10 @@ export const ENDPOINTS = {
     // Salons
     SALONS: "/api/v1/salons",
     MY_SALON: "/api/v1/salons/me",
-<<<<<<< HEAD
-    SEARCH_BRANCHES: "/api/v1/branches/search"
-=======
     SEARCH_BRANCHES: "/api/v1/branches/search",
 
     // Vouchers
     VOUCHERS: "/api/vouchers",
     VOUCHERS_BATCH: "/api/vouchers/batch",
-    VOUCHERS_VALIDATE: "/api/vouchers/validate",
->>>>>>> f93b0dae6b2582af7357ef8c375f0f68e7782389
+    VOUCHERS_VALIDATE: "/api/vouchers/validate"
 };
