@@ -68,7 +68,7 @@ export default function PaymentCallbackPage() {
                     <Result
                         status="success"
                         title={<Title level={2} style={{ color: "#52c41a", margin: 0 }}>Thanh toán thành công!</Title>}
-                        subTitle="Hệ thống đã ghi nhận thanh toán trực tuyến của bạn."
+                        subTitle="Hệ thống đã ghi nhận khoản tiền cọc trực tuyến của bạn."
                         extra={[
                             <Button 
                                 type="primary" 
@@ -96,7 +96,7 @@ export default function PaymentCallbackPage() {
                                 <Descriptions.Item label={<Text strong>Mã đặt lịch</Text>}>
                                     <Text copyable strong>#{result.bookingId}</Text>
                                 </Descriptions.Item>
-                                <Descriptions.Item label={<Text strong>Số tiền đã thanh toán</Text>}>
+                                <Descriptions.Item label={<Text strong>Số tiền đã thanh toán (tiền cọc)</Text>}>
                                     <Text type="success" strong style={{ fontSize: 16 }}>
                                         {parseFloat(result.amount).toLocaleString()} đ
                                     </Text>
