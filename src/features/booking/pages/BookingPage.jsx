@@ -1,18 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, DatePicker, message, Spin, Grid, Radio, Avatar, Tag, Input } from "antd";
-import { ShopOutlined, AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, SmileOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, message, Spin, Grid, Segmented } from "antd";
+import { AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined, RetweetOutlined } from "@ant-design/icons";
 import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
 import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
-import { getAvailabilityApi, createBookingApi } from "../api/bookingApi";
+import { getAvailabilityApi, createBookingApi, previewRecurringBookingApi, confirmRecurringBookingApi } from "../api/bookingApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { getAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
 import dayjs from "dayjs";
 
-const { Title, Text } = Typography;
+// Import refactored components
+import BookingSummary from "../components/BookingSummary";
+import StepServiceSelection from "../components/StepServiceSelection";
+import StepTimeSlots from "../components/StepTimeSlots";
+import NormalBookingForm from "../components/NormalBookingForm";
+import RecurringBookingForm from "../components/RecurringBookingForm";
+
+const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
 const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
@@ -56,6 +63,16 @@ export default function BookingPage() {
     const [refreshCounter, setRefreshCounter] = useState(0);
     const [workingStaffIds, setWorkingStaffIds] = useState([]);
     const [loadingStaff, setLoadingStaff] = useState(false);
+
+    // Trạng thái Đặt lịch định kỳ (Recurring Booking)
+    const [isRecurringMode, setIsRecurringMode] = useState(false);
+    const [recurringPattern, setRecurringPattern] = useState("WEEKLY");
+    const [recurringStartDate, setRecurringStartDate] = useState(null);
+    const [recurringEndDate, setRecurringEndDate] = useState(null);
+    const [recurringTime, setRecurringTime] = useState(null);
+    const [recurringPreviewList, setRecurringPreviewList] = useState([]);
+    const [loadingPreview, setLoadingPreview] = useState(false);
+    const [recurringServiceId, setRecurringServiceId] = useState(null);
 
     // WebSocket listener for real-time slot updates
     useEffect(() => {
@@ -120,7 +137,6 @@ export default function BookingPage() {
                 setLoading(true);
                 const data = await getPublicSalonsApi();
                 setSalons(data);
-                // Bỏ tự động chọn salon đầu tiên để bắt người dùng phải chọn thủ công
             } catch {
                 message.error("Không thể tải danh sách Salon.");
             } finally {
@@ -139,7 +155,6 @@ export default function BookingPage() {
                 setLoading(true);
                 const data = await getPublicBranchesApi(selectedSalonId);
                 setBranches(data);
-                // Bỏ tự động chọn chi nhánh đầu tiên, bắt chọn thủ công
                 setSelectedBranchId(null);
             } catch {
                 message.error("Lỗi tải danh sách chi nhánh của Salon này.");
@@ -185,6 +200,15 @@ export default function BookingPage() {
         loadBranchData();
     }, [selectedBranchId]);
 
+    // Đồng bộ service đầu tiên cho đặt lịch định kỳ
+    useEffect(() => {
+        if (selectedServices.length > 0) {
+            setRecurringServiceId(selectedServices[0].id);
+        } else {
+            setRecurringServiceId(null);
+        }
+    }, [selectedServices]);
+
     // Tải danh sách nhân viên làm việc vào ngày đã chọn
     useEffect(() => {
         if (!selectedBranchId || !selectedDate) {
@@ -197,7 +221,6 @@ export default function BookingPage() {
                 setLoadingStaff(true);
                 const dateStr = selectedDate.format("YYYY-MM-DD");
                 const slots = await getAvailabilitySlots(selectedBranchId, dateStr);
-                // Lấy ra danh sách userId duy nhất của các ca làm việc
                 const userIds = [...new Set(slots.map(s => s.userId))];
                 setWorkingStaffIds(userIds);
             } catch (error) {
@@ -222,9 +245,7 @@ export default function BookingPage() {
                 setSelectedTime(null);
 
                 const dateStr = selectedDate.format("YYYY-MM-DD");
-                const params = {
-                    date: dateStr
-                };
+                const params = { date: dateStr };
 
                 if (bookingType === "service") {
                     params.serviceIds = selectedServices.map(s => s.id).join(",");
@@ -281,8 +302,7 @@ export default function BookingPage() {
 
             if (!hasSkill) return false;
 
-            // Nếu đã chọn ngày hẹn, chỉ hiển thị nhân viên có ca làm việc vào ngày đó
-            if (selectedDate) {
+            if (selectedDate && !isRecurringMode) {
                 return workingStaffIds.includes(staff.userId);
             }
 
@@ -293,49 +313,33 @@ export default function BookingPage() {
     // Tính tổng tiền và tổng thời gian đặt lịch
     const getBookingSummary = () => {
         if (bookingType === "bundle") {
+            if (!selectedBundle) return { price: 0, duration: 0 };
             return {
-                price: selectedBundle ? parseFloat(selectedBundle.price) : 0,
-                duration: selectedBundle ? selectedBundle.totalDurationMinutes : 0
+                price: Number(selectedBundle.price || 0),
+                duration: selectedBundle.totalDurationMinutes || 0
             };
         } else {
-            const price = selectedServices.reduce((sum, s) => sum + parseFloat(s.price), 0);
-            const duration = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
-            return { price, duration };
-        }
-    };
-
-    // Tính tiền cọc dựa trên cấu hình từng dịch vụ.
-    const getServiceDepositAmount = (service) => {
-        const price = Number(service?.price || 0);
-        const depositRequired = service?.depositRequired;
-        const depositPercentage = Number(service?.depositPercentage || 0);
-
-        if (!depositRequired || !depositPercentage) {
-            return 0;
-        }
-
-        return Math.round((price * depositPercentage) / 100);
-    };
-
-    const getBookingDepositAmount = () => {
-        if (bookingType === "service") {
             return selectedServices.reduce(
-                (sum, service) => sum + getServiceDepositAmount(service),
-                0
+                (acc, s) => ({
+                    price: acc.price + Number(s.price || 0),
+                    duration: acc.duration + (s.durationMinutes || 0)
+                }),
+                { price: 0, duration: 0 }
             );
         }
-
-        if (!selectedBundle) {
-            return 0;
-        }
-
-        return (selectedBundle.items || []).reduce((sum, item) => {
-            const service = services.find(s => String(s.id) === String(item.serviceId));
-            return sum + getServiceDepositAmount(service);
-        }, 0);
     };
 
-    // Xử lý chuyển bước tiếp theo
+    // Tính tiền cọc cần thanh toán trước
+    const getBookingDepositAmount = () => {
+        if (bookingType === "bundle") {
+            if (!selectedBundle) return 0;
+            return Number(selectedBundle.depositAmount || 0);
+        } else {
+            return selectedServices.reduce((sum, s) => sum + Number(s.depositAmount || 0), 0);
+        }
+    };
+
+    // Đi tiếp bước tiếp theo
     const handleNext = () => {
         if (currentStep === 0) {
             if (bookingType === "service" && selectedServices.length === 0) {
@@ -390,12 +394,12 @@ export default function BookingPage() {
                 
                 const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
                 const returnUrl = window.location.origin + "/payment/callback";
-                const depositAmount = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
+                const depositAmountVal = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
                 
                 const paymentPayload = {
                     bookingId: res.id,
                     paymentMethod: "VNPAY",
-                    amount: depositAmount,
+                    amount: depositAmountVal,
                     idempotencyKey: idempotencyKey,
                     returnUrl: returnUrl
                 };
@@ -418,6 +422,133 @@ export default function BookingPage() {
         }
     };
 
+    // Xem trước lịch định kỳ
+    const handleRecurringPreview = async () => {
+        if (!selectedBranchId) {
+            message.warning("Vui lòng chọn chi nhánh!");
+            return;
+        }
+        if (!recurringServiceId) {
+            message.warning("Vui lòng chọn dịch vụ!");
+            return;
+        }
+        if (!selectedStaff) {
+            message.warning("Vui lòng chọn một nhân viên cụ thể cho lịch định kỳ!");
+            return;
+        }
+        if (!recurringStartDate || !recurringEndDate) {
+            message.warning("Vui lòng chọn đầy đủ ngày bắt đầu và kết thúc!");
+            return;
+        }
+        if (!recurringTime) {
+            message.warning("Vui lòng chọn giờ hẹn!");
+            return;
+        }
+
+        const activeService = services.find(s => s.id === recurringServiceId);
+        const duration = activeService ? activeService.durationMinutes : 30;
+        const startTimeStr = recurringTime;
+        const endTimeStr = dayjs(`2020-01-01T${startTimeStr}`).add(duration, "minute").format("HH:mm");
+
+        try {
+            setLoadingPreview(true);
+            setRecurringPreviewList([]);
+
+            const payload = {
+                branchId: selectedBranchId,
+                staffId: selectedStaff.id,
+                serviceId: recurringServiceId,
+                pattern: recurringPattern,
+                startDate: recurringStartDate.format("YYYY-MM-DD"),
+                endDate: recurringEndDate.format("YYYY-MM-DD"),
+                startTime: startTimeStr,
+                endTime: endTimeStr,
+                note: notes
+            };
+
+            const data = await previewRecurringBookingApi(payload);
+            
+            const mappedOccurrences = (data.occurrences || []).map(item => ({
+                ...item,
+                action: item.hasConflict ? "SKIP" : "INCLUDE",
+                overrideStartTime: null,
+                overrideEndTime: null,
+                showOverridePicker: false
+            }));
+
+            setRecurringPreviewList(mappedOccurrences);
+            message.success(`Đã tạo xem trước chuỗi lịch hẹn (${data.totalOccurrences} ngày). Có ${data.conflictCount} ngày bị trùng lịch.`);
+        } catch (error) {
+            message.error(error.response?.data?.message || error.message || "Lỗi khi quét lịch xem trước.");
+        } finally {
+            setLoadingPreview(false);
+        }
+    };
+
+    // Xác nhận lưu toàn bộ chuỗi lịch định kỳ
+    const handleConfirmRecurringBooking = async () => {
+        if (recurringPreviewList.length === 0) {
+            message.warning("Vui lòng click Xem trước lịch hẹn trước!");
+            return;
+        }
+
+        const activeService = services.find(s => s.id === recurringServiceId);
+        const duration = activeService ? activeService.durationMinutes : 30;
+        const startTimeStr = recurringTime;
+        const endTimeStr = dayjs(`2020-01-01T${startTimeStr}`).add(duration, "minute").format("HH:mm");
+
+        try {
+            setLoading(true);
+
+            const payload = {
+                pattern: {
+                    branchId: selectedBranchId,
+                    staffId: selectedStaff.id,
+                    serviceId: recurringServiceId,
+                    pattern: recurringPattern,
+                    startDate: recurringStartDate.format("YYYY-MM-DD"),
+                    endDate: recurringEndDate.format("YYYY-MM-DD"),
+                    startTime: startTimeStr + ":00",
+                    endTime: endTimeStr + ":00",
+                    note: notes
+                },
+                occurrences: recurringPreviewList.map(item => {
+                    const action = item.action || (item.hasConflict ? "SKIP" : "INCLUDE");
+                    return {
+                        date: item.date,
+                        action: action,
+                        overrideStartTime: action === "INCLUDE" && item.overrideStartTime ? item.overrideStartTime + ":00" : null,
+                        overrideEndTime: action === "INCLUDE" && item.overrideEndTime ? item.overrideEndTime + ":00" : null
+                    };
+                })
+            };
+
+            await confirmRecurringBookingApi(payload);
+            message.success("Đặt lịch định kỳ thành công!");
+            
+            const activeBranch = branches.find(b => b.id === selectedBranchId);
+            const activeService = services.find(s => s.id === recurringServiceId);
+            
+            navigate("/booking/recurring-success", {
+                state: {
+                    branchName: activeBranch ? `${activeBranch.name} (${activeBranch.address})` : "",
+                    serviceName: activeService ? activeService.name : "",
+                    staffName: selectedStaff ? selectedStaff.name : "",
+                    pattern: recurringPattern,
+                    startDate: recurringStartDate.format("YYYY-MM-DD"),
+                    endDate: recurringEndDate.format("YYYY-MM-DD"),
+                    time: recurringTime,
+                    note: notes,
+                    totalCreated: recurringPreviewList.filter(item => (item.action || (item.hasConflict ? "SKIP" : "INCLUDE")) === "INCLUDE").length
+                }
+            });
+        } catch (error) {
+            message.error(error.response?.data?.message || error.message || "Lỗi khi lưu chuỗi đặt lịch định kỳ.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const { price: totalPrice, duration: totalDuration } = getBookingSummary();
     const depositAmount = getBookingDepositAmount();
     const payableAmount = depositAmount > 0 ? depositAmount : totalPrice;
@@ -435,341 +566,145 @@ export default function BookingPage() {
                 items={[
                     { title: "Chọn dịch vụ", icon: <AppstoreOutlined /> },
                     { title: "Chọn ngày & nhân viên", icon: <TeamOutlined /> },
-                    { title: "Chọn giờ & hoàn tất", icon: <CalendarOutlined /> }
+                    { title: "Chọn giờ & hoàn tất", icon: <ClockCircleOutlined /> }
                 ]}
             />
 
             <Row gutter={[24, 24]}>
-                {/* Cột trái: Form thao tác chính của từng bước */}
+                {/* Cột trái: Form cấu hình theo từng bước */}
                 <Col xs={24} lg={16}>
-                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", minHeight: 480 }}>
+                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+                        {/* CHỌN SALON & CHI NHÁNH (Chỉ hiển thị ở Bước 1) */}
+                        {currentStep === 0 && (
+                            <>
+                                <Row gutter={16} style={{ marginBottom: 24 }}>
+                                    <Col xs={24} sm={12}>
+                                        <div style={{ marginBottom: 12 }}>
+                                            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Chọn Salon</label>
+                                            <Select
+                                                placeholder="Chọn thương hiệu salon..."
+                                                style={{ width: "100%" }}
+                                                size="large"
+                                                value={selectedSalonId}
+                                                onChange={(val) => {
+                                                    setSelectedSalonId(val);
+                                                    setBranches([]);
+                                                    setSelectedBranchId(null);
+                                                }}
+                                                options={salons.map(s => ({ label: s.name, value: s.id }))}
+                                            />
+                                        </div>
+                                    </Col>
+
+                                    <Col xs={24} sm={12}>
+                                        <div style={{ marginBottom: 12 }}>
+                                            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Chọn Chi nhánh</label>
+                                            <Select
+                                                placeholder="Chọn cơ sở chi nhánh gần bạn..."
+                                                style={{ width: "100%" }}
+                                                size="large"
+                                                disabled={!selectedSalonId}
+                                                value={selectedBranchId}
+                                                onChange={setSelectedBranchId}
+                                                options={branches.map(b => ({ label: `${b.name} (${b.address})`, value: b.id }))}
+                                            />
+                                        </div>
+                                    </Col>
+                                </Row>
+                                <Divider style={{ margin: "24px 0" }} />
+                            </>
+                        )}
+
                         {loading ? (
                             <div style={{ textAlign: "center", padding: "100px 0" }}>
-                                <Spin size="large" tip="Đang tải dữ liệu..." />
+                                <Spin size="large" tip="Đang tải dữ liệu chi nhánh..." />
                             </div>
                         ) : (
                             <>
-                                {/* ── BƯỚC 1: CHỌN CHI NHÁNH & DỊCH VỤ ──────────────── */}
+                                {/* ── BƯỚC 1: CHỌN DỊCH VỤ / COMBO ────────────────── */}
                                 {currentStep === 0 && (
-                                    <div>
-                                        <Row gutter={16} style={{ marginBottom: 24 }}>
-                                            <Col xs={24} sm={12}>
-                                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Bước 1a: Chọn Hệ thống Salon</label>
-                                                <Select
-                                                    style={{ width: "100%" }}
-                                                    size="large"
-                                                    value={selectedSalonId}
-                                                    onChange={(value) => {
-                                                        setSelectedSalonId(value);
-                                                        setBranches([]);
-                                                        setSelectedBranchId(null);
-                                                    }}
-                                                    options={salons.map(s => ({ label: s.name, value: s.id }))}
-                                                    placeholder="Chọn hệ thống Salon..."
-                                                />
-                                            </Col>
-                                            <Col xs={24} sm={12}>
-                                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Bước 1b: Chọn Chi nhánh</label>
-                                                <Select
-                                                    style={{ width: "100%" }}
-                                                    size="large"
-                                                    value={selectedBranchId}
-                                                    onChange={setSelectedBranchId}
-                                                    options={branches.map(b => ({ label: b.name, value: b.id }))}
-                                                    placeholder={selectedSalonId ? "Chọn chi nhánh..." : "Vui lòng chọn hệ thống Salon trước"}
-                                                    disabled={!selectedSalonId}
-                                                />
-                                            </Col>
-                                        </Row>
-
-                                        <Divider style={{ margin: "24px 0" }} />
-
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                                            <label style={{ fontWeight: 600 }}>Bước 2: Chọn dịch vụ muốn đặt</label>
-                                            <Radio.Group value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
-                                                <Radio.Button value="service">Dịch vụ lẻ</Radio.Button>
-                                                <Radio.Button value="bundle">Gói Combo</Radio.Button>
-                                            </Radio.Group>
-                                        </div>
-
-                                        {bookingType === "service" ? (
-                                            <Row gutter={[16, 16]}>
-                                                {services.map(s => {
-                                                    const isSelected = selectedServices.some(item => item.id === s.id);
-                                                    return (
-                                                        <Col xs={24} sm={12} key={s.id}>
-                                                            <Card
-                                                                hoverable
-                                                                style={{
-                                                                    borderRadius: 12,
-                                                                    border: isSelected ? "2px solid #1890ff" : "1px solid #f0f0f0",
-                                                                    backgroundColor: isSelected ? "#e6f7ff" : "#fff"
-                                                                }}
-                                                                onClick={() => {
-                                                                    if (isSelected) {
-                                                                        setSelectedServices(selectedServices.filter(item => item.id !== s.id));
-                                                                    } else {
-                                                                        setSelectedServices([...selectedServices, s]);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Text strong style={{ fontSize: 16 }}>{s.name}</Text>
-                                                                <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                                    <Tag color="blue">{s.durationMinutes} phút</Tag>
-                                                                    <Text strong style={{ color: "#faad14" }}>{parseFloat(s.price).toLocaleString()} đ</Text>
-                                                                </div>
-                                                            </Card>
-                                                        </Col>
-                                                    );
-                                                })}
-                                                {services.length === 0 && <Col span={24} style={{ textAlign: "center", padding: 40 }}><Text type="secondary">Chi nhánh chưa có dịch vụ nào.</Text></Col>}
-                                            </Row>
-                                        ) : (
-                                            <Row gutter={[16, 16]}>
-                                                {bundles.map(b => {
-                                                    const isSelected = selectedBundle?.id === b.id;
-                                                    return (
-                                                        <Col xs={24} key={b.id}>
-                                                            <Card
-                                                                hoverable
-                                                                style={{
-                                                                    borderRadius: 12,
-                                                                    border: isSelected ? "2px solid #52c41a" : "1px solid #f0f0f0",
-                                                                    backgroundColor: isSelected ? "#f6ffed" : "#fff"
-                                                                }}
-                                                                onClick={() => setSelectedBundle(b)}
-                                                            >
-                                                                <Row justify="space-between" align="middle">
-                                                                    <Col xs={24} sm={16}>
-                                                                        <Text strong style={{ fontSize: 17 }}>{b.name}</Text>
-                                                                        <div style={{ marginTop: 8 }}>
-                                                                            {b.items?.map(item => (
-                                                                                <Tag color="cyan" key={item.serviceId}>{item.name}</Tag>
-                                                                            ))}
-                                                                        </div>
-                                                                    </Col>
-                                                                    <Col xs={24} sm={8} style={{ textAlign: screens.xs ? "left" : "right", marginTop: screens.xs ? 12 : 0 }}>
-                                                                        <Text delete style={{ color: "#bfbfbf", marginRight: 8 }}>{parseFloat(b.originalPrice).toLocaleString()} đ</Text>
-                                                                        <br />
-                                                                        <Text strong style={{ color: "#52c41a", fontSize: 18 }}>{parseFloat(b.price).toLocaleString()} đ</Text>
-                                                                        <br />
-                                                                        <Tag color="blue">{b.totalDurationMinutes} phút</Tag>
-                                                                    </Col>
-                                                                </Row>
-                                                            </Card>
-                                                        </Col>
-                                                    );
-                                                })}
-                                                {bundles.length === 0 && <Col span={24} style={{ textAlign: "center", padding: 40 }}><Text type="secondary">Chi nhánh chưa có gói combo ưu đãi nào.</Text></Col>}
-                                            </Row>
-                                        )}
-                                    </div>
+                                    <StepServiceSelection
+                                        bookingType={bookingType}
+                                        setBookingType={setBookingType}
+                                        services={services}
+                                        selectedServices={selectedServices}
+                                        setSelectedServices={setSelectedServices}
+                                        bundles={bundles}
+                                        selectedBundle={selectedBundle}
+                                        setSelectedBundle={setSelectedBundle}
+                                        screens={screens}
+                                        formatCurrency={formatCurrency}
+                                    />
                                 )}
 
-                                {/* ── BƯỚC 2: CHỌN NHÂN VIÊN & NGÀY HẸN ────────────── */}
+                                {/* ── BƯỚC 2: CHỌN NHÂN VIÊN & NGÀY HẸN (ĐƠN / ĐỊNH KỲ) ── */}
                                 {currentStep === 1 && (
                                     <div>
-                                        <div style={{ marginBottom: 24 }}>
-                                            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Chọn Ngày hẹn</label>
-                                            <DatePicker
-                                                style={{ width: "100%" }}
-                                                size="large"
-                                                format="YYYY-MM-DD"
-                                                disabledDate={current => current && current.valueOf() < Date.now() - 24*60*60*1000}
-                                                value={selectedDate}
-                                                onChange={(date) => {
-                                                    setSelectedDate(date);
-                                                    setSelectedStaff(null); // Reset nhân viên khi đổi ngày
-                                                }}
-                                                placeholder="Chọn ngày bạn muốn hẹn lịch..."
+                                        <Segmented
+                                            options={[
+                                                { label: "Đặt lịch thường (Một lần)", value: "normal" },
+                                                { label: "Đặt lịch định kỳ 🔄", value: "recurring" }
+                                            ]}
+                                            value={isRecurringMode ? "recurring" : "normal"}
+                                            onChange={(value) => {
+                                                setIsRecurringMode(value === "recurring");
+                                                setSelectedStaff(null);
+                                                setSelectedDate(null);
+                                                setRecurringPreviewList([]);
+                                            }}
+                                            size="large"
+                                            block
+                                            style={{ marginBottom: 24 }}
+                                        />
+
+                                        {!isRecurringMode ? (
+                                            <NormalBookingForm
+                                                selectedDate={selectedDate}
+                                                setSelectedDate={setSelectedDate}
+                                                setSelectedStaff={setSelectedStaff}
+                                                loadingStaff={loadingStaff}
+                                                getQualifiedStaff={getQualifiedStaff}
+                                                selectedStaff={selectedStaff}
                                             />
-                                        </div>
-
-                                        <Divider style={{ margin: "24px 0" }} />
-
-                                        {!selectedDate ? (
-                                            <div style={{ 
-                                                padding: "40px 20px", 
-                                                background: "#fafafa", 
-                                                borderRadius: 16, 
-                                                textAlign: "center",
-                                                border: "1px dashed #d9d9d9"
-                                            }}>
-                                                <CalendarOutlined style={{ fontSize: 32, color: "#bfbfbf", marginBottom: 12 }} />
-                                                <div>
-                                                    <Text type="secondary" style={{ fontSize: 16, fontWeight: 500 }}>
-                                                        Vui lòng chọn ngày hẹn trước để hiển thị danh sách nhân viên khả dụng.
-                                                    </Text>
-                                                </div>
-                                            </div>
-                                        ) : loadingStaff ? (
-                                            <div style={{ textAlign: "center", padding: "40px 0" }}>
-                                                <Spin tip="Đang kiểm tra lịch làm việc của nhân viên..." />
-                                            </div>
                                         ) : (
-                                            <div>
-                                                <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>Chọn Nhân viên thực hiện</label>
-                                                <Row gutter={[16, 16]}>
-                                                    {/* Thẻ chọn "Bất kỳ ai" */}
-                                                    <Col xs={24} sm={12}>
-                                                        <Card
-                                                            hoverable
-                                                            style={{
-                                                                borderRadius: 12,
-                                                                border: selectedStaff === null ? "2px solid #1890ff" : "1px solid #f0f0f0",
-                                                                backgroundColor: selectedStaff === null ? "#e6f7ff" : "#fff"
-                                                            }}
-                                                            onClick={() => setSelectedStaff(null)}
-                                                        >
-                                                            <Space size="middle">
-                                                                <Avatar size={48} icon={<SmileOutlined />} style={{ backgroundColor: "#87d068" }} />
-                                                                <div>
-                                                                    <Text strong style={{ fontSize: 16 }}>Bất kỳ ai</Text>
-                                                                    <br />
-                                                                    <Text type="secondary" style={{ fontSize: 12 }}>Tự động phân bổ thợ đang rảnh</Text>
-                                                                </div>
-                                                            </Space>
-                                                        </Card>
-                                                    </Col>
-
-                                                    {/* Danh sách thợ đủ điều kiện kỹ năng */}
-                                                    {getQualifiedStaff().map(staff => {
-                                                        const isSelected = selectedStaff?.id === staff.id;
-                                                        return (
-                                                            <Col xs={24} sm={12} key={staff.id}>
-                                                                <Card
-                                                                    hoverable
-                                                                    style={{
-                                                                        borderRadius: 12,
-                                                                        border: isSelected ? "2px solid #1890ff" : "1px solid #f0f0f0",
-                                                                        backgroundColor: isSelected ? "#e6f7ff" : "#fff"
-                                                                    }}
-                                                                    onClick={() => setSelectedStaff(staff)}
-                                                                >
-                                                                    <Space size="middle">
-                                                                        <Avatar size={48} src={staff.avatarUrl} icon={<TeamOutlined />} style={{ backgroundColor: "#1890ff" }} />
-                                                                        <div>
-                                                                            <Text strong style={{ fontSize: 16 }}>{staff.name}</Text>
-                                                                            <br />
-                                                                            <Text type="secondary" style={{ fontSize: 12, display: "inline-block", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                                                {staff.specialties || "Thợ làm tóc chuyên nghiệp"}
-                                                                            </Text>
-                                                                        </div>
-                                                                    </Space>
-                                                                </Card>
-                                                            </Col>
-                                                        );
-                                                    })}
-                                                </Row>
-                                                {getQualifiedStaff().length === 0 && (
-                                                    <div style={{ textAlign: "center", padding: "20px 0" }}>
-                                                        <Text type="secondary">Không có nhân viên nào hoạt động hoặc có ca làm việc vào ngày này.</Text>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <RecurringBookingForm
+                                                services={services}
+                                                selectedServices={selectedServices}
+                                                selectedBundle={selectedBundle}
+                                                bookingType={bookingType}
+                                                recurringServiceId={recurringServiceId}
+                                                setRecurringServiceId={setRecurringServiceId}
+                                                recurringPattern={recurringPattern}
+                                                setRecurringPattern={setRecurringPattern}
+                                                recurringStartDate={recurringStartDate}
+                                                setRecurringStartDate={setRecurringStartDate}
+                                                recurringEndDate={recurringEndDate}
+                                                setRecurringEndDate={setRecurringEndDate}
+                                                recurringTime={recurringTime}
+                                                setRecurringTime={setRecurringTime}
+                                                getQualifiedStaff={getQualifiedStaff}
+                                                selectedStaff={selectedStaff}
+                                                setSelectedStaff={setSelectedStaff}
+                                                recurringPreviewList={recurringPreviewList}
+                                                setRecurringPreviewList={setRecurringPreviewList}
+                                            />
                                         )}
                                     </div>
                                 )}
 
                                 {/* ── BƯỚC 3: CHỌN GIỜ & GHI CHÚ ──────────────────── */}
                                 {currentStep === 2 && (
-                                    <div>
-                                        <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>
-                                            <ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Chọn giờ hẹn khả dụng (Khung giờ trống)
-                                        </label>
-
-                                        {loadingSlots ? (
-                                            <div style={{ textAlign: "center", padding: "40px 0" }}>
-                                                <Spin tip="Đang quét giờ khả dụng..." />
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                {(() => {
-                                                    const allSlots = generateAllTimeSlots();
-                                                    if (allSlots.length > 0) {
-                                                        return (
-                                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
-                                                                {allSlots.map(time => {
-                                                                    const displayTime = time.substring(0, 5);
-                                                                    const isAvailable = availableTimes.includes(time);
-                                                                    const isSelected = selectedTime === time;
-                                                                    
-                                                                    return (
-                                                                        <Button
-                                                                            key={time}
-                                                                            size="large"
-                                                                            disabled={!isAvailable}
-                                                                            style={{
-                                                                                borderRadius: 8,
-                                                                                fontWeight: isSelected ? "600" : "500",
-                                                                                backgroundColor: isSelected 
-                                                                                    ? "#52c41a" // Selected
-                                                                                    : isAvailable 
-                                                                                        ? "#f6ffed" // Available green
-                                                                                        : "#fff1f0", // Busy red
-                                                                                borderColor: isSelected 
-                                                                                    ? "#52c41a" 
-                                                                                    : isAvailable 
-                                                                                        ? "#b7eb8f" 
-                                                                                        : "#ffa39e",
-                                                                                color: isSelected 
-                                                                                    ? "#fff" 
-                                                                                    : isAvailable 
-                                                                                        ? "#389e0d" 
-                                                                                        : "#cf1322",
-                                                                                transition: "all 0.3s",
-                                                                                opacity: isAvailable ? 1 : 0.65,
-                                                                                cursor: isAvailable ? "pointer" : "not-allowed"
-                                                                            }}
-                                                                            onClick={() => isAvailable && setSelectedTime(time)}
-                                                                        >
-                                                                            {displayTime}
-                                                                        </Button>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        );
-                                                    } else {
-                                                        return (
-                                                            <div style={{ padding: "30px 10px", background: "#fff2e8", borderRadius: 8, border: "1px solid #ffbb96", marginBottom: 24, textAlign: "center" }}>
-                                                                <Text type="warning" strong>Vui lòng hoàn thành chọn chi nhánh, dịch vụ và ngày hẹn ở các bước trước để quét giờ hoạt động.</Text>
-                                                            </div>
-                                                        );
-                                                    }
-                                                })()}
-                                            </div>
-                                        )}
-
-                                        <Divider style={{ margin: "24px 0" }} />
-
-                                        <FormLayoutItem label="Ghi chú thêm (Không bắt buộc)">
-                                            <Input.TextArea
-                                                rows={4}
-                                                placeholder="Mô tả các yêu cầu đặc biệt của bạn để salon chuẩn bị tốt nhất..."
-                                                value={notes}
-                                                onChange={(e) => setNotes(e.target.value)}
-                                            />
-                                        </FormLayoutItem>
-
-                                        <Divider style={{ margin: "24px 0" }} />
-
-                                        <FormLayoutItem label="Phương thức thanh toán">
-                                            <Radio.Group 
-                                                value={paymentMethod} 
-                                                onChange={(e) => setPaymentMethod(e.target.value)}
-                                                style={{ width: "100%" }}
-                                            >
-                                                <Space direction="vertical" style={{ width: "100%" }}>
-                                                    <Radio value="PAY_AT_COUNTER" style={{ padding: "4px 0", fontSize: 15 }}>
-                                                        <Text strong>Thanh toán tại quầy</Text> (Thanh toán cọc online, phần còn lại thanh toán tại salon)
-                                                    </Radio>
-                                                    <Radio value="VNPAY" style={{ padding: "4px 0", fontSize: 15 }}>
-                                                        <Text strong>Thanh toán qua cổng VNPay</Text> (Thanh toán cọc online bằng thẻ nội địa/QR Code)
-                                                    </Radio>
-                                                </Space>
-                                            </Radio.Group>
-                                        </FormLayoutItem>
-                                    </div>
+                                    <StepTimeSlots
+                                        loadingSlots={loadingSlots}
+                                        generateAllTimeSlots={generateAllTimeSlots}
+                                        availableTimes={availableTimes}
+                                        selectedTime={selectedTime}
+                                        setSelectedTime={setSelectedTime}
+                                        notes={notes}
+                                        setNotes={setNotes}
+                                        paymentMethod={paymentMethod}
+                                        setPaymentMethod={setPaymentMethod}
+                                    />
                                 )}
 
                                 {/* Hàng nút điều hướng Quy trình */}
@@ -783,7 +718,37 @@ export default function BookingPage() {
                                         Quay lại
                                     </Button>
 
-                                    {currentStep < 2 ? (
+                                    {isRecurringMode && currentStep === 1 ? (
+                                        recurringPreviewList.length === 0 ? (
+                                            <Button
+                                                type="primary"
+                                                size="large"
+                                                onClick={handleRecurringPreview}
+                                                loading={loadingPreview}
+                                                icon={<RetweetOutlined />}
+                                            >
+                                                Xem trước lịch định kỳ
+                                            </Button>
+                                        ) : (
+                                            <Space>
+                                                <Button
+                                                    size="large"
+                                                    onClick={() => setRecurringPreviewList([])}
+                                                >
+                                                    Thay đổi thiết lập
+                                                </Button>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    onClick={handleConfirmRecurringBooking}
+                                                    style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+                                                    loading={loading}
+                                                >
+                                                    Xác nhận đặt lịch định kỳ
+                                                </Button>
+                                            </Space>
+                                        )
+                                    ) : currentStep < 2 ? (
                                         <Button
                                             type="primary"
                                             size="large"
@@ -810,129 +775,31 @@ export default function BookingPage() {
 
                 {/* Cột phải: Hóa đơn tóm tắt thông tin đặt lịch */}
                 <Col xs={24} lg={8}>
-                    <Card
-                        style={{
-                            borderRadius: 16,
-                            boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-                            background: "linear-gradient(180deg, #fafafa 0%, #ffffff 100%)",
-                            position: "sticky",
-                            top: 24
-                        }}
-                    >
-                        <Title level={4} style={{ marginTop: 0 }}>Tóm tắt lịch hẹn</Title>
-                        <Divider style={{ margin: "16px 0" }} />
-
-                        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-                            <div>
-                                <Text type="secondary"><ShopOutlined /> Chi nhánh:</Text>
-                                <br />
-                                <Text strong>{branches.find(b => b.id === selectedBranchId)?.name || "-"}</Text>
-                            </div>
-
-                            <div>
-                                <Text type="secondary"><AppstoreOutlined /> Dịch vụ đặt:</Text>
-                                <br />
-                                {bookingType === "service" ? (
-                                    selectedServices.length > 0 ? (
-                                        <div style={{ marginTop: 4 }}>
-                                            {selectedServices.map(s => (
-                                                <div key={s.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                                                    <Text>- {s.name}</Text>
-                                                    <Text type="secondary">{parseFloat(s.price).toLocaleString()} đ</Text>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <Text type="secondary" italic>Chưa chọn dịch vụ nào</Text>
-                                    )
-                                ) : (
-                                    selectedBundle ? (
-                                        <div style={{ marginTop: 4 }}>
-                                            <Text strong color="green">{selectedBundle.name}</Text>
-                                            <div style={{ fontSize: 12, color: "#8c8c8c" }}>
-                                                Gói combo gồm nhiều dịch vụ kết hợp
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <Text type="secondary" italic>Chưa chọn combo nào</Text>
-                                    )
-                                )}
-                            </div>
-
-                            {currentStep >= 1 && (
-                                <>
-                                    <div>
-                                        <Text type="secondary"><TeamOutlined /> Nhân viên phục vụ:</Text>
-                                        <br />
-                                        <Text strong>{selectedStaff ? selectedStaff.name : "Bất kỳ nhân viên (Auto)"}</Text>
-                                    </div>
-
-                                    <div>
-                                        <Text type="secondary"><CalendarOutlined /> Ngày hẹn:</Text>
-                                        <br />
-                                        <Text strong>{selectedDate ? selectedDate.format("YYYY-MM-DD") : "-"}</Text>
-                                    </div>
-                                </>
-                            )}
-
-                            {currentStep >= 2 && selectedTime && (
-                                <div>
-                                    <Text type="secondary"><ClockCircleOutlined /> Giờ hẹn:</Text>
-                                    <br />
-                                    <Tag color="gold" style={{ fontSize: 14, padding: "2px 8px" }}>
-                                        {selectedTime.substring(0, 5)}
-                                    </Tag>
-                                </div>
-                            )}
-                        </Space>
-
-                        <Divider style={{ margin: "20px 0" }} />
-
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                            <Text type="secondary">Tổng thời gian:</Text>
-                            <Text strong>{totalDuration} phút</Text>
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                            <Text type="secondary" style={{ fontSize: 16 }}>
-                                Tiền cọc phải thanh toán:
-                            </Text>
-                            <Text strong style={{ color: "#faad14", fontSize: 22 }}>
-                                {payableAmount.toLocaleString()} đ
-                            </Text>
-                        </div>
-                        <div style={{ marginTop: 8 }}>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                                {paymentMethod === "PAY_AT_COUNTER"
-                                    ? (depositAmount > 0
-                                        ? `Với lựa chọn thanh toán tại quầy, bạn vẫn cần thanh toán tiền cọc online để giữ lịch: ${formatCurrency(depositAmount)} đ. Phần còn lại sẽ thanh toán tại salon.`
-                                        : "Hiện chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên.")
-                                    : (depositAmount > 0
-                                        ? `Tiền cọc sẽ được thanh toán online qua VNPay: ${formatCurrency(depositAmount)} đ.`
-                                        : "Hiện chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên.")
-                                }
-                            </Text>
-                        </div>
-                        {paymentMethod === "VNPAY" && (
-                            <div style={{ marginTop: 8 }}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                    Thanh toán trực tuyến sẽ được xử lý qua VNPay ngay sau khi tạo booking.
-                                </Text>
-                            </div>
-                        )}
-                    </Card>
+                    <BookingSummary
+                        isRecurringMode={isRecurringMode}
+                        currentStep={currentStep}
+                        branches={branches}
+                        selectedBranchId={selectedBranchId}
+                        bookingType={bookingType}
+                        selectedServices={selectedServices}
+                        selectedBundle={selectedBundle}
+                        selectedStaff={selectedStaff}
+                        selectedDate={selectedDate}
+                        selectedTime={selectedTime}
+                        recurringStartDate={recurringStartDate}
+                        recurringEndDate={recurringEndDate}
+                        recurringPattern={recurringPattern}
+                        recurringTime={recurringTime}
+                        services={services}
+                        recurringServiceId={recurringServiceId}
+                        totalDuration={totalDuration}
+                        payableAmount={payableAmount}
+                        depositAmount={depositAmount}
+                        paymentMethod={paymentMethod}
+                        formatCurrency={formatCurrency}
+                    />
                 </Col>
             </Row>
-        </div>
-    );
-}
-
-// Helper Layout Component
-function FormLayoutItem({ label, children }) {
-    return (
-        <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>{label}</label>
-            {children}
         </div>
     );
 }

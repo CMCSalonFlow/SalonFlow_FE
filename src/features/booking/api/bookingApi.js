@@ -68,3 +68,19 @@ export const createWalkInBookingApi = async (branchId, payload) => {
 
     return response.data;
 };
+
+// Recurring Bookings
+export const previewRecurringBookingApi = async (payload) => {
+    const response = await api.post("/api/v1/recurring-bookings/preview", payload);
+    return response.data;
+};
+
+export const confirmRecurringBookingApi = async (payload) => {
+    const response = await api.post("/api/v1/recurring-bookings/confirm", payload);
+    return response.data;
+};
+
+export const cancelRecurringBookingApi = async (id) => {
+    const response = await api.delete(`/api/v1/recurring-bookings/${id}`);
+    return response.data;
+};

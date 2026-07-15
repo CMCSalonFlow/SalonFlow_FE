@@ -54,6 +54,7 @@ import ServiceManagementPage from "@/features/service/pages/ServiceManagementPag
 import StaffManagementPage from "@/features/staff/pages/StaffManagementPage";
 import BookingPage from "@/features/booking/pages/BookingPage";
 import PayAtCounterSuccessPage from "@/features/booking/pages/PayAtCounterSuccessPage";
+import RecurringSuccessPage from "@/features/booking/pages/RecurringSuccessPage";
 import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
 import SchedulePage from "@/features/schedule/pages/SchedulePage";
 import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
@@ -235,6 +236,10 @@ const router = createBrowserRouter([
             {
                 path: "/booking/pay-at-counter-success",
                 element: <PayAtCounterSuccessPage />
+            },
+            {
+                path: "/booking/recurring-success",
+                element: <RecurringSuccessPage />
             },
             {
                 path: "/appointments",
