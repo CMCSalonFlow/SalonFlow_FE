@@ -1,5 +1,6 @@
 import {
     createBrowserRouter,
+    Navigate,
 } from "react-router-dom";
 
 import LoginPage from
@@ -53,6 +54,7 @@ import MySalonPage from "@/features/salon/pages/MySalonPage";
 import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
 import StaffManagementPage from "@/features/staff/pages/StaffManagementPage";
 import BookingPage from "@/features/booking/pages/BookingPage";
+import GuestBookingPage from "@/features/booking/pages/GuestBookingPage";
 import PayAtCounterSuccessPage from "@/features/booking/pages/PayAtCounterSuccessPage";
 import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
 import SchedulePage from "@/features/schedule/pages/SchedulePage";
@@ -192,8 +194,12 @@ const router = createBrowserRouter([
                 element: <CategoryListUserPage />
             },
             {
-                path: "booking",
-                element: <BookingPage />
+                path: "guest-booking",
+                element: <GuestBookingPage />
+            },
+            {
+                path: "public-booking",
+                element: <GuestBookingPage />
             },
             {
                 path: "booking/pay-at-counter-success",
@@ -221,6 +227,14 @@ const router = createBrowserRouter([
             {
                 path: "/booking",
                 element: <BookingPage />
+            },
+            {
+                path: "/guest-booking",
+                element: <Navigate to="/booking" replace />
+            },
+            {
+                path: "/public-booking",
+                element: <Navigate to="/booking" replace />
             },
             {
                 path: "/booking/pay-at-counter-success",

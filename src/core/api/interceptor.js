@@ -21,6 +21,7 @@ export function attachInterceptors(api) {
 
     api.interceptors.request.use(
         (config) => {
+            const skipAuth = config.skipAuth === true;
 
             const token =
                 localStorage.getItem(
@@ -32,7 +33,7 @@ export function attachInterceptors(api) {
                     "currentBranchId"
                 );
 
-            if (token) {
+            if (token && !skipAuth) {
 
                 config.headers.Authorization =
                     `Bearer ${token}`;
@@ -57,6 +58,9 @@ export function attachInterceptors(api) {
             const originalRequest = error.config;
 
             if (error.response && error.response.status === 401 && !originalRequest._retry) {
+                if (originalRequest.skipAuth) {
+                    return Promise.reject(error);
+                }
                 
                 // If it is the login or refresh token request itself, don't try to refresh to prevent loops
                 if (originalRequest.url?.includes(ENDPOINTS.LOGIN) || originalRequest.url?.includes(ENDPOINTS.REFRESH_TOKEN)) {

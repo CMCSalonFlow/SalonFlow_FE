@@ -85,7 +85,7 @@ export const getUsersApi = async () => {
 export const getPublicBranchesApi = async (salonId) => {
     const response = await api.get(
         `${ENDPOINTS.BRANCHES}/public`,
-        { params: { salonId } }
+        { params: { salonId }, skipAuth: true }
     );
     return response.data;
 };

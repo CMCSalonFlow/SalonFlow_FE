@@ -5,10 +5,36 @@ import { CalendarOutlined, HomeOutlined, RedoOutlined } from "@ant-design/icons"
 import { verifyPaymentApi } from "../api/paymentApi";
 
 const { Title, Text } = Typography;
+const BOOKING_CONTEXT_KEY = "salonflow_last_booking_context";
 
 export default function PaymentCallbackPage() {
     const location = useLocation();
     const navigate = useNavigate();
+    const bookingContext = (() => {
+        const stored = sessionStorage.getItem(BOOKING_CONTEXT_KEY);
+        if (!stored) {
+            return {
+                bookingMode: "authenticated",
+                returnPath: "/booking",
+                homePath: "/home"
+            };
+        }
+
+        try {
+            const parsed = JSON.parse(stored);
+            return {
+                bookingMode: parsed.bookingMode || "authenticated",
+                returnPath: parsed.returnPath || (parsed.bookingMode === "public" ? "/guest-booking" : "/booking"),
+                homePath: parsed.bookingMode === "public" ? "/" : "/home"
+            };
+        } catch {
+            return {
+                bookingMode: "authenticated",
+                returnPath: "/booking",
+                homePath: "/home"
+            };
+        }
+    })();
     
     const [loading, setLoading] = useState(true);
     const [result, setResult] = useState(null);
@@ -30,7 +56,10 @@ export default function PaymentCallbackPage() {
                     return;
                 }
 
-                const response = await verifyPaymentApi(params);
+                const response = await verifyPaymentApi(
+                    params,
+                    bookingContext.bookingMode === "public" ? { skipAuth: true } : {}
+                );
                 setResult(response);
             } catch (err) {
                 console.error("Xác minh thanh toán thất bại:", err);
@@ -70,20 +99,33 @@ export default function PaymentCallbackPage() {
                         title={<Title level={2} style={{ color: "#52c41a", margin: 0 }}>Thanh toán thành công!</Title>}
                         subTitle="Hệ thống đã ghi nhận khoản tiền cọc trực tuyến của bạn."
                         extra={[
-                            <Button 
-                                type="primary" 
-                                size="large" 
-                                icon={<CalendarOutlined />} 
-                                onClick={() => navigate("/appointments")}
-                                style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
-                                key="appointments"
-                            >
-                                Lịch hẹn của tôi
-                            </Button>,
-                            <Button 
-                                size="large" 
-                                icon={<HomeOutlined />} 
-                                onClick={() => navigate("/home")}
+                            bookingContext.bookingMode === "public" ? (
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    icon={<RedoOutlined />}
+                                    onClick={() => navigate(bookingContext.returnPath)}
+                                    style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
+                                    key="booking"
+                                >
+                                    Đặt lịch mới
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    icon={<CalendarOutlined />}
+                                    onClick={() => navigate("/appointments")}
+                                    style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
+                                    key="appointments"
+                                >
+                                    Lịch hẹn của tôi
+                                </Button>
+                            ),
+                            <Button
+                                size="large"
+                                icon={<HomeOutlined />}
+                                onClick={() => navigate(bookingContext.homePath)}
                                 style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
                                 key="home"
                             >
@@ -121,7 +163,7 @@ export default function PaymentCallbackPage() {
                                 danger
                                 size="large" 
                                 icon={<RedoOutlined />} 
-                                onClick={() => navigate("/booking")}
+                                onClick={() => navigate(bookingContext.returnPath)}
                                 style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
                                 key="retry"
                             >
@@ -130,7 +172,7 @@ export default function PaymentCallbackPage() {
                             <Button 
                                 size="large" 
                                 icon={<HomeOutlined />} 
-                                onClick={() => navigate("/home")}
+                                onClick={() => navigate(bookingContext.homePath)}
                                 style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
                                 key="home"
                             >

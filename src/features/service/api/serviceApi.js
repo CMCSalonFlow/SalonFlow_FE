@@ -6,6 +6,13 @@ export const getServicesByBranchApi = async (branchId) => {
     return response.data;
 };
 
+export const getPublicServicesByBranchApi = async (branchId) => {
+    const response = await api.get(`/api/v1/branches/${branchId}/services/public`, {
+        skipAuth: true
+    });
+    return response.data;
+};
+
 export const createServiceApi = async (branchId, payload) => {
     const response = await api.post(`/api/v1/branches/${branchId}/services`, payload);
     return response.data;
@@ -25,6 +32,13 @@ export const deleteServiceApi = async (branchId, serviceId) => {
 export const getBundlesByBranchApi = async (branchId, activeOnly = false) => {
     const response = await api.get(`/api/v1/branches/${branchId}/bundles`, {
         params: { activeOnly }
+    });
+    return response.data;
+};
+
+export const getPublicBundlesByBranchApi = async (branchId) => {
+    const response = await api.get(`/api/v1/branches/${branchId}/bundles/public`, {
+        skipAuth: true
     });
     return response.data;
 };

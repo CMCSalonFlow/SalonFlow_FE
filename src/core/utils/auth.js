@@ -39,6 +39,36 @@ export const saveAuthData = (response) => {
     }));
 };
 
+export const getStoredAuthData = () => {
+    try {
+        const authStr = localStorage.getItem("auth");
+        if (authStr) {
+            const auth = JSON.parse(authStr);
+            return {
+                userId: auth?.userId ?? localStorage.getItem("userId") ?? "",
+                username: auth?.username ?? localStorage.getItem("username") ?? "",
+                email: auth?.email ?? localStorage.getItem("email") ?? "",
+                accessToken: auth?.accessToken ?? localStorage.getItem("accessToken") ?? "",
+                refreshToken: auth?.refreshToken ?? localStorage.getItem("refreshToken") ?? "",
+                roles: Array.isArray(auth?.roles)
+                    ? auth.roles
+                    : JSON.parse(localStorage.getItem("roles") || "[]")
+            };
+        }
+    } catch (error) {
+        console.warn("Failed to parse auth data from localStorage:", error);
+    }
+
+    return {
+        userId: localStorage.getItem("userId") || "",
+        username: localStorage.getItem("username") || "",
+        email: localStorage.getItem("email") || "",
+        accessToken: localStorage.getItem("accessToken") || "",
+        refreshToken: localStorage.getItem("refreshToken") || "",
+        roles: JSON.parse(localStorage.getItem("roles") || "[]")
+    };
+};
+
 export const getToken = () => {
     if (isSessionExpired()) {
         localStorage.clear();
@@ -84,9 +114,23 @@ export const logout = () => {
 export const setupGlobalAuthListener = () => {
     const handleAuthCheck = () => {
         const token = localStorage.getItem("accessToken");
-        const isLoginPage = window.location.pathname === "/login" || window.location.pathname === "/";
-        
-        if (!token && !isLoginPage) {
+        const path = window.location.pathname;
+        const isPublicPath =
+            path === "/" ||
+            path === "/login" ||
+            path === "/register" ||
+            path === "/forgot-password" ||
+            path === "/reset-password" ||
+            path === "/verify-email" ||
+            path === "/oauth2/success" ||
+            path === "/search" ||
+            path === "/services" ||
+            path === "/guest-booking" ||
+            path === "/public-booking" ||
+            path === "/booking/pay-at-counter-success" ||
+            path === "/payment/callback";
+
+        if (!token && !isPublicPath) {
             localStorage.clear();
             window.location.href = "/login";
         }
@@ -98,4 +142,4 @@ export const setupGlobalAuthListener = () => {
             handleAuthCheck();
         }
     });
-};
+};
