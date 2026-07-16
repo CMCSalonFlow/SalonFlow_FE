@@ -479,19 +479,19 @@ export default function AppointmentsPage() {
                             Thanh toán tiền cọc qua VNPay
                         </Button>
                     ),
-                   selectedBooking?.status === "COMPLETED" && selectedBooking?.id && (
-                       <Button
-                         key="invoice"
-                         type="primary"
-                         onClick={() =>
-                         window.open(
-                         `http://localhost:9090/api/v1/bookings/${selectedBooking.id}/invoice`,
-                          "_blank"
-                       )
-                 }
-    > 
-                              Tải hóa đơn PDF
-                    </Button>
+                    ["CONFIRMED", "COMPLETED"].includes(selectedBooking?.status) &&
+                     selectedBooking?.id &&
+                     selectedBooking?.invoiceUrl && (
+              <Button
+                key="invoice"
+                type="primary"
+                onClick={() =>
+                window.open(selectedBooking.invoiceUrl, "_blank")
+              }
+                >
+                       Tải hóa đơn PDF
+                </Button>
+
                 ),
                     <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
                         Đóng
