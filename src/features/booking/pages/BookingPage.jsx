@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, message, Spin, Grid, Segmented } from "antd";
-import { AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined, RetweetOutlined } from "@ant-design/icons";
+import { AppstoreOutlined, TeamOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined, RetweetOutlined } from "@ant-design/icons";
 import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
 import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
@@ -343,13 +343,27 @@ export default function BookingPage() {
         }
     };
 
+    const getServiceDepositAmount = (service) => {
+        const price = Number(service?.price || 0);
+        const depositRequired = service?.depositRequired;
+        const depositPercentage = Number(service?.depositPercentage || 0);
+        if (!depositRequired || !depositPercentage) return 0;
+        return Math.round((price * depositPercentage) / 100);
+    };
+
     // Tính tiền cọc cần thanh toán trước
     const getBookingDepositAmount = () => {
         if (bookingType === "bundle") {
             if (!selectedBundle) return 0;
-            return Number(selectedBundle.depositAmount || 0);
+            const bundleDeposit = Number(selectedBundle.depositAmount || 0);
+            if (bundleDeposit > 0) return bundleDeposit;
+
+            return (selectedBundle.items || []).reduce((sum, item) => {
+                const service = services.find(s => String(s.id) === String(item.serviceId));
+                return sum + getServiceDepositAmount(service);
+            }, 0);
         } else {
-            return selectedServices.reduce((sum, s) => sum + Number(s.depositAmount || 0), 0);
+            return selectedServices.reduce((sum, service) => sum + getServiceDepositAmount(service), 0);
         }
     };
 
@@ -431,11 +445,18 @@ export default function BookingPage() {
                     throw new Error("Không thể tạo liên kết thanh toán VNPay.");
                 }
             } else {
-                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(res));
+                const depositAmountVal = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
+                const bookingWithAmounts = {
+                    ...res,
+                    depositAmount: depositAmountVal,
+                    totalPrice: Number(res.totalPrice || totalPrice || 0)
+                };
+
+                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingWithAmounts));
                 message.success("Đặt lịch hẹn thành công!");
                 navigate("/booking/pay-at-counter-success", {
                     state: {
-                        booking: res
+                        booking: bookingWithAmounts
                     }
                 });
             }

@@ -194,7 +194,12 @@ export default function AppointmentsPage() {
             
             const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
             const returnUrl = window.location.origin + "/payment/callback";
-            const amount = Number(booking.depositAmount || booking.totalPrice || 0);
+            const amount = Number(booking.depositAmount || booking.payableAmount || 0);
+
+            if (!amount || amount <= 0) {
+                message.warning("Không tìm thấy tiền cọc để thanh toán.");
+                return;
+            }
             
             const paymentPayload = {
                 bookingId: booking.id,
