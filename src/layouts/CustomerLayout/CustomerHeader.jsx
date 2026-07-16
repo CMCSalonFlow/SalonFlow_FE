@@ -27,10 +27,9 @@ export default function CustomerHeader() {
     const navigate =
         useNavigate();
 
-    const username =
-        localStorage.getItem(
-            "username"
-        );
+    const fullName = localStorage.getItem("fullName");
+    const username = localStorage.getItem("username");
+    const displayName = fullName || username;
 
     const menuItems = [
         {
@@ -119,7 +118,7 @@ export default function CustomerHeader() {
                             }
                         />
 
-                        {username}
+                        {displayName}
                     </Space>
                 </Button>
             </Dropdown>

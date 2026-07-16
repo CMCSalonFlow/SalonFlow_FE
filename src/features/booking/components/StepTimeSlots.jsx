@@ -12,7 +12,9 @@ export default function StepTimeSlots({
     notes,
     setNotes,
     paymentMethod,
-    setPaymentMethod
+    setPaymentMethod,
+    customerPhone,
+    setCustomerPhone
 }) {
     return (
         <div>
@@ -79,6 +81,19 @@ export default function StepTimeSlots({
                             );
                         }
                     })()}
+
+                    <div style={{ marginBottom: 24 }}>
+                        <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                            Số điện thoại liên hệ <span style={{ color: "#ff4d4f" }}>*</span>
+                        </label>
+                        <Input
+                            placeholder="Nhập số điện thoại để nhận thông báo lịch hẹn..."
+                            value={customerPhone}
+                            onChange={(e) => setCustomerPhone(e.target.value)}
+                            style={{ borderRadius: 8 }}
+                            size="large"
+                        />
+                    </div>
 
                     <div style={{ marginBottom: 24 }}>
                         <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Ghi chú gửi cho Salon (Tùy chọn)</label>

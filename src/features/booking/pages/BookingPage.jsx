@@ -10,6 +10,7 @@ import { getAvailabilityApi, createBookingApi, previewRecurringBookingApi, confi
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { getAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
+import { getUserByIdApi } from "@/features/user/api/userApi";
 import dayjs from "dayjs";
 
 // Import refactored components
@@ -72,6 +73,20 @@ export default function BookingPage() {
     const [recurringPreviewList, setRecurringPreviewList] = useState([]);
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [recurringServiceId, setRecurringServiceId] = useState(null);
+    const [customerPhone, setCustomerPhone] = useState("");
+
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+            getUserByIdApi(userId)
+                .then(data => {
+                    if (data && data.phone) {
+                        setCustomerPhone(data.phone);
+                    }
+                })
+                .catch(err => console.error("Lỗi khi tải thông tin SĐT người dùng:", err));
+        }
+    }, []);
 
     // WebSocket listener for real-time slot updates
     useEffect(() => {
@@ -366,6 +381,10 @@ export default function BookingPage() {
 
     // Gửi yêu cầu đặt lịch hẹn lên Backend
     const handleConfirmBooking = async () => {
+        if (!customerPhone || !customerPhone.trim()) {
+            message.warning("Vui lòng nhập số điện thoại liên hệ!");
+            return;
+        }
         if (!selectedTime) {
             message.warning("Vui lòng chọn giờ hẹn!");
             return;
@@ -377,7 +396,9 @@ export default function BookingPage() {
                 bookingDate: selectedDate.format("YYYY-MM-DD"),
                 startTime: selectedTime,
                 preferredStaffId: selectedStaff ? selectedStaff.id : null,
-                notes
+                notes,
+                customerPhone,
+                paymentMethod
             };
 
             if (bookingType === "service") {
@@ -490,6 +511,10 @@ export default function BookingPage() {
 
     // Xác nhận lưu toàn bộ chuỗi lịch định kỳ
     const handleConfirmRecurringBooking = async () => {
+        if (!customerPhone || !customerPhone.trim()) {
+            message.warning("Vui lòng nhập số điện thoại liên hệ!");
+            return;
+        }
         if (recurringPreviewList.length === 0) {
             message.warning("Vui lòng click Xem trước lịch hẹn trước!");
             return;
@@ -513,7 +538,8 @@ export default function BookingPage() {
                     endDate: recurringEndDate.format("YYYY-MM-DD"),
                     startTime: startTimeStr + ":00",
                     endTime: endTimeStr + ":00",
-                    note: notes
+                    note: notes,
+                    customerPhone
                 },
                 occurrences: recurringPreviewList.map(item => {
                     const action = item.action || (item.hasConflict ? "SKIP" : "INCLUDE");
@@ -609,7 +635,7 @@ export default function BookingPage() {
                                                 disabled={!selectedSalonId}
                                                 value={selectedBranchId}
                                                 onChange={setSelectedBranchId}
-                                                options={branches.map(b => ({ label: `${b.name} (${b.address})`, value: b.id }))}
+                                                options={branches.map(b => ({ label: b.name, value: b.id }))}
                                             />
                                         </div>
                                     </Col>
@@ -707,6 +733,8 @@ export default function BookingPage() {
                                         setNotes={setNotes}
                                         paymentMethod={paymentMethod}
                                         setPaymentMethod={setPaymentMethod}
+                                        customerPhone={customerPhone}
+                                        setCustomerPhone={setCustomerPhone}
                                     />
                                 )}
 

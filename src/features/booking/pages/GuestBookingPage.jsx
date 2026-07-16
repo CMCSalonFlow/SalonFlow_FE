@@ -294,7 +294,8 @@ export default function GuestBookingPage() {
                 notes,
                 customerName: guestName.trim(),
                 customerPhone: guestPhone.trim(),
-                bookingChannel: "PUBLIC"
+                bookingChannel: "PUBLIC",
+                paymentMethod
             };
 
             if (guestEmail.trim()) {

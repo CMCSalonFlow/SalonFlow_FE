@@ -24,6 +24,8 @@ export default function OAuth2SuccessPage() {
         userId,
         username:
             params.get("username"),
+        fullName:
+            params.get("fullName") || "",
         email:
             params.get("email"),
         accessToken:

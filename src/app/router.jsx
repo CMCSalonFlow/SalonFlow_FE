@@ -65,6 +65,7 @@ import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyP
 import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
 import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
 import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPage";
+import ProfilePage from "@/features/user/pages/ProfilePage";
 
 const router = createBrowserRouter([
     {
@@ -266,6 +267,10 @@ const router = createBrowserRouter([
             {
                 path: "/search",
                 element: <SearchPage />
+            },
+            {
+                path: "/profile",
+                element: <ProfilePage />
             }
         ]
     },
