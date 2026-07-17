@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "mobile:start": "npm --prefix mobile start",
+    "mobile:android": "npm --prefix mobile android",
+    "mobile:ios": "npm --prefix mobile ios"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.5",
