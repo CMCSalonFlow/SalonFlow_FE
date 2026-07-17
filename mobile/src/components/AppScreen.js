@@ -1,14 +1,5 @@
-import { View, StyleSheet } from "react-native";
-import { colors } from "../theme/colors";
+import { View } from "react-native";
 
 export function AppScreen({ children }) {
-  return <View style={styles.container}>{children}</View>;
+  return <View className="flex-1 bg-ink">{children}</View>;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-});
-

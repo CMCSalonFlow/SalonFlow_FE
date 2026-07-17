@@ -1,16 +1,14 @@
 # SalonFlow Mobile
 
-This folder is a separate React Native app for the customer experience.
+This folder is a separate customer app built with Expo Router + NativeWind.
 
-It is intentionally isolated from the web app at the repo root, so the current Vite
-web source remains unchanged.
+The web app at the repo root stays untouched.
 
 ## Structure
 
-- `mobile/App.js`: native entry UI
-- `mobile/src/screens`: customer screens
-- `mobile/src/components`: shared mobile UI building blocks
-- `mobile/src/shared/api`: API helper for backend calls
+- `mobile/app`: file-based routes
+- `mobile/src/components`: shared mobile UI
+- `mobile/src/shared/api`: mobile API helper and endpoint map
 
 ## Run
 
@@ -20,15 +18,20 @@ From the repo root:
 npm run mobile:start
 ```
 
-Or run Expo directly inside `mobile/` after dependencies are installed:
+## API base URL
 
-```bash
-npm install
-npm start
+- Android emulator: defaults to `http://10.0.2.2:9090`
+- iOS simulator: defaults to `http://localhost:9090`
+- Real phone: set `EXPO_PUBLIC_API_BASE_URL` to your Windows LAN IP or a staging domain
+
+Example:
+
+```powershell
+$env:EXPO_PUBLIC_API_BASE_URL = "http://192.168.1.10:9090"
+npm run mobile:start
 ```
 
 ## Notes
 
-- Set `EXPO_PUBLIC_API_BASE_URL` to point to the same backend used by the web app.
-- This scaffold is a starting point; we can now move customer flows screen by screen into mobile.
-
+- The mobile app uses its own API helper, so it does not depend on the web axios interceptor.
+- You can now migrate customer flows screen by screen without touching the web UI.

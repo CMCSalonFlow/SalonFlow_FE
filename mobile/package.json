@@ -2,7 +2,7 @@
   "name": "salonflow-mobile",
   "private": true,
   "version": "0.0.0",
-  "main": "index.js",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -11,8 +11,16 @@
   },
   "dependencies": {
     "expo": "*",
+    "expo-constants": "*",
+    "expo-router": "*",
+    "expo-status-bar": "*",
+    "@expo/vector-icons": "*",
+    "nativewind": "*",
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-reanimated": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-screens": "*",
+    "tailwindcss": "*"
   }
 }
-

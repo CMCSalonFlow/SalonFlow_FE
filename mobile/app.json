@@ -7,7 +7,7 @@
     "platforms": ["ios", "android"],
     "jsEngine": "hermes",
     "scheme": "salonflow",
-    "plugins": [],
+    "plugins": ["expo-router"],
     "extra": {
       "eas": {
         "projectId": "replace-with-your-project-id"
@@ -15,4 +15,3 @@
     }
   }
 }
-
