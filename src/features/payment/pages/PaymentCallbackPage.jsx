@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card, Result, Button, Spin, Typography, Space, Descriptions, Divider } from "antd";
 import { CalendarOutlined, HomeOutlined, RedoOutlined } from "@ant-design/icons";
 import { verifyPaymentApi } from "../api/paymentApi";
+import { getInvoiceUrl } from "@/features/media/api/mediaApi";  
 
 const { Title, Text } = Typography;
 const BOOKING_CONTEXT_KEY = "salonflow_last_booking_context";
@@ -39,6 +40,7 @@ export default function PaymentCallbackPage() {
     const [loading, setLoading] = useState(true);
     const [result, setResult] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
+    const [invoiceLoading, setInvoiceLoading] = useState(false);
 
     useEffect(() => {
         const verifyPayment = async () => {
@@ -60,6 +62,9 @@ export default function PaymentCallbackPage() {
                     params,
                     bookingContext.bookingMode === "public" ? { skipAuth: true } : {}
                 );
+
+            console.log("Payment response:", response);
+
                 setResult(response);
             } catch (err) {
                 console.error("Xác minh thanh toán thất bại:", err);
@@ -71,6 +76,33 @@ export default function PaymentCallbackPage() {
 
         verifyPayment();
     }, [location]);
+
+    const handleDownloadInvoice = async () => {
+
+    try {
+
+        if (!result?.invoiceUrl) {
+            return;
+        }
+
+        setInvoiceLoading(true);
+
+        const url = await getInvoiceUrl(
+            result.invoiceUrl
+        );
+
+        window.open(url, "_blank");
+
+    } catch (error) {
+
+        console.error("Lỗi lấy invoice:", error);
+
+    } finally {
+
+        setInvoiceLoading(false);
+
+    }
+};
 
     if (loading) {
         return (
@@ -122,6 +154,17 @@ export default function PaymentCallbackPage() {
                                     Lịch hẹn của tôi
                                 </Button>
                             ),
+                            result?.invoiceUrl && (
+                                <Button
+                                    type="primary"
+                                    loading={invoiceLoading}
+                                    onClick={handleDownloadInvoice}
+                                    key="invoice"
+                                >
+                                    Tải hóa đơn PDF
+                                </Button>
+                            ),
+
                             <Button
                                 size="large"
                                 icon={<HomeOutlined />}
