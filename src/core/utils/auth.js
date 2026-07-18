@@ -24,6 +24,7 @@ export const saveAuthData = (response) => {
     localStorage.setItem("refreshToken", response.refreshToken || "");
     localStorage.setItem("userId", response.userId || "");
     localStorage.setItem("username", response.username || "");
+    localStorage.setItem("fullName", response.fullName || "");
     localStorage.setItem("email", response.email || "");
     localStorage.setItem("roles", JSON.stringify(response.roles || []));
     localStorage.setItem("authExpiry", expiryTime.toString());
@@ -32,6 +33,7 @@ export const saveAuthData = (response) => {
     localStorage.setItem("auth", JSON.stringify({
         userId: response.userId,
         username: response.username,
+        fullName: response.fullName,
         email: response.email,
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
@@ -47,6 +49,7 @@ export const getStoredAuthData = () => {
             return {
                 userId: auth?.userId ?? localStorage.getItem("userId") ?? "",
                 username: auth?.username ?? localStorage.getItem("username") ?? "",
+                fullName: auth?.fullName ?? localStorage.getItem("fullName") ?? "",
                 email: auth?.email ?? localStorage.getItem("email") ?? "",
                 accessToken: auth?.accessToken ?? localStorage.getItem("accessToken") ?? "",
                 refreshToken: auth?.refreshToken ?? localStorage.getItem("refreshToken") ?? "",
@@ -62,6 +65,7 @@ export const getStoredAuthData = () => {
     return {
         userId: localStorage.getItem("userId") || "",
         username: localStorage.getItem("username") || "",
+        fullName: localStorage.getItem("fullName") || "",
         email: localStorage.getItem("email") || "",
         accessToken: localStorage.getItem("accessToken") || "",
         refreshToken: localStorage.getItem("refreshToken") || "",

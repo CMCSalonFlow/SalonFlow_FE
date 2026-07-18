@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, DatePicker, message, Spin, Grid, Radio, Avatar, Tag, Input } from "antd";
-import { ShopOutlined, AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, SmileOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { ShopOutlined, AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
 import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getPublicServicesByBranchApi, getPublicBundlesByBranchApi } from "@/features/service/api/serviceApi";
@@ -233,6 +233,10 @@ export default function GuestBookingPage() {
             return selectedServices.reduce((sum, service) => sum + getServiceDepositAmount(service), 0);
         }
         if (!selectedBundle) return 0;
+
+        const bundleDeposit = Number(selectedBundle.depositAmount || 0);
+        if (bundleDeposit > 0) return bundleDeposit;
+
         return (selectedBundle.items || []).reduce((sum, item) => {
             const service = services.find(s => String(s.id) === String(item.serviceId));
             return sum + getServiceDepositAmount(service);
@@ -294,7 +298,8 @@ export default function GuestBookingPage() {
                 notes,
                 customerName: guestName.trim(),
                 customerPhone: guestPhone.trim(),
-                bookingChannel: "PUBLIC"
+                bookingChannel: "PUBLIC",
+                paymentMethod
             };
 
             if (guestEmail.trim()) {
@@ -338,9 +343,16 @@ export default function GuestBookingPage() {
                     throw new Error("Không thể tạo liên kết thanh toán VNPay.");
                 }
             } else {
-                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(res));
+                const depositAmount = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
+                const bookingWithAmounts = {
+                    ...res,
+                    depositAmount,
+                    totalPrice: Number(res.totalPrice || totalPrice || 0)
+                };
+
+                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingWithAmounts));
                 message.success("Đặt lịch hẹn thành công!");
-                navigate("/booking/pay-at-counter-success", { state: { booking: res, bookingMode: "public" } });
+                navigate("/booking/pay-at-counter-success", { state: { booking: bookingWithAmounts, bookingMode: "public" } });
             }
         } catch (error) {
             message.error({ content: error.response?.data?.message || error.message || "Lỗi khi tạo đặt lịch hẹn.", key: "payment_redirect" });

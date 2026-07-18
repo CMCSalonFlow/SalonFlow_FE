@@ -57,7 +57,7 @@ export default function PayAtCounterSuccessPage() {
 
     const bookingItems = booking?.items || [];
     const totalPrice = Number(booking?.totalPrice || 0);
-    const depositAmount = Number(booking?.depositAmount || 0);
+    const depositAmount = Number(booking?.depositAmount || booking?.payableAmount || booking?.bookingDepositAmount || 0);
     const payableAmount = depositAmount > 0 ? depositAmount : totalPrice;
 
     const handlePayDeposit = async () => {

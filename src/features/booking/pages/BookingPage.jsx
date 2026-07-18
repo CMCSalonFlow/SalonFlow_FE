@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, message, Spin, Grid, Segmented } from "antd";
-import { AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined, RetweetOutlined } from "@ant-design/icons";
+import { AppstoreOutlined, TeamOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined, RetweetOutlined } from "@ant-design/icons";
 import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
 import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
@@ -10,6 +10,7 @@ import { getAvailabilityApi, createBookingApi, previewRecurringBookingApi, confi
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { getAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
+import { getUserByIdApi } from "@/features/user/api/userApi";
 import dayjs from "dayjs";
 
 // Import refactored components
@@ -72,6 +73,20 @@ export default function BookingPage() {
     const [recurringPreviewList, setRecurringPreviewList] = useState([]);
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [recurringServiceId, setRecurringServiceId] = useState(null);
+    const [customerPhone, setCustomerPhone] = useState("");
+
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+            getUserByIdApi(userId)
+                .then(data => {
+                    if (data && data.phone) {
+                        setCustomerPhone(data.phone);
+                    }
+                })
+                .catch(err => console.error("Lỗi khi tải thông tin SĐT người dùng:", err));
+        }
+    }, []);
 
     // WebSocket listener for real-time slot updates
     useEffect(() => {
@@ -328,13 +343,27 @@ export default function BookingPage() {
         }
     };
 
+    const getServiceDepositAmount = (service) => {
+        const price = Number(service?.price || 0);
+        const depositRequired = service?.depositRequired;
+        const depositPercentage = Number(service?.depositPercentage || 0);
+        if (!depositRequired || !depositPercentage) return 0;
+        return Math.round((price * depositPercentage) / 100);
+    };
+
     // Tính tiền cọc cần thanh toán trước
     const getBookingDepositAmount = () => {
         if (bookingType === "bundle") {
             if (!selectedBundle) return 0;
-            return Number(selectedBundle.depositAmount || 0);
+            const bundleDeposit = Number(selectedBundle.depositAmount || 0);
+            if (bundleDeposit > 0) return bundleDeposit;
+
+            return (selectedBundle.items || []).reduce((sum, item) => {
+                const service = services.find(s => String(s.id) === String(item.serviceId));
+                return sum + getServiceDepositAmount(service);
+            }, 0);
         } else {
-            return selectedServices.reduce((sum, s) => sum + Number(s.depositAmount || 0), 0);
+            return selectedServices.reduce((sum, service) => sum + getServiceDepositAmount(service), 0);
         }
     };
 
@@ -366,6 +395,10 @@ export default function BookingPage() {
 
     // Gửi yêu cầu đặt lịch hẹn lên Backend
     const handleConfirmBooking = async () => {
+        if (!customerPhone || !customerPhone.trim()) {
+            message.warning("Vui lòng nhập số điện thoại liên hệ!");
+            return;
+        }
         if (!selectedTime) {
             message.warning("Vui lòng chọn giờ hẹn!");
             return;
@@ -377,7 +410,9 @@ export default function BookingPage() {
                 bookingDate: selectedDate.format("YYYY-MM-DD"),
                 startTime: selectedTime,
                 preferredStaffId: selectedStaff ? selectedStaff.id : null,
-                notes
+                notes,
+                customerPhone,
+                paymentMethod
             };
 
             if (bookingType === "service") {
@@ -410,11 +445,18 @@ export default function BookingPage() {
                     throw new Error("Không thể tạo liên kết thanh toán VNPay.");
                 }
             } else {
-                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(res));
+                const depositAmountVal = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
+                const bookingWithAmounts = {
+                    ...res,
+                    depositAmount: depositAmountVal,
+                    totalPrice: Number(res.totalPrice || totalPrice || 0)
+                };
+
+                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingWithAmounts));
                 message.success("Đặt lịch hẹn thành công!");
                 navigate("/booking/pay-at-counter-success", {
                     state: {
-                        booking: res
+                        booking: bookingWithAmounts
                     }
                 });
             }
@@ -490,6 +532,10 @@ export default function BookingPage() {
 
     // Xác nhận lưu toàn bộ chuỗi lịch định kỳ
     const handleConfirmRecurringBooking = async () => {
+        if (!customerPhone || !customerPhone.trim()) {
+            message.warning("Vui lòng nhập số điện thoại liên hệ!");
+            return;
+        }
         if (recurringPreviewList.length === 0) {
             message.warning("Vui lòng click Xem trước lịch hẹn trước!");
             return;
@@ -513,7 +559,8 @@ export default function BookingPage() {
                     endDate: recurringEndDate.format("YYYY-MM-DD"),
                     startTime: startTimeStr + ":00",
                     endTime: endTimeStr + ":00",
-                    note: notes
+                    note: notes,
+                    customerPhone
                 },
                 occurrences: recurringPreviewList.map(item => {
                     const action = item.action || (item.hasConflict ? "SKIP" : "INCLUDE");
@@ -609,7 +656,7 @@ export default function BookingPage() {
                                                 disabled={!selectedSalonId}
                                                 value={selectedBranchId}
                                                 onChange={setSelectedBranchId}
-                                                options={branches.map(b => ({ label: `${b.name} (${b.address})`, value: b.id }))}
+                                                options={branches.map(b => ({ label: b.name, value: b.id }))}
                                             />
                                         </div>
                                     </Col>
@@ -707,6 +754,8 @@ export default function BookingPage() {
                                         setNotes={setNotes}
                                         paymentMethod={paymentMethod}
                                         setPaymentMethod={setPaymentMethod}
+                                        customerPhone={customerPhone}
+                                        setCustomerPhone={setCustomerPhone}
                                     />
                                 )}
 
