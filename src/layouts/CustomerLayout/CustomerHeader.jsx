@@ -4,13 +4,22 @@ import {
     Button,
     Dropdown,
     Avatar,
-    Space
+    Space,
+    Badge,
+    Tooltip,
+    notification
 } from "antd";
 
 import {
     UserOutlined,
-    LogoutOutlined
+    LogoutOutlined,
+    BellOutlined,
+    CheckCircleOutlined
 } from "@ant-design/icons";
+
+import {
+    useCallback
+} from "react";
 
 import {
     useNavigate
@@ -19,6 +28,8 @@ import {
 import {
     logout
 } from "@/core/utils/auth";
+import { useFirebaseMessaging } from "@/features/notification/hooks/useFirebaseMessaging";
+import { useUnreadNotificationCount } from "@/features/notification/hooks/useUnreadNotificationCount";
 
 const { Header } = Layout;
 
@@ -30,6 +41,58 @@ export default function CustomerHeader() {
     const fullName = localStorage.getItem("fullName");
     const username = localStorage.getItem("username");
     const displayName = fullName || username;
+    const accessToken = localStorage.getItem("accessToken");
+    const isLogin = !!accessToken;
+
+    const handleForegroundMessage = useCallback((payload) => {
+        const title = payload?.notification?.title || payload?.data?.title || "SalonFlow";
+        const body = payload?.notification?.body || payload?.data?.body || "Bạn có thông báo mới.";
+        const targetUrl = payload?.data?.url || "/appointments";
+
+        notification.info({
+            message: title,
+            description: body,
+            placement: "topRight",
+            duration: 5,
+            onClick: () => navigate(targetUrl)
+        });
+    }, [navigate]);
+
+    const {
+        permission,
+        loading: messagingLoading,
+        supported: messagingSupported,
+        enableMessaging
+    } = useFirebaseMessaging({
+        autoSync: isLogin,
+        onMessageReceived: handleForegroundMessage
+    });
+
+    const {
+        count: unreadCount
+    } = useUnreadNotificationCount({
+        enabled: isLogin
+    });
+
+    const canShowMessagingButton =
+        isLogin &&
+        messagingSupported &&
+        permission !== "granted";
+
+    const handleEnableNotifications = async () => {
+        try {
+            await enableMessaging();
+            notification.success({
+                message: "Đã bật thông báo",
+                description: "Firebase Messaging đã được kết nối cho tài khoản customer này."
+            });
+        } catch (error) {
+            notification.error({
+                message: "Không thể bật thông báo",
+                description: error?.message || "Đã xảy ra lỗi khi đăng ký FCM token."
+            });
+        }
+    };
 
     const menuItems = [
         {
@@ -47,6 +110,10 @@ export default function CustomerHeader() {
         {
             key: "/appointments",
             label: "Lịch hẹn"
+        },
+        {
+            key: "/notifications",
+            label: "Thông báo"
         }
     ];
 
@@ -122,6 +189,52 @@ export default function CustomerHeader() {
                     </Space>
                 </Button>
             </Dropdown>
+
+            {isLogin ? (
+                <Badge count={unreadCount} size="small" overflowCount={99}>
+                    <Button
+                        type="text"
+                        icon={<BellOutlined />}
+                        onClick={() => navigate("/notifications")}
+                        style={{ marginLeft: 8 }}
+                    >
+                        Thông báo
+                    </Button>
+                </Badge>
+            ) : null}
+
+            {canShowMessagingButton ? (
+                <Tooltip title="Bật thông báo đơn hàng, lịch hẹn">
+                    <Badge dot={permission === "default"}>
+                        <Button
+                            type="primary"
+                            icon={<BellOutlined />}
+                            loading={messagingLoading}
+                            onClick={handleEnableNotifications}
+                            style={{ marginLeft: 12 }}
+                        >
+                            Bật thông báo
+                        </Button>
+                    </Badge>
+                </Tooltip>
+            ) : isLogin && permission === "granted" ? (
+                <Button
+                    type="default"
+                    icon={<CheckCircleOutlined />}
+                    disabled
+                    style={{ marginLeft: 12 }}
+                >
+                    Đã bật thông báo
+                </Button>
+            ) : isLogin && permission === "denied" ? (
+                <Button
+                    danger
+                    disabled
+                    style={{ marginLeft: 12 }}
+                >
+                    Thông báo đã bị chặn
+                </Button>
+            ) : null}
         </Header>
     );
 }

@@ -27,5 +27,11 @@ export const ENDPOINTS = {
     // Vouchers
     VOUCHERS: "/api/vouchers",
     VOUCHERS_BATCH: "/api/vouchers/batch",
-    VOUCHERS_VALIDATE: "/api/vouchers/validate"
+    VOUCHERS_VALIDATE: "/api/vouchers/validate",
+
+    // Notifications
+    NOTIFICATIONS: "/api/v1/notifications",
+    NOTIFICATION_UNREAD_COUNT: "/api/v1/notifications/unread-count",
+    NOTIFICATION_MARK_READ: (id) => `/api/v1/notifications/${id}/read`,
+    FCM_TOKENS: "/api/v1/notifications/fcm-tokens"
 };
