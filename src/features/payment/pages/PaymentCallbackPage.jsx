@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Card, Result, Button, Spin, Typography, Space, Descriptions, Divider } from "antd";
+import { Card, Result, Button, Spin, Typography, Space, Descriptions, Divider, message } from "antd";
 import { CalendarOutlined, HomeOutlined, RedoOutlined } from "@ant-design/icons";
 import { verifyPaymentApi } from "../api/paymentApi";
 import { getInvoiceUrl } from "@/features/media/api/mediaApi";  
@@ -78,36 +78,31 @@ export default function PaymentCallbackPage() {
     }, [location]);
 
     const handleDownloadInvoice = async () => {
-
-    try {
-
         if (!result?.invoiceUrl) {
+            message.info("Hệ thống đang chuyển tới trang Lịch hẹn để xem hóa đơn PDF.");
+            navigate("/appointments");
             return;
         }
-
-        setInvoiceLoading(true);
-
-        const url = await getInvoiceUrl(
-            result.invoiceUrl
-        );
-
-        window.open(url, "_blank");
-
-    } catch (error) {
-
-        console.error("Lỗi lấy invoice:", error);
-
-    } finally {
-
-        setInvoiceLoading(false);
-
-    }
-};
+        try {
+            setInvoiceLoading(true);
+            const url = await getInvoiceUrl(result.invoiceUrl);
+            if (url) {
+                window.open(url, "_blank");
+            } else {
+                message.error("Không thể lấy liên kết tải hóa đơn.");
+            }
+        } catch (error) {
+            console.error("Lỗi lấy invoice:", error);
+            message.error("Có lỗi xảy ra khi tải hóa đơn PDF.");
+        } finally {
+            setInvoiceLoading(false);
+        }
+    };
 
     if (loading) {
         return (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh", flexDirection: "column" }}>
-                <Spin size="large" tip="Đang xác minh kết quả thanh toán..." />
+                <Spin size="large" />
                 <Title level={4} style={{ marginTop: 24, color: "#1890ff" }}>Vui lòng giữ kết nối, hệ thống đang cập nhật trạng thái đặt lịch</Title>
             </div>
         );
@@ -154,7 +149,7 @@ export default function PaymentCallbackPage() {
                                     Lịch hẹn của tôi
                                 </Button>
                             ),
-                            result?.invoiceUrl && (
+                            (Boolean(result?.invoiceUrl) || result?.status === "SUCCESS") && (
                                 <Button
                                     type="primary"
                                     loading={invoiceLoading}

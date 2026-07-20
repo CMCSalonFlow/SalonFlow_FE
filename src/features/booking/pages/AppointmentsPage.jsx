@@ -32,6 +32,7 @@ import {
     cancelBookingApi
 } from "../api/bookingApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
+import { getInvoiceUrl } from "@/features/media/api/mediaApi";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -43,6 +44,28 @@ export default function AppointmentsPage() {
     const [myBookings, setMyBookings] = useState([]);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [invoiceLoading, setInvoiceLoading] = useState(false);
+
+    const handleDownloadInvoice = async (booking) => {
+        if (!booking?.invoiceUrl) {
+            message.warning("Lịch hẹn này chưa có file hóa đơn PDF.");
+            return;
+        }
+        try {
+            setInvoiceLoading(true);
+            const url = await getInvoiceUrl(booking.invoiceUrl);
+            if (url) {
+                window.open(url, "_blank");
+            } else {
+                message.error("Không thể lấy liên kết tải hóa đơn.");
+            }
+        } catch (err) {
+            console.error("Lỗi tải hóa đơn:", err);
+            message.error("Có lỗi xảy ra khi tải hóa đơn PDF.");
+        } finally {
+            setInvoiceLoading(false);
+        }
+    };
 
     const formatCurrency = (value) =>
         Number(value || 0).toLocaleString("vi-VN");
@@ -484,20 +507,17 @@ export default function AppointmentsPage() {
                             Thanh toán tiền cọc qua VNPay
                         </Button>
                     ),
-                    ["CONFIRMED", "COMPLETED"].includes(selectedBooking?.status) &&
-                     selectedBooking?.id &&
-                     selectedBooking?.invoiceUrl && (
-              <Button
-                key="invoice"
-                type="primary"
-                onClick={() =>
-                window.open(selectedBooking.invoiceUrl, "_blank")
-              }
-                >
-                       Tải hóa đơn PDF
-                </Button>
-
-                ),
+                    (Boolean(selectedBooking?.invoiceUrl) || ["CONFIRMED", "COMPLETED"].includes(selectedBooking?.status)) && (
+                        <Button
+                            key="invoice"
+                            type="primary"
+                            loading={invoiceLoading}
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleDownloadInvoice(selectedBooking)}
+                        >
+                            Tải hóa đơn PDF
+                        </Button>
+                    ),
                     <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
                         Đóng
                     </Button>
