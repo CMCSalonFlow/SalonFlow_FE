@@ -31,5 +31,10 @@ export const ENDPOINTS = {
     // Vouchers
     VOUCHERS: "/api/vouchers",
     VOUCHERS_BATCH: "/api/vouchers/batch",
-    VOUCHERS_VALIDATE: "/api/vouchers/validate"
+    VOUCHERS_VALIDATE: "/api/vouchers/validate",
+
+    // Loyalty Points
+    LOYALTY_SUMMARY: "/api/v1/loyalty/summary",
+    LOYALTY_HISTORY: "/api/v1/loyalty/history",
+    LOYALTY_REDEEM: "/api/v1/loyalty/redeem"
 };
