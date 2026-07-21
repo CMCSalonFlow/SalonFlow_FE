@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Card, Result, Button, Spin, Typography, Space, Descriptions, Divider } from "antd";
+import { Card, Result, Button, Spin, Typography, Space, Descriptions, Divider, message } from "antd";
 import { CalendarOutlined, HomeOutlined, RedoOutlined } from "@ant-design/icons";
 import { verifyPaymentApi } from "../api/paymentApi";
+import { getInvoiceUrl } from "@/features/media/api/mediaApi";  
 
 const { Title, Text } = Typography;
 const BOOKING_CONTEXT_KEY = "salonflow_last_booking_context";
@@ -39,6 +40,7 @@ export default function PaymentCallbackPage() {
     const [loading, setLoading] = useState(true);
     const [result, setResult] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
+    const [invoiceLoading, setInvoiceLoading] = useState(false);
 
     useEffect(() => {
         const verifyPayment = async () => {
@@ -60,6 +62,9 @@ export default function PaymentCallbackPage() {
                     params,
                     bookingContext.bookingMode === "public" ? { skipAuth: true } : {}
                 );
+
+            console.log("Payment response:", response);
+
                 setResult(response);
             } catch (err) {
                 console.error("Xác minh thanh toán thất bại:", err);
@@ -72,10 +77,32 @@ export default function PaymentCallbackPage() {
         verifyPayment();
     }, [location]);
 
+    const handleDownloadInvoice = async () => {
+        if (!result?.invoiceUrl) {
+            message.info("Hệ thống đang chuyển tới trang Lịch hẹn để xem hóa đơn PDF.");
+            navigate("/appointments");
+            return;
+        }
+        try {
+            setInvoiceLoading(true);
+            const url = await getInvoiceUrl(result.invoiceUrl);
+            if (url) {
+                window.open(url, "_blank");
+            } else {
+                message.error("Không thể lấy liên kết tải hóa đơn.");
+            }
+        } catch (error) {
+            console.error("Lỗi lấy invoice:", error);
+            message.error("Có lỗi xảy ra khi tải hóa đơn PDF.");
+        } finally {
+            setInvoiceLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh", flexDirection: "column" }}>
-                <Spin size="large" tip="Đang xác minh kết quả thanh toán..." />
+                <Spin size="large" />
                 <Title level={4} style={{ marginTop: 24, color: "#1890ff" }}>Vui lòng giữ kết nối, hệ thống đang cập nhật trạng thái đặt lịch</Title>
             </div>
         );
@@ -122,6 +149,17 @@ export default function PaymentCallbackPage() {
                                     Lịch hẹn của tôi
                                 </Button>
                             ),
+                            (Boolean(result?.invoiceUrl) || result?.status === "SUCCESS") && (
+                                <Button
+                                    type="primary"
+                                    loading={invoiceLoading}
+                                    onClick={handleDownloadInvoice}
+                                    key="invoice"
+                                >
+                                    Tải hóa đơn PDF
+                                </Button>
+                            ),
+
                             <Button
                                 size="large"
                                 icon={<HomeOutlined />}
