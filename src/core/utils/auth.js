@@ -108,11 +108,8 @@ export const hasRole = (
 };
 
 export const logout = () => {
-
     localStorage.clear();
-
-    window.location.href =
-        "/login";
+    window.location.href = "/";
 };
 
 export const setupGlobalAuthListener = () => {
@@ -121,6 +118,7 @@ export const setupGlobalAuthListener = () => {
         const path = window.location.pathname;
         const isPublicPath =
             path === "/" ||
+            path === "/home" ||
             path === "/login" ||
             path === "/register" ||
             path === "/forgot-password" ||
@@ -136,7 +134,7 @@ export const setupGlobalAuthListener = () => {
 
         if (!token && !isPublicPath) {
             localStorage.clear();
-            window.location.href = "/login";
+            window.location.href = "/";
         }
     };
 

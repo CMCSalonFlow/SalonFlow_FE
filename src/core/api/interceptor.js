@@ -17,6 +17,20 @@ const processQueue = (error, token = null) => {
     failedQueue = [];
 };
 
+const isPublicRoute = (pathname) => {
+    return (
+        pathname === "/" ||
+        pathname === "/home" ||
+        pathname === "/services" ||
+        pathname === "/guest-booking" ||
+        pathname === "/public-booking" ||
+        pathname === "/search" ||
+        pathname === "/categories" ||
+        pathname === "/login" ||
+        pathname === "/register"
+    );
+};
+
 export function attachInterceptors(api) {
 
     api.interceptors.request.use(
@@ -65,8 +79,8 @@ export function attachInterceptors(api) {
                 // If it is the login or refresh token request itself, don't try to refresh to prevent loops
                 if (originalRequest.url?.includes(ENDPOINTS.LOGIN) || originalRequest.url?.includes(ENDPOINTS.REFRESH_TOKEN)) {
                     localStorage.clear();
-                    if (window.location.pathname !== "/login") {
-                        window.location.href = "/login";
+                    if (!isPublicRoute(window.location.pathname)) {
+                        window.location.href = "/";
                     }
                     return Promise.reject(error);
                 }
@@ -130,8 +144,8 @@ export function attachInterceptors(api) {
                         sessionStorage.setItem("lastAuthError", JSON.stringify(errorInfo));
 
                         localStorage.clear();
-                        if (window.location.pathname !== "/login") {
-                            window.location.href = "/login";
+                        if (!isPublicRoute(window.location.pathname)) {
+                            window.location.href = "/";
                         }
                         return Promise.reject(refreshError);
                     }
@@ -146,8 +160,8 @@ export function attachInterceptors(api) {
                     sessionStorage.setItem("lastAuthError", JSON.stringify(errorInfo));
 
                     localStorage.clear();
-                    if (window.location.pathname !== "/login") {
-                        window.location.href = "/login";
+                    if (!isPublicRoute(window.location.pathname)) {
+                        window.location.href = "/";
                     }
                 }
             }
