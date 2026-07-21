@@ -29,11 +29,12 @@ import {
     logout
 } from "@/core/utils/auth";
 import { useFirebaseMessaging } from "@/features/notification/hooks/useFirebaseMessaging";
-import { useUnreadNotificationCount } from "@/features/notification/hooks/useUnreadNotificationCount";
+import { useNotificationWebSocket } from "@/features/notification/hooks/useNotificationWebSocket";
 
 const { Header } = Layout;
 
 export default function CustomerHeader() {
+    const { unreadCount } = useNotificationWebSocket();
 
     const navigate =
         useNavigate();
@@ -66,12 +67,6 @@ export default function CustomerHeader() {
     } = useFirebaseMessaging({
         autoSync: isLogin,
         onMessageReceived: handleForegroundMessage
-    });
-
-    const {
-        count: unreadCount
-    } = useUnreadNotificationCount({
-        enabled: isLogin
     });
 
     const canShowMessagingButton =
