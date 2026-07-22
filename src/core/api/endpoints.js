@@ -27,5 +27,9 @@ export const ENDPOINTS = {
     // Vouchers
     VOUCHERS: "/api/vouchers",
     VOUCHERS_BATCH: "/api/vouchers/batch",
-    VOUCHERS_VALIDATE: "/api/vouchers/validate"
+    VOUCHERS_VALIDATE: "/api/vouchers/validate",
+
+    // Reviews
+    ADMIN_REVIEWS: "/api/v1/admin/reviews",
+    ADMIN_REVIEW_SUMMARY: "/api/v1/admin/reviews/summary"
 };
