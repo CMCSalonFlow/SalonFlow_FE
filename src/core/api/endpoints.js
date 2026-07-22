@@ -33,15 +33,14 @@ export const ENDPOINTS = {
     VOUCHERS_BATCH: "/api/vouchers/batch",
     VOUCHERS_VALIDATE: "/api/vouchers/validate",
 
-<<<<<<< HEAD
     // Notifications
     NOTIFICATIONS: "/api/v1/notifications",
     NOTIFICATION_UNREAD_COUNT: "/api/v1/notifications/unread-count",
     NOTIFICATION_MARK_READ: (id) => `/api/v1/notifications/${id}/read`,
-    FCM_TOKENS: "/api/v1/notifications/fcm-tokens"
-=======
+    FCM_TOKENS: "/api/v1/notifications/fcm-tokens",
+
     // Reviews
     ADMIN_REVIEWS: "/api/v1/admin/reviews",
     ADMIN_REVIEW_SUMMARY: "/api/v1/admin/reviews/summary"
->>>>>>> 48c8cf06d9208dc2f91c3b264f80aca60490c364
+
 };
