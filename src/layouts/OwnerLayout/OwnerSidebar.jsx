@@ -8,7 +8,8 @@ import {
     ClockCircleOutlined,
     TagsOutlined,
     DollarOutlined,
-    PlusCircleOutlined
+    PlusCircleOutlined,
+    MessageOutlined
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
@@ -48,6 +49,11 @@ export default function OwnerSidebar() {
             key: "/owner/cancellation-policy",
             icon: <DollarOutlined />,
             label: "Cancellation Policy"
+        },
+        {
+            key: "/owner/reviews",
+            icon: <MessageOutlined />,
+            label: "Reviews"
         },
         {
             key: "/owner/schedule",

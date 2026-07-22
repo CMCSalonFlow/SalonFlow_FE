@@ -6,9 +6,7 @@ import {
     DashboardOutlined,
     UserOutlined,
     TeamOutlined,
-    ApartmentOutlined,
-    ShopOutlined,
-    TagsOutlined
+    ApartmentOutlined
 } from "@ant-design/icons";
 
 import {
