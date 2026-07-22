@@ -4,13 +4,22 @@ import {
     Button,
     Dropdown,
     Avatar,
-    Space
+    Space,
+    Badge,
+    Tooltip,
+    notification
 } from "antd";
 
 import {
     UserOutlined,
-    LogoutOutlined
+    LogoutOutlined,
+    BellOutlined,
+    CheckCircleOutlined
 } from "@ant-design/icons";
+
+import {
+    useCallback
+} from "react";
 
 import {
     useNavigate
@@ -19,17 +28,83 @@ import {
 import {
     logout
 } from "@/core/utils/auth";
+import { useFirebaseMessaging } from "@/features/notification/hooks/useFirebaseMessaging";
+import { useNotificationWebSocket } from "@/features/notification/hooks/useNotificationWebSocket";
 
 const { Header } = Layout;
 
 export default function CustomerHeader() {
+    const { unreadCount } = useNotificationWebSocket();
 
-    const navigate =
-        useNavigate();
+    const navigate = useNavigate();
 
     const fullName = localStorage.getItem("fullName");
     const username = localStorage.getItem("username");
     const displayName = fullName || username;
+    const accessToken = localStorage.getItem("accessToken");
+    const isLogin = !!accessToken;
+
+    const handleForegroundMessage = useCallback((payload) => {
+        const title = payload?.notification?.title || payload?.data?.title || "SalonFlow";
+        const body = payload?.notification?.body || payload?.data?.body || "Bạn có thông báo mới.";
+        const targetUrl = payload?.data?.url || "/appointments";
+
+        notification.info({
+            message: title,
+            description: body,
+            placement: "topRight",
+            duration: 5,
+            onClick: () => navigate(targetUrl)
+        });
+    }, [navigate]);
+
+    const {
+        permission,
+        loading: messagingLoading,
+        supported: messagingSupported,
+        isDisabledByUser,
+        enableMessaging,
+        disableMessaging
+    } = useFirebaseMessaging({
+        autoSync: isLogin,
+        onMessageReceived: handleForegroundMessage
+    });
+
+    const isNotificationOn =
+        isLogin &&
+        messagingSupported &&
+        permission === "granted" &&
+        !isDisabledByUser;
+
+    const handleEnableNotifications = async () => {
+        try {
+            await enableMessaging();
+            notification.success({
+                message: "Đã bật thông báo thành công",
+                description: "Bạn sẽ nhận được thông báo thời gian thực về lịch hẹn và ưu đãi."
+            });
+        } catch (error) {
+            notification.error({
+                message: "Không thể bật thông báo",
+                description: error?.message || "Đã xảy ra lỗi khi đăng ký FCM token."
+            });
+        }
+    };
+
+    const handleDisableNotifications = async () => {
+        try {
+            await disableMessaging();
+            notification.info({
+                message: "Đã tắt thông báo",
+                description: "Bạn đã tắt nhận thông báo đẩy. Bạn có thể bật lại bất cứ lúc nào."
+            });
+        } catch (error) {
+            notification.error({
+                message: "Không thể tắt thông báo",
+                description: error?.message || "Đã xảy ra lỗi khi hủy token thông báo."
+            });
+        }
+    };
 
     const menuItems = [
         {
@@ -47,6 +122,10 @@ export default function CustomerHeader() {
         {
             key: "/appointments",
             label: "Lịch hẹn"
+        },
+        {
+            key: "/notifications",
+            label: "Thông báo"
         }
     ];
 
@@ -55,13 +134,11 @@ export default function CustomerHeader() {
             {
                 key: "profile",
                 label: "Hồ sơ",
-                onClick: () =>
-                    navigate("/profile")
+                onClick: () => navigate("/profile")
             },
             {
                 key: "logout",
-                icon:
-                    <LogoutOutlined />,
+                icon: <LogoutOutlined />,
                 label: "Đăng xuất",
                 onClick: logout
             }
@@ -72,21 +149,20 @@ export default function CustomerHeader() {
         <Header
             style={{
                 display: "flex",
-                justifyContent:
-                    "space-between",
-                alignItems:
-                    "center",
+                justifyContent: "space-between",
+                alignItems: "center",
                 background: "#fff",
-                borderBottom:
-                    "1px solid #eee"
+                borderBottom: "1px solid #eee"
             }}
         >
             <div
                 style={{
                     color: "#1677ff",
                     fontWeight: 700,
-                    fontSize: 22
+                    fontSize: 22,
+                    cursor: "pointer"
                 }}
+                onClick={() => navigate("/")}
             >
                 SalonFlow
             </div>
@@ -94,34 +170,72 @@ export default function CustomerHeader() {
             <Menu
                 mode="horizontal"
                 items={menuItems}
-                onClick={({ key }) =>
-                    navigate(key)
-                }
+                onClick={({ key }) => navigate(key)}
                 style={{
                     flex: 1,
-                    justifyContent:
-                        "center",
+                    justifyContent: "center",
                     borderBottom: 0
                 }}
             />
 
-            <Dropdown
-                menu={userMenu}
-            >
-                <Button
-                    type="text"
-                >
+            <Dropdown menu={userMenu}>
+                <Button type="text">
                     <Space>
-                        <Avatar
-                            icon={
-                                <UserOutlined />
-                            }
-                        />
-
+                        <Avatar icon={<UserOutlined />} />
                         {displayName}
                     </Space>
                 </Button>
             </Dropdown>
+
+            {isLogin ? (
+                <Badge count={unreadCount} size="small" overflowCount={99}>
+                    <Button
+                        type="text"
+                        icon={<BellOutlined />}
+                        onClick={() => navigate("/notifications")}
+                        style={{ marginLeft: 8 }}
+                    >
+                        Thông báo
+                    </Button>
+                </Badge>
+            ) : null}
+
+            {/* NÚT BẬT / TẮT THÔNG BÁO CHUẨN XÁC */}
+            {isLogin && messagingSupported ? (
+                isNotificationOn ? (
+                    <Tooltip title="Bấm vào đây để TẮT nhận thông báo">
+                        <Button
+                            type="default"
+                            icon={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
+                            loading={messagingLoading}
+                            onClick={handleDisableNotifications}
+                            style={{ marginLeft: 12, borderColor: "#52c41a", color: "#52c41a", borderRadius: 20 }}
+                        >
+                            Đã bật thông báo (Bấm để Tắt)
+                        </Button>
+                    </Tooltip>
+                ) : permission === "denied" ? (
+                    <Tooltip title="Trình duyệt đang chặn thông báo. Hãy cho phép trong cài đặt trình duyệt.">
+                        <Button danger disabled style={{ marginLeft: 12, borderRadius: 20 }}>
+                            Thông báo bị chặn
+                        </Button>
+                    </Tooltip>
+                ) : (
+                    <Tooltip title="Bấm vào đây để BẬT nhận thông báo thời gian thực">
+                        <Badge dot={permission === "default"}>
+                            <Button
+                                type="primary"
+                                icon={<BellOutlined />}
+                                loading={messagingLoading}
+                                onClick={handleEnableNotifications}
+                                style={{ marginLeft: 12, borderRadius: 20 }}
+                            >
+                                Bật thông báo
+                            </Button>
+                        </Badge>
+                    </Tooltip>
+                )
+            ) : null}
         </Header>
     );
 }

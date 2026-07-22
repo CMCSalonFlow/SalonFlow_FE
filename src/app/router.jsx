@@ -66,7 +66,7 @@ import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
 import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
 import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPage";
 import ProfilePage from "@/features/user/pages/ProfilePage";
-import ReviewAdminPage from "@/features/review/pages/ReviewAdminPage";
+import CustomerNotificationsPage from "@/features/notification/pages/CustomerNotificationsPage";
 
 const router = createBrowserRouter([
     {
@@ -225,37 +225,11 @@ const router = createBrowserRouter([
         ]
     },
     {
-        element:
-            <CustomerLayout />,
+        element: <CustomerLayout />,
         children: [
-            {
-                path: "/home",
-                element:
-                    <HomePage />
-            },
-            {
-                path: "/services",
-                element: <CategoryListUserPage />
-            },
-            {
-                path: "/categories",
-                element: <CategoryListUserPage />
-            },
             {
                 path: "/booking",
                 element: <BookingPage />
-            },
-            {
-                path: "/guest-booking",
-                element: <Navigate to="/booking" replace />
-            },
-            {
-                path: "/public-booking",
-                element: <Navigate to="/booking" replace />
-            },
-            {
-                path: "/booking/pay-at-counter-success",
-                element: <PayAtCounterSuccessPage />
             },
             {
                 path: "/booking/recurring-success",
@@ -270,39 +244,13 @@ const router = createBrowserRouter([
                 element: <PaymentCallbackPage />
             },
             {
-                path: "/search",
-                element: <SearchPage />
-            },
-            {
                 path: "/profile",
                 element: <ProfilePage />
+            },
+            {
+                path: "/notifications",
+                element: <CustomerNotificationsPage />
             }
-        ]
-    },
-    {
-        element: <PublicLayout />,
-        children: [
-            {
-                path: "/",
-                element: <HomePage />
-            },
-            {
-                path: "/home",
-                element: <HomePage />
-            },
-            {
-                path: "/search",
-                element: <SearchPage />
-            },
-            {
-                path: "/services",
-                element: <CategoryListUserPage />
-            },
-            {
-                path: "/booking",
-                element: <BookingPage />
-            },
-
         ]
     }
 ]);

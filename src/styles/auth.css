@@ -1,196 +1,196 @@
 /* =========================
-   AUTH LAYOUT
+   CENTERED AUTH LAYOUT
 ========================= */
 
-.auth-container {
+.auth-centered-wrapper {
     min-height: 100vh;
-    display: grid;
-    grid-template-columns: 58% 42%;
-    font-family: "Segoe UI", sans-serif;
-    background: #f8fafc;
-}
-
-/* =========================
-   LEFT SIDE
-========================= */
-
-.auth-left {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    padding: 60px;
-    overflow: hidden;
-    background:
-        linear-gradient(
-            rgba(236, 72, 153, 0.58),
-            rgba(168, 85, 247, 0.58)
-        ),
-        url("https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f")
-        center center / cover no-repeat;
-}
-
-/* Logo */
-
-.auth-brand {
-    position: absolute;
-    top: 45px;
-    left: 50px;
-    color: white;
-    z-index: 10;
-    max-width: 420px;
-}
-
-.auth-brand h1 {
-    margin: 0;
-    font-size: 42px;
-    font-weight: 800;
-    letter-spacing: -1px;
-}
-
-.auth-brand p {
-    margin-top: 12px;
-    font-size: 17px;
-    line-height: 1.7;
-    opacity: .95;
-}
-
-/* Text dưới ảnh */
-
-.auth-overlay-content {
-    position: relative;
-    z-index: 5;
-    color: white;
-    max-width: 520px;
-    margin-bottom: 40px;
-}
-
-.auth-overlay-content h2 {
-    font-size: 44px;
-    font-weight: 700;
-    margin-bottom: 18px;
-}
-
-.auth-overlay-content p {
-    font-size: 18px;
-    line-height: 1.8;
-}
-
-/* =========================
-   RIGHT SIDE
-========================= */
-
-.auth-right {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 60px;
-}
-
-/* =========================
-   CARD
-========================= */
-
-.auth-card {
-    width: 100%;
-    max-width: 480px;
-    background: #fff;
-    border-radius: 24px;
-    padding: 50px;
-    box-shadow: 0 25px 60px rgba(15, 23, 42, .08);
-}
-
-/* =========================
-   TITLE
-========================= */
-
-.auth-title {
-    font-size: 34px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 8px;
-}
-
-.auth-subtitle {
-    font-size: 16px;
-    color: #64748b;
-    margin-bottom: 30px;
-}
-
-/* =========================
-   INPUT
-========================= */
-
-.auth-card input {
-    width: 100%;
-    height: 54px;
-    padding: 0 18px;
-    margin-bottom: 18px;
-    border-radius: 14px;
-    border: 1px solid #dbe4ee;
-    outline: none;
-    font-size: 15px;
-    transition: .25s;
+    padding: 40px 20px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(15, 23, 42, 0.72),
+            rgba(22, 119, 255, 0.72)
+        ),
+        url("https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f")
+        center center / cover no-repeat;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
     box-sizing: border-box;
 }
 
-.auth-card input:focus {
-    border-color: #a855f7;
-    box-shadow: 0 0 0 4px rgba(168,85,247,.12);
+.auth-card-centered {
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    border-radius: 28px;
+    padding: 44px 40px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+    box-sizing: border-box;
+}
+
+.auth-header-bar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.auth-brand-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.auth-logo-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1677ff, #722ed1);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 6px 16px rgba(22, 119, 255, 0.3);
+}
+
+.auth-brand-name {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
 }
 
 /* =========================
-   BUTTON
+   BACK BUTTON
+========================= */
+
+.auth-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-back-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: translateX(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* =========================
+   TITLE & SUBTITLE
+========================= */
+
+.auth-title {
+    font-size: 30px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 6px 0;
+}
+
+.auth-subtitle {
+    font-size: 15px;
+    color: #64748b;
+    margin: 0 0 24px 0;
+}
+
+/* =========================
+   FORM INPUTS (VERTICAL STACKING)
+========================= */
+
+.auth-form-body {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.auth-card-centered input,
+.auth-card input {
+    display: block !important;
+    width: 100% !important;
+    height: 52px !important;
+    padding: 0 18px !important;
+    margin-bottom: 16px !important;
+    border-radius: 14px !important;
+    border: 1px solid #dbe4ee !important;
+    outline: none !important;
+    font-size: 15px !important;
+    transition: all 0.25s ease !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+}
+
+.auth-card-centered input:focus,
+.auth-card input:focus {
+    border-color: #1677ff !important;
+    box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.12) !important;
+}
+
+/* =========================
+   SUBMIT BUTTON
 ========================= */
 
 .auth-submit-btn {
-    width: 100%;
-    height: 54px;
-    border: none;
-    border-radius: 14px;
-    background: linear-gradient(135deg,#ec4899,#a855f7);
-    color: white;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: .25s;
+    display: block;
+    width: 100% !important;
+    height: 52px !important;
+    border: none !important;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, #1677ff 0%, #722ed1 100%) !important;
+    color: white !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    margin-top: 6px !important;
+    box-shadow: 0 6px 20px rgba(22, 119, 255, 0.25) !important;
 }
 
 .auth-submit-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(168,85,247,.25);
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 25px rgba(22, 119, 255, 0.35) !important;
+}
+
+.auth-submit-btn:disabled {
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
 }
 
 /* =========================
-   SOCIAL BUTTON
-========================= */
-
-.social-btn {
-    margin-top: 12px;
-    background: white !important;
-    color: #111827 !important;
-    border: 1px solid #dbe4ee !important;
-}
-
-.social-btn:hover {
-    background: #f8fafc !important;
-    transform: translateY(-2px);
-}
-
-/* =========================
-   FORGOT PASSWORD
+   FORGOT PASSWORD LINK
 ========================= */
 
 .forgot-password {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 20px;
+    margin-top: -4px;
 }
 
 .forgot-password span {
-    color: #ec4899;
+    color: #1677ff;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .forgot-password span:hover {
@@ -198,48 +198,44 @@
 }
 
 /* =========================
-   ERROR
+   ERROR & SUCCESS ALERTS
 ========================= */
 
 .auth-error {
     background: #fee2e2;
     color: #b91c1c;
     border: 1px solid #fecaca;
-    padding: 12px;
+    padding: 12px 16px;
     border-radius: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     font-size: 14px;
 }
-
-/* =========================
-   SUCCESS
-========================= */
 
 .auth-success {
     background: #dcfce7;
     color: #166534;
     border: 1px solid #86efac;
-    padding: 12px;
+    padding: 12px 16px;
     border-radius: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     font-size: 14px;
 }
 
 /* =========================
-   SWITCH
+   SWITCH USER LINK
 ========================= */
 
 .auth-switch {
-    margin-top: 25px;
+    margin-top: 24px;
     text-align: center;
     font-size: 14px;
     color: #64748b;
 }
 
 .auth-switch span {
-    color: #ec4899;
+    color: #1677ff;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .auth-switch span:hover {
@@ -247,93 +243,15 @@
 }
 
 /* =========================
-   LINK BUTTON
-========================= */
-
-.auth-link-button {
-    display: inline-flex;
-    justify-content: center;
-
-    width: 100%;
-    margin-top: 10px;
-    margin-bottom: 16px;
-
-    background: none !important;
-    border: none;
-    padding: 0;
-
-    color: #ec4899;
-    font-size: 14px;
-    font-weight: 500;
-
-    cursor: pointer;
-}
-
-.auth-link-button:hover {
-    text-decoration: underline;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media (max-width: 992px) {
-
-    .auth-container {
-        grid-template-columns: 1fr;
-    }
-
-    .auth-left {
-        display: none;
-    }
-
-    .auth-right {
-        padding: 30px;
-    }
-
-    .auth-card {
-        max-width: 500px;
-        padding: 40px;
-    }
-
-}
-
-@media (max-width: 576px) {
-
-    .auth-right {
-        padding: 20px;
-    }
-
-    .auth-card {
-        padding: 30px 24px;
-        border-radius: 18px;
-    }
-
-    .auth-title {
-        font-size: 28px;
-    }
-
-    .auth-subtitle {
-        font-size: 15px;
-    }
-
-    .auth-card input,
-    .auth-card button {
-        height: 50px;
-    }
-
-}
-
-/* =========================
-   OAUTH
+   OAUTH DIVIDER & GOOGLE BTN
 ========================= */
 
 .oauth-divider {
     display: flex;
     align-items: center;
-    margin: 28px 0 20px;
+    margin: 24px 0 16px;
     color: #94a3b8;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .oauth-divider::before,
@@ -341,121 +259,40 @@
     content: "";
     flex: 1;
     height: 1px;
-    background: #e5e7eb;
+    background: #e2e8f0;
 }
 
 .oauth-divider span {
-    padding: 0 14px;
+    padding: 0 12px;
     white-space: nowrap;
 }
 
-/* =========================
-   SOCIAL LOGIN
-========================= */
-
 .social-login {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    margin-top: 16px;
-}
-
-.google-btn,
-.facebook-btn {
-    width: 100%;
-    height: 52px;
-    border-radius: 14px;
-    border: 1px solid #dbe4ee;
-    background: white;
-    color: #374151;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .25s ease;
-}
-
-.google-btn:hover,
-.facebook-btn:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,.08);
-}
-
-/* ===========================
-   SOCIAL LOGIN
-=========================== */
-
-.social-login {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin-top: 20px;
+    gap: 12px;
 }
 
 .social-btn {
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    gap: 12px;
-
+    gap: 10px;
     width: 100%;
-    height: 52px;
-
-    background: white;
-
+    height: 50px;
+    background: #ffffff;
     border: 1px solid #dbe4ee;
     border-radius: 14px;
-
     font-size: 15px;
     font-weight: 600;
-
-    color: #111827;
-
+    color: #1e293b;
     cursor: pointer;
-
-    transition: .25s;
+    transition: all 0.25s ease;
 }
 
 .social-btn:hover {
-
     background: #f8fafc;
-
     border-color: #cbd5e1;
-
     transform: translateY(-2px);
-
-    box-shadow: 0 8px 20px rgba(0,0,0,.08);
-}
-
-.social-icon {
-
-    font-size: 24px;
-
-    flex-shrink: 0;
-
-}
-
-.facebook-btn{
-
-    background:#1877F2;
-
-    color:white;
-
-    border:none;
-
-}
-
-.facebook-btn:hover{
-
-    background:#166fe5;
-
-}
-
-.facebook-icon{
-
-    color:white;
-
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, Avatar, Button, Typography, Row, Col, Space, Divider, message, Spin, Tag } from "antd";
 import { UserOutlined, MailOutlined, PhoneOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import api from "@/core/api/axios";
+import LoyaltyPointsSection from "../components/LoyaltyPointsSection";
 
 const { Title, Text } = Typography;
 
@@ -44,7 +45,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div style={{ maxWidth: 600, margin: "40px auto", padding: "0 20px" }}>
+        <div style={{ maxWidth: 850, margin: "40px auto", padding: "0 20px" }}>
             <Card
                 style={{
                     borderRadius: 24,
@@ -95,21 +96,24 @@ export default function ProfilePage() {
 
                 {/* Thông tin chi tiết */}
                 <Card title="Thông tin cá nhân" bordered={false} style={{ borderRadius: 16, background: "#fff" }}>
-                    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-                        <div>
+                    <Row gutter={[24, 16]}>
+                        <Col xs={24} sm={12}>
                             <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>
                                 <MailOutlined /> Email
                             </Text>
                             <Text strong>{user?.email}</Text>
-                        </div>
-                        <div>
+                        </Col>
+                        <Col xs={24} sm={12}>
                             <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>
                                 <PhoneOutlined /> Số điện thoại
                             </Text>
                             <Text strong>{user?.phone || "Chưa cập nhật"}</Text>
-                        </div>
-                    </Space>
+                        </Col>
+                    </Row>
                 </Card>
+
+                {/* Section Điểm thưởng (Loyalty Points) */}
+                <LoyaltyPointsSection userId={user?.id} />
             </Card>
         </div>
     );
