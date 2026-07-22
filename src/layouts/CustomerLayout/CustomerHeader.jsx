@@ -36,8 +36,7 @@ const { Header } = Layout;
 export default function CustomerHeader() {
     const { unreadCount } = useNotificationWebSocket();
 
-    const navigate =
-        useNavigate();
+    const navigate = useNavigate();
 
     const fullName = localStorage.getItem("fullName");
     const username = localStorage.getItem("username");
@@ -63,28 +62,46 @@ export default function CustomerHeader() {
         permission,
         loading: messagingLoading,
         supported: messagingSupported,
-        enableMessaging
+        isDisabledByUser,
+        enableMessaging,
+        disableMessaging
     } = useFirebaseMessaging({
         autoSync: isLogin,
         onMessageReceived: handleForegroundMessage
     });
 
-    const canShowMessagingButton =
+    const isNotificationOn =
         isLogin &&
         messagingSupported &&
-        permission !== "granted";
+        permission === "granted" &&
+        !isDisabledByUser;
 
     const handleEnableNotifications = async () => {
         try {
             await enableMessaging();
             notification.success({
-                message: "Đã bật thông báo",
-                description: "Firebase Messaging đã được kết nối cho tài khoản customer này."
+                message: "Đã bật thông báo thành công",
+                description: "Bạn sẽ nhận được thông báo thời gian thực về lịch hẹn và ưu đãi."
             });
         } catch (error) {
             notification.error({
                 message: "Không thể bật thông báo",
                 description: error?.message || "Đã xảy ra lỗi khi đăng ký FCM token."
+            });
+        }
+    };
+
+    const handleDisableNotifications = async () => {
+        try {
+            await disableMessaging();
+            notification.info({
+                message: "Đã tắt thông báo",
+                description: "Bạn đã tắt nhận thông báo đẩy. Bạn có thể bật lại bất cứ lúc nào."
+            });
+        } catch (error) {
+            notification.error({
+                message: "Không thể tắt thông báo",
+                description: error?.message || "Đã xảy ra lỗi khi hủy token thông báo."
             });
         }
     };
@@ -117,13 +134,11 @@ export default function CustomerHeader() {
             {
                 key: "profile",
                 label: "Hồ sơ",
-                onClick: () =>
-                    navigate("/profile")
+                onClick: () => navigate("/profile")
             },
             {
                 key: "logout",
-                icon:
-                    <LogoutOutlined />,
+                icon: <LogoutOutlined />,
                 label: "Đăng xuất",
                 onClick: logout
             }
@@ -134,21 +149,20 @@ export default function CustomerHeader() {
         <Header
             style={{
                 display: "flex",
-                justifyContent:
-                    "space-between",
-                alignItems:
-                    "center",
+                justifyContent: "space-between",
+                alignItems: "center",
                 background: "#fff",
-                borderBottom:
-                    "1px solid #eee"
+                borderBottom: "1px solid #eee"
             }}
         >
             <div
                 style={{
                     color: "#1677ff",
                     fontWeight: 700,
-                    fontSize: 22
+                    fontSize: 22,
+                    cursor: "pointer"
                 }}
+                onClick={() => navigate("/")}
             >
                 SalonFlow
             </div>
@@ -156,30 +170,18 @@ export default function CustomerHeader() {
             <Menu
                 mode="horizontal"
                 items={menuItems}
-                onClick={({ key }) =>
-                    navigate(key)
-                }
+                onClick={({ key }) => navigate(key)}
                 style={{
                     flex: 1,
-                    justifyContent:
-                        "center",
+                    justifyContent: "center",
                     borderBottom: 0
                 }}
             />
 
-            <Dropdown
-                menu={userMenu}
-            >
-                <Button
-                    type="text"
-                >
+            <Dropdown menu={userMenu}>
+                <Button type="text">
                     <Space>
-                        <Avatar
-                            icon={
-                                <UserOutlined />
-                            }
-                        />
-
+                        <Avatar icon={<UserOutlined />} />
                         {displayName}
                     </Space>
                 </Button>
@@ -198,37 +200,41 @@ export default function CustomerHeader() {
                 </Badge>
             ) : null}
 
-            {canShowMessagingButton ? (
-                <Tooltip title="Bật thông báo đơn hàng, lịch hẹn">
-                    <Badge dot={permission === "default"}>
+            {/* NÚT BẬT / TẮT THÔNG BÁO CHUẨN XÁC */}
+            {isLogin && messagingSupported ? (
+                isNotificationOn ? (
+                    <Tooltip title="Bấm vào đây để TẮT nhận thông báo">
                         <Button
-                            type="primary"
-                            icon={<BellOutlined />}
+                            type="default"
+                            icon={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
                             loading={messagingLoading}
-                            onClick={handleEnableNotifications}
-                            style={{ marginLeft: 12 }}
+                            onClick={handleDisableNotifications}
+                            style={{ marginLeft: 12, borderColor: "#52c41a", color: "#52c41a", borderRadius: 20 }}
                         >
-                            Bật thông báo
+                            Đã bật thông báo (Bấm để Tắt)
                         </Button>
-                    </Badge>
-                </Tooltip>
-            ) : isLogin && permission === "granted" ? (
-                <Button
-                    type="default"
-                    icon={<CheckCircleOutlined />}
-                    disabled
-                    style={{ marginLeft: 12 }}
-                >
-                    Đã bật thông báo
-                </Button>
-            ) : isLogin && permission === "denied" ? (
-                <Button
-                    danger
-                    disabled
-                    style={{ marginLeft: 12 }}
-                >
-                    Thông báo đã bị chặn
-                </Button>
+                    </Tooltip>
+                ) : permission === "denied" ? (
+                    <Tooltip title="Trình duyệt đang chặn thông báo. Hãy cho phép trong cài đặt trình duyệt.">
+                        <Button danger disabled style={{ marginLeft: 12, borderRadius: 20 }}>
+                            Thông báo bị chặn
+                        </Button>
+                    </Tooltip>
+                ) : (
+                    <Tooltip title="Bấm vào đây để BẬT nhận thông báo thời gian thực">
+                        <Badge dot={permission === "default"}>
+                            <Button
+                                type="primary"
+                                icon={<BellOutlined />}
+                                loading={messagingLoading}
+                                onClick={handleEnableNotifications}
+                                style={{ marginLeft: 12, borderRadius: 20 }}
+                            >
+                                Bật thông báo
+                            </Button>
+                        </Badge>
+                    </Tooltip>
+                )
             ) : null}
         </Header>
     );

@@ -21,6 +21,9 @@ export const useFirebaseMessaging = ({ autoSync = false, onMessageReceived } = {
     const [loading, setLoading] = useState(false);
     const [supported, setSupported] = useState(true);
     const [error, setError] = useState("");
+    const [isDisabledByUser, setIsDisabledByUser] = useState(() => {
+        return localStorage.getItem("fcm_disabled_by_user") === "true";
+    });
 
     const syncToken = useCallback(async () => {
         setLoading(true);
@@ -62,6 +65,8 @@ export const useFirebaseMessaging = ({ autoSync = false, onMessageReceived } = {
 
     const enableMessaging = useCallback(async () => {
         setError("");
+        setIsDisabledByUser(false);
+        localStorage.removeItem("fcm_disabled_by_user");
 
         try {
             const nextPermission = await requestNotificationPermission();
@@ -78,6 +83,29 @@ export const useFirebaseMessaging = ({ autoSync = false, onMessageReceived } = {
         }
     }, [syncToken]);
 
+    const disableMessaging = useCallback(async () => {
+        setLoading(true);
+        setError("");
+        try {
+            let targetToken = token;
+            if (!targetToken) {
+                const vapidKey = getVapidKey();
+                targetToken = await getFirebaseFcmToken(vapidKey).catch(() => null);
+            }
+            if (targetToken) {
+                await revokeFcmTokenApi(targetToken).catch(() => {});
+            }
+            setToken("");
+            setIsDisabledByUser(true);
+            localStorage.setItem("fcm_disabled_by_user", "true");
+        } catch (err) {
+            setError(err?.message || "Không thể tắt thông báo.");
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
+
     const refreshToken = useCallback(async () => {
         return syncToken();
     }, [syncToken]);
@@ -90,7 +118,7 @@ export const useFirebaseMessaging = ({ autoSync = false, onMessageReceived } = {
     }, [token]);
 
     useEffect(() => {
-        if (!autoSync) return;
+        if (!autoSync || isDisabledByUser) return;
 
         const canAutoSync =
             typeof Notification !== "undefined" &&
@@ -103,13 +131,13 @@ export const useFirebaseMessaging = ({ autoSync = false, onMessageReceived } = {
 
             return () => window.clearTimeout(timerId);
         }
-    }, [autoSync, syncToken]);
+    }, [autoSync, isDisabledByUser, syncToken]);
 
     useEffect(() => {
         let unsubscribe = null;
 
         const startListener = async () => {
-            if (typeof onMessageReceived !== "function") return;
+            if (typeof onMessageReceived !== "function" || isDisabledByUser) return;
 
             unsubscribe = await listenForegroundMessages(onMessageReceived);
         };
@@ -121,7 +149,7 @@ export const useFirebaseMessaging = ({ autoSync = false, onMessageReceived } = {
                 unsubscribe();
             }
         };
-    }, [onMessageReceived]);
+    }, [isDisabledByUser, onMessageReceived]);
 
     useEffect(() => {
         const updatePermission = () => {
@@ -141,7 +169,9 @@ export const useFirebaseMessaging = ({ autoSync = false, onMessageReceived } = {
         loading,
         supported,
         error,
+        isDisabledByUser,
         enableMessaging,
+        disableMessaging,
         refreshToken,
         unregisterToken,
         syncToken
