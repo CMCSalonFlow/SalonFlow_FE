@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LeftOutlined, ScissorOutlined } from "@ant-design/icons";
 import "@/styles/auth.css";
 
 export default function AuthForm({
@@ -14,11 +15,9 @@ export default function AuthForm({
     success = "",
     extraContent,
 }) {
-
     const [form, setForm] = useState({});
 
     const handleChange = (e) => {
-
         setForm({
             ...form,
             [e.target.name]: e.target.value,
@@ -26,94 +25,61 @@ export default function AuthForm({
     };
 
     const handleSubmit = (e) => {
-
         e.preventDefault();
-
         onSubmit(form);
     };
 
     return (
-        <div className="auth-container">
-
-            {/* LEFT PANEL */}
-            <div className="auth-left">
-                <div className="auth-brand">
-
-                    <h1>SalonFlow</h1>
-
-                    <p>
-                        Quản lý salon hiện đại,
-                        đặt lịch nhanh chóng,
-                        tối ưu trải nghiệm khách hàng.
-                    </p>
-
-                </div>
-            </div>
-
-            {/* RIGHT PANEL */}
-            <div className="auth-right">
-
-                <div className="auth-card">
-
-                    <h2 className="auth-title">
-                        {title}
-                    </h2>
-
-                    <p className="auth-subtitle">
-                        {subtitle}
-                    </p>
-
-                    {error && (
-                        <div className="auth-error">
-                            {error}
-                        </div>
-                    )}
-
-                    {success && (
-                        <div className="auth-success">
-                            {success}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit}>
-
-                        {children(handleChange)}
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="auth-submit-btn"
-                        >
-                            {
-                                loading
-                                    ? "Đang xử lý..."
-                                    : buttonText
-                            }
-                        </button>
-
-                    </form>
-
-                    {extraContent}
-
-                    {switchText && (
-                        <p className="auth-switch">
-
-                            {switchText}{" "}
-
-                            <span
-                                onClick={onSwitch}
-                                role="button"
-                            >
-                                Click here
-                            </span>
-
-                        </p>
-                    )}
-
+        <div className="auth-centered-wrapper">
+            <div className="auth-card-centered">
+                {/* Header Top Bar with Back Button */}
+                <div className="auth-header-bar">
+                    <button
+                        type="button"
+                        className="auth-back-btn"
+                        onClick={() => window.location.href = "/"}
+                    >
+                        <LeftOutlined style={{ fontSize: 12 }} />
+                        <span>Quay về trang chủ (Khách vãng lai)</span>
+                    </button>
                 </div>
 
-            </div>
+                <div className="auth-brand-header">
+                    <div className="auth-logo-icon">
+                        <ScissorOutlined />
+                    </div>
+                    <h1 className="auth-brand-name">SalonFlow</h1>
+                </div>
 
+                <h2 className="auth-title">{title}</h2>
+                <p className="auth-subtitle">{subtitle}</p>
+
+                {error && <div className="auth-error">{error}</div>}
+                {success && <div className="auth-success">{success}</div>}
+
+                <form onSubmit={handleSubmit} className="auth-form-body">
+                    {children(handleChange)}
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="auth-submit-btn"
+                    >
+                        {loading ? "Đang xử lý..." : buttonText}
+                    </button>
+                </form>
+
+                {extraContent}
+
+                {switchText && (
+                    <p className="auth-switch">
+                        {switchText}{" "}
+                        <span onClick={onSwitch} role="button">
+                            Bấm vào đây
+                        </span>
+                    </p>
+                )}
+            </div>
         </div>
     );
 }

@@ -16,6 +16,11 @@ export const markNotificationAsReadApi = async (notificationId) => {
     return response.data;
 };
 
+export const markAllNotificationsAsReadApi = async () => {
+    const response = await api.post(ENDPOINTS.NOTIFICATION_READ_ALL);
+    return response.data;
+};
+
 export const getMyFcmTokensApi = async () => {
     const response = await api.get(ENDPOINTS.FCM_TOKENS);
     return response.data;

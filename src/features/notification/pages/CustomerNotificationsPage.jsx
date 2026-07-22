@@ -23,9 +23,10 @@ import {
 } from "@ant-design/icons";
 import {
     getMyNotificationsApi,
-    markNotificationAsReadApi
+    markNotificationAsReadApi,
+    markAllNotificationsAsReadApi
 } from "@/features/notification/api/notificationApi";
-import { useUnreadNotificationCount } from "@/features/notification/hooks/useUnreadNotificationCount";
+import { useNotificationWebSocket } from "@/features/notification/hooks/useNotificationWebSocket";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -57,12 +58,12 @@ export default function CustomerNotificationsPage() {
     const [loading, setLoading] = useState(false);
     const [notifications, setNotifications] = useState([]);
 
-    const {
-        count: unreadCount,
-        loading: unreadLoading,
-        refresh: refreshUnreadCount,
-        setCount: setUnreadCount
-    } = useUnreadNotificationCount({ enabled: true });
+    const handleNewWebSocketNotification = (newNotif) => {
+        if (!newNotif) return;
+        setNotifications((prev) => normalizeNotifications([newNotif, ...prev.filter(item => String(item.id) !== String(newNotif.id))]));
+    };
+
+    const { unreadCount, setUnreadCount, refreshUnreadCount } = useNotificationWebSocket(handleNewWebSocketNotification);
 
     const loadNotifications = async () => {
         try {
@@ -89,14 +90,29 @@ export default function CustomerNotificationsPage() {
             await markNotificationAsReadApi(notificationId);
             setNotifications((prev) => prev.map((item) => (
                 String(item.id) === String(notificationId)
-                    ? { ...item, status: "READ", readAt: item.readAt || new Date().toISOString() }
+                    ? { ...item, status: "READ", isRead: true, readAt: item.readAt || new Date().toISOString() }
                     : item
             )));
             setUnreadCount((prev) => Math.max(0, prev - 1));
-            refreshUnreadCount();
             message.success("Đã đánh dấu đã đọc.");
         } catch (error) {
             message.error(error?.message || "Không thể đánh dấu đã đọc.");
+        }
+    };
+
+    const handleMarkAllAsRead = async () => {
+        try {
+            await markAllNotificationsAsReadApi();
+            setNotifications((prev) => prev.map((item) => ({
+                ...item,
+                status: "READ",
+                isRead: true,
+                readAt: item.readAt || new Date().toISOString()
+            })));
+            setUnreadCount(0);
+            message.success("Đã đánh dấu tất cả thông báo là đã đọc.");
+        } catch (error) {
+            message.error(error?.message || "Không thể đánh dấu tất cả đã đọc.");
         }
     };
 
@@ -112,12 +128,15 @@ export default function CustomerNotificationsPage() {
         navigate("/home");
     };
 
-    const unreadOnly = notifications.filter((item) => String(item?.status || "").toUpperCase() !== "READ").length;
+    const unreadOnly = notifications.filter((item) => {
+        const status = String(item?.status || "").toUpperCase();
+        return status !== "READ" && !item?.isRead;
+    }).length;
 
     return (
         <div style={{ padding: "24px 0 40px" }}>
             <Row gutter={[24, 24]} align="middle" style={{ marginBottom: 20 }}>
-                <Col xs={24} md={16}>
+                <Col xs={24} md={14}>
                     <Title level={2} style={{ marginBottom: 8 }}>
                         Thông báo của bạn
                     </Title>
@@ -125,11 +144,18 @@ export default function CustomerNotificationsPage() {
                         Xem thông báo lịch hẹn, thanh toán và các cập nhật từ SalonFlow.
                     </Paragraph>
                 </Col>
-                <Col xs={24} md={8} style={{ textAlign: "right" }}>
-                    <Space>
+                <Col xs={24} md={10} style={{ textAlign: "right" }}>
+                    <Space wrap>
                         <Tag color="blue" icon={<BellOutlined />}>
-                            {unreadLoading ? "Đang cập nhật..." : `${unreadCount} chưa đọc`}
+                            {`${unreadCount} chưa đọc`}
                         </Tag>
+                        <Button
+                            icon={<CheckOutlined />}
+                            onClick={handleMarkAllAsRead}
+                            disabled={unreadCount === 0 && unreadOnly === 0}
+                        >
+                            Đánh dấu tất cả đã đọc
+                        </Button>
                         <Button icon={<ReloadOutlined />} onClick={loadNotifications}>
                             Tải lại
                         </Button>

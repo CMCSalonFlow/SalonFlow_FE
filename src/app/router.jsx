@@ -221,37 +221,11 @@ const router = createBrowserRouter([
         ]
     },
     {
-        element:
-            <CustomerLayout />,
+        element: <CustomerLayout />,
         children: [
-            {
-                path: "/home",
-                element:
-                    <HomePage />
-            },
-            {
-                path: "/services",
-                element: <CategoryListUserPage />
-            },
-            {
-                path: "/categories",
-                element: <CategoryListUserPage />
-            },
             {
                 path: "/booking",
                 element: <BookingPage />
-            },
-            {
-                path: "/guest-booking",
-                element: <Navigate to="/booking" replace />
-            },
-            {
-                path: "/public-booking",
-                element: <Navigate to="/booking" replace />
-            },
-            {
-                path: "/booking/pay-at-counter-success",
-                element: <PayAtCounterSuccessPage />
             },
             {
                 path: "/booking/recurring-success",
@@ -266,10 +240,6 @@ const router = createBrowserRouter([
                 element: <PaymentCallbackPage />
             },
             {
-                path: "/search",
-                element: <SearchPage />
-            },
-            {
                 path: "/profile",
                 element: <ProfilePage />
             },
@@ -277,32 +247,6 @@ const router = createBrowserRouter([
                 path: "/notifications",
                 element: <CustomerNotificationsPage />
             }
-        ]
-    },
-    {
-        element: <PublicLayout />,
-        children: [
-            {
-                path: "/",
-                element: <HomePage />
-            },
-            {
-                path: "/home",
-                element: <HomePage />
-            },
-            {
-                path: "/search",
-                element: <SearchPage />
-            },
-            {
-                path: "/services",
-                element: <CategoryListUserPage />
-            },
-            {
-                path: "/booking",
-                element: <BookingPage />
-            },
-
         ]
     }
 ]);
