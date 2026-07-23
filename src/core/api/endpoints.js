@@ -38,5 +38,11 @@ export const ENDPOINTS = {
     NOTIFICATION_UNREAD_COUNT: "/api/v1/notifications/unread-count",
     NOTIFICATION_MARK_READ: (id) => `/api/v1/notifications/${id}/read`,
     NOTIFICATION_READ_ALL: "/api/v1/notifications/read-all",
-    FCM_TOKENS: "/api/v1/notifications/fcm-tokens"
+    FCM_TOKENS: "/api/v1/notifications/fcm-tokens",
+
+    // Zalo OA & ZNS
+    ZALO_CONNECT_URL: "/api/v1/zalo/connect-url",
+    ZALO_CONNECT: "/api/v1/zalo/connect",
+    ZALO_TEST_ZNS: "/api/v1/zalo/test-zns"
 };
+
