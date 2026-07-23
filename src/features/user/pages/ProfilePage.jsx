@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Avatar, Button, Typography, Row, Col, Space, Divider, message, Spin, Tag } from "antd";
-import { UserOutlined, MailOutlined, PhoneOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { Card, Avatar, Button, Typography, Row, Col, Space, Divider, message, Spin, Tag, Modal, Form, Input } from "antd";
+import { UserOutlined, MailOutlined, PhoneOutlined, ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
 import api from "@/core/api/axios";
 import LoyaltyPointsSection from "../components/LoyaltyPointsSection";
 
@@ -11,6 +11,9 @@ export default function ProfilePage() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [form] = Form.useForm();
 
     // Lấy thông tin User hiện tại từ localStorage
     const userId = localStorage.getItem("userId");
@@ -35,6 +38,34 @@ export default function ProfilePage() {
     useEffect(() => {
         fetchUserProfile();
     }, []);
+
+    const handleOpenEditModal = () => {
+        form.setFieldsValue({
+            fullName: user?.fullName || "",
+            phone: user?.phone || "",
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleUpdateProfile = async (values) => {
+        try {
+            setSubmitting(true);
+            const payload = {
+                fullName: values.fullName?.trim() || user?.fullName,
+                phone: values.phone?.trim() || "",
+                avatarUrl: user?.avatarUrl,
+            };
+            const response = await api.put(`/api/v1/users/${userId}`, payload);
+            message.success("Cập nhật thông tin thành công!");
+            setUser(response.data);
+            setIsModalOpen(false);
+        } catch (error) {
+            const errorMsg = error?.response?.data?.message || "Không thể cập nhật số điện thoại.";
+            message.error(errorMsg);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -95,7 +126,22 @@ export default function ProfilePage() {
                 <Divider style={{ margin: "24px 0" }} />
 
                 {/* Thông tin chi tiết */}
-                <Card title="Thông tin cá nhân" bordered={false} style={{ borderRadius: 16, background: "#fff" }}>
+                <Card 
+                    title="Thông tin cá nhân" 
+                    bordered={false} 
+                    style={{ borderRadius: 16, background: "#fff" }}
+                    extra={
+                        <Button 
+                            type="primary" 
+                            ghost 
+                            icon={<EditOutlined />} 
+                            onClick={handleOpenEditModal}
+                            style={{ borderRadius: 8 }}
+                        >
+                            Chỉnh sửa
+                        </Button>
+                    }
+                >
                     <Row gutter={[24, 16]}>
                         <Col xs={24} sm={12}>
                             <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>
@@ -115,6 +161,49 @@ export default function ProfilePage() {
                 {/* Section Điểm thưởng (Loyalty Points) */}
                 <LoyaltyPointsSection userId={user?.id} />
             </Card>
+
+            {/* Modal chỉnh sửa thông tin / số điện thoại */}
+            <Modal
+                title="Cập nhật thông tin cá nhân"
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                onOk={() => form.submit()}
+                confirmLoading={submitting}
+                okText="Lưu thay đổi"
+                cancelText="Hủy"
+                destroyOnClose
+                style={{ top: 100 }}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleUpdateProfile}
+                    style={{ marginTop: 16 }}
+                >
+                    <Form.Item
+                        name="fullName"
+                        label="Họ và tên"
+                        rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+                    >
+                        <Input prefix={<UserOutlined />} placeholder="Nhập họ và tên" maxLength={100} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="phone"
+                        label="Số điện thoại"
+                        rules={[
+                            { required: true, message: "Vui lòng nhập số điện thoại" },
+                            {
+                                pattern: /^(0|84)[3|5|7|8|9][0-9]{8}$/,
+                                message: "Số điện thoại không đúng định dạng (Ví dụ: 0987654321)"
+                            }
+                        ]}
+                    >
+                        <Input prefix={<PhoneOutlined />} placeholder="Ví dụ: 0987654321" maxLength={15} />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 }
+
