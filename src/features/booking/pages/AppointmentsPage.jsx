@@ -23,10 +23,12 @@ import {
     UserOutlined,
     InfoCircleOutlined,
     FileTextOutlined,
-    DollarCircleOutlined
+    DollarCircleOutlined,
+    StarOutlined
 } from "@ant-design/icons";
 
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
+import ReviewModal from "@/features/review/components/ReviewModal";
 import {
     getBookingsByBranchApi,
     cancelBookingApi
@@ -45,6 +47,8 @@ export default function AppointmentsPage() {
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [invoiceLoading, setInvoiceLoading] = useState(false);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [reviewBookingTarget, setReviewBookingTarget] = useState(null);
 
     const handleDownloadInvoice = async (booking) => {
         if (!booking?.invoiceUrl) {
@@ -387,17 +391,33 @@ export default function AppointmentsPage() {
         {
             title: "Thao tác",
             render: (_, record) => (
-                (record.status === "PENDING" ||
-                    record.status === "CONFIRMED") && (
-                    <Button
-                        danger
-                        onClick={() =>
-                            handleCancelBooking(record.id)
-                        }
-                    >
-                        Hủy lịch
-                    </Button>
-                )
+                <Space>
+                    {(record.status === "PENDING" || record.status === "CONFIRMED") && (
+                        <Button
+                            danger
+                            onClick={() => handleCancelBooking(record.id)}
+                        >
+                            Hủy lịch
+                        </Button>
+                    )}
+                    {record.status === "COMPLETED" && (
+                        record.reviewedAt ? (
+                            <Tag color="gold" icon={<StarOutlined />}>Đã đánh giá</Tag>
+                        ) : (
+                            <Button
+                                type="primary"
+                                icon={<StarOutlined />}
+                                style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
+                                onClick={() => {
+                                    setReviewBookingTarget(record);
+                                    setIsReviewModalOpen(true);
+                                }}
+                            >
+                                Đánh giá
+                            </Button>
+                        )
+                    )}
+                </Space>
             )
         }
     ];
@@ -620,6 +640,20 @@ export default function AppointmentsPage() {
                     </div>
                 )}
             </Modal>
+
+            {/* Modal Đánh giá dịch vụ */}
+            <ReviewModal
+                isOpen={isReviewModalOpen}
+                onClose={() => {
+                    setIsReviewModalOpen(false);
+                    setReviewBookingTarget(null);
+                }}
+                booking={reviewBookingTarget}
+                onSuccess={() => {
+                    message.success("Đánh giá của bạn đã được gửi thành công!");
+                    loadMyBookings();
+                }}
+            />
 
         </div>
     );

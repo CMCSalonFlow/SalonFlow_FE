@@ -15,7 +15,8 @@ import {
     GlobalOutlined,
     EditOutlined,
     DeleteOutlined,
-    PlusOutlined
+    PlusOutlined,
+    StarOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -27,6 +28,7 @@ import {
 } from "../api/salonApi";
 
 import { uploadMediaApi } from "@/features/media/api/mediaApi";
+import SalonReviewList from "@/features/review/components/SalonReviewList";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -608,6 +610,16 @@ export default function MySalonPage() {
                                 </Col>
                             )}
                         </Row>
+                    </Card>
+                </Col>
+
+                {/* REVIEWS & RATINGS */}
+                <Col span={24}>
+                    <Card
+                        title={<span><StarOutlined style={{ marginRight: 8, color: "#fa8c16" }} /> Đánh Giá & Nhận Xét Từ Khách Hàng</span>}
+                        style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}
+                    >
+                        <SalonReviewList salonId={salon.id} />
                     </Card>
                 </Col>
             </Row>
