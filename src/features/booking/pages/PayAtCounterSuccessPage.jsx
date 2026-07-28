@@ -59,6 +59,8 @@ export default function PayAtCounterSuccessPage() {
     const totalPrice = Number(booking?.totalPrice || 0);
     const depositAmount = Number(booking?.depositAmount || booking?.payableAmount || booking?.bookingDepositAmount || 0);
     const payableAmount = depositAmount > 0 ? depositAmount : totalPrice;
+    const bookingId = booking?.id;
+    const branchId = booking?.branchId || booking?.branch?.id;
 
     const handlePayDeposit = async () => {
         try {
@@ -139,8 +141,20 @@ export default function PayAtCounterSuccessPage() {
                         title={<Title level={2} style={{ marginBottom: 0 }}>Đặt lịch đã được ghi nhận</Title>}
                         subTitle="Bạn đã chọn thanh toán tại quầy, nhưng vẫn cần thanh toán tiền cọc online để giữ lịch."
                         extra={[
-                            <Button key="pay" type="primary" size="large" onClick={handlePayDeposit}>
+                        <Button key="pay" type="primary" size="large" onClick={handlePayDeposit}>
                                 Thanh toán cọc ngay
+                            </Button>,
+                            <Button
+                                key="status"
+                                size="large"
+                                onClick={() => {
+                                    const search = new URLSearchParams();
+                                    if (bookingId) search.set("bookingId", bookingId);
+                                    if (branchId) search.set("branchId", branchId);
+                                    navigate(`/booking/status/confirmed?${search.toString()}`, { state: { booking } });
+                                }}
+                            >
+                                Xem màn hình xác nhận
                             </Button>,
                             bookingContext.bookingMode === "public" ? (
                                 <Button key="booking" type="primary" size="large" onClick={() => navigate(bookingContext.returnPath)}>

@@ -39,6 +39,9 @@ export const ENDPOINTS = {
     NOTIFICATION_MARK_READ: (id) => `/api/v1/notifications/${id}/read`,
     NOTIFICATION_READ_ALL: "/api/v1/notifications/read-all",
     FCM_TOKENS: "/api/v1/notifications/fcm-tokens",
+  // Reviews
+    ADMIN_REVIEWS: "/api/v1/admin/reviews",
+    ADMIN_REVIEW_SUMMARY: "/api/v1/admin/reviews/summary",
 
     // Zalo OA & ZNS
     ZALO_CONNECT_URL: "/api/v1/zalo/connect-url",

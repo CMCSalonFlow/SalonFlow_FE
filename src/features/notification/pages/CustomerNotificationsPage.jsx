@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Card,
@@ -53,6 +53,50 @@ const normalizeNotifications = (items) => {
         });
 };
 
+const parseNotificationPayload = (item) => {
+    if (!item?.payloadJson) return null;
+
+    try {
+        return JSON.parse(item.payloadJson);
+    } catch {
+        return null;
+    }
+};
+
+const inferBookingVariant = (item, payload) => {
+    const text = [
+        item?.eventType,
+        item?.title,
+        item?.message,
+        payload?.eventType,
+        payload?.type,
+        payload?.status
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+    if (text.includes("cancel") || text.includes("hủy") || text.includes("huy")) return "cancelled";
+    if (text.includes("reminder") || text.includes("nhắc") || text.includes("24h")) return "reminder";
+    return "confirmed";
+};
+
+const resolveNotificationBookingTarget = (item) => {
+    const payload = parseNotificationPayload(item);
+    const booking = payload?.booking && typeof payload.booking === "object" ? payload.booking : payload;
+
+    const bookingId = item?.bookingId || payload?.bookingId || booking?.bookingId || booking?.id || "";
+    const branchId = item?.branchId || payload?.branchId || booking?.branchId || booking?.branch?.id || "";
+    const variant = inferBookingVariant(item, payload);
+
+    return {
+        bookingId: bookingId ? String(bookingId) : "",
+        branchId: branchId ? String(branchId) : "",
+        variant,
+        booking: booking && typeof booking === "object" ? booking : null
+    };
+};
+
 export default function CustomerNotificationsPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -65,17 +109,18 @@ export default function CustomerNotificationsPage() {
 
     const { unreadCount, setUnreadCount, refreshUnreadCount } = useNotificationWebSocket(handleNewWebSocketNotification);
 
-    const loadNotifications = async () => {
+    const loadNotifications = useCallback(async () => {
         try {
             setLoading(true);
             const data = await getMyNotificationsApi();
             setNotifications(normalizeNotifications(data));
+            void refreshUnreadCount();
         } catch (error) {
             message.error(error?.message || "Không thể tải danh sách thông báo.");
         } finally {
             setLoading(false);
         }
-    };
+    }, [refreshUnreadCount]);
 
     useEffect(() => {
         const timerId = window.setTimeout(() => {
@@ -83,7 +128,7 @@ export default function CustomerNotificationsPage() {
         }, 0);
 
         return () => window.clearTimeout(timerId);
-    }, []);
+    }, [loadNotifications]);
 
     const handleMarkAsRead = async (notificationId) => {
         try {
@@ -117,11 +162,19 @@ export default function CustomerNotificationsPage() {
     };
 
     const handleOpenRelated = (item) => {
-        if (item?.bookingId) {
-            navigate("/appointments");
-            return;
-        }
-        if (item?.sourceType === "BOOKING") {
+        if (item?.bookingId || item?.sourceType === "BOOKING" || item?.eventType) {
+            const target = resolveNotificationBookingTarget(item);
+            if (target.bookingId) {
+                const search = new URLSearchParams();
+                search.set("bookingId", target.bookingId);
+                if (target.branchId) search.set("branchId", target.branchId);
+
+                navigate(`/booking/status/${target.variant}?${search.toString()}`, {
+                    state: target.booking ? { booking: target.booking } : undefined
+                });
+                return;
+            }
+
             navigate("/appointments");
             return;
         }

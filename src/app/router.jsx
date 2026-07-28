@@ -68,6 +68,7 @@ import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPag
 import ProfilePage from "@/features/user/pages/ProfilePage";
 import CustomerNotificationsPage from "@/features/notification/pages/CustomerNotificationsPage";
 import ReviewAdminPage from "@/features/review/pages/ReviewAdminPage";
+import BookingStatusPage from "@/features/booking/pages/BookingStatusPage";
 
 const router = createBrowserRouter([
     {
@@ -231,6 +232,14 @@ const router = createBrowserRouter([
             {
                 path: "/booking",
                 element: <BookingPage />
+            },
+            {
+                path: "/booking/status",
+                element: <Navigate to="/booking/status/confirmed" replace />
+            },
+            {
+                path: "/booking/status/:variant",
+                element: <BookingStatusPage />
             },
             {
                 path: "/booking/recurring-success",

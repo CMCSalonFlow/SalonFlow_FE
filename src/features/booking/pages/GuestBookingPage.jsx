@@ -313,6 +313,13 @@ export default function GuestBookingPage() {
             }
 
             const res = await createPublicBookingApi(selectedBranchId, payload);
+            const bookingDetail = {
+                ...res,
+                branchId: selectedBranchId,
+                bookingChannel: "PUBLIC",
+                depositAmount: Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0),
+                totalPrice: Number(res.totalPrice || totalPrice || 0)
+            };
 
             sessionStorage.setItem(
                 BOOKING_CONTEXT_KEY,
@@ -321,16 +328,17 @@ export default function GuestBookingPage() {
                     returnPath: "/guest-booking"
                 })
             );
+            sessionStorage.setItem("salonflow_last_booking_detail", JSON.stringify(bookingDetail));
 
             if (paymentMethod === "VNPAY") {
                 message.loading({ content: "Đang chuyển hướng sang cổng thanh toán VNPay...", key: "payment_redirect" });
 
                 const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
                 const returnUrl = window.location.origin + "/payment/callback";
-                const depositAmount = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
+                const depositAmount = Number(bookingDetail.depositAmount || bookingDetail.totalPrice || 0);
 
                 const paymentRes = await createPaymentUrlApi({
-                    bookingId: res.id,
+                    bookingId: bookingDetail.id,
                     paymentMethod: "VNPAY",
                     amount: depositAmount,
                     idempotencyKey,
@@ -343,12 +351,7 @@ export default function GuestBookingPage() {
                     throw new Error("Không thể tạo liên kết thanh toán VNPay.");
                 }
             } else {
-                const depositAmount = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
-                const bookingWithAmounts = {
-                    ...res,
-                    depositAmount,
-                    totalPrice: Number(res.totalPrice || totalPrice || 0)
-                };
+                const bookingWithAmounts = bookingDetail;
 
                 sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingWithAmounts));
                 message.success("Đặt lịch hẹn thành công!");

@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Card, Result, Button, Spin, Typography, Space, Descriptions, Divider, message } from "antd";
+import { Card, Result, Button, Spin, Typography, Descriptions, message } from "antd";
 import { CalendarOutlined, HomeOutlined, RedoOutlined } from "@ant-design/icons";
 import { verifyPaymentApi } from "../api/paymentApi";
 import { getInvoiceUrl } from "@/features/media/api/mediaApi";  
 
 const { Title, Text } = Typography;
 const BOOKING_CONTEXT_KEY = "salonflow_last_booking_context";
+const BOOKING_STORAGE_KEY = "salonflow_last_booking_detail";
 
 export default function PaymentCallbackPage() {
     const location = useLocation();
@@ -41,6 +42,16 @@ export default function PaymentCallbackPage() {
     const [result, setResult] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
     const [invoiceLoading, setInvoiceLoading] = useState(false);
+    const storedBooking = (() => {
+        const raw = sessionStorage.getItem(BOOKING_STORAGE_KEY);
+        if (!raw) return null;
+
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return null;
+        }
+    })();
 
     useEffect(() => {
         const verifyPayment = async () => {
@@ -75,7 +86,7 @@ export default function PaymentCallbackPage() {
         };
 
         verifyPayment();
-    }, [location]);
+    }, [location, bookingContext.bookingMode]);
 
     const handleDownloadInvoice = async () => {
         if (!result?.invoiceUrl) {
@@ -147,6 +158,30 @@ export default function PaymentCallbackPage() {
                                     key="appointments"
                                 >
                                     Lịch hẹn của tôi
+                                </Button>
+                            ),
+                            isSuccess && (
+                                <Button
+                                    key="status"
+                                    size="large"
+                                    onClick={() => {
+                                        const search = new URLSearchParams();
+                                        if (result?.bookingId) search.set("bookingId", result.bookingId);
+                                        if (storedBooking?.branchId) search.set("branchId", storedBooking.branchId);
+
+                                        navigate(`/booking/status/confirmed?${search.toString()}`, {
+                                            state: {
+                                                booking: storedBooking || {
+                                                    id: result.bookingId,
+                                                    totalPrice: result.amount,
+                                                    depositAmount: result.amount,
+                                                    status: "CONFIRMED"
+                                                }
+                                            }
+                                        });
+                                    }}
+                                >
+                                    Xem màn hình xác nhận
                                 </Button>
                             ),
                             (Boolean(result?.invoiceUrl) || result?.status === "SUCCESS") && (

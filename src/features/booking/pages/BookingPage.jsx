@@ -216,35 +216,39 @@ export default function BookingPage() {
 
     // Đồng bộ service đầu tiên cho đặt lịch định kỳ
     useEffect(() => {
-        if (selectedServices.length > 0) {
-            setRecurringServiceId(selectedServices[0].id);
-        } else {
-            setRecurringServiceId(null);
-        }
+        const timerId = window.setTimeout(() => {
+            setRecurringServiceId(selectedServices.length > 0 ? selectedServices[0].id : null);
+        }, 0);
+
+        return () => window.clearTimeout(timerId);
     }, [selectedServices]);
 
     // Tải danh sách nhân viên làm việc vào ngày đã chọn
     useEffect(() => {
-        if (!selectedBranchId || !selectedDate) {
-            setWorkingStaffIds([]);
-            return;
-        }
-
-        const fetchWorkingStaff = async () => {
-            try {
-                setLoadingStaff(true);
-                const dateStr = selectedDate.format("YYYY-MM-DD");
-                const slots = await getAvailabilitySlots(selectedBranchId, dateStr);
-                const userIds = [...new Set(slots.map(s => s.userId))];
-                setWorkingStaffIds(userIds);
-            } catch (error) {
-                console.error("Lỗi khi tải lịch làm việc của nhân viên:", error);
-            } finally {
-                setLoadingStaff(false);
+        const timerId = window.setTimeout(() => {
+            if (!selectedBranchId || !selectedDate) {
+                setWorkingStaffIds([]);
+                return;
             }
-        };
 
-        fetchWorkingStaff();
+            const fetchWorkingStaff = async () => {
+                try {
+                    setLoadingStaff(true);
+                    const dateStr = selectedDate.format("YYYY-MM-DD");
+                    const slots = await getAvailabilitySlots(selectedBranchId, dateStr);
+                    const userIds = [...new Set(slots.map(s => s.userId))];
+                    setWorkingStaffIds(userIds);
+                } catch (error) {
+                    console.error("Lỗi khi tải lịch làm việc của nhân viên:", error);
+                } finally {
+                    setLoadingStaff(false);
+                }
+            };
+
+            fetchWorkingStaff();
+        }, 0);
+
+        return () => window.clearTimeout(timerId);
     }, [selectedBranchId, selectedDate]);
 
     // 3. Tải danh sách khung giờ rảnh khi có đóng Ngày, Dịch vụ/Combo, và Thợ
@@ -304,15 +308,9 @@ export default function BookingPage() {
     const getQualifiedStaff = () => {
         return staffList.filter(staff => {
             const allowedIds = (staff.services || []).map(s => s.id);
-            let hasSkill = false;
-            if (bookingType === "bundle") {
-                if (!selectedBundle) return false;
-                const reqIds = (selectedBundle.items || []).map(item => item.serviceId);
-                hasSkill = reqIds.every(id => allowedIds.includes(id));
-            } else {
-                if (selectedServices.length === 0) return false;
-                hasSkill = selectedServices.every(s => allowedIds.includes(s.id));
-            }
+            const hasSkill = bookingType === "bundle"
+                ? Boolean(selectedBundle) && (selectedBundle.items || []).every(item => allowedIds.includes(item.serviceId))
+                : selectedServices.length > 0 && selectedServices.every(s => allowedIds.includes(s.id));
 
             if (!hasSkill) return false;
 
@@ -422,16 +420,23 @@ export default function BookingPage() {
             }
 
             const res = await createBookingApi(selectedBranchId, payload);
+            const bookingDetail = {
+                ...res,
+                branchId: selectedBranchId,
+                depositAmount: Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0),
+                totalPrice: Number(res.totalPrice || totalPrice || 0)
+            };
+            sessionStorage.setItem("salonflow_last_booking_detail", JSON.stringify(bookingDetail));
             
             if (paymentMethod === "VNPAY") {
                 message.loading({ content: "Đang chuyển hướng sang cổng thanh toán VNPay...", key: "payment_redirect" });
                 
                 const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
                 const returnUrl = window.location.origin + "/payment/callback";
-                const depositAmountVal = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
+                const depositAmountVal = Number(bookingDetail.depositAmount || bookingDetail.totalPrice || 0);
                 
                 const paymentPayload = {
-                    bookingId: res.id,
+                    bookingId: bookingDetail.id,
                     paymentMethod: "VNPAY",
                     amount: depositAmountVal,
                     idempotencyKey: idempotencyKey,
@@ -445,12 +450,7 @@ export default function BookingPage() {
                     throw new Error("Không thể tạo liên kết thanh toán VNPay.");
                 }
             } else {
-                const depositAmountVal = Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0);
-                const bookingWithAmounts = {
-                    ...res,
-                    depositAmount: depositAmountVal,
-                    totalPrice: Number(res.totalPrice || totalPrice || 0)
-                };
+                const bookingWithAmounts = bookingDetail;
 
                 sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingWithAmounts));
                 message.success("Đặt lịch hẹn thành công!");

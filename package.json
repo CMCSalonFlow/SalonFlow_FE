@@ -25,6 +25,7 @@
     "axios": "^1.18.0",
     "emoji-picker-react": "^4.19.1",
     "firebase": "^12.16.0",
+    "lucide-react": "^1.27.0",
     "path": "^0.12.7",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

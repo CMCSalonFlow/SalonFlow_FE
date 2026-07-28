@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Card,
@@ -74,11 +74,7 @@ export default function AppointmentsPage() {
     const formatCurrency = (value) =>
         Number(value || 0).toLocaleString("vi-VN");
 
-    useEffect(() => {
-        loadMyBookings();
-    }, []);
-
-    const loadMyBookings = async () => {
+    const loadMyBookings = useCallback(async () => {
         const currentUserId = localStorage.getItem("userId");
 
         if (!currentUserId) {
@@ -139,12 +135,20 @@ export default function AppointmentsPage() {
                 setMyBookings(mergedBookings);
             }
 
-        } catch (error) {
+        } catch {
             message.error("Lỗi khi tải lịch sử đặt chỗ.");
         } finally {
             setLoading(false);
         }
-    };
+    }, [navigate]);
+
+    useEffect(() => {
+        const timerId = window.setTimeout(() => {
+            void loadMyBookings();
+        }, 0);
+
+        return () => window.clearTimeout(timerId);
+    }, [loadMyBookings]);
 
     const getStatusTag = (status) => {
         switch (status) {
@@ -312,7 +316,24 @@ export default function AppointmentsPage() {
             }
         }
     });
-};
+    };
+
+    const handleOpenStatusScreen = (variant, booking) => {
+        const bookingId = booking?.id;
+        const branchId = booking?.branchId || booking?.branch?.id;
+        const search = new URLSearchParams();
+        if (bookingId) search.set("bookingId", bookingId);
+        if (branchId) search.set("branchId", branchId);
+
+        navigate(`/booking/status/${variant}?${search.toString()}`, {
+            state: {
+                booking: {
+                    ...booking,
+                    status: variant === "cancelled" ? "CANCELLED" : (booking?.status || "CONFIRMED")
+                }
+            }
+        });
+    };
 
     const columns = [
         {
@@ -517,6 +538,22 @@ export default function AppointmentsPage() {
                     setSelectedBooking(null);
                 }}
                 footer={[
+                    selectedBooking && ["PENDING", "CONFIRMED"].includes(selectedBooking.status) && (
+                        <Button
+                            key="reminder"
+                            onClick={() => handleOpenStatusScreen("reminder", selectedBooking)}
+                        >
+                            Xem màn hình nhắc 24h
+                        </Button>
+                    ),
+                    selectedBooking?.status === "CANCELLED" && (
+                        <Button
+                            key="cancelled"
+                            onClick={() => handleOpenStatusScreen("cancelled", selectedBooking)}
+                        >
+                            Xem màn hình hủy
+                        </Button>
+                    ),
                     selectedBooking?.status === "PENDING" && (
                         <Button
                             key="pay"
