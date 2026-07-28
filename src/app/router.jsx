@@ -36,6 +36,8 @@ import HomePage
 
 import AdminDashboardPage
     from "@/features/dashboard/pages/AdminDashboardPage";
+import AdminReviewReportsPage
+    from "@/features/review/pages/AdminReviewReportsPage";
 import OwnerDashboardPage
     from "@/features/dashboard/pages/OwnerDashboardPage";
 import UserListPage
@@ -129,6 +131,10 @@ const router = createBrowserRouter([
             {
                 path: "vouchers",
                 element: <VoucherManagementPage />
+            },
+            {
+                path: "review-reports",
+                element: <AdminReviewReportsPage />
             },
         ]
     },
