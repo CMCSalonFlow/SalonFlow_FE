@@ -142,14 +142,37 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos, 
               )}
             </div>
           </div>
-          {/* Status */}
+          {/* Customer */}
+          {(booking.customerName || booking.customerPhone) && (
+            <div className="popup-row">
+              <span className="popup-row-icon">📞</span>
+              <div className="popup-row-content">
+                <div className="popup-row-label">Khách hàng</div>
+                <div className="popup-row-value" style={{ fontWeight: "bold" }}>
+                  {booking.customerName || "Khách vãng lai"} {booking.customerPhone ? `(${booking.customerPhone})` : ""}
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Status & Deposit Info */}
           <div className="popup-row">
             <span className="popup-row-icon">📋</span>
             <div className="popup-row-content">
-              <div className="popup-row-label">Trạng thái</div>
-              <span className={`booking-status-badge status-${status}`}>
-                {statusIcon} {statusLabel}
-              </span>
+              <div className="popup-row-label">Trạng thái & Tiền cọc</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
+                <span className={`booking-status-badge status-${status}`}>
+                  {statusIcon} {statusLabel}
+                </span>
+                {booking.depositAmount && Number(booking.depositAmount) > 0 ? (
+                  <span style={{ fontSize: 11, background: "#e6f7ff", color: "#1890ff", border: "1px solid #91caff", padding: "2px 8px", borderRadius: 12, fontWeight: "bold" }}>
+                    ✓ Đã cọc {Number(booking.depositAmount).toLocaleString("vi-VN")} đ
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 11, background: "#fffbe6", color: "#d4b106", border: "1px solid #ffe58f", padding: "2px 8px", borderRadius: 12 }}>
+                    Chưa cọc (Tại quầy)
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           {/* Note */}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import {
     Button,
     Card,
@@ -17,12 +17,11 @@ import {
     Modal,
     Avatar,
     Spin,
-    Badge
+    InputNumber
 } from "antd";
 import {
     UserOutlined,
     PhoneOutlined,
-    CalendarOutlined,
     ClockCircleOutlined,
     ScissorOutlined,
     ShopOutlined,
@@ -31,7 +30,8 @@ import {
     PrinterOutlined,
     PlusOutlined,
     CreditCardOutlined,
-    FileTextOutlined
+    FileTextOutlined,
+    SafetyCertificateOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -42,12 +42,13 @@ import {
     createWalkInBookingApi,
     getAvailabilityApi,
 } from "../api/bookingApi";
+import { processPosCashPaymentApi } from "@/features/payment/api/paymentApi";
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 
 export default function WalkInBookingPage() {
     const [form] = Form.useForm();
+    const thermalReceiptRef = useRef(null);
 
     const [branches, setBranches] = useState([]);
     const [branchId, setBranchId] = useState(null);
@@ -58,13 +59,22 @@ export default function WalkInBookingPage() {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [successBooking, setSuccessBooking] = useState(null);
 
     // Dynamic Selected State for POS Summary Cart
     const [selectedServiceIds, setSelectedServiceIds] = useState([]);
     const [selectedStaffId, setSelectedStaffId] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
-    const [paymentMethod, setPaymentMethod] = useState("PAY_AT_COUNTER");
+    const [paymentMethod, setPaymentMethod] = useState("CASH");
+
+    // Cash Given by Customer for POS Cash Payment Change Calculation
+    const [cashReceived, setCashReceived] = useState(null);
+
+    // Success State including Thermal Receipt Data & Payment Record Info
+    const [successData, setSuccessData] = useState(null);
+
+    const staffUsername = localStorage.getItem("username") || "Staff";
+    const staffFullName = localStorage.getItem("fullName") || staffUsername;
+    const staffUserId = localStorage.getItem("userId");
 
     useEffect(() => {
         init();
@@ -170,6 +180,12 @@ export default function WalkInBookingPage() {
         return selectedServicesList.reduce((sum, item) => sum + (item.durationMinutes || item.duration || 0), 0);
     }, [selectedServicesList]);
 
+    // Change Return calculation
+    const changeAmount = useMemo(() => {
+        if (!cashReceived || cashReceived < totalPrice) return 0;
+        return cashReceived - totalPrice;
+    }, [cashReceived, totalPrice]);
+
     const selectedStaffObj = useMemo(() => {
         return staffs.find(s => s.id === selectedStaffId);
     }, [staffs, selectedStaffId]);
@@ -182,6 +198,7 @@ export default function WalkInBookingPage() {
         try {
             setSubmitting(true);
 
+            // 1. Tạo đơn Đặt lịch Walk-in
             const payload = {
                 customerName: values.customerName,
                 customerPhone: values.customerPhone,
@@ -193,42 +210,107 @@ export default function WalkInBookingPage() {
                 notes: values.note || values.notes || "",
             };
 
-            const createdRes = await createWalkInBookingApi(branchId, payload);
-            
-            setSuccessBooking({
-                id: createdRes?.id || "WALK-IN",
+            const createdBooking = await createWalkInBookingApi(branchId, payload);
+            const bookingId = createdBooking?.id;
+
+            let paymentRecord = null;
+
+            // 2. Nếu thanh toán tiền mặt (POS CASH MODE) -> Gọi endpoint riêng không qua payment gateway
+            if (paymentMethod === "CASH" || paymentMethod === "PAY_AT_COUNTER") {
+                paymentRecord = await processPosCashPaymentApi({
+                    bookingId: bookingId,
+                    amount: totalPrice,
+                    notes: `Staff ${staffFullName} (ID: ${staffUserId}) thu tiền mặt tại quầy POS`
+                });
+            }
+
+            // 3. Chuẩn bị thông tin In Hóa Đơn Nhiệt K80
+            const receipt = {
+                bookingId: bookingId,
+                paymentId: paymentRecord?.paymentId || "POS-CASH",
                 customerName: values.customerName,
                 customerPhone: values.customerPhone,
-                branchName: selectedBranchObj?.name || "Chi nhánh",
-                staffName: selectedStaffObj?.name || "Bất kỳ nhân viên",
+                branchName: selectedBranchObj?.name || "SalonFlow Branch",
+                branchAddress: selectedBranchObj?.address || "",
+                staffOperatorName: staffFullName,
+                staffOperatorId: staffUserId,
+                assignedStaffName: selectedStaffObj?.name || "Bất kỳ nhân viên",
                 date: values.bookingDate.format("DD/MM/YYYY"),
                 time: values.startTime ? values.startTime.substring(0, 5) : "",
+                services: selectedServicesList,
                 totalPrice: totalPrice,
                 totalDuration: totalDuration,
-                services: selectedServicesList,
-                paymentMethod: paymentMethod === "PAY_AT_COUNTER" ? "Tiền mặt tại quầy" : "Chuyển khoản QR"
-            });
+                cashReceived: cashReceived || totalPrice,
+                changeAmount: changeAmount,
+                paymentMethod: "TIỀN MẶT TẠI CỬA HÀNG (POS CASH)",
+                confirmedByStaffId: staffUserId,
+                createdAtFormatted: dayjs().format("DD/MM/YYYY HH:mm:ss")
+            };
 
-            message.success("Tạo lịch đặt tại quầy thành công!");
+            setSuccessData(receipt);
+            message.success("Đã xác nhận thu tiền mặt và tạo đơn POS thành công!");
 
-            // Reset form for next walk-in booking
+            // Reset form cho đơn tiếp theo
             form.resetFields();
             form.setFieldValue("branchId", branchId);
             setSelectedServiceIds([]);
             setSelectedStaffId(null);
             setSelectedSlot(null);
+            setCashReceived(null);
             setAvailableSlots([]);
         } catch (e) {
             console.error(e);
-            message.error(e?.response?.data?.message ?? "Đã xảy ra lỗi khi tạo lịch vãng lai.");
+            message.error(e?.response?.data?.message ?? "Đã xảy ra lỗi khi xử lý đơn POS.");
         } finally {
             setSubmitting(false);
         }
     };
 
+    // Hàm in hóa đơn nhiệt K80 chuẩn máy in hóa đơn quầy (Print Thermal Receipt)
+    const handlePrintThermalReceipt = () => {
+        const printContent = thermalReceiptRef.current;
+        if (!printContent) return;
+
+        const printWindow = window.open("", "_blank", "width=400,height=600");
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>In Hóa Đơn Nhiệt POS - SalonFlow</title>
+                    <style>
+                        @page { size: 80mm auto; margin: 0; }
+                        body {
+                            font-family: 'Courier New', Courier, monospace;
+                            width: 78mm;
+                            margin: 0 auto;
+                            padding: 8px;
+                            font-size: 12px;
+                            color: #000;
+                        }
+                        .text-center { text-align: center; }
+                        .text-right { text-align: right; }
+                        .bold { font-weight: bold; }
+                        .divider { border-top: 1px dashed #000; margin: 6px 0; }
+                        .double-divider { border-top: 2px solid #000; margin: 6px 0; }
+                        table { width: 100%; border-collapse: collapse; margin: 6px 0; }
+                        th, td { text-align: left; padding: 2px 0; font-size: 11px; }
+                    </style>
+                </head>
+                <body>
+                    ${printContent.innerHTML}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
+
     return (
         <div style={{ maxWidth: 1280, margin: "0 auto", paddingBottom: 40 }}>
-            {/* Header POS Terminal Banner */}
+            {/* Header POS Banner */}
             <Card
                 style={{
                     marginBottom: 20,
@@ -250,17 +332,17 @@ export default function WalkInBookingPage() {
                             />
                             <div>
                                 <Title level={3} style={{ color: "#fff", margin: 0 }}>
-                                    Hệ Thống POS Đặt Lịch Tại Quầy (Walk-in Counter)
+                                    Trạm POS Thu Tiền Mặt & Xếp Lịch Tại Quầy
                                 </Title>
                                 <Text style={{ color: "#8c8c8c", fontSize: 13 }}>
-                                    Dành cho Staff & Quản lý tiếp nhận khách vãng lai, xếp lịch phục vụ tức thì
+                                    Thu tiền mặt trực tiếp do Nhân viên {staffFullName} (ID: {staffUserId || "N/A"}) xác nhận
                                 </Text>
                             </div>
                         </Space>
                     </Col>
                     <Col>
                         <Tag color="green" style={{ fontSize: 13, padding: "4px 12px", borderRadius: 20 }}>
-                            ● POS OPERATIONAL
+                            ● POS CASH MODE READY
                         </Tag>
                     </Col>
                 </Row>
@@ -270,18 +352,18 @@ export default function WalkInBookingPage() {
                 form={form}
                 layout="vertical"
                 onFinish={onFinish}
-                initialValues={{ paymentMethod: "PAY_AT_COUNTER" }}
+                initialValues={{ paymentMethod: "CASH" }}
             >
                 <Row gutter={24}>
-                    {/* LEFT PANEL: POS Selection Inputs */}
+                    {/* LEFT PANEL: Selection Forms */}
                     <Col xs={24} lg={15}>
                         <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                            {/* Card 1: Chọn Chi Nhánh & Thông Tin Khách Hàng */}
+                            {/* Card 1: Khách vãng lai & Chi nhánh */}
                             <Card
                                 title={
                                     <Space>
                                         <UserOutlined style={{ color: "#1890ff" }} />
-                                        <span>1. Thông Tin Khách Hàng Vãng Lai & Chi Nhánh</span>
+                                        <span>1. Thông Tin Khách Vãng Lai & Chi Nhánh</span>
                                     </Space>
                                 }
                                 style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
@@ -289,7 +371,7 @@ export default function WalkInBookingPage() {
                                 <Row gutter={16}>
                                     <Col xs={24} md={12}>
                                         <Form.Item
-                                            label="Chi nhánh thực hiện"
+                                            label="Chi nhánh làm việc"
                                             name="branchId"
                                             rules={[{ required: true, message: "Vui lòng chọn chi nhánh" }]}
                                         >
@@ -314,7 +396,7 @@ export default function WalkInBookingPage() {
                                             <Input
                                                 size="large"
                                                 prefix={<UserOutlined style={{ color: "#bfbfbf" }} />}
-                                                placeholder="Ví dụ: Anh Nam / Chị Lan"
+                                                placeholder="Ví dụ: Anh Nam / Chị Minh"
                                             />
                                         </Form.Item>
                                     </Col>
@@ -339,23 +421,23 @@ export default function WalkInBookingPage() {
                                     </Col>
 
                                     <Col xs={24} md={12}>
-                                        <Form.Item label="Ghi chú dịch vụ (nếu có)" name="note">
+                                        <Form.Item label="Ghi chú đơn hàng" name="note">
                                             <Input
                                                 size="large"
                                                 prefix={<FileTextOutlined style={{ color: "#bfbfbf" }} />}
-                                                placeholder="Yêu cầu cắt kĩ, uốn nhẹ..."
+                                                placeholder="Cắt ngắn 2p, sấy nếp..."
                                             />
                                         </Form.Item>
                                     </Col>
                                 </Row>
                             </Card>
 
-                            {/* Card 2: Chọn Dịch Vụ & Nhân Viên */}
+                            {/* Card 2: Dịch vụ & Stylist */}
                             <Card
                                 title={
                                     <Space>
                                         <ScissorOutlined style={{ color: "#52c41a" }} />
-                                        <span>2. Chọn Dịch Vụ & Nhân Viên Đảm Nhận</span>
+                                        <span>2. Dịch Vụ Phục Vụ & Stylist Đảm Nhận</span>
                                     </Space>
                                 }
                                 style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
@@ -368,21 +450,20 @@ export default function WalkInBookingPage() {
                                     <Select
                                         size="large"
                                         mode="multiple"
-                                        placeholder="Bấm chọn dịch vụ..."
+                                        placeholder="Chọn các dịch vụ thực hiện..."
                                         onChange={loadAvailability}
                                         options={services.map((s) => ({
                                             value: s.id,
                                             label: `${s.name} - ${(s.price || 0).toLocaleString("vi-VN")} VND (${s.durationMinutes || s.duration || 30} phút)`
                                         }))}
-                                        style={{ width: "100%" }}
                                     />
                                 </Form.Item>
 
-                                <Form.Item label="Nhân viên cắt/làm tóc (Tùy chọn)" name="staffId">
+                                <Form.Item label="Stylist đảm nhận (Tùy chọn)" name="staffId">
                                     <Select
                                         size="large"
                                         allowClear
-                                        placeholder="Bất kỳ nhân viên khả dụng (Hệ thống tự gán)"
+                                        placeholder="Tự động phân bổ Stylist trống"
                                         onChange={loadAvailability}
                                         options={staffs.map((s) => ({
                                             value: s.id,
@@ -392,12 +473,12 @@ export default function WalkInBookingPage() {
                                 </Form.Item>
                             </Card>
 
-                            {/* Card 3: Chọn Ngày & Khung Giờ */}
+                            {/* Card 3: Ngày & Giờ */}
                             <Card
                                 title={
                                     <Space>
                                         <ClockCircleOutlined style={{ color: "#fa8c16" }} />
-                                        <span>3. Chọn Ngày & Khung Giờ Phục Vụ</span>
+                                        <span>3. Ngày & Khung Giờ Khả Dụng</span>
                                     </Space>
                                 }
                                 style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
@@ -421,13 +502,13 @@ export default function WalkInBookingPage() {
 
                                     <Col xs={24} md={12}>
                                         <Form.Item
-                                            label="Khung giờ trống khả dụng"
+                                            label="Khung giờ trống"
                                             name="startTime"
-                                            rules={[{ required: true, message: "Chọn khung giờ" }]}
+                                            rules={[{ required: true, message: "Chọn giờ" }]}
                                         >
                                             <Select
                                                 size="large"
-                                                placeholder="Chọn khung giờ"
+                                                placeholder="Chọn giờ bắt đầu"
                                                 onChange={(val) => setSelectedSlot(val)}
                                                 options={availableSlots}
                                                 loading={loadingSlots}
@@ -435,87 +516,60 @@ export default function WalkInBookingPage() {
                                                     loadingSlots ? (
                                                         <Spin size="small" />
                                                     ) : (
-                                                        <Text type="secondary">
-                                                            Chưa chọn đủ Dịch vụ / Ngày hoặc đã kín lịch
-                                                        </Text>
+                                                        <Text type="secondary">Chưa có khung giờ phù hợp</Text>
                                                     )
                                                 }
                                             />
                                         </Form.Item>
                                     </Col>
                                 </Row>
-
-                                {/* Quick Slots Grid Preview */}
-                                {availableSlots.length > 0 && (
-                                    <div style={{ marginTop: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 8 }}>
-                                            Các khung giờ còn trống (Bấm nhanh để chọn):
-                                        </Text>
-                                        <Space wrap size={[8, 8]}>
-                                            {availableSlots.map((slot) => (
-                                                <Button
-                                                    key={slot.value}
-                                                    type={selectedSlot === slot.value ? "primary" : "default"}
-                                                    size="middle"
-                                                    onClick={() => {
-                                                        form.setFieldValue("startTime", slot.value);
-                                                        setSelectedSlot(slot.value);
-                                                    }}
-                                                    style={{ borderRadius: 6 }}
-                                                >
-                                                    {slot.label}
-                                                </Button>
-                                            ))}
-                                        </Space>
-                                    </div>
-                                )}
                             </Card>
                         </Space>
                     </Col>
 
-                    {/* RIGHT PANEL: Sticky POS Summary Counter Ticket Cart */}
+                    {/* RIGHT PANEL: Sticky POS Cash Counter Ticket */}
                     <Col xs={24} lg={9}>
                         <Card
                             title={
                                 <Space justify="space-between" style={{ width: "100%" }}>
                                     <Space>
-                                        <DollarOutlined style={{ color: "#faad14" }} />
-                                        <span>PHIẾU TẠO ĐƠN POS</span>
+                                        <DollarOutlined style={{ color: "#52c41a" }} />
+                                        <span>POS CASH COUNTER CART</span>
                                     </Space>
-                                    <Tag color="gold">COUNTER CART</Tag>
+                                    <Tag color="green">TIỀN MẶT</Tag>
                                 </Space>
                             }
                             style={{
                                 borderRadius: 12,
-                                border: "1px solid #ffe58f",
-                                background: "#fffbe6",
+                                border: "1px solid #b7eb8f",
+                                background: "#f6ffed",
                                 sticky: "top",
                                 position: "sticky",
                                 top: 20,
-                                boxShadow: "0 4px 12px rgba(250, 173, 20, 0.15)"
+                                boxShadow: "0 4px 12px rgba(82, 196, 26, 0.15)"
                             }}
                         >
-                            {/* Summary Branch & Customer Info */}
+                            {/* Summary Branch & Staff Operator info */}
                             <div style={{ background: "#fff", padding: 12, borderRadius: 8, marginBottom: 16 }}>
                                 <Row justify="space-between" style={{ marginBottom: 4 }}>
+                                    <Text type="secondary">Thu ngân trực POS:</Text>
+                                    <Text bold style={{ color: "#1890ff" }}>{staffFullName}</Text>
+                                </Row>
+                                <Row justify="space-between">
                                     <Text type="secondary">Chi nhánh:</Text>
                                     <Text bold>{selectedBranchObj?.name || "Chưa chọn"}</Text>
                                 </Row>
-                                <Row justify="space-between">
-                                    <Text type="secondary">Khách vãng lai:</Text>
-                                    <Text bold>{form.getFieldValue("customerName") || "Chưa nhập"}</Text>
-                                </Row>
                             </div>
 
-                            {/* Selected Services Itemized Breakdown */}
+                            {/* Itemized Services Breakdown */}
                             <Title level={5} style={{ fontSize: 14, marginBottom: 8 }}>
-                                Danh sách dịch vụ ({selectedServicesList.length}):
+                                Dịch vụ thanh toán ({selectedServicesList.length}):
                             </Title>
 
                             {selectedServicesList.length === 0 ? (
                                 <div style={{ textAlign: "center", padding: "20px 0", color: "#bfbfbf" }}>
                                     <ScissorOutlined style={{ fontSize: 24, marginBottom: 8 }} />
-                                    <div>Chưa chọn dịch vụ nào</div>
+                                    <div>Chưa chọn dịch vụ</div>
                                 </div>
                             ) : (
                                 <div style={{ background: "#fff", borderRadius: 8, padding: 12, marginBottom: 16 }}>
@@ -523,14 +577,9 @@ export default function WalkInBookingPage() {
                                         <Row key={item.id || idx} justify="space-between" align="middle" style={{ padding: "6px 0", borderBottom: idx < selectedServicesList.length - 1 ? "1px dashed #f0f0f0" : 0 }}>
                                             <Col span={14}>
                                                 <Text style={{ fontSize: 13 }}>{item.name}</Text>
-                                                <div>
-                                                    <Tag color="blue" style={{ fontSize: 10 }}>
-                                                        {item.durationMinutes || item.duration || 30} phút
-                                                    </Tag>
-                                                </div>
                                             </Col>
                                             <Col span={10} style={{ textAlign: "right" }}>
-                                                <Text bold style={{ color: "#d4b106" }}>
+                                                <Text bold style={{ color: "#52c41a" }}>
                                                     {(item.price || 0).toLocaleString("vi-VN")} đ
                                                 </Text>
                                             </Col>
@@ -541,23 +590,18 @@ export default function WalkInBookingPage() {
 
                             <Divider style={{ margin: "12px 0" }} />
 
-                            {/* Total Calculation */}
-                            <Row justify="space-between" align="middle" style={{ marginBottom: 6 }}>
-                                <Text style={{ fontSize: 13 }}>Tổng thời gian:</Text>
-                                <Text bold style={{ fontSize: 14 }}>{totalDuration} phút</Text>
-                            </Row>
-
-                            <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-                                <Text style={{ fontSize: 15, fontWeight: 700 }}>Tổng tiền dịch vụ:</Text>
-                                <Text bold style={{ fontSize: 20, color: "#cf1322" }}>
+                            {/* Total Amount & Cash Change Calculator */}
+                            <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
+                                <Text style={{ fontSize: 16, fontWeight: 700 }}>Tổng tiền phải thu:</Text>
+                                <Text bold style={{ fontSize: 22, color: "#cf1322" }}>
                                     {totalPrice.toLocaleString("vi-VN")} VND
                                 </Text>
                             </Row>
 
                             {/* Payment Method Selector */}
-                            <div style={{ marginBottom: 20 }}>
-                                <Text style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 8 }}>
-                                    Hình thức thu tiền tại quầy:
+                            <div style={{ marginBottom: 16 }}>
+                                <Text style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                                    Phương thức thanh toán POS:
                                 </Text>
                                 <Radio.Group
                                     value={paymentMethod}
@@ -565,108 +609,161 @@ export default function WalkInBookingPage() {
                                     style={{ width: "100%" }}
                                 >
                                     <Space direction="vertical" style={{ width: "100%" }}>
-                                        <Radio value="PAY_AT_COUNTER" style={{ background: "#fff", padding: "8px 12px", borderRadius: 6, width: "100%" }}>
+                                        <Radio value="CASH" style={{ background: "#fff", padding: "8px 12px", borderRadius: 6, width: "100%" }}>
                                             <Space>
                                                 <DollarOutlined style={{ color: "#52c41a" }} />
-                                                <span>Tiền mặt tại quầy</span>
-                                            </Space>
-                                        </Radio>
-                                        <Radio value="ONLINE_QR" style={{ background: "#fff", padding: "8px 12px", borderRadius: 6, width: "100%" }}>
-                                            <Space>
-                                                <CreditCardOutlined style={{ color: "#1890ff" }} />
-                                                <span>Chuyển khoản QR / Thẻ POS</span>
+                                                <span>Thanh toán tiền mặt tại quầy (Direct Cash)</span>
                                             </Space>
                                         </Radio>
                                     </Space>
                                 </Radio.Group>
                             </div>
 
-                            {/* Submit Button */}
+                            {/* Input Tiền Khách Đưa & Tự Tính Tiền Thừa */}
+                            <div style={{ background: "#fff", padding: 12, borderRadius: 8, marginBottom: 20 }}>
+                                <div style={{ marginBottom: 8 }}>
+                                    <Text style={{ fontSize: 13, fontWeight: 600 }}>Tiền khách đưa (VND):</Text>
+                                    <InputNumber
+                                        size="large"
+                                        style={{ width: "100%", marginTop: 4 }}
+                                        formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                        parser={(val) => val.replace(/\$\s?|(,*)/g, "")}
+                                        placeholder={`Gợi ý: ${totalPrice.toLocaleString("vi-VN")}`}
+                                        value={cashReceived}
+                                        onChange={(val) => setCashReceived(val)}
+                                        min={0}
+                                    />
+                                </div>
+                                <Row justify="space-between" align="middle">
+                                    <Text type="secondary">Tiền thừa trả khách:</Text>
+                                    <Text bold style={{ fontSize: 16, color: changeAmount >= 0 ? "#52c41a" : "#ff4d4f" }}>
+                                        {changeAmount.toLocaleString("vi-VN")} VND
+                                    </Text>
+                                </Row>
+                            </div>
+
+                            {/* Button Xác Nhận Thu Tiền Mặt */}
                             <Button
                                 type="primary"
                                 htmlType="submit"
                                 size="large"
                                 loading={submitting}
                                 block
-                                icon={<CheckCircleOutlined />}
+                                icon={<SafetyCertificateOutlined />}
                                 style={{
-                                    height: 48,
+                                    height: 50,
                                     fontSize: 16,
                                     fontWeight: 700,
                                     borderRadius: 8,
                                     background: "#52c41a",
                                     borderColor: "#52c41a",
-                                    boxShadow: "0 4px 12px rgba(82, 196, 26, 0.3)"
+                                    boxShadow: "0 4px 12px rgba(82, 196, 26, 0.35)"
                                 }}
                             >
-                                XÁC NHẬN TẠO LỊCH POS
+                                XÁC NHẬN ĐÃ THU TIỀN MẶT
                             </Button>
                         </Card>
                     </Col>
                 </Row>
             </Form>
 
-            {/* Success Modal Preview / Printable Ticket */}
+            {/* Thermal Receipt Print Modal (Chuẩn Máy In Hóa Đơn Nhiệt K80 80mm) */}
             <Modal
                 title={
                     <Space>
                         <CheckCircleOutlined style={{ color: "#52c41a", fontSize: 22 }} />
-                        <span>TẠO BOOKING TẠI QUẦY THÀNH CÔNG!</span>
+                        <span>XÁC NHẬN THU TIỀN MẶT & TẠO ĐƠN POS THÀNH CÔNG!</span>
                     </Space>
                 }
-                open={!!successBooking}
-                onCancel={() => setSuccessBooking(null)}
+                open={!!successData}
+                onCancel={() => setSuccessData(null)}
                 footer={[
-                    <Button key="print" icon={<PrinterOutlined />} onClick={() => window.print()}>
-                        In Phiếu Lịch Hẹn
+                    <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={handlePrintThermalReceipt} style={{ background: "#1890ff" }}>
+                        In Hóa Đơn Nhiệt (K80 Printer)
                     </Button>,
-                    <Button key="new" type="primary" icon={<PlusOutlined />} onClick={() => setSuccessBooking(null)}>
-                        Tạo Booking Tiếp Theo
+                    <Button key="new" icon={<PlusOutlined />} onClick={() => setSuccessData(null)}>
+                        Tạo Đơn Mới
                     </Button>
                 ]}
-                width={520}
+                width={480}
             >
-                {successBooking && (
-                    <div style={{ padding: "12px 0" }}>
+                {successData && (
+                    <div>
                         <Card size="small" style={{ background: "#f6ffed", borderColor: "#b7eb8f", marginBottom: 16 }}>
                             <Row justify="space-between">
-                                <Text type="secondary">Mã đơn đặt:</Text>
-                                <Text bold style={{ color: "#52c41a" }}>#{successBooking.id}</Text>
+                                <Text type="secondary">Trạng thái thanh toán:</Text>
+                                <Tag color="green">● ĐÃ XÁC NHẬN THU TIỀN MẶT (PAID)</Tag>
                             </Row>
                             <Row justify="space-between">
-                                <Text type="secondary">Khách hàng:</Text>
-                                <Text bold>{successBooking.customerName} ({successBooking.customerPhone})</Text>
+                                <Text type="secondary">Staff xác nhận (Confirmed By):</Text>
+                                <Text bold>{successData.staffOperatorName} (ID: {successData.confirmedByStaffId})</Text>
                             </Row>
                             <Row justify="space-between">
-                                <Text type="secondary">Thời gian hẹn:</Text>
-                                <Text bold>{successBooking.time} - Ngày {successBooking.date}</Text>
-                            </Row>
-                            <Row justify="space-between">
-                                <Text type="secondary">Nhân viên phục vụ:</Text>
-                                <Text bold>{successBooking.staffName}</Text>
+                                <Text type="secondary">Mã giao dịch Payment:</Text>
+                                <Text bold style={{ color: "#52c41a" }}>#{successData.paymentId}</Text>
                             </Row>
                         </Card>
 
-                        <Title level={5} style={{ fontSize: 14 }}>Chi tiết dịch vụ:</Title>
-                        {successBooking.services.map((s) => (
-                            <Row key={s.id} justify="space-between" style={{ padding: "4px 0" }}>
-                                <Text>{s.name}</Text>
-                                <Text bold>{(s.price || 0).toLocaleString("vi-VN")} VND</Text>
-                            </Row>
-                        ))}
+                        {/* Hidden Printable Thermal K80 Container */}
+                        <div ref={thermalReceiptRef} style={{ background: "#fff", padding: 12, border: "1px solid #d9d9d9", borderRadius: 8 }}>
+                            <div className="text-center bold" style={{ fontSize: 16, marginBottom: 2 }}>
+                                {successData.branchName}
+                            </div>
+                            <div className="text-center" style={{ fontSize: 11, marginBottom: 6 }}>
+                                {successData.branchAddress}
+                            </div>
+                            <div className="text-center bold" style={{ fontSize: 14, marginBottom: 4 }}>
+                                HÓA ĐƠN THU TIỀN MẶT POS
+                            </div>
+                            <div className="divider" style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
 
-                        <Divider style={{ margin: "12px 0" }} />
+                            <div><strong>Mã đơn:</strong> #{successData.bookingId}</div>
+                            <div><strong>Thời gian:</strong> {successData.time} - {successData.date}</div>
+                            <div><strong>Khách hàng:</strong> {successData.customerName} ({successData.customerPhone})</div>
+                            <div><strong>Thu ngân:</strong> {successData.staffOperatorName}</div>
+                            <div><strong>Stylist:</strong> {successData.assignedStaffName}</div>
 
-                        <Row justify="space-between" align="middle">
-                            <Text bold style={{ fontSize: 16 }}>TỔNG CỘNG THU KHÁCH:</Text>
-                            <Text bold style={{ fontSize: 20, color: "#cf1322" }}>
-                                {successBooking.totalPrice.toLocaleString("vi-VN")} VND
-                            </Text>
-                        </Row>
-                        <Row justify="space-between" style={{ marginTop: 4 }}>
-                            <Text type="secondary">Hình thức:</Text>
-                            <Tag color="green">{successBooking.paymentMethod}</Tag>
-                        </Row>
+                            <div className="divider" style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
+
+                            <table style={{ width: "100%", fontSize: 11 }}>
+                                <thead>
+                                    <tr style={{ borderBottom: "1px solid #000" }}>
+                                        <th style={{ textAlign: "left" }}>Dịch vụ</th>
+                                        <th style={{ textAlign: "right" }}>Giá tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {successData.services.map((item, i) => (
+                                        <tr key={i}>
+                                            <td style={{ padding: "3px 0" }}>{item.name}</td>
+                                            <td style={{ textAlign: "right", padding: "3px 0" }}>
+                                                {(item.price || 0).toLocaleString("vi-VN")} đ
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            <div className="divider" style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
+
+                            <div style={{ display: "flex", justify: "space-between", fontWeight: "bold", fontSize: 13 }}>
+                                <span>TỔNG CỘNG:</span>
+                                <span>{successData.totalPrice.toLocaleString("vi-VN")} VND</span>
+                            </div>
+                            <div style={{ display: "flex", justify: "space-between", fontSize: 11 }}>
+                                <span>Tiền khách đưa:</span>
+                                <span>{successData.cashReceived.toLocaleString("vi-VN")} VND</span>
+                            </div>
+                            <div style={{ display: "flex", justify: "space-between", fontSize: 11 }}>
+                                <span>Tiền thừa trả khách:</span>
+                                <span>{successData.changeAmount.toLocaleString("vi-VN")} VND</span>
+                            </div>
+
+                            <div className="divider" style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
+                            <div className="text-center" style={{ fontSize: 11, fontStyle: "italic" }}>
+                                Chân thành cảm ơn & Hẹn gặp lại quý khách!
+                            </div>
+                        </div>
                     </div>
                 )}
             </Modal>

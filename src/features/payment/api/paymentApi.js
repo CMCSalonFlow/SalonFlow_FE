@@ -11,3 +11,9 @@ export const verifyPaymentApi = async (params, config = {}) => {
     const response = await api.get("/api/v1/payments/vnpay-callback", { params, ...config });
     return response.data;
 };
+
+// Xử lý thanh toán tiền mặt tại quầy (POS Mode) do Staff xác nhận - không qua cổng trực tuyến
+export const processPosCashPaymentApi = async (payload, config = {}) => {
+    const response = await api.post("/api/v1/payments/pos/cash", payload, config);
+    return response.data;
+};
