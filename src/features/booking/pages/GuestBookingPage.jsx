@@ -22,7 +22,7 @@ export default function GuestBookingPage() {
 
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState("PAY_AT_COUNTER");
+    const [paymentMethod, setPaymentMethod] = useState("VNPAY");
 
     const [salons, setSalons] = useState([]);
     const [selectedSalonId, setSelectedSalonId] = useState(null);
@@ -662,14 +662,14 @@ export default function GuestBookingPage() {
                                         <FormLayoutItem label="Phương thức thanh toán">
                                             <Radio.Group value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ width: "100%" }}>
                                                 <Space direction="vertical" style={{ width: "100%" }}>
-                                                    <Radio value="PAY_AT_COUNTER" style={{ padding: "4px 0", fontSize: 15 }}>
-                                                        <Text strong>Thanh toán tại quầy</Text> (Thanh toán cọc online, phần còn lại thanh toán tại salon)
-                                                    </Radio>
                                                     <Radio value="VNPAY" style={{ padding: "4px 0", fontSize: 15 }}>
-                                                        <Text strong>Thanh toán qua cổng VNPay</Text> (Thanh toán cọc online bằng thẻ nội địa/QR Code)
+                                                        <Text strong>Thanh toán Online qua cổng VNPay</Text> (Thanh toán cọc online bằng thẻ nội địa/QR Code)
                                                     </Radio>
                                                 </Space>
                                             </Radio.Group>
+                                            <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 8 }}>
+                                                💡 Đặt lịch trực tuyến áp dụng thanh toán cọc online qua VNPay. Phần tiền còn lại sẽ được thanh toán trực tiếp tại salon khi làm dịch vụ.
+                                            </Text>
                                         </FormLayoutItem>
                                     </div>
                                 )}
