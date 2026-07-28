@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { Star } from "lucide-react";
+import { StarFilled } from "@ant-design/icons";
 
 const StarRatingInput = ({ value = 0, onChange, readOnly = false, size = 24 }) => {
     const [hoverValue, setHoverValue] = useState(0);
-
     const displayValue = hoverValue || value;
 
     return (
@@ -19,16 +18,16 @@ const StarRatingInput = ({ value = 0, onChange, readOnly = false, size = 24 }) =
                         onMouseEnter={() => !readOnly && setHoverValue(star)}
                         onMouseLeave={() => !readOnly && setHoverValue(0)}
                         className={`transition-transform duration-150 ${
-                            !readOnly ? "hover:scale-115 focus:outline-none cursor-pointer" : "cursor-default"
+                            !readOnly ? "hover:scale-110 focus:outline-none cursor-pointer" : "cursor-default"
                         }`}
+                        style={{ border: 0, background: "none", padding: 2 }}
                     >
-                        <Star
-                            size={size}
-                            className={`transition-colors duration-150 ${
-                                isFilled
-                                    ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]"
-                                    : "text-gray-300 dark:text-gray-600 fill-transparent"
-                            }`}
+                        <StarFilled
+                            style={{
+                                fontSize: size,
+                                color: isFilled ? "#faad14" : "#d9d9d9",
+                                transition: "color 0.2s"
+                            }}
                         />
                     </button>
                 );

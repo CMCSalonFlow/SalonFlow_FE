@@ -26,6 +26,8 @@ import AdminLayout
     from "@/layouts/AdminLayout/AdminLayout";
 import OwnerLayout
     from "@/layouts/OwnerLayout/OwnerLayout";
+import StaffLayout
+    from "@/layouts/StaffLayout";
 
 import CustomerLayout
     from "@/layouts/CustomerLayout/CustomerLayout";
@@ -161,13 +163,10 @@ const router = createBrowserRouter([
             {
                 path: "staff",
                 element: <StaffManagementPage />
-            }, {
-                path: "schedule",
-                element: <SchedulePage />
             },
             {
-                path: "walk-in-booking",
-                element: <WalkInBookingPage />
+                path: "schedule",
+                element: <SchedulePage />
             },
             {
                 path: "shifts",
@@ -188,6 +187,35 @@ const router = createBrowserRouter([
             {
                 path: "reviews",
                 element: <ReviewAdminPage />
+            }
+        ]
+    },
+    // STAFF / POS AREA
+    {
+        path: "/staff",
+        element: (
+            <ProtectedRoute
+                allowedRoles={[
+                    "STAFF",
+                    "SALON_OWNER",
+                    "SUPER_ADMIN"
+                ]}
+            >
+                <StaffLayout />
+            </ProtectedRoute>
+        ),
+        children: [
+            {
+                index: true,
+                element: <WalkInBookingPage />
+            },
+            {
+                path: "pos",
+                element: <WalkInBookingPage />
+            },
+            {
+                path: "schedule",
+                element: <SchedulePage />
             }
         ]
     },
