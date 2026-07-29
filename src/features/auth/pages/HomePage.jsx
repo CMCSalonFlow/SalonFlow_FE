@@ -81,14 +81,19 @@ export default function HomePage() {
             }
         }
 
-        // Tải danh sách chi nhánh công khai
-        api.get("/api/v1/branches/public")
+        // Tải danh sách chi nhánh
+        api.get("/api/v1/branches/my-branches")
             .then(res => setBranches(res.data || []))
-            .catch(() => setBranches([]));
+            .catch(() => {
+                api.get("/api/v1/branches")
+                    .then(res => setBranches(res.data || []))
+                    .catch(() => setBranches([]));
+            });
 
         if (isLogin) {
             const fetchStats = async () => {
-                const currentUserId = localStorage.getItem("userId");
+                const rawUserId = localStorage.getItem("userId");
+                const currentUserId = rawUserId || auth?.id || JSON.parse(localStorage.getItem("user") || "{}")?.id;
                 if (!currentUserId) return;
 
                 const isStaff = auth?.roles?.some(role => 
@@ -97,8 +102,16 @@ export default function HomePage() {
 
                 try {
                     setLoadingStats(true);
-                    const branchesData = await api.get("/api/v1/branches/public").then(res => res.data || []);
+                    let branchesData = await api.get("/api/v1/branches/my-branches")
+                        .then(res => res.data || [])
+                        .catch(() => []);
                     
+                    if (branchesData.length === 0) {
+                        branchesData = await api.get("/api/v1/branches")
+                            .then(res => res.data || [])
+                            .catch(() => []);
+                    }
+
                     if (branchesData.length > 0) {
                         const bookingsPromises = branchesData.map(branch =>
                             api.get(`/api/v1/branches/${branch.id}/bookings`)
@@ -109,18 +122,13 @@ export default function HomePage() {
                         const allResults = await Promise.all(bookingsPromises);
                         const mergedBookings = allResults
                             .flat()
-                            .filter(booking => String(booking.customerId) === String(currentUserId));
+                            .filter(b => 
+                                String(b.customerId) === String(currentUserId) ||
+                                String(b.userId) === String(currentUserId) ||
+                                String(b.customer?.id) === String(currentUserId)
+                            );
 
-                        const now = new Date();
-                        const isUpcoming = (booking) => {
-                            if (booking.status !== "PENDING" && booking.status !== "CONFIRMED") {
-                                return false;
-                            }
-                            const bookingDateTime = new Date(`${booking.bookingDate}T${booking.startTime}`);
-                            return bookingDateTime >= now;
-                        };
-
-                        const upcoming = mergedBookings.filter(isUpcoming).length;
+                        const upcoming = mergedBookings.filter(b => b.status === "PENDING" || b.status === "CONFIRMED").length;
                         const total = mergedBookings.length;
 
                         let totalRevenue = 0;
@@ -131,12 +139,12 @@ export default function HomePage() {
                                 .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
                         }
 
-                        // Lấy số điểm tích lũy của user nếu có API
+                        // Lấy đúng số điểm tích lũy của khách hàng từ endpoint /api/v1/loyalty/summary
                         let userPoints = 0;
                         try {
-                            const loyaltyRes = await api.get(`/api/v1/loyalty/points/user/${currentUserId}`).catch(() => null);
+                            const loyaltyRes = await api.get("/api/v1/loyalty/summary").catch(() => null);
                             if (loyaltyRes && loyaltyRes.data) {
-                                userPoints = loyaltyRes.data.pointsBalance || loyaltyRes.data.totalPoints || 0;
+                                userPoints = loyaltyRes.data.totalPoints ?? loyaltyRes.data.pointsBalance ?? 0;
                             }
                         } catch (e) {
                             userPoints = 0;
