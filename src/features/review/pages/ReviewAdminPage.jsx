@@ -12,6 +12,7 @@ import {
     Table,
     Tag,
     Typography,
+    Modal,
     message
 } from "antd";
 
@@ -22,6 +23,7 @@ import {
     getAdminReviewSummaryApi,
     getAdminReviewsApi
 } from "../api/reviewAdminApi";
+import { replyReviewApi, reportReviewApi } from "../api/reviewReportApi";
 import ReviewDetailDrawer from "../components/ReviewDetailDrawer";
 
 const { Title, Text, Paragraph } = Typography;
@@ -145,6 +147,55 @@ export default function ReviewAdminPage() {
         pageSize: 10,
         total: 0
     });
+
+    // Modals for Owner Reply & Report
+    const [targetReview, setTargetReview] = useState(null);
+    const [replyModalOpen, setReplyModalOpen] = useState(false);
+    const [replyContent, setReplyContent] = useState("");
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [reportReason, setReportReason] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleReplySubmit = async () => {
+        if (!replyContent || !replyContent.trim()) {
+            message.warning("Vui lòng nhập nội dung phản hồi");
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await replyReviewApi(targetReview.id, replyContent.trim());
+            message.success("Đã đăng phản hồi cho đánh giá thành công!");
+            setReplyModalOpen(false);
+            setReplyContent("");
+            setTargetReview(null);
+            loadReviews({ page: pagination.current });
+        } catch (err) {
+            console.error(err);
+            message.error(err?.response?.data?.message || "Không thể phản hồi đánh giá.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleReportSubmit = async () => {
+        if (!reportReason || !reportReason.trim()) {
+            message.warning("Vui lòng nhập lý do báo cáo vi phạm");
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await reportReviewApi(targetReview.id, reportReason.trim());
+            message.success("Đã gửi báo cáo vi phạm tới Admin duyệt thành công!");
+            setReportModalOpen(false);
+            setReportReason("");
+            setTargetReview(null);
+        } catch (err) {
+            console.error(err);
+            message.error(err?.response?.data?.message || "Không thể gửi báo cáo vi phạm.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     const loadBranches = async () => {
         try {
@@ -332,25 +383,58 @@ export default function ReviewAdminPage() {
             render: (value) => value || "-"
         },
         {
-            title: "Tạo lúc",
-            dataIndex: "createdAt",
-            width: 170,
-            render: (value) => formatDateTime(value)
+            title: "Phản hồi Salon",
+            dataIndex: "ownerReply",
+            ellipsis: true,
+            render: (value) => {
+                if (value) {
+                    return <Tag color="blue">💬 {value}</Tag>;
+                }
+                return <Text type="secondary" style={{ fontSize: 12 }}>Chưa phản hồi</Text>;
+            }
         },
         {
             title: "Thao tác",
             key: "action",
-            width: 110,
+            width: 220,
             render: (_, record) => (
-                <Button
-                    type="link"
-                    onClick={() => {
-                        setSelectedReviewId(record.id);
-                        setDrawerOpen(true);
-                    }}
-                >
-                    Xem
-                </Button>
+                <Space>
+                    <Button
+                        type="link"
+                        size="small"
+                        onClick={() => {
+                            setSelectedReviewId(record.id);
+                            setDrawerOpen(true);
+                        }}
+                    >
+                        Xem
+                    </Button>
+                    <Button
+                        type="primary"
+                        ghost
+                        size="small"
+                        disabled={!!record.ownerReply}
+                        onClick={() => {
+                            setTargetReview(record);
+                            setReplyContent("");
+                            setReplyModalOpen(true);
+                        }}
+                    >
+                        {record.ownerReply ? "Đã trả lời" : "Phản hồi"}
+                    </Button>
+                    <Button
+                        danger
+                        type="dashed"
+                        size="small"
+                        onClick={() => {
+                            setTargetReview(record);
+                            setReportReason("");
+                            setReportModalOpen(true);
+                        }}
+                    >
+                        Báo cáo
+                    </Button>
+                </Space>
             )
         }
     ];
@@ -478,6 +562,63 @@ export default function ReviewAdminPage() {
                     setSelectedReviewId(null);
                 }}
             />
+
+            {/* Modal Phản hồi đánh giá (Salon Owner - 1 reply per review) */}
+            <Modal
+                title={`Phản hồi đánh giá #${targetReview?.id || ""}`}
+                open={replyModalOpen}
+                onOk={handleReplySubmit}
+                confirmLoading={submitting}
+                onCancel={() => setReplyModalOpen(false)}
+                okText="Đăng phản hồi"
+            >
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div>
+                        <Text type="secondary">Nội dung đánh giá của khách:</Text>
+                        <div style={{ background: "#f5f5f5", padding: "8px 12px", borderRadius: 6, marginTop: 4 }}>
+                            "{targetReview?.content || "Không có nội dung"}"
+                        </div>
+                    </div>
+                    <div>
+                        <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Nội dung phản hồi của Salon (Chỉ được phản hồi 1 lần duy nhất):</label>
+                        <Input.TextArea
+                            rows={4}
+                            placeholder="Cảm ơn quý khách đã ghé Salon..."
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal Báo cáo vi phạm (Salon Owner / User) */}
+            <Modal
+                title={`Báo cáo vi phạm đánh giá #${targetReview?.id || ""}`}
+                open={reportModalOpen}
+                onOk={handleReportSubmit}
+                confirmLoading={submitting}
+                onCancel={() => setReportModalOpen(false)}
+                okText="Gửi báo cáo"
+                okButtonProps={{ danger: true }}
+            >
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div>
+                        <Text type="secondary">Nội dung đánh giá bị báo cáo:</Text>
+                        <div style={{ background: "#fff1f0", padding: "8px 12px", borderRadius: 6, marginTop: 4, border: "1px solid #ffccc7" }}>
+                            "{targetReview?.content || "Không có nội dung"}"
+                        </div>
+                    </div>
+                    <div>
+                        <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Lý do báo cáo vi phạm:</label>
+                        <Input.TextArea
+                            rows={4}
+                            placeholder="Mô tả lý do vi phạm (Ví dụ: Chứa từ ngữ thô tục, xúc phạm nhân viên, sai sự thật...)"
+                            value={reportReason}
+                            onChange={(e) => setReportReason(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

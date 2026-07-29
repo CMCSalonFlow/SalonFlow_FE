@@ -26,6 +26,8 @@ import AdminLayout
     from "@/layouts/AdminLayout/AdminLayout";
 import OwnerLayout
     from "@/layouts/OwnerLayout/OwnerLayout";
+import StaffLayout
+    from "@/layouts/StaffLayout";
 
 import CustomerLayout
     from "@/layouts/CustomerLayout/CustomerLayout";
@@ -34,6 +36,8 @@ import HomePage
 
 import AdminDashboardPage
     from "@/features/dashboard/pages/AdminDashboardPage";
+import AdminReviewReportsPage
+    from "@/features/review/pages/AdminReviewReportsPage";
 import OwnerDashboardPage
     from "@/features/dashboard/pages/OwnerDashboardPage";
 import UserListPage
@@ -129,6 +133,10 @@ const router = createBrowserRouter([
                 path: "vouchers",
                 element: <VoucherManagementPage />
             },
+            {
+                path: "review-reports",
+                element: <AdminReviewReportsPage />
+            },
         ]
     },
     {
@@ -162,13 +170,10 @@ const router = createBrowserRouter([
             {
                 path: "staff",
                 element: <StaffManagementPage />
-            }, {
-                path: "schedule",
-                element: <SchedulePage />
             },
             {
-                path: "walk-in-booking",
-                element: <WalkInBookingPage />
+                path: "schedule",
+                element: <SchedulePage />
             },
             {
                 path: "shifts",
@@ -189,6 +194,35 @@ const router = createBrowserRouter([
             {
                 path: "reviews",
                 element: <ReviewAdminPage />
+            }
+        ]
+    },
+    // STAFF / POS AREA
+    {
+        path: "/staff",
+        element: (
+            <ProtectedRoute
+                allowedRoles={[
+                    "STAFF",
+                    "SALON_OWNER",
+                    "SUPER_ADMIN"
+                ]}
+            >
+                <StaffLayout />
+            </ProtectedRoute>
+        ),
+        children: [
+            {
+                index: true,
+                element: <WalkInBookingPage />
+            },
+            {
+                path: "pos",
+                element: <WalkInBookingPage />
+            },
+            {
+                path: "schedule",
+                element: <SchedulePage />
             }
         ]
     },

@@ -46,9 +46,7 @@ export const getPublicAvailabilityApi = async (branchId, staffId, params) => {
     return response.data;
 };
 
-// ======================
 // Hủy booking
-// ======================
 export const cancelBookingApi = async (bookingId, reason = "") => {
     const response = await api.post(
         `/api/v1/bookings/${bookingId}/cancel`,
@@ -58,9 +56,13 @@ export const cancelBookingApi = async (bookingId, reason = "") => {
     return response.data;
 };
 
-// ======================
+// Xác nhận lịch hẹn thủ công (Staff / Owner)
+export const confirmBookingApi = async (bookingId) => {
+    const response = await api.put(`/api/v1/bookings/${bookingId}/confirm`);
+    return response.data;
+};
+
 // Chính sách hủy
-// ======================
 export const getCancellationPolicyApi = async (salonId) => {
     const response = await api.get(
         `/api/v1/salons/${salonId}/cancellation-policy`
@@ -77,6 +79,7 @@ export const updateCancellationPolicyApi = async (salonId, payload) => {
 
     return response.data;
 };
+
 export const createWalkInBookingApi = async (branchId, payload) => {
     const response = await api.post(
         `/api/v1/branches/${branchId}/walk-in-bookings`,

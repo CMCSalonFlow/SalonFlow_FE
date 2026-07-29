@@ -61,11 +61,6 @@ export default function OwnerSidebar() {
             label: "Schedule"
         },
         {
-            key: "/owner/walk-in-booking",
-            icon: <PlusCircleOutlined />,
-            label: "Walk-in Booking"
-        },
-        {
             key: "/owner/off-days",
             icon: <CalendarOutlined />,
             label: "Off Days"
