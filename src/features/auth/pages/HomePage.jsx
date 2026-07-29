@@ -52,121 +52,121 @@ export default function HomePage() {
     const [user, setUser] = useState(null);
     const [loadingStats, setLoadingStats] = useState(false);
     const [branches, setBranches] = useState([]);
-    const [stats, setStats] = useState({
-        loyaltyPoints: 0,
-        upcomingBookingsCount: 0,
-        totalBookings: 0,
-        revenue: 0,
-        staffCount: 0
-    });
+    const cachedStats = sessionStorage.getItem("homepage_stats");
+    const [stats, setStats] = useState(
+        cachedStats
+            ? JSON.parse(cachedStats)
+            : {
+                  loyaltyPoints: 0,
+                  upcomingBookingsCount: 0,
+                  totalBookings: 0,
+                  revenue: 0,
+                  staffCount: 8
+              }
+    );
 
     const { logout } = useAuth();
     const token = localStorage.getItem("accessToken");
     const isLogin = !!token;
 
     useEffect(() => {
-        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
-        if (isLogin) {
-            setUser(auth);
-            const currentUserId = localStorage.getItem("userId");
-            if (currentUserId) {
-                api.get(`/api/v1/users/${currentUserId}`)
-                    .then(res => {
-                        setUser(prev => ({ ...prev, ...res.data }));
-                        if (res.data?.fullName) {
-                            localStorage.setItem("fullName", res.data.fullName);
-                        }
-                    })
-                    .catch(err => console.error("Lỗi tải thông tin user:", err));
-            }
+        if (!isLogin) {
+            // Tải danh sách chi nhánh công khai nếu chưa đăng nhập
+            api.get("/api/v1/branches")
+                .then((res) => setBranches(res.data || []))
+                .catch(() => setBranches([]));
+            return;
         }
 
-        // Tải danh sách chi nhánh
-        api.get("/api/v1/branches/my-branches")
-            .then(res => setBranches(res.data || []))
-            .catch(() => {
-                api.get("/api/v1/branches")
-                    .then(res => setBranches(res.data || []))
-                    .catch(() => setBranches([]));
-            });
+        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+        const rawUserId = localStorage.getItem("userId");
+        const currentUserId = rawUserId || auth?.id || JSON.parse(localStorage.getItem("user") || "{}")?.id;
 
-        if (isLogin) {
-            const fetchStats = async () => {
-                const rawUserId = localStorage.getItem("userId");
-                const currentUserId = rawUserId || auth?.id || JSON.parse(localStorage.getItem("user") || "{}")?.id;
-                if (!currentUserId) return;
+        setUser(auth);
+        let isMounted = true;
 
-                const isStaff = auth?.roles?.some(role => 
-                    ["OWNER", "ADMIN", "STAFF", "MANAGER"].includes(role.toUpperCase())
+        if (!cachedStats) {
+            setLoadingStats(true);
+        }
+
+        const isStaff = auth?.roles?.some((role) =>
+            ["OWNER", "ADMIN", "STAFF", "MANAGER"].includes(role.toUpperCase())
+        );
+
+        // ĐỒNG THỜI khởi tạo tất cả các yêu cầu API (Parallel Requests - loại bỏ Waterfall delay)
+        const pUserInfo = currentUserId
+            ? api.get(`/api/v1/users/${currentUserId}`).then((res) => res.data).catch(() => null)
+            : Promise.resolve(null);
+
+        const pLoyalty = api.get("/api/v1/loyalty/summary").then((res) => res.data).catch(() => null);
+
+        const pBranches = api
+            .get("/api/v1/branches/my-branches")
+            .then((res) => res.data || [])
+            .catch(() =>
+                api.get("/api/v1/branches").then((res) => res.data || []).catch(() => [])
+            );
+
+        Promise.all([pUserInfo, pLoyalty, pBranches]).then(async ([userData, loyaltyData, branchesData]) => {
+            if (!isMounted) return;
+
+            if (userData) {
+                setUser((prev) => ({ ...prev, ...userData }));
+                if (userData.fullName) {
+                    localStorage.setItem("fullName", userData.fullName);
+                }
+            }
+
+            let upcoming = 0;
+            let total = 0;
+            let totalRevenue = 0;
+
+            if (branchesData && branchesData.length > 0) {
+                setBranches(branchesData);
+
+                // Tải song song lịch hẹn tất cả các chi nhánh
+                const bookingsResults = await Promise.all(
+                    branchesData.map((b) =>
+                        api.get(`/api/v1/branches/${b.id}/bookings`).then((res) => res.data || []).catch(() => [])
+                    )
                 );
 
-                try {
-                    setLoadingStats(true);
-                    let branchesData = await api.get("/api/v1/branches/my-branches")
-                        .then(res => res.data || [])
-                        .catch(() => []);
-                    
-                    if (branchesData.length === 0) {
-                        branchesData = await api.get("/api/v1/branches")
-                            .then(res => res.data || [])
-                            .catch(() => []);
-                    }
+                const allBookings = bookingsResults.flat();
+                const myBookings = allBookings.filter(
+                    (b) =>
+                        String(b.customerId) === String(currentUserId) ||
+                        String(b.userId) === String(currentUserId) ||
+                        String(b.customer?.id) === String(currentUserId)
+                );
 
-                    if (branchesData.length > 0) {
-                        const bookingsPromises = branchesData.map(branch =>
-                            api.get(`/api/v1/branches/${branch.id}/bookings`)
-                                .then(res => res.data || [])
-                                .catch(() => [])
-                        );
+                upcoming = myBookings.filter((b) => b.status === "PENDING" || b.status === "CONFIRMED").length;
+                total = myBookings.length;
 
-                        const allResults = await Promise.all(bookingsPromises);
-                        const mergedBookings = allResults
-                            .flat()
-                            .filter(b => 
-                                String(b.customerId) === String(currentUserId) ||
-                                String(b.userId) === String(currentUserId) ||
-                                String(b.customer?.id) === String(currentUserId)
-                            );
-
-                        const upcoming = mergedBookings.filter(b => b.status === "PENDING" || b.status === "CONFIRMED").length;
-                        const total = mergedBookings.length;
-
-                        let totalRevenue = 0;
-                        if (isStaff) {
-                            const allBookings = allResults.flat();
-                            totalRevenue = allBookings
-                                .filter(b => b.status === "CONFIRMED" || b.status === "COMPLETED")
-                                .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
-                        }
-
-                        // Lấy đúng số điểm tích lũy của khách hàng từ endpoint /api/v1/loyalty/summary
-                        let userPoints = 0;
-                        try {
-                            const loyaltyRes = await api.get("/api/v1/loyalty/summary").catch(() => null);
-                            if (loyaltyRes && loyaltyRes.data) {
-                                userPoints = loyaltyRes.data.totalPoints ?? loyaltyRes.data.pointsBalance ?? 0;
-                            }
-                        } catch (e) {
-                            userPoints = 0;
-                        }
-
-                        setStats({
-                            loyaltyPoints: userPoints,
-                            upcomingBookingsCount: upcoming,
-                            totalBookings: total,
-                            revenue: totalRevenue,
-                            staffCount: 8
-                        });
-                    }
-                } catch (err) {
-                    console.error("Lỗi khi tải thông tin thống kê:", err);
-                } finally {
-                    setLoadingStats(false);
+                if (isStaff) {
+                    totalRevenue = allBookings
+                        .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")
+                        .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
                 }
+            }
+
+            const userPoints = loyaltyData?.totalPoints ?? loyaltyData?.pointsBalance ?? 0;
+
+            const newStats = {
+                loyaltyPoints: userPoints,
+                upcomingBookingsCount: upcoming,
+                totalBookings: total,
+                revenue: totalRevenue,
+                staffCount: 8
             };
 
-            fetchStats();
-        }
+            setStats(newStats);
+            sessionStorage.setItem("homepage_stats", JSON.stringify(newStats));
+            setLoadingStats(false);
+        });
+
+        return () => {
+            isMounted = false;
+        };
     }, [isLogin]);
 
     const handleLogout = async () => {

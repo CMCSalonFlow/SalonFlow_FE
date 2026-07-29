@@ -7,6 +7,7 @@ import {
     Space,
     Badge,
     Tooltip,
+    Switch,
     notification
 } from "antd";
 
@@ -14,6 +15,7 @@ import {
     UserOutlined,
     LogoutOutlined,
     BellOutlined,
+    BellFilled,
     CheckCircleOutlined,
     CalendarOutlined
 } from "@ant-design/icons";
@@ -25,6 +27,24 @@ import { useFirebaseMessaging } from "@/features/notification/hooks/useFirebaseM
 import { useNotificationWebSocket } from "@/features/notification/hooks/useNotificationWebSocket";
 
 const { Header } = Layout;
+
+const BellMutedIcon = ({ style }) => (
+    <span role="img" aria-label="bell-muted" className="anticon" style={{ display: "inline-flex", alignItems: "center", position: "relative", ...style }}>
+        <BellOutlined style={{ opacity: 0.55 }} />
+        <span
+            style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                width: "115%",
+                height: "2px",
+                backgroundColor: "#ff4d4f",
+                transform: "translate(-50%, -50%) rotate(-45deg)",
+                borderRadius: "2px"
+            }}
+        />
+    </span>
+);
 
 export default function AppHeader() {
     const { unreadCount } = useNotificationWebSocket();
@@ -233,39 +253,40 @@ export default function AppHeader() {
                     </Badge>
 
                     {messagingSupported ? (
-                        isNotificationOn ? (
-                            <Tooltip title="Bấm vào đây để TẮT nhận thông báo">
-                                <Button
-                                    type="default"
-                                    icon={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
-                                    loading={messagingLoading}
-                                    onClick={handleDisableNotifications}
-                                    style={{ borderColor: "#52c41a", color: "#52c41a", borderRadius: 20 }}
-                                >
-                                    Đã bật thông báo
-                                </Button>
-                            </Tooltip>
-                        ) : permission === "denied" ? (
-                            <Tooltip title="Trình duyệt đang chặn thông báo. Hãy cho phép trong cài đặt trình duyệt.">
-                                <Button danger disabled style={{ borderRadius: 20 }}>
-                                    Thông báo bị chặn
-                                </Button>
-                            </Tooltip>
-                        ) : (
-                            <Tooltip title="Bấm vào đây để BẬT nhận thông báo thời gian thực">
-                                <Badge dot={permission === "default"}>
-                                    <Button
-                                        type="primary"
-                                        icon={<BellOutlined />}
-                                        loading={messagingLoading}
-                                        onClick={handleEnableNotifications}
-                                        style={{ borderRadius: 20 }}
-                                    >
-                                        Bật thông báo
-                                    </Button>
-                                </Badge>
-                            </Tooltip>
-                        )
+                        <Tooltip
+                            title={
+                                permission === "denied"
+                                    ? "Trình duyệt đang chặn thông báo. Hãy mở quyền trong cài đặt trình duyệt."
+                                    : isNotificationOn
+                                    ? "Đang BẬT nhận thông báo. Bấm để TẮT"
+                                    : "Đang TẮT nhận thông báo. Bấm để BẬT"
+                            }
+                        >
+                            <Button
+                                type="text"
+                                shape="circle"
+                                size="large"
+                                loading={messagingLoading}
+                                disabled={permission === "denied"}
+                                onClick={isNotificationOn ? handleDisableNotifications : handleEnableNotifications}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    background: isNotificationOn ? "#e6f4ff" : "#f5f5f5",
+                                    border: `1px solid ${isNotificationOn ? "#91caff" : "#d9d9d9"}`,
+                                    boxShadow: isNotificationOn ? "0 2px 8px rgba(22, 119, 255, 0.18)" : "none",
+                                    transition: "all 0.3s ease"
+                                }}
+                                icon={
+                                    isNotificationOn ? (
+                                        <BellFilled style={{ fontSize: 18, color: "#1677ff" }} />
+                                    ) : (
+                                        <BellMutedIcon style={{ fontSize: 18 }} />
+                                    )
+                                }
+                            />
+                        </Tooltip>
                     ) : null}
                 </Space>
             ) : (
