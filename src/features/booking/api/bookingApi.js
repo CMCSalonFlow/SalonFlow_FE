@@ -62,6 +62,18 @@ export const confirmBookingApi = async (bookingId) => {
     return response.data;
 };
 
+// Đánh dấu khách đã đến
+export const checkInBookingApi = async (bookingId) => {
+    const response = await api.put(`/api/v1/bookings/${bookingId}/check-in`);
+    return response.data;
+};
+
+// Hoàn tất dịch vụ và chuyển booking sang COMPLETED
+export const completeBookingApi = async (bookingId) => {
+    const response = await api.put(`/api/v1/bookings/${bookingId}/complete`);
+    return response.data;
+};
+
 // Chính sách hủy
 export const getCancellationPolicyApi = async (salonId) => {
     const response = await api.get(

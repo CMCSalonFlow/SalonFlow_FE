@@ -73,6 +73,7 @@ import ProfilePage from "@/features/user/pages/ProfilePage";
 import CustomerNotificationsPage from "@/features/notification/pages/CustomerNotificationsPage";
 import ReviewAdminPage from "@/features/review/pages/ReviewAdminPage";
 import BookingStatusPage from "@/features/booking/pages/BookingStatusPage";
+import OwnerBookingWorkflowPage from "@/features/booking/pages/OwnerBookingWorkflowPage";
 
 const router = createBrowserRouter([
     {
@@ -194,6 +195,10 @@ const router = createBrowserRouter([
             {
                 path: "reviews",
                 element: <ReviewAdminPage />
+            },
+            {
+                path: "bookings",
+                element: <OwnerBookingWorkflowPage />
             }
         ]
     },

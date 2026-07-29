@@ -8,8 +8,8 @@ import {
     ClockCircleOutlined,
     TagsOutlined,
     DollarOutlined,
-    PlusCircleOutlined,
-    MessageOutlined
+    MessageOutlined,
+    CheckCircleOutlined
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
@@ -54,6 +54,11 @@ export default function OwnerSidebar() {
             key: "/owner/reviews",
             icon: <MessageOutlined />,
             label: "Reviews"
+        },
+        {
+            key: "/owner/bookings",
+            icon: <CheckCircleOutlined />,
+            label: "Check-in / Complete"
         },
         {
             key: "/owner/schedule",
