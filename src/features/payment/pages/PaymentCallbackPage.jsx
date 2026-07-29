@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, Result, Button, Spin, Typography, Descriptions, message } from "antd";
-import { CalendarOutlined, HomeOutlined, RedoOutlined } from "@ant-design/icons";
+import { RedoOutlined, HomeOutlined } from "@ant-design/icons";
 import { verifyPaymentApi } from "../api/paymentApi";
-import { getInvoiceUrl } from "@/features/media/api/mediaApi";  
+import { getInvoiceUrl } from "@/features/media/api/mediaApi";
 
 const { Title, Text } = Typography;
 const BOOKING_CONTEXT_KEY = "salonflow_last_booking_context";
@@ -37,11 +37,12 @@ export default function PaymentCallbackPage() {
             };
         }
     })();
-    
+
     const [loading, setLoading] = useState(true);
     const [result, setResult] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
     const [invoiceLoading, setInvoiceLoading] = useState(false);
+
     const storedBooking = (() => {
         const raw = sessionStorage.getItem(BOOKING_STORAGE_KEY);
         if (!raw) return null;
@@ -56,7 +57,6 @@ export default function PaymentCallbackPage() {
     useEffect(() => {
         const verifyPayment = async () => {
             try {
-                // Lấy tất cả query params từ URL do VNPay redirect về
                 const params = {};
                 const searchParams = new URLSearchParams(location.search);
                 for (const [key, value] of searchParams.entries()) {
@@ -74,7 +74,7 @@ export default function PaymentCallbackPage() {
                     bookingContext.bookingMode === "public" ? { skipAuth: true } : {}
                 );
 
-            console.log("Payment response:", response);
+                console.log("Payment response:", response);
 
                 setResult(response);
             } catch (err) {
@@ -123,9 +123,9 @@ export default function PaymentCallbackPage() {
 
     return (
         <div style={{ maxWidth: 700, margin: "60px auto", padding: "0 16px" }}>
-            <Card 
-                style={{ 
-                    borderRadius: 20, 
+            <Card
+                style={{
+                    borderRadius: 20,
                     boxShadow: "0 15px 40px rgba(0, 0, 0, 0.08)",
                     border: "none",
                     background: "rgba(255, 255, 255, 0.95)"
@@ -137,74 +137,42 @@ export default function PaymentCallbackPage() {
                         title={<Title level={2} style={{ color: "#52c41a", margin: 0 }}>Thanh toán thành công!</Title>}
                         subTitle="Hệ thống đã ghi nhận khoản tiền cọc trực tuyến của bạn."
                         extra={[
-                            bookingContext.bookingMode === "public" ? (
-                                <Button
-                                    type="primary"
-                                    size="large"
-                                    icon={<RedoOutlined />}
-                                    onClick={() => navigate(bookingContext.returnPath)}
-                                    style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
-                                    key="booking"
-                                >
-                                    Đặt lịch mới
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="primary"
-                                    size="large"
-                                    icon={<CalendarOutlined />}
-                                    onClick={() => navigate("/appointments")}
-                                    style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
-                                    key="appointments"
-                                >
-                                    Lịch hẹn của tôi
-                                </Button>
-                            ),
-                            isSuccess && (
-                                <Button
-                                    key="status"
-                                    size="large"
-                                    onClick={() => {
-                                        const search = new URLSearchParams();
-                                        if (result?.bookingId) search.set("bookingId", result.bookingId);
-                                        if (storedBooking?.branchId) search.set("branchId", storedBooking.branchId);
+                            <Button
+                                key="status"
+                                type="primary"
+                                size="large"
+                                onClick={() => {
+                                    const search = new URLSearchParams();
+                                    if (result?.bookingId) search.set("bookingId", result.bookingId);
+                                    if (storedBooking?.branchId) search.set("branchId", storedBooking.branchId);
 
-                                        navigate(`/booking/status/confirmed?${search.toString()}`, {
-                                            state: {
-                                                booking: storedBooking || {
-                                                    id: result.bookingId,
-                                                    totalPrice: result.amount,
-                                                    depositAmount: result.amount,
-                                                    status: "CONFIRMED"
-                                                }
+                                    navigate(`/booking/status/confirmed?${search.toString()}`, {
+                                        state: {
+                                            booking: storedBooking || {
+                                                id: result.bookingId,
+                                                totalPrice: result.amount,
+                                                depositAmount: result.amount,
+                                                status: "CONFIRMED"
                                             }
-                                        });
-                                    }}
-                                >
-                                    Xem màn hình xác nhận
-                                </Button>
-                            ),
+                                        }
+                                    });
+                                }}
+                                style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
+                            >
+                                Xem chi tiết
+                            </Button>,
                             (Boolean(result?.invoiceUrl) || result?.status === "SUCCESS") && (
                                 <Button
-                                    type="primary"
+                                    key="invoice"
+                                    size="large"
                                     loading={invoiceLoading}
                                     onClick={handleDownloadInvoice}
-                                    key="invoice"
+                                    style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
                                 >
                                     Tải hóa đơn PDF
                                 </Button>
-                            ),
-
-                            <Button
-                                size="large"
-                                icon={<HomeOutlined />}
-                                onClick={() => navigate(bookingContext.homePath)}
-                                style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
-                                key="home"
-                            >
-                                Trang chủ
-                            </Button>
-                        ]}
+                            )
+                        ].filter(Boolean)}
                     >
                         <div style={{ background: "#f6ffed", border: "1px solid #b7eb8f", padding: "20px", borderRadius: 12, marginTop: 16 }}>
                             <Descriptions title="Chi tiết giao dịch" column={1} size="small" layout="horizontal">
@@ -231,20 +199,20 @@ export default function PaymentCallbackPage() {
                         title={<Title level={2} style={{ color: "#f5222d", margin: 0 }}>Thanh toán không thành công</Title>}
                         subTitle={errorMsg || "Giao dịch thanh toán đã bị hủy hoặc gặp lỗi trong quá trình xử lý."}
                         extra={[
-                            <Button 
-                                type="primary" 
+                            <Button
+                                type="primary"
                                 danger
-                                size="large" 
-                                icon={<RedoOutlined />} 
+                                size="large"
+                                icon={<RedoOutlined />}
                                 onClick={() => navigate(bookingContext.returnPath)}
                                 style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
                                 key="retry"
                             >
                                 Đặt lịch lại
                             </Button>,
-                            <Button 
-                                size="large" 
-                                icon={<HomeOutlined />} 
+                            <Button
+                                size="large"
+                                icon={<HomeOutlined />}
                                 onClick={() => navigate(bookingContext.homePath)}
                                 style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
                                 key="home"
@@ -264,3 +232,4 @@ export default function PaymentCallbackPage() {
         </div>
     );
 }
+
