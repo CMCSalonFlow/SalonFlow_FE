@@ -103,7 +103,7 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
 
             await createBookingReviewApi(booking.id, payload);
             message.success("Đánh giá dịch vụ thành công!");
-            if (onSuccess) onSuccess();
+            if (onSuccess) onSuccess(booking.id);
             onClose();
         } catch (err) {
             console.error("Lỗi khi gửi đánh giá:", err);

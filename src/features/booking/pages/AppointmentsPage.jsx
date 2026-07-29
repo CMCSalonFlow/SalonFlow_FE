@@ -50,6 +50,23 @@ export default function AppointmentsPage() {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [reviewBookingTarget, setReviewBookingTarget] = useState(null);
 
+    useEffect(() => {
+        const handleBookingReviewedEvent = (e) => {
+            const reviewedId = e.detail?.bookingId;
+            if (reviewedId) {
+                setMyBookings((prev) =>
+                    prev.map((item) =>
+                        item.id === reviewedId
+                            ? { ...item, reviewedAt: new Date().toISOString() }
+                            : item
+                    )
+                );
+            }
+        };
+        window.addEventListener("booking_reviewed", handleBookingReviewedEvent);
+        return () => window.removeEventListener("booking_reviewed", handleBookingReviewedEvent);
+    }, []);
+
     const handleDownloadInvoice = async (booking) => {
         if (!booking?.invoiceUrl) {
             message.warning("Lịch hẹn này chưa có file hóa đơn PDF.");
@@ -686,9 +703,17 @@ export default function AppointmentsPage() {
                     setReviewBookingTarget(null);
                 }}
                 booking={reviewBookingTarget}
-                onSuccess={() => {
-                    message.success("Đánh giá của bạn đã được gửi thành công!");
-                    loadMyBookings();
+                onSuccess={(reviewedId) => {
+                    const targetId = reviewedId || reviewBookingTarget?.id;
+                    if (targetId) {
+                        setMyBookings((prev) =>
+                            prev.map((item) =>
+                                item.id === targetId
+                                    ? { ...item, reviewedAt: new Date().toISOString() }
+                                    : item
+                            )
+                        );
+                    }
                 }}
             />
 
