@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import AuthForm from "../components/AuthForm";
 import SocialLogin from "../components/SocialLogin";
+import PasswordInput from "../components/PasswordInput";
 
 import { useAuth } from "../hooks/useAuth";
 import { checkAuthSession } from "@/core/utils/auth";
@@ -136,8 +137,7 @@ export default function LoginPage() {
                         required
                     />
 
-                    <input
-                        type="password"
+                    <PasswordInput
                         name="password"
                         placeholder="Mật khẩu"
                         onChange={handleChange}

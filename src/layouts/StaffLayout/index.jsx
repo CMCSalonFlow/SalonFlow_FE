@@ -29,6 +29,11 @@ export function StaffLayout() {
             key: "/staff/schedule",
             icon: <CalendarOutlined />,
             label: "Lịch Làm Việc"
+        },
+        {
+            key: "/staff/appointments",
+            icon: <UnorderedListOutlined />,
+            label: "Lịch Hẹn Phân Công"
         }
     ];
 
@@ -54,7 +59,10 @@ export function StaffLayout() {
                     alignItems: "center",
                     background: "#001529",
                     padding: "0 24px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+                    height: 64,
+                    lineHeight: "64px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    overflow: "hidden"
                 }}
             >
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -75,19 +83,53 @@ export function StaffLayout() {
                     </div>
                 </div>
 
-                <Menu
-                    theme="dark"
-                    mode="horizontal"
-                    selectedKeys={[currentKey]}
-                    items={navItems}
-                    onClick={({ key }) => navigate(key)}
-                    style={{
-                        flex: 1,
-                        justifyContent: "center",
-                        borderBottom: 0,
-                        background: "transparent"
-                    }}
-                />
+                {/* Thanh điều hướng Tab dạng Capsule/Pill hiện đại */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flex: 1 }}>
+                    {navItems.map((item) => {
+                        const isActive = currentKey === item.key;
+                        return (
+                            <button
+                                key={item.key}
+                                type="button"
+                                onClick={() => navigate(item.key)}
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                    padding: "8px 20px",
+                                    height: 40,
+                                    borderRadius: 20,
+                                    border: "none",
+                                    background: isActive
+                                        ? "linear-gradient(135deg, #1677ff 0%, #0958d9 100%)"
+                                        : "transparent",
+                                    color: isActive ? "#ffffff" : "rgba(255, 255, 255, 0.75)",
+                                    fontWeight: isActive ? 600 : 500,
+                                    fontSize: 14,
+                                    cursor: "pointer",
+                                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                                    boxShadow: isActive ? "0 4px 14px rgba(22, 119, 255, 0.35)" : "none",
+                                    outline: "none"
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!isActive) {
+                                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                                        e.currentTarget.style.color = "#ffffff";
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!isActive) {
+                                        e.currentTarget.style.background = "transparent";
+                                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.75)";
+                                    }
+                                }}
+                            >
+                                <span style={{ fontSize: 16, display: "flex", alignItems: "center" }}>{item.icon}</span>
+                                <span>{item.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
 
                 <Dropdown menu={userMenu}>
                     <Button type="text" style={{ color: "#fff" }}>

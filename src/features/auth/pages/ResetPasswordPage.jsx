@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 import AuthForm from "../components/AuthForm";
+import PasswordInput from "../components/PasswordInput";
 import { useAuth } from "../hooks/useAuth";
 
 export default function ResetPasswordPage() {
@@ -71,18 +72,18 @@ export default function ResetPasswordPage() {
             {(handleChange) => (
                 <>
 
-                    <input
-                        type="password"
+                    <PasswordInput
                         name="newPassword"
                         placeholder="Mật khẩu mới"
                         onChange={handleChange}
+                        required
                     />
 
-                    <input
-                        type="password"
+                    <PasswordInput
                         name="confirmPassword"
                         placeholder="Xác nhận mật khẩu"
                         onChange={handleChange}
+                        required
                     />
 
                 </>

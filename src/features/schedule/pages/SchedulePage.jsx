@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import { message } from "antd";
 
@@ -15,6 +16,8 @@ import BookingDetailModal from "../components/BookingDetailModal";
 
 export default function SchedulePage() {
   const calendarRef = useRef(null);
+  const location = useLocation();
+  const isStaffPage = location.pathname.startsWith("/staff");
 
   const [branches, setBranches] = useState([]);
   const [branchId, setBranchId] = useState(() =>
@@ -36,6 +39,25 @@ export default function SchedulePage() {
     branchId,
     visibleRange
   );
+
+  const currentUserId = String(localStorage.getItem("userId") || "");
+  const currentFullName =
+    localStorage.getItem("fullName") ||
+    JSON.parse(localStorage.getItem("user") || "{}")?.fullName ||
+    JSON.parse(localStorage.getItem("auth") || "{}")?.fullName ||
+    "";
+
+  const staffResources = useMemo(() => {
+    if (!isStaffPage || resources.length === 0) return resources;
+
+    const matched = resources.filter(
+      (r) =>
+        String(r.id) === currentUserId ||
+        (currentFullName && r.title?.toLowerCase().includes(currentFullName.toLowerCase()))
+    );
+
+    return matched.length > 0 ? matched : resources;
+  }, [isStaffPage, resources, currentUserId, currentFullName]);
 
   const getApi = () => calendarRef.current?.getApi();
 
@@ -96,10 +118,14 @@ export default function SchedulePage() {
     return branches.find((branch) => String(branch.id) === String(branchId))?.name || "";
   }, [branchId, branches]);
 
-  const effectiveActive =
-    activeResources.length > 0
+  const effectiveActive = useMemo(() => {
+    if (isStaffPage) {
+      return staffResources.map((r) => String(r.id));
+    }
+    return activeResources.length > 0
       ? activeResources
       : resources.map((r) => String(r.id));
+  }, [isStaffPage, staffResources, activeResources, resources]);
 
   const handleToday = () => {
     getApi()?.today();
@@ -202,10 +228,11 @@ export default function SchedulePage() {
         <ScheduleSidebar
           selectedDate={currentDate}
           onDateClick={handleMiniDateClick}
-          resources={resources}
+          resources={isStaffPage ? staffResources : resources}
           activeResources={effectiveActive}
           onToggleResource={handleToggleResource}
           onCreateNew={reload}
+          isStaffView={isStaffPage}
         />
 
         <div className="schedule-main">

@@ -144,6 +144,45 @@
     box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.12) !important;
 }
 
+/* Password Input Wrapper & Toggle Icon */
+.auth-password-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.auth-password-container input {
+    margin-bottom: 0 !important;
+    padding-right: 48px !important;
+}
+
+.auth-password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 26px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    z-index: 5;
+    outline: none;
+}
+
+.auth-password-toggle-btn:hover {
+    background: #f1f5f9;
+    color: #1677ff;
+}
+
 /* =========================
    SUBMIT BUTTON
 ========================= */

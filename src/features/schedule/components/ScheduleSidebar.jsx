@@ -108,6 +108,7 @@ export default function ScheduleSidebar({
   activeResources,
   onToggleResource,
   onCreateNew,
+  isStaffView = false,
 }) {
   return (
     <div className="schedule-sidebar">
@@ -118,49 +119,54 @@ export default function ScheduleSidebar({
       </button>
       {/* Mini Calendar */}
       <MiniCalendar selectedDate={selectedDate} onDateClick={onDateClick} />
-      <div style={{ height: 1, background: "var(--gc-gray-200)", margin: "0 12px 12px" }} />
-      {/* Staff list */}
-      <div className="sidebar-section">
-        <div className="sidebar-section-title">Nhân viên</div>
-        <div className="staff-list">
-          {resources.map((res) => {
-            const active = activeResources.includes(res.id);
-            return (
-              <div
-                key={res.id}
-                className="staff-item"
-                onClick={() => onToggleResource(res.id)}
-              >
-                <div
-                  className={`staff-color-dot ${!active ? "inactive" : ""}`}
-                  style={{ background: res.color }}
-                />
-                <span className="staff-name">{res.title}</span>
-                <div className={`staff-checkbox ${active ? "checked" : ""}`} />
+
+      {!isStaffView && (
+        <>
+          <div style={{ height: 1, background: "var(--gc-gray-200)", margin: "0 12px 12px" }} />
+          {/* Staff list */}
+          <div className="sidebar-section">
+            <div className="sidebar-section-title">Nhân viên</div>
+            <div className="staff-list">
+              {resources.map((res) => {
+                const active = activeResources.includes(res.id);
+                return (
+                  <div
+                    key={res.id}
+                    className="staff-item"
+                    onClick={() => onToggleResource(res.id)}
+                  >
+                    <div
+                      className={`staff-color-dot ${!active ? "inactive" : ""}`}
+                      style={{ background: res.color }}
+                    />
+                    <span className="staff-name">{res.title}</span>
+                    <div className={`staff-checkbox ${active ? "checked" : ""}`} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ height: 1, background: "var(--gc-gray-200)", margin: "0 12px 12px" }} />
+          {/* Status legend */}
+          <div className="sidebar-section">
+            <div className="sidebar-section-title">Trạng thái</div>
+            <div className="sidebar-legend">
+              <div className="legend-item">
+                <div className="legend-dot" style={{ background: "#34a853" }} />
+                Đã xác nhận
               </div>
-            );
-          })}
-        </div>
-      </div>
-      <div style={{ height: 1, background: "var(--gc-gray-200)", margin: "0 12px 12px" }} />
-      {/* Status legend */}
-      <div className="sidebar-section">
-        <div className="sidebar-section-title">Trạng thái</div>
-        <div className="sidebar-legend">
-          <div className="legend-item">
-            <div className="legend-dot" style={{ background: "#34a853" }} />
-            Đã xác nhận
+              <div className="legend-item">
+                <div className="legend-dot" style={{ background: "#f29900" }} />
+                Chờ xử lý
+              </div>
+              <div className="legend-item">
+                <div className="legend-dot" style={{ background: "#c5221f" }} />
+                Đã hủy
+              </div>
+            </div>
           </div>
-          <div className="legend-item">
-            <div className="legend-dot" style={{ background: "#f29900" }} />
-            Chờ xử lý
-          </div>
-          <div className="legend-item">
-            <div className="legend-dot" style={{ background: "#c5221f" }} />
-            Đã hủy
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

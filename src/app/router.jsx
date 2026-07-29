@@ -67,6 +67,7 @@ import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
 import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
 import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
 import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
+import StaffAppointmentsPage from "@/features/booking/pages/StaffAppointmentsPage";
 import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
 import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPage";
 import ProfilePage from "@/features/user/pages/ProfilePage";
@@ -228,6 +229,10 @@ const router = createBrowserRouter([
             {
                 path: "schedule",
                 element: <SchedulePage />
+            },
+            {
+                path: "appointments",
+                element: <StaffAppointmentsPage />
             }
         ]
     },
