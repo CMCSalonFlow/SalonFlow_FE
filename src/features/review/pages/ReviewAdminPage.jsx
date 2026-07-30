@@ -19,9 +19,12 @@ import {
 import dayjs from "dayjs";
 
 import { getBranchesApi } from "@/features/branch/api/branchApi";
+import { getRoles } from "@/core/utils/auth";
+import ROLES from "@/core/constants/roles";
 import {
     getAdminReviewSummaryApi,
-    getAdminReviewsApi
+    getAdminReviewsApi,
+    triggerOwnerReviewAiApi
 } from "../api/reviewAdminApi";
 import { replyReviewApi, reportReviewApi } from "../api/reviewReportApi";
 import ReviewDetailDrawer from "../components/ReviewDetailDrawer";
@@ -133,6 +136,7 @@ const pickSummaryCards = (summary) => {
 export default function ReviewAdminPage() {
     const [loading, setLoading] = useState(false);
     const [summaryLoading, setSummaryLoading] = useState(false);
+    const [triggerAiLoading, setTriggerAiLoading] = useState(false);
     const [reviews, setReviews] = useState([]);
     const [summary, setSummary] = useState(null);
     const [branches, setBranches] = useState([]);
@@ -155,6 +159,7 @@ export default function ReviewAdminPage() {
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [reportReason, setReportReason] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const isSalonOwner = getRoles().includes(ROLES.SALON_OWNER);
 
     const handleReplySubmit = async () => {
         if (!replyContent || !replyContent.trim()) {
@@ -174,6 +179,23 @@ export default function ReviewAdminPage() {
             message.error(err?.response?.data?.message || "Không thể phản hồi đánh giá.");
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleTriggerAiReview = async () => {
+        setTriggerAiLoading(true);
+        try {
+            await triggerOwnerReviewAiApi();
+            message.success("Đã gửi yêu cầu trigger AI review.");
+            await Promise.all([
+                loadReviews({ page: pagination.current }),
+                loadSummary(branchId)
+            ]);
+        } catch (err) {
+            console.error(err);
+            message.error(err?.response?.data?.message || "Không thể trigger AI review.");
+        } finally {
+            setTriggerAiLoading(false);
         }
     };
 
@@ -328,17 +350,18 @@ export default function ReviewAdminPage() {
         {
             title: "Khách hàng",
             dataIndex: "userName",
-            render: (_, record) => record.userName || record.userId || "-"
+            render: (_, record) =>
+                record.userName
+                    ? `${record.userName} (#${record.userId || "-"})`
+                    : record.userId || "-"
         },
         {
             title: "Chi nhánh",
             dataIndex: "branchName",
-            render: (_, record) => record.branchName || record.branchId || "-"
-        },
-        {
-            title: "Nhân viên",
-            dataIndex: "staffName",
-            render: (_, record) => record.staffName || record.staffId || "-"
+            render: (_, record) =>
+                record.branchName
+                    ? `${record.branchName} (#${record.branchId || "-"})`
+                    : record.branchId || "-"
         },
         {
             title: "Rating",
@@ -383,6 +406,12 @@ export default function ReviewAdminPage() {
             render: (value) => value || "-"
         },
         {
+            title: "Bình luận",
+            dataIndex: "comment",
+            ellipsis: true,
+            render: (value) => value || "-"
+        },
+        {
             title: "Phản hồi Salon",
             dataIndex: "ownerReply",
             ellipsis: true,
@@ -392,6 +421,12 @@ export default function ReviewAdminPage() {
                 }
                 return <Text type="secondary" style={{ fontSize: 12 }}>Chưa phản hồi</Text>;
             }
+        },
+        {
+            title: "Tạo lúc",
+            dataIndex: "createdAt",
+            width: 150,
+            render: (value) => formatDateTime(value)
         },
         {
             title: "Thao tác",
@@ -529,6 +564,16 @@ export default function ReviewAdminPage() {
                     </Space>
 
                     <Space>
+                        {isSalonOwner && (
+                            <Button
+                                type="primary"
+                                ghost
+                                onClick={handleTriggerAiReview}
+                                loading={triggerAiLoading}
+                            >
+                                Trigger AI review
+                            </Button>
+                        )}
                         <Button onClick={handleReset}>
                             Đặt lại
                         </Button>

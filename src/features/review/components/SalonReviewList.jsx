@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Star, MessageSquare, ChevronLeft, ChevronRight, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Star, MessageSquare, Loader2 } from "lucide-react";
+import { Pagination } from "antd";
 import StarRatingInput from "./StarRatingInput";
 import { getSalonReviewsApi, getSalonReviewSummaryApi } from "../api/reviewApi";
 
@@ -8,6 +9,7 @@ const SalonReviewList = ({ salonId }) => {
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [selectedPhoto, setSelectedPhoto] = useState(null);
 
@@ -37,6 +39,7 @@ const SalonReviewList = ({ salonId }) => {
                 sort: "createdAt,desc"
             });
             setReviews(res.content || []);
+            setTotalElements(res.totalElements || res.total || (res.content || []).length);
             setTotalPages(res.totalPages || 0);
             setPage(res.number || 0);
         } catch (err) {
@@ -47,8 +50,8 @@ const SalonReviewList = ({ salonId }) => {
     };
 
     const handlePageChange = (newPage) => {
-        if (newPage >= 0 && newPage < totalPages) {
-            fetchReviews(newPage);
+        if (newPage >= 1) {
+            fetchReviews(newPage - 1);
         }
     };
 
@@ -177,27 +180,19 @@ const SalonReviewList = ({ salonId }) => {
                 )}
 
                 {/* Pagination Controls */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between pt-4">
+                {totalElements > pageSize && (
+                    <div className="flex items-center justify-between pt-4 flex-wrap gap-3">
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                            Trang {page + 1} / {totalPages}
+                            Trang {page + 1} / {totalPages || Math.ceil(totalElements / pageSize)}
                         </span>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handlePageChange(page - 1)}
-                                disabled={page === 0}
-                                className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 transition"
-                            >
-                                <ChevronLeft size={16} />
-                            </button>
-                            <button
-                                onClick={() => handlePageChange(page + 1)}
-                                disabled={page >= totalPages - 1}
-                                className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 transition"
-                            >
-                                <ChevronRight size={16} />
-                            </button>
-                        </div>
+                        <Pagination
+                            current={page + 1}
+                            total={totalElements}
+                            pageSize={pageSize}
+                            showSizeChanger={false}
+                            onChange={handlePageChange}
+                            disabled={loading}
+                        />
                     </div>
                 )}
             </div>

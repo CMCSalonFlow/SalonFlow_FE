@@ -28,3 +28,8 @@ export const getAdminReviewSummaryApi = async (branchId) => {
 
     return response.data;
 };
+
+export const triggerOwnerReviewAiApi = async () => {
+    const response = await api.post(ENDPOINTS.OWNER_REVIEW_AI_TRIGGER);
+    return response.data;
+};

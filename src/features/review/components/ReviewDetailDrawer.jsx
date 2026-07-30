@@ -115,11 +115,6 @@ export default function ReviewDetailDrawer({ open, reviewId, onClose }) {
                                     {review.sentimentStatus}
                                 </Tag>
                             )}
-                            {review.sentimentProvider && (
-                                <Tag color="cyan">
-                                    {review.sentimentProvider}
-                                </Tag>
-                            )}
                         </Space>
                     </Space>
 
@@ -134,14 +129,8 @@ export default function ReviewDetailDrawer({ open, reviewId, onClose }) {
                         <Descriptions.Item label="Người dùng">
                             {review.userName || review.userId || "-"}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Đặt lịch">
-                            {review.bookingId ?? "-"}
-                        </Descriptions.Item>
                         <Descriptions.Item label="Chi nhánh">
                             {review.branchName || review.branchId || "-"}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Nhân viên">
-                            {review.staffName || review.staffId || "-"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Đánh giá">
                             {review.rating ?? "-"}
@@ -149,17 +138,14 @@ export default function ReviewDetailDrawer({ open, reviewId, onClose }) {
                         <Descriptions.Item label="Độ tin cậy">
                             {formatConfidence(review.sentimentConfidence)}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Phân tích lúc">
-                            {formatDateTime(review.sentimentAnalyzedAt)}
-                        </Descriptions.Item>
                         <Descriptions.Item label="Tạo lúc">
                             {formatDateTime(review.createdAt)}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Cập nhật lúc">
-                            {formatDateTime(review.updatedAt)}
+                        <Descriptions.Item label="Bình luận">
+                            {review.comment || "-"}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Lỗi phân tích">
-                            {review.sentimentError || "-"}
+                        <Descriptions.Item label="Phản hồi Salon">
+                            {review.ownerReply || "-"}
                         </Descriptions.Item>
                     </Descriptions>
 
