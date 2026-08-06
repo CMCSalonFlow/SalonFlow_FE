@@ -62,10 +62,10 @@ const NoShowWarningBadge = ({
         setSending(true);
         try {
             await sendNoShowReminderApi(bookingId);
-            message.success('Đã gửi tin nhắn Zalo ZNS / SMS nhắc lịch hẹn tới khách hàng!');
+            message.success('Đã gửi Email nhắc lịch hẹn thành công tới khách hàng!');
             onReminderSent();
         } catch (error) {
-            message.error(error?.response?.data?.message || 'Không thể gửi tin nhắn nhắc nhở');
+            message.error(error?.response?.data?.message || 'Không thể gửi email nhắc nhở');
         } finally {
             setSending(false);
         }
@@ -106,7 +106,7 @@ const NoShowWarningBadge = ({
                             loading={sending}
                             onClick={handleSendReminder}
                         >
-                            {smsSent ? 'Gửi Lại Zalo ZNS Nhắc Nhở' : 'Tự Động Gửi Zalo ZNS Nhắc Lịch'}
+                            {smsSent ? 'Gửi Lại Email Nhắc Lịch' : 'Tự Động Gửi Email Nhắc Lịch'}
                         </Button>
                     )
                 ]}
@@ -166,11 +166,11 @@ const NoShowWarningBadge = ({
                         </div>
                     )}
 
-                    {/* SMS Status */}
+                    {/* Email Status */}
                     {smsSent && (
                         <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-lg border border-emerald-200 flex items-center gap-2">
                             <SendOutlined className="text-emerald-600 text-sm" />
-                            <span>Đã tự động kích hoạt gửi tin nhắn Zalo ZNS / SMS nhắc nhở tới khách hàng.</span>
+                            <span>Đã tự động kích hoạt gửi Email nhắc nhở tới hòm thư của khách hàng.</span>
                         </div>
                     )}
                 </div>

@@ -83,10 +83,10 @@ const NoShowDashboardPage = () => {
     const handleSendReminder = async (bookingId) => {
         try {
             await sendNoShowReminderApi(bookingId);
-            message.success("Đã gửi tin nhắn Zalo ZNS nhắc lịch hẹn thành công!");
+            message.success("Đã gửi Email nhắc nhở lịch hẹn thành công!");
             loadHighRiskBookings();
         } catch (error) {
-            message.error(error?.response?.data?.message || "Không thể gửi tin nhắn nhắc nhở");
+            message.error(error?.response?.data?.message || "Không thể gửi email nhắc nhở");
         }
     };
 
@@ -158,13 +158,13 @@ const NoShowDashboardPage = () => {
             }
         },
         {
-            title: 'Trạng Thái Zalo ZNS',
+            title: 'Trạng Thái Nhắc Nhở',
             key: 'smsStatus',
             width: 160,
             render: (_, record) => (
                 record.smsSent ? (
                     <Tag color="success" icon={<CheckCircleOutlined />}>
-                        Đã gửi ZNS nhắc nhở
+                        Đã gửi Email
                     </Tag>
                 ) : (
                     <Tag color="warning" icon={<ThunderboltOutlined />}>
@@ -185,7 +185,7 @@ const NoShowDashboardPage = () => {
                     icon={<SendOutlined />}
                     onClick={() => handleSendReminder(record.bookingId)}
                 >
-                    Gửi ZNS Nhắc Nhở
+                    Gửi Email Nhắc Lịch
                 </Button>
             )
         }
