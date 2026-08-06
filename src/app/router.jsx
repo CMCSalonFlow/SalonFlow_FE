@@ -75,8 +75,10 @@ import CustomerNotificationsPage from "@/features/notification/pages/CustomerNot
 import ReviewAdminPage from "@/features/review/pages/ReviewAdminPage";
 import BookingStatusPage from "@/features/booking/pages/BookingStatusPage";
 import OwnerBookingWorkflowPage from "@/features/booking/pages/OwnerBookingWorkflowPage";
+import SmartSchedulingConfigPage from "@/features/ai/pages/SmartSchedulingConfigPage";
 
 const router = createBrowserRouter([
+
     {
         path: "/login",
         element: <LoginPage />,
@@ -200,9 +202,14 @@ const router = createBrowserRouter([
             {
                 path: "bookings",
                 element: <OwnerBookingWorkflowPage />
+            },
+            {
+                path: "ai-smart-schedule",
+                element: <SmartSchedulingConfigPage />
             }
         ]
     },
+
     // STAFF / POS AREA
     {
         path: "/staff",

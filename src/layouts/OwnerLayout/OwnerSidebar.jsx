@@ -9,7 +9,8 @@ import {
     TagsOutlined,
     DollarOutlined,
     MessageOutlined,
-    CheckCircleOutlined
+    CheckCircleOutlined,
+    RobotOutlined
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
@@ -46,6 +47,11 @@ export default function OwnerSidebar() {
             label: "Services"
         },
         {
+            key: "/owner/ai-smart-schedule",
+            icon: <RobotOutlined />,
+            label: "AI Smart Schedule"
+        },
+        {
             key: "/owner/cancellation-policy",
             icon: <DollarOutlined />,
             label: "Cancellation Policy"
@@ -76,13 +82,14 @@ export default function OwnerSidebar() {
             icon: <ClockCircleOutlined />,
             label: "Shift Templates"
         },
-            {
-                key: "/owner/categories",
-                icon: <TagsOutlined />,
-                label: "Categories"
-            }
+        {
+            key: "/owner/categories",
+            icon: <TagsOutlined />,
+            label: "Categories"
+        }
 
     ];
+
 
     const selectedKey =
         items.find(item =>

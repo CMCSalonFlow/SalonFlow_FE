@@ -756,7 +756,14 @@ export default function BookingPage() {
                                         setPaymentMethod={setPaymentMethod}
                                         customerPhone={customerPhone}
                                         setCustomerPhone={setCustomerPhone}
+                                        selectedBranchId={selectedBranchId}
+                                        selectedDate={selectedDate}
+                                        selectedServices={selectedServices}
+                                        selectedBundle={selectedBundle}
+                                        bookingType={bookingType}
+                                        selectedStaff={selectedStaff}
                                     />
+
                                 )}
 
                                 {/* Hàng nút điều hướng Quy trình */}

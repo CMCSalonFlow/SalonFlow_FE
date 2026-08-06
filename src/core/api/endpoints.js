@@ -52,6 +52,12 @@ export const ENDPOINTS = {
     // Reviews
     BOOKING_REVIEWS: (id) => `/api/v1/bookings/${id}/reviews`,
     SALON_REVIEWS: (salonId) => `/api/v1/salons/${salonId}/reviews`,
-    SALON_REVIEW_SUMMARY: (salonId) => `/api/v1/salons/${salonId}/review-summary`
+    SALON_REVIEW_SUMMARY: (salonId) => `/api/v1/salons/${salonId}/review-summary`,
+
+    // AI Smart Scheduling
+    SMART_SCHEDULING_RECOMMEND: "/api/ai/smart-scheduling/recommend",
+    SMART_SCHEDULING_CONFIG: "/api/ai/smart-scheduling/config",
+    SMART_SCHEDULING_LOGS: "/api/ai/smart-scheduling/logs"
 };
+
 
