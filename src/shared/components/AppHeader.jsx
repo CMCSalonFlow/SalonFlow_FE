@@ -7,7 +7,6 @@ import {
     Space,
     Badge,
     Tooltip,
-    Switch,
     notification
 } from "antd";
 
@@ -16,7 +15,6 @@ import {
     LogoutOutlined,
     BellOutlined,
     BellFilled,
-    CheckCircleOutlined,
     CalendarOutlined
 } from "@ant-design/icons";
 
@@ -133,6 +131,10 @@ export default function AppHeader() {
             {
                 key: "/services",
                 label: "Dịch vụ"
+            },
+            {
+                key: "/hair-ai",
+                label: "Hair AI"
             },
             {
                 key: "/booking",

@@ -15,6 +15,11 @@ export const ENDPOINTS = {
     MEDIA_UPLOAD: "/api/v1/media/upload",
     MEDIA_INVOICE: "/api/v1/media/invoice",
 
+    // Hair AI
+    HAIR_STYLE_ANALYZE: "/api/v1/hair-styles/analyze",
+    HAIR_STYLE_CONFIRM: "/api/v1/hair-styles/confirm",
+    HAIR_STYLE_PROFILE: "/api/v1/hair-styles/profile",
+
     // Users
     USERS: "/api/v1/users",
 
