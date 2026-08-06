@@ -76,6 +76,7 @@ import ReviewAdminPage from "@/features/review/pages/ReviewAdminPage";
 import BookingStatusPage from "@/features/booking/pages/BookingStatusPage";
 import OwnerBookingWorkflowPage from "@/features/booking/pages/OwnerBookingWorkflowPage";
 import SmartSchedulingConfigPage from "@/features/ai/pages/SmartSchedulingConfigPage";
+import NoShowDashboardPage from "@/features/ai/pages/NoShowDashboardPage";
 
 const router = createBrowserRouter([
 
@@ -206,6 +207,10 @@ const router = createBrowserRouter([
             {
                 path: "ai-smart-schedule",
                 element: <SmartSchedulingConfigPage />
+            },
+            {
+                path: "ai-no-show",
+                element: <NoShowDashboardPage />
             }
         ]
     },

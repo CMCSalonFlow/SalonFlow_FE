@@ -38,6 +38,7 @@ import {
     confirmBookingApi,
     getBookingsByBranchApi
 } from "../api/bookingApi";
+import NoShowWarningBadge from "@/features/ai/components/NoShowWarningBadge";
 
 const { Title, Text, Paragraph } = Typography;
 const { RangePicker } = DatePicker;
@@ -335,18 +336,31 @@ export default function OwnerBookingWorkflowPage() {
         },
         {
             title: "Khách hàng",
-            width: 210,
-            render: (_, record) => (
-                <Space direction="vertical" size={0}>
-                    <Space size={8}>
-                        <UserOutlined />
-                        <Text strong>{record.customerName || record.customer?.name || "-"}</Text>
+            width: 230,
+            render: (_, record) => {
+                const pred = record.noShowPrediction;
+                return (
+                    <Space direction="vertical" size={2}>
+                        <Space size={8}>
+                            <UserOutlined />
+                            <Text strong>{record.customerName || record.customer?.name || "-"}</Text>
+                        </Space>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            {record.customerPhone || "-"}
+                        </Text>
+                        {pred && (
+                            <NoShowWarningBadge
+                                probabilityPercentage={pred.probabilityPercentage}
+                                riskLevel={pred.riskLevel}
+                                explanation={pred.explanation}
+                                features={pred.features}
+                                bookingId={record.id}
+                                smsSent={pred.smsSent}
+                            />
+                        )}
                     </Space>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                        {record.customerPhone || "-"}
-                    </Text>
-                </Space>
-            )
+                );
+            }
         },
         {
             title: "Dịch vụ / Combo",

@@ -57,7 +57,16 @@ export const ENDPOINTS = {
     // AI Smart Scheduling
     SMART_SCHEDULING_RECOMMEND: "/api/ai/smart-scheduling/recommend",
     SMART_SCHEDULING_CONFIG: "/api/ai/smart-scheduling/config",
-    SMART_SCHEDULING_LOGS: "/api/ai/smart-scheduling/logs"
+    SMART_SCHEDULING_LOGS: "/api/ai/smart-scheduling/logs",
+
+    // AI No-Show Prediction
+    NO_SHOW_PREDICT: (bookingId) => `/api/v1/ai/no-show/predict/${bookingId}`,
+    NO_SHOW_HIGH_RISK: "/api/v1/ai/no-show/high-risk",
+    NO_SHOW_LOGS: "/api/v1/ai/no-show/logs",
+    NO_SHOW_SEND_REMINDER: (bookingId) => `/api/v1/ai/no-show/send-reminder/${bookingId}`,
+    NO_SHOW_CONFIG: "/api/v1/ai/no-show/config",
+    NO_SHOW_EVALUATIONS: "/api/v1/ai/no-show/evaluations",
+    NO_SHOW_EVALUATION_TRIGGER: "/api/v1/ai/no-show/evaluations/trigger"
 };
 
 

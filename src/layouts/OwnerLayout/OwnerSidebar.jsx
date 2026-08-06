@@ -10,6 +10,7 @@ import {
     DollarOutlined,
     MessageOutlined,
     CheckCircleOutlined,
+    AlertOutlined,
     RobotOutlined
 } from "@ant-design/icons";
 
@@ -50,6 +51,11 @@ export default function OwnerSidebar() {
             key: "/owner/ai-smart-schedule",
             icon: <RobotOutlined />,
             label: "AI Smart Schedule"
+        },
+        {
+            key: "/owner/ai-no-show",
+            icon: <AlertOutlined />,
+            label: "AI No-Show Prediction"
         },
         {
             key: "/owner/cancellation-policy",
