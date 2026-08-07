@@ -315,17 +315,30 @@ const SalonReviewList = ({ salonId }) => {
                                             </Space>
                                         </Col>
 
-                                        {rev.branchName && (
-                                            <Col>
-                                                <Tag color="cyan" style={{ borderRadius: 12 }}>
-                                                    {rev.branchName}
-                                                </Tag>
-                                            </Col>
-                                        )}
+                                        <Col>
+                                            <Space size="small">
+                                                {rev.staffName && (
+                                                    <Tag color="purple" style={{ borderRadius: 12 }}>
+                                                        Stylist: {rev.staffName}
+                                                    </Tag>
+                                                )}
+                                                {rev.branchName && (
+                                                    <Tag color="cyan" style={{ borderRadius: 12 }}>
+                                                        {rev.branchName}
+                                                    </Tag>
+                                                )}
+                                            </Space>
+                                        </Col>
                                     </Row>
 
+                                    {rev.title && (
+                                        <Text strong style={{ display: "block", fontSize: 15, color: "#1f1f1f", marginBottom: 4 }}>
+                                            {rev.title}
+                                        </Text>
+                                    )}
+
                                     {rev.comment && (
-                                        <Paragraph style={{ margin: "8px 0", color: "#262626", fontSize: 14, lineHeight: 1.6 }}>
+                                        <Paragraph style={{ margin: "4px 0 8px 0", color: "#434343", fontSize: 14, lineHeight: 1.6 }}>
                                             {rev.comment}
                                         </Paragraph>
                                     )}
