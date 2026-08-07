@@ -7,7 +7,8 @@ import {
     UserOutlined,
     TeamOutlined,
     ApartmentOutlined,
-    MessageOutlined
+    MessageOutlined,
+    ShopOutlined
 } from "@ant-design/icons";
 
 import {
@@ -39,6 +40,11 @@ export default function AdminSidebar() {
         type: "group",
         label: "MANAGEMENT",
         children: [
+            {
+                key: "/admin/salons",
+                icon: <ShopOutlined />,
+                label: "Duyệt Salon"
+            },
             {
                 key: "/admin/users",
                 icon: <UserOutlined />,

@@ -38,6 +38,8 @@ import AdminDashboardPage
     from "@/features/dashboard/pages/AdminDashboardPage";
 import AdminReviewReportsPage
     from "@/features/review/pages/AdminReviewReportsPage";
+import AdminSalonsPage
+    from "@/features/salon/pages/AdminSalonsPage";
 import OwnerDashboardPage
     from "@/features/dashboard/pages/OwnerDashboardPage";
 import UserListPage
@@ -141,6 +143,10 @@ const router = createBrowserRouter([
             {
                 path: "review-reports",
                 element: <AdminReviewReportsPage />
+            },
+            {
+                path: "salons",
+                element: <AdminSalonsPage />
             },
         ]
     },

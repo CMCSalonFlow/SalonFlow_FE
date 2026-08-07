@@ -169,8 +169,26 @@ export default function AppHeader() {
         return location.pathname.startsWith(item.key);
     })?.key || (isLogin ? "/home" : "/");
 
+    const rolesStr = localStorage.getItem("roles");
+    let roles = [];
+    try { roles = rolesStr ? JSON.parse(rolesStr) : []; } catch (e) {}
+
+    const isSalonOwner = roles.includes("SALON_OWNER");
+    const isSuperAdmin = roles.includes("SUPER_ADMIN");
+    const isStaffRole = roles.includes("STAFF");
+    const hasAdminOrOwnerAccess = isSalonOwner || isSuperAdmin || isStaffRole;
+
     const userMenu = {
         items: [
+            ...(hasAdminOrOwnerAccess ? [
+                {
+                    key: "dashboard",
+                    icon: <UserOutlined style={{ color: "#1890ff" }} />,
+                    label: isSuperAdmin ? "Trang Super Admin" : isSalonOwner ? "Trang Quản Lý Salon" : "Trang Staff",
+                    onClick: () => navigate(isSuperAdmin ? "/admin" : isSalonOwner ? "/owner" : "/staff")
+                },
+                { type: "divider" }
+            ] : []),
             {
                 key: "profile",
                 icon: <UserOutlined />,

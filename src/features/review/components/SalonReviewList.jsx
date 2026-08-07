@@ -1,8 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Star, MessageSquare, Loader2 } from "lucide-react";
-import { Pagination } from "antd";
-import StarRatingInput from "./StarRatingInput";
+import {
+    Card,
+    Row,
+    Col,
+    Rate,
+    Progress,
+    Avatar,
+    Typography,
+    Space,
+    Tag,
+    List,
+    Image,
+    Spin,
+    Empty,
+    Pagination
+} from "antd";
+import {
+    StarFilled,
+    MessageOutlined,
+    UserOutlined,
+    CheckCircleOutlined,
+    CalendarOutlined
+} from "@ant-design/icons";
 import { getSalonReviewsApi, getSalonReviewSummaryApi } from "../api/reviewApi";
+
+const { Title, Text, Paragraph } = Typography;
 
 const SalonReviewList = ({ salonId }) => {
     const [reviews, setReviews] = useState([]);
@@ -11,7 +33,6 @@ const SalonReviewList = ({ salonId }) => {
     const [page, setPage] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const [selectedPhoto, setSelectedPhoto] = useState(null);
 
     const pageSize = 5;
 
@@ -55,166 +76,181 @@ const SalonReviewList = ({ salonId }) => {
         }
     };
 
+    const avgRating = summary?.averageRating != null ? summary.averageRating : 0;
+    const totalCount = summary?.totalReviews || 0;
+
     return (
-        <div className="space-y-6">
-            {/* Rating Summary Header Card */}
-            {summary && (
-                <div className="bg-gradient-to-br from-amber-500/10 via-rose-500/5 to-purple-500/10 dark:from-amber-950/30 dark:to-purple-950/30 rounded-2xl p-6 border border-amber-200/50 dark:border-amber-900/30 flex flex-col md:flex-row items-center gap-8">
-                    {/* Left: Score */}
-                    <div className="flex flex-col items-center justify-center text-center md:border-r border-amber-200/60 dark:border-amber-900/40 md:pr-8">
-                        <span className="text-5xl font-extrabold text-amber-500 tracking-tight">
-                            {summary.averageRating != null ? summary.averageRating.toFixed(1) : "0.0"}
-                        </span>
-                        <div className="my-2">
-                            <StarRatingInput value={Math.round(summary.averageRating || 0)} readOnly size={20} />
+        <Space direction="vertical" style={{ width: "100%" }} size="large">
+            {/* RATING SUMMARY HEADER CARD */}
+            <Card
+                style={{
+                    borderRadius: 16,
+                    background: "linear-gradient(135deg, #fffbe6 0%, #fff1f0 50%, #f9f0ff 100%)",
+                    border: "1px solid #ffe58f",
+                    boxShadow: "0 4px 16px rgba(250, 173, 20, 0.08)"
+                }}
+                styles={{ body: { padding: "24px 32px" } }}
+            >
+                <Row align="middle" gutter={[32, 24]}>
+                    {/* LEFT SCORE SUMMARY */}
+                    <Col xs={24} md={8} style={{ textAlign: "center", borderRight: "1px solid rgba(0,0,0,0.06)" }}>
+                        <div style={{ fontSize: 52, fontWeight: 800, color: "#fa8c16", lineHeight: 1.1 }}>
+                            {avgRating ? avgRating.toFixed(1) : "0.0"}
                         </div>
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            {summary.totalReviews || 0} lượt đánh giá
-                        </span>
-                    </div>
+                        <div style={{ margin: "8px 0" }}>
+                            <Rate disabled allowHalf value={avgRating} style={{ fontSize: 20, color: "#faad14" }} />
+                        </div>
+                        <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>
+                            Dựa trên {totalCount} lượt đánh giá thực tế
+                        </Text>
+                    </Col>
 
-                    {/* Right: Star distribution bars */}
-                    <div className="flex-1 w-full space-y-2">
-                        {[5, 4, 3, 2, 1].map((star) => {
-                            const count = summary.ratingDistribution?.[star] || 0;
-                            const total = summary.totalReviews || 1;
-                            const percent = Math.round((count / total) * 100);
+                    {/* RIGHT RATING BARS */}
+                    <Col xs={24} md={16}>
+                        <Space direction="vertical" style={{ width: "100%" }} size="xs">
+                            {[5, 4, 3, 2, 1].map((star) => {
+                                const count = summary?.ratingDistribution?.[star] || 0;
+                                const percent = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
 
-                            return (
-                                <div key={star} className="flex items-center text-xs gap-3">
-                                    <span className="w-12 text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
-                                        {star} <Star size={12} className="fill-amber-400 text-amber-400 inline" />
-                                    </span>
-                                    <div className="flex-1 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-amber-400 to-rose-400 rounded-full transition-all duration-500"
-                                            style={{ width: `${percent}%` }}
-                                        />
-                                    </div>
-                                    <span className="w-10 text-right text-gray-500 dark:text-gray-400 font-mono">
-                                        {count}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
+                                return (
+                                    <Row key={star} align="middle" gutter={12} style={{ fontSize: 13 }}>
+                                        <Col style={{ width: 45, textAlign: "right" }}>
+                                            <Text strong>{star} <StarFilled style={{ color: "#faad14", fontSize: 12 }} /></Text>
+                                        </Col>
+                                        <Col flex="1">
+                                            <Progress
+                                                percent={percent}
+                                                strokeColor={{ "0%": "#ffc53d", "100%": "#fa8c16" }}
+                                                trailColor="#f5f5f5"
+                                                showInfo={false}
+                                                size="small"
+                                            />
+                                        </Col>
+                                        <Col style={{ width: 40, textAlign: "left" }}>
+                                            <Text type="secondary">{count}</Text>
+                                        </Col>
+                                    </Row>
+                                );
+                            })}
+                        </Space>
+                    </Col>
+                </Row>
+            </Card>
 
-            {/* Review List */}
-            <div className="space-y-4">
-                <h4 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <MessageSquare size={20} className="text-rose-500" />
-                    Đánh giá từ khách hàng
-                </h4>
+            {/* REVIEW LIST HEADER */}
+            <div>
+                <Space style={{ marginBottom: 16 }}>
+                    <MessageOutlined style={{ fontSize: 20, color: "#ff4d4f" }} />
+                    <Title level={4} style={{ margin: 0 }}>Đánh giá từ khách hàng</Title>
+                    <Tag color="blue" style={{ borderRadius: 12 }}>{totalElements} nhận xét</Tag>
+                </Space>
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 size={32} className="animate-spin text-rose-500" />
+                    <div style={{ textAlign: "center", padding: "40px 0" }}>
+                        <Spin size="large" tip="Đang tải nhận xét..." />
                     </div>
                 ) : reviews.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
-                        <Star size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-                            Chưa có đánh giá nào cho Salon này.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {reviews.map((rev) => (
-                            <div
-                                key={rev.id}
-                                className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition"
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <img
-                                            src={rev.customerAvatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"}
-                                            alt={rev.customerName}
-                                            className="w-10 h-10 rounded-full object-cover border border-rose-200 dark:border-rose-900"
-                                        />
-                                        <div>
-                                            <h5 className="font-semibold text-gray-900 dark:text-white text-sm">
-                                                {rev.customerName || "Khách hàng"}
-                                            </h5>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <StarRatingInput value={rev.rating} readOnly size={14} />
-                                                <span className="text-xs text-gray-400">
-                                                    • {new Date(rev.createdAt).toLocaleDateString("vi-VN")}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {rev.branchName && (
-                                        <span className="text-xs px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full">
-                                            {rev.branchName}
-                                        </span>
-                                    )}
-                                </div>
-
-                                {rev.comment && (
-                                    <p className="mt-3 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                                        {rev.comment}
-                                    </p>
-                                )}
-
-                                {/* Photos List */}
-                                {rev.photos && rev.photos.length > 0 && (
-                                    <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1">
-                                        {rev.photos.map((photo, pIdx) => (
-                                            <button
-                                                key={pIdx}
-                                                type="button"
-                                                onClick={() => setSelectedPhoto(photo)}
-                                                className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 flex-shrink-0 hover:opacity-90 transition focus:outline-none"
-                                            >
-                                                <img src={photo} alt={`rev-img-${pIdx}`} className="w-full h-full object-cover" />
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Pagination Controls */}
-                {totalElements > pageSize && (
-                    <div className="flex items-center justify-between pt-4 flex-wrap gap-3">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                            Trang {page + 1} / {totalPages || Math.ceil(totalElements / pageSize)}
-                        </span>
-                        <Pagination
-                            current={page + 1}
-                            total={totalElements}
-                            pageSize={pageSize}
-                            showSizeChanger={false}
-                            onChange={handlePageChange}
-                            disabled={loading}
+                    <Card style={{ borderRadius: 16, textAlign: "center", padding: "40px 0", background: "#fafafa" }}>
+                        <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description={<Text type="secondary">Chưa có đánh giá nào cho Salon này.</Text>}
                         />
-                    </div>
+                    </Card>
+                ) : (
+                    <Space direction="vertical" style={{ width: "100%" }} size="middle">
+                        <Image.PreviewGroup>
+                            {reviews.map((rev) => (
+                                <Card
+                                    key={rev.id}
+                                    style={{
+                                        borderRadius: 16,
+                                        boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
+                                        border: "1px solid #f0f0f0"
+                                    }}
+                                    styles={{ body: { padding: 20 } }}
+                                >
+                                    <Row justify="space-between" align="top" style={{ marginBottom: 12 }}>
+                                        <Col>
+                                            <Space size="middle" align="center">
+                                                <Avatar
+                                                    size={44}
+                                                    src={rev.customerAvatar}
+                                                    icon={<UserOutlined />}
+                                                    style={{ backgroundColor: "#1890ff" }}
+                                                />
+                                                <div>
+                                                    <Space align="center">
+                                                        <Text strong style={{ fontSize: 15 }}>
+                                                            {rev.customerName || "Khách hàng"}
+                                                        </Text>
+                                                        <Tag color="green" style={{ borderRadius: 10, fontSize: 11 }}>
+                                                            <CheckCircleOutlined /> Đã trải nghiệm
+                                                        </Tag>
+                                                    </Space>
+                                                    <div style={{ marginTop: 2 }}>
+                                                        <Space size="small">
+                                                            <Rate disabled value={rev.rating} style={{ fontSize: 13, color: "#faad14" }} />
+                                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                                • {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString("vi-VN") : "Gần đây"}
+                                                            </Text>
+                                                        </Space>
+                                                    </div>
+                                                </div>
+                                            </Space>
+                                        </Col>
+
+                                        {rev.branchName && (
+                                            <Col>
+                                                <Tag color="cyan" style={{ borderRadius: 12 }}>
+                                                    {rev.branchName}
+                                                </Tag>
+                                            </Col>
+                                        )}
+                                    </Row>
+
+                                    {rev.comment && (
+                                        <Paragraph style={{ margin: "8px 0", color: "#262626", fontSize: 14, lineHeight: 1.6 }}>
+                                            {rev.comment}
+                                        </Paragraph>
+                                    )}
+
+                                    {/* REVIEW PHOTOS */}
+                                    {rev.photos && rev.photos.length > 0 && (
+                                        <Space size="small" wrap style={{ marginTop: 12 }}>
+                                            {rev.photos.map((photoUrl, pIdx) => (
+                                                <Image
+                                                    key={pIdx}
+                                                    width={72}
+                                                    height={72}
+                                                    src={photoUrl}
+                                                    style={{ borderRadius: 10, objectFit: "cover" }}
+                                                />
+                                            ))}
+                                        </Space>
+                                    )}
+                                </Card>
+                            ))}
+                        </Image.PreviewGroup>
+
+                        {/* PAGINATION */}
+                        {totalElements > pageSize && (
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
+                                <Text type="secondary" style={{ fontSize: 13 }}>
+                                    Hiển thị {reviews.length} / tổng số {totalElements} đánh giá
+                                </Text>
+                                <Pagination
+                                    current={page + 1}
+                                    total={totalElements}
+                                    pageSize={pageSize}
+                                    onChange={handlePageChange}
+                                    showSizeChanger={false}
+                                />
+                            </div>
+                        )}
+                    </Space>
                 )}
             </div>
-
-            {/* Photo Lightbox Modal */}
-            {selectedPhoto && (
-                <div
-                    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-                    onClick={() => setSelectedPhoto(null)}
-                >
-                    <div className="relative max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl">
-                        <img src={selectedPhoto} alt="Review Large" className="w-full h-full object-contain max-h-[85vh]" />
-                        <button
-                            onClick={() => setSelectedPhoto(null)}
-                            className="absolute top-3 right-3 bg-black/60 text-white p-2 rounded-full hover:bg-black transition"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+        </Space>
     );
 };
 

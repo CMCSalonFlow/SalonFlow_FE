@@ -44,6 +44,7 @@ import {
 } from "@ant-design/icons";
 import { useAuth } from "../hooks/useAuth";
 import api from "@/core/api/axios";
+import ROLES from "@/core/constants/roles";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -90,7 +91,7 @@ export default function HomePage() {
         }
 
         const isStaff = auth?.roles?.some((role) =>
-            ["OWNER", "ADMIN", "STAFF", "MANAGER"].includes(role.toUpperCase())
+            [ROLES.SUPER_ADMIN, ROLES.SALON_OWNER, ROLES.STAFF].includes(role.toUpperCase())
         );
 
         // ĐỒNG THỜI khởi tạo tất cả các yêu cầu API (Parallel Requests - loại bỏ Waterfall delay)
@@ -175,7 +176,7 @@ export default function HomePage() {
     };
 
     const isStaffOrOwner = user?.roles?.some(role => 
-        ["OWNER", "ADMIN", "STAFF", "MANAGER"].includes(role.toUpperCase())
+        [ROLES.SUPER_ADMIN, ROLES.SALON_OWNER, ROLES.STAFF].includes(role.toUpperCase())
     );
 
     // Dữ liệu danh mục dịch vụ mẫu hình ảnh cao cấp

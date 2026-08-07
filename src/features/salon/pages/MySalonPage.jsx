@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
     Card, Button, Form, Input, TimePicker, Switch,
     Steps, Row, Col, Typography, Divider, Space,
-    Upload, message, Spin, List, Image, Tag, Popconfirm, Drawer
+    Upload, message, Spin, List, Image, Tag, Popconfirm, Drawer, Alert
 } from "antd";
 import {
     UploadOutlined,
@@ -16,7 +16,10 @@ import {
     EditOutlined,
     DeleteOutlined,
     PlusOutlined,
-    StarOutlined
+    StarOutlined,
+    ReloadOutlined,
+    WarningOutlined,
+    CheckCircleOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -24,7 +27,8 @@ import {
     getMySalonApi,
     createSalonApi,
     updateSalonApi,
-    deleteSalonApi
+    deleteSalonApi,
+    appealSalonApi
 } from "../api/salonApi";
 
 import { uploadMediaApi } from "@/features/media/api/mediaApi";
@@ -266,6 +270,20 @@ export default function MySalonPage() {
         }
     };
 
+    const handleAppeal = async () => {
+        setLoading(true);
+        try {
+            await appealSalonApi();
+            message.success("Đã gửi lại đơn đăng ký (Appeal) thành công! Hồ sơ đang chờ Super Admin phê duyệt.");
+            loadSalon();
+        } catch (error) {
+            console.error(error);
+            message.error(error.response?.data?.message || "Gửi đơn Appeal thất bại!");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // ════════════════════════════════════════════════════════
     // RENDER: LOADING
     // ════════════════════════════════════════════════════════
@@ -462,6 +480,53 @@ export default function MySalonPage() {
 
     return (
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+            {salon.status === "PENDING" && (
+                <Alert
+                    message="Hồ sơ Salon đang chờ Super Admin phê duyệt"
+                    description="Đơn đăng ký của bạn đang được ban quản trị hệ thống kiểm tra và xét duyệt. Trong thời gian này, bạn vẫn có thể cập nhật thông tin cửa hàng."
+                    type="warning"
+                    showIcon
+                    icon={<ClockCircleOutlined />}
+                    style={{ marginBottom: 20, borderRadius: 12 }}
+                />
+            )}
+
+            {salon.status === "REJECTED" && (
+                <Alert
+                    message="Đơn đăng ký Salon bị từ chối"
+                    description={
+                        <div>
+                            <p style={{ margin: "4px 0 8px 0" }}><b>Lý do:</b> {salon.rejectionReason || "Chưa đáp ứng tiêu chuẩn hệ thống."}</p>
+                            <p style={{ margin: 0, fontSize: 13 }}>
+                                Theo quy định, bạn có thể nộp lại đơn (Appeal) sau <b>7 ngày</b> kể từ khi bị từ chối.
+                            </p>
+                            <div style={{ marginTop: 12 }}>
+                                {salon.canAppeal ? (
+                                    <Popconfirm
+                                        title="Gửi lại đơn đăng ký (Appeal)?"
+                                        description="Hồ sơ sẽ được chuyển về lại trạng thái Chờ duyệt để Super Admin xem xét."
+                                        onConfirm={handleAppeal}
+                                        okText="Gửi đơn"
+                                        cancelText="Hủy"
+                                    >
+                                        <Button type="primary" icon={<ReloadOutlined />}>
+                                            Gửi lại đơn đăng ký ngay
+                                        </Button>
+                                    </Popconfirm>
+                                ) : (
+                                    <Button disabled icon={<ClockCircleOutlined />}>
+                                        Gửi lại đơn (Còn {salon.daysUntilAppeal} ngày)
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    }
+                    type="error"
+                    showIcon
+                    style={{ marginBottom: 20, borderRadius: 12 }}
+                />
+            )}
+
             <Row gutter={[24, 24]}>
 
                 {/* SALON HERO CARD */}
@@ -489,7 +554,9 @@ export default function MySalonPage() {
                                     <Title level={1} style={{ color: "#fff", margin: 0, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
                                         {salon.name}
                                     </Title>
-                                    <Tag color="success" style={{ marginLeft: 8 }}>Đang hoạt động</Tag>
+                                    {salon.status === "APPROVED" && <Tag color="success" style={{ marginLeft: 8 }}>ĐÃ DUYỆT / ĐANG HOẠT ĐỘNG</Tag>}
+                                    {salon.status === "PENDING" && <Tag color="warning" style={{ marginLeft: 8 }}>CHỜ SUPER ADMIN DUYỆT</Tag>}
+                                    {salon.status === "REJECTED" && <Tag color="error" style={{ marginLeft: 8 }}>BỊ TỪ CHỐI</Tag>}
                                 </Space>
                                 <Paragraph style={{ color: "rgba(255,255,255,0.85)", fontSize: 16, margin: "8px 0 0 0", maxWidth: 650 }}>
                                     {salon.description || "Chưa có mô tả nào cho salon này."}
