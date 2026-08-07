@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Select, Tabs, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Divider, Spin } from "antd";
+import { Card, Select, Tabs, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin } from "antd";
 import { AppstoreOutlined, PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
@@ -14,6 +14,7 @@ import {
 } from "../api/serviceApi";
 import ServiceFormModal from "../components/ServiceFormModal";
 import BundleFormModal from "../components/BundleFormModal";
+import ServiceDescriptionAiPanel from "@/features/service-description-ai/components/ServiceDescriptionAiPanel";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -29,6 +30,7 @@ export default function ServiceManagementPage() {
     // Modals visibility
     const [serviceModalVisible, setServiceModalVisible] = useState(false);
     const [editingService, setEditingService] = useState(null);
+    const [serviceDraftInitialValues, setServiceDraftInitialValues] = useState(null);
 
     const [bundleModalVisible, setBundleModalVisible] = useState(false);
     const [editingBundle, setEditingBundle] = useState(null);
@@ -43,7 +45,7 @@ export default function ServiceManagementPage() {
                 } else {
                     setLoadingBranches(false);
                 }
-            } catch (error) {
+            } catch {
                 message.error("Không thể tải danh sách chi nhánh.");
                 setLoadingBranches(false);
             }
@@ -61,7 +63,7 @@ export default function ServiceManagementPage() {
             ]);
             setServices(servicesData);
             setBundles(bundlesData);
-        } catch (error) {
+        } catch {
             message.error("Lỗi khi tải dữ liệu dịch vụ.");
         } finally {
             setLoadingData(false);
@@ -70,9 +72,39 @@ export default function ServiceManagementPage() {
     };
 
     useEffect(() => {
-        if (selectedBranchId) {
-            loadData(selectedBranchId);
-        }
+        if (!selectedBranchId) return;
+
+        let cancelled = false;
+
+        const run = async () => {
+            setLoadingData(true);
+            try {
+                const [servicesData, bundlesData] = await Promise.all([
+                    getServicesByBranchApi(selectedBranchId),
+                    getBundlesByBranchApi(selectedBranchId)
+                ]);
+
+                if (cancelled) return;
+
+                setServices(servicesData);
+                setBundles(bundlesData);
+            } catch {
+                if (!cancelled) {
+                    message.error("Lỗi khi tải dữ liệu dịch vụ.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingData(false);
+                    setLoadingBranches(false);
+                }
+            }
+        };
+
+        run();
+
+        return () => {
+            cancelled = true;
+        };
     }, [selectedBranchId]);
 
     // ── Standard Service Handlers ───────────────────────────────
@@ -88,6 +120,7 @@ export default function ServiceManagementPage() {
             }
             setServiceModalVisible(false);
             setEditingService(null);
+            setServiceDraftInitialValues(null);
             loadData(selectedBranchId);
         } catch (error) {
             message.error(error.response?.data?.message || "Lỗi khi lưu dịch vụ.");
@@ -338,6 +371,19 @@ export default function ServiceManagementPage() {
                 </Col>
             </Row>
 
+            <ServiceDescriptionAiPanel
+                selectedBranchId={selectedBranchId}
+                services={services}
+                onSaved={() => loadData(selectedBranchId)}
+                onCreateDraft={(draftValues) => {
+                    setEditingService(null);
+                    setServiceDraftInitialValues(draftValues);
+                    setServiceModalVisible(true);
+                }}
+            />
+
+            <div style={{ height: 24 }} />
+
             <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
                 {loadingData ? (
                     <div style={{ textAlign: "center", padding: "50px 0" }}>
@@ -359,6 +405,7 @@ export default function ServiceManagementPage() {
                                                 size="large"
                                                 onClick={() => {
                                                     setEditingService(null);
+                                                    setServiceDraftInitialValues(null);
                                                     setServiceModalVisible(true);
                                                 }}
                                             >
@@ -414,9 +461,10 @@ export default function ServiceManagementPage() {
                 onCancel={() => {
                     setServiceModalVisible(false);
                     setEditingService(null);
+                    setServiceDraftInitialValues(null);
                 }}
                 onSubmit={handleServiceSubmit}
-                initialValues={editingService}
+                initialValues={editingService || serviceDraftInitialValues}
             />
 
             {/* Bundle Edit/Create Form Modal */}

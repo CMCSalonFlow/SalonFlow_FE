@@ -20,6 +20,10 @@ export const ENDPOINTS = {
     HAIR_STYLE_CONFIRM: "/api/v1/hair-styles/confirm",
     HAIR_STYLE_PROFILE: "/api/v1/hair-styles/profile",
 
+    // Service Description AI
+    SERVICE_DESCRIPTION_GENERATE: (salonId) => `/api/v1/owner/salons/${salonId}/ai/service-descriptions/generate`,
+    SERVICE_DESCRIPTION_QUOTA: (salonId) => `/api/v1/owner/salons/${salonId}/ai/service-descriptions/quota`,
+
     // Users
     USERS: "/api/v1/users",
 
