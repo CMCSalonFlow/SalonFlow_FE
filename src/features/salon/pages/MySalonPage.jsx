@@ -290,7 +290,7 @@ export default function MySalonPage() {
     if (loading) {
         return (
             <div style={{ textAlign: "center", padding: "100px 0" }}>
-                <Spin size="large" tip="Đang tải dữ liệu..." />
+                <Spin size="large" description="Đang tải dữ liệu..." />
             </div>
         );
     }

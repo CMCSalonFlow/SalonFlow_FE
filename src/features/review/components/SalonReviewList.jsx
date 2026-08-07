@@ -9,22 +9,38 @@ import {
     Typography,
     Space,
     Tag,
-    List,
     Image,
     Spin,
     Empty,
-    Pagination
+    Pagination,
+    Button,
+    Skeleton
 } from "antd";
 import {
     StarFilled,
     MessageOutlined,
     UserOutlined,
-    CheckCircleOutlined,
-    CalendarOutlined
+    CheckCircleOutlined
 } from "@ant-design/icons";
 import { getSalonReviewsApi, getSalonReviewSummaryApi } from "../api/reviewApi";
 
 const { Title, Text, Paragraph } = Typography;
+
+const ReviewItemImage = ({ src }) => {
+    if (!src || typeof src !== "string") {
+        return null;
+    }
+
+    return (
+        <Image
+            width={72}
+            height={72}
+            src={src}
+            fallback="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'><rect width='72' height='72' fill='%23e6f7ff' rx='10' stroke='%2391caff'/><text x='50%' y='42%' dominant-baseline='middle' text-anchor='middle' fill='%231677ff' font-size='20'>📷</text><text x='50%' y='70%' dominant-baseline='middle' text-anchor='middle' fill='%23595959' font-size='9' font-weight='bold'>Ảnh đính kèm</text></svg>"
+            style={{ borderRadius: 10, objectFit: "cover" }}
+        />
+    );
+};
 
 const SalonReviewList = ({ salonId }) => {
     const [reviews, setReviews] = useState([]);
@@ -33,13 +49,14 @@ const SalonReviewList = ({ salonId }) => {
     const [page, setPage] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [selectedRating, setSelectedRating] = useState(null); // null = Tất cả, 5 = 5 sao, ...
 
     const pageSize = 5;
 
     useEffect(() => {
         if (!salonId) return;
         fetchSummary();
-        fetchReviews(0);
+        fetchReviews(0, selectedRating);
     }, [salonId]);
 
     const fetchSummary = async () => {
@@ -51,14 +68,18 @@ const SalonReviewList = ({ salonId }) => {
         }
     };
 
-    const fetchReviews = async (pageIndex) => {
+    const fetchReviews = async (pageIndex, ratingParam = selectedRating) => {
         setLoading(true);
         try {
-            const res = await getSalonReviewsApi(salonId, {
+            const params = {
                 page: pageIndex,
                 size: pageSize,
                 sort: "createdAt,desc"
-            });
+            };
+            if (ratingParam != null) {
+                params.rating = ratingParam;
+            }
+            const res = await getSalonReviewsApi(salonId, params);
             setReviews(res.content || []);
             setTotalElements(res.totalElements || res.total || (res.content || []).length);
             setTotalPages(res.totalPages || 0);
@@ -70,9 +91,14 @@ const SalonReviewList = ({ salonId }) => {
         }
     };
 
+    const handleRatingFilterChange = (star) => {
+        setSelectedRating(star);
+        fetchReviews(0, star);
+    };
+
     const handlePageChange = (newPage) => {
         if (newPage >= 1) {
-            fetchReviews(newPage - 1);
+            fetchReviews(newPage - 1, selectedRating);
         }
     };
 
@@ -108,53 +134,143 @@ const SalonReviewList = ({ salonId }) => {
                     {/* RIGHT RATING BARS */}
                     <Col xs={24} md={16}>
                         <Space direction="vertical" style={{ width: "100%" }} size="xs">
-                            {[5, 4, 3, 2, 1].map((star) => {
-                                const count = summary?.ratingDistribution?.[star] || 0;
-                                const percent = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+                            {(() => {
+                                const distValues = Object.values(summary?.ratingDistribution || {});
+                                const totalDistCount = distValues.reduce((sum, val) => sum + Number(val), 0);
 
-                                return (
-                                    <Row key={star} align="middle" gutter={12} style={{ fontSize: 13 }}>
-                                        <Col style={{ width: 45, textAlign: "right" }}>
-                                            <Text strong>{star} <StarFilled style={{ color: "#faad14", fontSize: 12 }} /></Text>
-                                        </Col>
-                                        <Col flex="1">
-                                            <Progress
-                                                percent={percent}
-                                                strokeColor={{ "0%": "#ffc53d", "100%": "#fa8c16" }}
-                                                trailColor="#f5f5f5"
-                                                showInfo={false}
-                                                size="small"
-                                            />
-                                        </Col>
-                                        <Col style={{ width: 40, textAlign: "left" }}>
-                                            <Text type="secondary">{count}</Text>
-                                        </Col>
-                                    </Row>
-                                );
-                            })}
+                                return [5, 4, 3, 2, 1].map((star) => {
+                                    const count = summary?.ratingDistribution?.[star] || 0;
+                                    const percent = totalDistCount > 0 ? Math.round((count / totalDistCount) * 100) : 0;
+
+                                    return (
+                                        <Row
+                                            key={star}
+                                            align="middle"
+                                            gutter={12}
+                                            style={{
+                                                fontSize: 13,
+                                                padding: "2px 0"
+                                            }}
+                                        >
+                                            <Col style={{ width: 45, textAlign: "right" }}>
+                                                <Text strong>
+                                                    {star} <StarFilled style={{ color: "#faad14", fontSize: 12 }} />
+                                                </Text>
+                                            </Col>
+                                            <Col flex="1">
+                                                <Progress
+                                                    percent={percent}
+                                                    strokeColor={{ "0%": "#ffc53d", "100%": "#fa8c16" }}
+                                                    railColor="#f5f5f5"
+                                                    showInfo={false}
+                                                    size="small"
+                                                />
+                                            </Col>
+                                            <Col style={{ width: 40, textAlign: "left" }}>
+                                                <Text type="secondary">{count}</Text>
+                                            </Col>
+                                        </Row>
+                                    );
+                                });
+                            })()}
                         </Space>
                     </Col>
                 </Row>
             </Card>
 
-            {/* REVIEW LIST HEADER */}
+            {/* REVIEW LIST HEADER & RATING FILTER TABS */}
             <div>
-                <Space style={{ marginBottom: 16 }}>
-                    <MessageOutlined style={{ fontSize: 20, color: "#ff4d4f" }} />
-                    <Title level={4} style={{ margin: 0 }}>Đánh giá từ khách hàng</Title>
-                    <Tag color="blue" style={{ borderRadius: 12 }}>{totalElements} nhận xét</Tag>
-                </Space>
+                <Row justify="space-between" align="middle" style={{ marginBottom: 18 }}>
+                    <Col>
+                        <Space align="center">
+                            <MessageOutlined style={{ fontSize: 20, color: "#ff4d4f" }} />
+                            <Title level={4} style={{ margin: 0 }}>Đánh giá từ khách hàng</Title>
+                            <Tag color="blue" style={{ borderRadius: 12 }}>{totalElements} nhận xét</Tag>
+                        </Space>
+                    </Col>
+
+                    {/* STAR FILTER BUTTONS RESTYLED */}
+                    <Col>
+                        <Space wrap size="small">
+                            <Button
+                                shape="round"
+                                style={{
+                                    height: 34,
+                                    padding: "0 18px",
+                                    fontSize: 13,
+                                    fontWeight: selectedRating === null ? 700 : 500,
+                                    background: selectedRating === null ? "linear-gradient(135deg, #faad14 0%, #fa8c16 100%)" : "#fafafa",
+                                    color: selectedRating === null ? "#fff" : "#595959",
+                                    border: selectedRating === null ? "none" : "1px solid #d9d9d9",
+                                    boxShadow: selectedRating === null ? "0 4px 14px rgba(250, 140, 22, 0.35)" : "none",
+                                    transition: "all 0.3s ease"
+                                }}
+                                onClick={() => handleRatingFilterChange(null)}
+                            >
+                                Tất cả ({summary?.totalReviews || 0})
+                            </Button>
+                            {[5, 4, 3, 2, 1].map((star) => {
+                                const cnt = summary?.ratingDistribution?.[star] || 0;
+                                const isSelected = selectedRating === star;
+                                return (
+                                    <Button
+                                        key={star}
+                                        shape="round"
+                                        style={{
+                                            height: 34,
+                                            padding: "0 16px",
+                                            fontSize: 13,
+                                            fontWeight: isSelected ? 700 : 500,
+                                            background: isSelected ? "linear-gradient(135deg, #faad14 0%, #fa8c16 100%)" : "#fafafa",
+                                            color: isSelected ? "#fff" : "#595959",
+                                            border: isSelected ? "none" : "1px solid #d9d9d9",
+                                            boxShadow: isSelected ? "0 4px 14px rgba(250, 140, 22, 0.35)" : "none",
+                                            transition: "all 0.3s ease"
+                                        }}
+                                        onClick={() => handleRatingFilterChange(isSelected ? null : star)}
+                                    >
+                                        {star} <StarFilled style={{ color: isSelected ? "#fff" : "#faad14", fontSize: 12, marginRight: 4 }} /> ({cnt})
+                                    </Button>
+                                );
+                            })}
+                        </Space>
+                    </Col>
+                </Row>
 
                 {loading ? (
-                    <div style={{ textAlign: "center", padding: "40px 0" }}>
-                        <Spin size="large" tip="Đang tải nhận xét..." />
-                    </div>
+                    <Space direction="vertical" style={{ width: "100%" }} size="middle">
+                        {[1, 2, 3].map((key) => (
+                            <Card
+                                key={key}
+                                style={{
+                                    borderRadius: 16,
+                                    boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
+                                    border: "1px solid #f0f0f0"
+                                }}
+                                styles={{ body: { padding: 20 } }}
+                            >
+                                <Skeleton avatar paragraph={{ rows: 2 }} active />
+                            </Card>
+                        ))}
+                    </Space>
                 ) : reviews.length === 0 ? (
                     <Card style={{ borderRadius: 16, textAlign: "center", padding: "40px 0", background: "#fafafa" }}>
                         <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description={<Text type="secondary">Chưa có đánh giá nào cho Salon này.</Text>}
-                        />
+                            description={
+                                <Text type="secondary">
+                                    {selectedRating != null
+                                        ? `Chưa có đánh giá ${selectedRating} sao nào cho Salon này.`
+                                        : "Chưa có đánh giá nào cho Salon này."}
+                                </Text>
+                            }
+                        >
+                            {selectedRating != null && (
+                                <Button type="link" onClick={() => handleRatingFilterChange(null)}>
+                                    Xem tất cả đánh giá
+                                </Button>
+                            )}
+                        </Empty>
                     </Card>
                 ) : (
                     <Space direction="vertical" style={{ width: "100%" }} size="middle">
@@ -217,15 +333,10 @@ const SalonReviewList = ({ salonId }) => {
                                     {/* REVIEW PHOTOS */}
                                     {rev.photos && rev.photos.length > 0 && (
                                         <Space size="small" wrap style={{ marginTop: 12 }}>
-                                            {rev.photos.map((photoUrl, pIdx) => (
-                                                <Image
-                                                    key={pIdx}
-                                                    width={72}
-                                                    height={72}
-                                                    src={photoUrl}
-                                                    style={{ borderRadius: 10, objectFit: "cover" }}
-                                                />
-                                            ))}
+                                            {rev.photos.map((item, pIdx) => {
+                                                const url = typeof item === "string" ? item : item?.url || item?.photoUrl;
+                                                return <ReviewItemImage key={pIdx} src={url} />;
+                                            })}
                                         </Space>
                                     )}
                                 </Card>
