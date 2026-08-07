@@ -69,8 +69,10 @@ export const ENDPOINTS = {
     NO_SHOW_EVALUATION_TRIGGER: "/api/v1/ai/no-show/evaluations/trigger",
 
     // Analytics
-    ANALYTICS_OVERVIEW: "/api/v1/owner/analytics/overview"
+    ANALYTICS_OVERVIEW: "/api/v1/owner/analytics/overview",
+    ANALYTICS_REVENUE: "/api/v1/owner/analytics/revenue"
 };
+
 
 
 
