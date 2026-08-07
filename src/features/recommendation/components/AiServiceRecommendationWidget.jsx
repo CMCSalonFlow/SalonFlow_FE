@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, Tag, Button, Row, Col, Typography, Spin, Space, Tooltip } from "antd";
-import { Sparkles, FireSimple, Clock, Tag as TagIcon, ArrowRight } from "@phosphor-icons/react";
+import { ThunderboltOutlined, FireOutlined, ClockCircleOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { getRecommendationsApi } from "../api/recommendationApi";
 
@@ -32,8 +32,8 @@ export default function AiServiceRecommendationWidget({ userId, branchId, limit 
 
   if (loading) {
     return (
-      <Card style={{ borderRadius: 16, textAlign: "center", padding: "40px 0" }}>
-        <Spin size="large" tip="AI đang phân tích sở thích và gợi ý dịch vụ tối ưu..." />
+      <Card style={{ borderRadius: 16, textAlign: "center", padding: "30px 0", marginBottom: 24 }}>
+        <Spin size="large" tip="AI đang phân tích sở thích và gợi ý dịch vụ..." />
       </Card>
     );
   }
@@ -74,35 +74,35 @@ export default function AiServiceRecommendationWidget({ userId, branchId, limit 
               style={{
                 background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
                 color: "#fff",
-                padding: 8,
+                padding: "8px 10px",
                 borderRadius: 10,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Sparkles size={22} weight="fill" />
+              <ThunderboltOutlined style={{ fontSize: 20 }} />
             </div>
           ) : (
             <div
               style={{
                 background: "linear-gradient(135deg, #f97316, #ea580c)",
                 color: "#fff",
-                padding: 8,
+                padding: "8px 10px",
                 borderRadius: 10,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <FireSimple size={22} weight="fill" />
+              <FireOutlined style={{ fontSize: 20 }} />
             </div>
           )}
           <div>
             <Title level={4} style={{ margin: 0, fontWeight: 700, color: "#1e1b4b" }}>
               {isAiRecommendation
-                ? "Gợi Ý Dịch Vụ AI Dành Riêng Cho Bạn"
-                : "Dịch Vụ Nổi Bật Được Yêu Thích Nhất"}
+                ? "🤖 Gợi Ý Dịch Vụ AI Dành Riêng Cho Bạn"
+                : "🔥 Dịch Vụ Nổi Bật Được Yêu Thích Nhất"}
             </Title>
             <Text type="secondary" style={{ fontSize: 13 }}>
               {isAiRecommendation
@@ -174,7 +174,7 @@ export default function AiServiceRecommendationWidget({ userId, branchId, limit 
                   </Text>
                   {service.durationMinutes && (
                     <Text type="secondary" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 3 }}>
-                      <Clock size={12} /> {service.durationMinutes} ph
+                      <ClockCircleOutlined style={{ fontSize: 12 }} /> {service.durationMinutes} ph
                     </Text>
                   )}
                 </div>
@@ -183,7 +183,7 @@ export default function AiServiceRecommendationWidget({ userId, branchId, limit 
                   type="primary"
                   block
                   size="small"
-                  icon={<ArrowRight size={14} />}
+                  icon={<ArrowRightOutlined />}
                   style={{
                     borderRadius: 8,
                     background: "linear-gradient(135deg, #4f46e5, #6366f1)",

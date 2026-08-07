@@ -44,6 +44,7 @@ import {
 } from "@ant-design/icons";
 import { useAuth } from "../hooks/useAuth";
 import api from "@/core/api/axios";
+import AiServiceRecommendationWidget from "@/features/recommendation/components/AiServiceRecommendationWidget";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -423,6 +424,9 @@ export default function HomePage() {
                         </Col>
                     </Row>
                 </Card>
+
+                {/* 🤖 WIDGET AI GỢI Ý DỊCH VỤ DÀNH RIÊNG CHO BẠN */}
+                <AiServiceRecommendationWidget userId={user?.id} limit={5} />
 
                 {/* ✂️ DANH MỤC DỊCH VỤ NỔI BẬT */}
                 <div style={{ marginBottom: 48 }}>
