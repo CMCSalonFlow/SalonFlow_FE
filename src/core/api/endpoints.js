@@ -66,7 +66,11 @@ export const ENDPOINTS = {
     NO_SHOW_SEND_REMINDER: (bookingId) => `/api/v1/ai/no-show/send-reminder/${bookingId}`,
     NO_SHOW_CONFIG: "/api/v1/ai/no-show/config",
     NO_SHOW_EVALUATIONS: "/api/v1/ai/no-show/evaluations",
-    NO_SHOW_EVALUATION_TRIGGER: "/api/v1/ai/no-show/evaluations/trigger"
+    NO_SHOW_EVALUATION_TRIGGER: "/api/v1/ai/no-show/evaluations/trigger",
+
+    // Analytics
+    ANALYTICS_OVERVIEW: "/api/v1/owner/analytics/overview"
 };
+
 
 
