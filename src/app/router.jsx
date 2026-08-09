@@ -79,6 +79,8 @@ import BookingStatusPage from "@/features/booking/pages/BookingStatusPage";
 import OwnerBookingWorkflowPage from "@/features/booking/pages/OwnerBookingWorkflowPage";
 import SmartSchedulingConfigPage from "@/features/ai/pages/SmartSchedulingConfigPage";
 import NoShowDashboardPage from "@/features/ai/pages/NoShowDashboardPage";
+import HairStyleAiPage from "@/features/hair-ai/pages/HairStyleAiPage";
+import ROLES from "@/core/constants/roles";
 
 const router = createBrowserRouter([
 
@@ -318,6 +320,14 @@ const router = createBrowserRouter([
             {
                 path: "/profile",
                 element: <ProfilePage />
+            },
+            {
+                path: "/hair-ai",
+                element: (
+                    <ProtectedRoute allowedRoles={[ROLES.CUSTOMER]}>
+                        <HairStyleAiPage />
+                    </ProtectedRoute>
+                )
             },
             {
                 path: "/notifications",
