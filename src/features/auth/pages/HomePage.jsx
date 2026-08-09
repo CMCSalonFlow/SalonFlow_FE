@@ -1,29 +1,29 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-    Card, 
-    Avatar, 
-    Button, 
-    Typography, 
-    Row, 
-    Col, 
-    Space, 
-    Divider, 
-    Spin, 
-    Statistic, 
+import {
+    Card,
+    Avatar,
+    Button,
+    Typography,
+    Row,
+    Col,
+    Space,
+    Divider,
+    Spin,
+    Statistic,
     Badge,
     Tag,
     Rate,
     Tooltip
 } from "antd";
-import { 
-    UserOutlined, 
-    CalendarOutlined, 
-    DollarCircleOutlined, 
-    ClockCircleOutlined, 
-    TeamOutlined, 
-    SettingOutlined, 
-    StarOutlined, 
+import {
+    UserOutlined,
+    CalendarOutlined,
+    DollarCircleOutlined,
+    ClockCircleOutlined,
+    TeamOutlined,
+    SettingOutlined,
+    StarOutlined,
     ShoppingOutlined,
     ArrowRightOutlined,
     LogoutOutlined,
@@ -45,6 +45,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import api from "@/core/api/axios";
 import ROLES from "@/core/constants/roles";
+import AiServiceRecommendationWidget from "@/features/recommendation/components/AiServiceRecommendationWidget";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -58,12 +59,12 @@ export default function HomePage() {
         cachedStats
             ? JSON.parse(cachedStats)
             : {
-                  loyaltyPoints: 0,
-                  upcomingBookingsCount: 0,
-                  totalBookings: 0,
-                  revenue: 0,
-                  staffCount: 8
-              }
+                loyaltyPoints: 0,
+                upcomingBookingsCount: 0,
+                totalBookings: 0,
+                revenue: 0,
+                staffCount: 8
+            }
     );
 
     const { logout } = useAuth();
@@ -175,7 +176,7 @@ export default function HomePage() {
         navigate("/");
     };
 
-    const isStaffOrOwner = user?.roles?.some(role => 
+    const isStaffOrOwner = user?.roles?.some(role =>
         [ROLES.SUPER_ADMIN, ROLES.SALON_OWNER, ROLES.STAFF].includes(role.toUpperCase())
     );
 
@@ -369,16 +370,16 @@ export default function HomePage() {
                                     textAlign: "center"
                                 }}
                             >
-                                <Avatar 
-                                    size={64} 
-                                    icon={<UserOutlined />} 
-                                    style={{ 
-                                        backgroundColor: "#ffffff", 
-                                        color: "#1677ff", 
+                                <Avatar
+                                    size={64}
+                                    icon={<UserOutlined />}
+                                    style={{
+                                        backgroundColor: "#ffffff",
+                                        color: "#1677ff",
                                         fontSize: 32,
                                         boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-                                        marginBottom: 12 
-                                    }} 
+                                        marginBottom: 12
+                                    }}
                                 />
                                 <Title level={3} style={{ color: "#fff", margin: "0 0 6px 0" }}>
                                     Hội Viên SalonFlow
@@ -392,13 +393,13 @@ export default function HomePage() {
                                         size="large"
                                         icon={<LoginOutlined />}
                                         onClick={() => navigate("/login")}
-                                        style={{ 
-                                            borderRadius: 14, 
+                                        style={{
+                                            borderRadius: 14,
                                             fontWeight: 700,
                                             height: 46,
                                             borderColor: "#fff",
                                             color: "#1677ff",
-                                            backgroundColor: "#fff" 
+                                            backgroundColor: "#fff"
                                         }}
                                     >
                                         Đăng nhập ngay
@@ -409,12 +410,12 @@ export default function HomePage() {
                                         size="large"
                                         icon={<UserAddOutlined />}
                                         onClick={() => navigate("/register")}
-                                        style={{ 
-                                            borderRadius: 14, 
-                                            fontWeight: 700, 
+                                        style={{
+                                            borderRadius: 14,
+                                            fontWeight: 700,
                                             height: 46,
-                                            backgroundColor: "#722ed1", 
-                                            borderColor: "#722ed1" 
+                                            backgroundColor: "#722ed1",
+                                            borderColor: "#722ed1"
                                         }}
                                     >
                                         Tạo tài khoản mới
@@ -424,6 +425,9 @@ export default function HomePage() {
                         </Col>
                     </Row>
                 </Card>
+
+                {/* 🤖 WIDGET AI GỢI Ý DỊCH VỤ DÀNH RIÊNG CHO BẠN */}
+                <AiServiceRecommendationWidget userId={user?.id} limit={5} />
 
                 {/* ✂️ DANH MỤC DỊCH VỤ NỔI BẬT */}
                 <div style={{ marginBottom: 48 }}>
@@ -437,10 +441,10 @@ export default function HomePage() {
                             </Text>
                         </Col>
                         <Col>
-                            <Button 
-                                type="primary" 
-                                ghost 
-                                shape="round" 
+                            <Button
+                                type="primary"
+                                ghost
+                                shape="round"
                                 icon={<ArrowRightOutlined />}
                                 onClick={() => navigate("/services")}
                             >
@@ -463,8 +467,8 @@ export default function HomePage() {
                                                 onMouseEnter={(e) => e.target.style.transform = "scale(1.08)"}
                                                 onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
                                             />
-                                            <Tag 
-                                                color={item.tagColor} 
+                                            <Tag
+                                                color={item.tagColor}
                                                 style={{ position: "absolute", top: 12, right: 12, borderRadius: 10, fontWeight: 700, padding: "2px 10px" }}
                                             >
                                                 {item.tag}
@@ -517,8 +521,8 @@ export default function HomePage() {
                     </Title>
                     <Row gutter={[24, 24]}>
                         <Col xs={24} md={8}>
-                            <Card 
-                                bordered={false} 
+                            <Card
+                                bordered={false}
                                 style={{ borderRadius: 20, height: "100%", textAlign: "center", boxShadow: "0 8px 24px rgba(0,0,0,0.03)" }}
                             >
                                 <div style={{ height: 140, borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
@@ -536,8 +540,8 @@ export default function HomePage() {
                             </Card>
                         </Col>
                         <Col xs={24} md={8}>
-                            <Card 
-                                bordered={false} 
+                            <Card
+                                bordered={false}
                                 style={{ borderRadius: 20, height: "100%", textAlign: "center", boxShadow: "0 8px 24px rgba(0,0,0,0.03)" }}
                             >
                                 <div style={{ height: 140, borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
@@ -555,8 +559,8 @@ export default function HomePage() {
                             </Card>
                         </Col>
                         <Col xs={24} md={8}>
-                            <Card 
-                                bordered={false} 
+                            <Card
+                                bordered={false}
                                 style={{ borderRadius: 20, height: "100%", textAlign: "center", boxShadow: "0 8px 24px rgba(0,0,0,0.03)" }}
                             >
                                 <div style={{ height: 140, borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
@@ -604,11 +608,11 @@ export default function HomePage() {
                                             <div style={{ height: 180, overflow: "hidden", position: "relative" }}>
                                                 <img
                                                     alt={branch.name}
-                                                    src={i === 0 
-                                                        ? "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=800" 
-                                                        : i === 1 
-                                                        ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800"
-                                                        : "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800"
+                                                    src={i === 0
+                                                        ? "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=800"
+                                                        : i === 1
+                                                            ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800"
+                                                            : "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800"
                                                     }
                                                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                                 />
@@ -688,8 +692,8 @@ export default function HomePage() {
                     borderRadius: 28,
                     border: "none",
                     overflow: "hidden",
-                    background: isStaffOrOwner 
-                        ? "linear-gradient(135deg, rgba(57, 16, 133, 0.9) 0%, rgba(114, 46, 209, 0.85) 100%), url('https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1600') center/cover no-repeat" 
+                    background: isStaffOrOwner
+                        ? "linear-gradient(135deg, rgba(57, 16, 133, 0.9) 0%, rgba(114, 46, 209, 0.85) 100%), url('https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1600') center/cover no-repeat"
                         : "linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(22, 119, 255, 0.8) 50%, rgba(114, 46, 209, 0.82) 100%), url('https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1600') center/cover no-repeat",
                     color: "#fff",
                     boxShadow: "0 20px 50px rgba(0, 0, 0, 0.2)",
@@ -700,10 +704,10 @@ export default function HomePage() {
                 <Row align="middle" gutter={[32, 32]}>
                     <Col xs={24} lg={14}>
                         <Space align="center" style={{ marginBottom: 12 }}>
-                            <Avatar 
-                                size={72} 
-                                icon={<UserOutlined />} 
-                                style={{ 
+                            <Avatar
+                                size={72}
+                                icon={<UserOutlined />}
+                                style={{
                                     backgroundColor: "rgba(255, 255, 255, 0.25)",
                                     border: "3px solid rgba(255, 255, 255, 0.6)",
                                     boxShadow: "0 6px 20px rgba(0,0,0,0.2)"
@@ -727,16 +731,16 @@ export default function HomePage() {
                         </Paragraph>
 
                         <Space size="middle" wrap>
-                            <Button 
-                                type="primary" 
-                                size="large" 
-                                icon={<ScissorOutlined />} 
+                            <Button
+                                type="primary"
+                                size="large"
+                                icon={<ScissorOutlined />}
                                 onClick={() => navigate(isStaffOrOwner ? "/owner" : "/booking")}
-                                style={{ 
-                                    height: 50, 
-                                    padding: "0 28px", 
-                                    borderRadius: 25, 
-                                    fontSize: 16, 
+                                style={{
+                                    height: 50,
+                                    padding: "0 28px",
+                                    borderRadius: 25,
+                                    fontSize: 16,
                                     fontWeight: 700,
                                     backgroundColor: "#ff4d4f",
                                     borderColor: "#ff4d4f",
@@ -745,27 +749,27 @@ export default function HomePage() {
                             >
                                 {isStaffOrOwner ? "Vào trang quản trị" : "Đặt lịch hẹn ngay"}
                             </Button>
-                            <Button 
-                                ghost 
-                                size="large" 
-                                icon={<UserOutlined />} 
+                            <Button
+                                ghost
+                                size="large"
+                                icon={<UserOutlined />}
                                 onClick={() => navigate("/profile")}
-                                style={{ 
-                                    height: 50, 
-                                    padding: "0 24px", 
-                                    borderRadius: 25, 
-                                    fontSize: 16, 
-                                    color: "#fff", 
+                                style={{
+                                    height: 50,
+                                    padding: "0 24px",
+                                    borderRadius: 25,
+                                    fontSize: 16,
+                                    color: "#fff",
                                     borderColor: "rgba(255, 255, 255, 0.8)",
                                     backdropFilter: "blur(4px)"
                                 }}
                             >
                                 Hồ sơ cá nhân
                             </Button>
-                            <Button 
-                                type="text" 
-                                size="large" 
-                                icon={<LogoutOutlined />} 
+                            <Button
+                                type="text"
+                                size="large"
+                                icon={<LogoutOutlined />}
                                 onClick={handleLogout}
                                 style={{ color: "rgba(255, 255, 255, 0.8)" }}
                             >
@@ -835,9 +839,9 @@ export default function HomePage() {
                         <Row gutter={[20, 20]} style={{ marginBottom: 32 }}>
                             <Col xs={24} sm={12} lg={6}>
                                 <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
-                                    <Statistic 
-                                        title="Doanh thu tháng này" 
-                                        value={stats.revenue} 
+                                    <Statistic
+                                        title="Doanh thu tháng này"
+                                        value={stats.revenue}
                                         precision={0}
                                         valueStyle={{ color: "#3f8600", fontWeight: 700 }}
                                         prefix={<DollarCircleOutlined style={{ marginRight: 8, color: "#3f8600" }} />}
@@ -847,9 +851,9 @@ export default function HomePage() {
                             </Col>
                             <Col xs={24} sm={12} lg={6}>
                                 <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
-                                    <Statistic 
-                                        title="Tổng số lượt đặt lịch" 
-                                        value={stats.totalBookings} 
+                                    <Statistic
+                                        title="Tổng số lượt đặt lịch"
+                                        value={stats.totalBookings}
                                         valueStyle={{ color: "#722ed1", fontWeight: 700 }}
                                         prefix={<CalendarOutlined style={{ marginRight: 8, color: "#722ed1" }} />}
                                     />
@@ -857,9 +861,9 @@ export default function HomePage() {
                             </Col>
                             <Col xs={24} sm={12} lg={6}>
                                 <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
-                                    <Statistic 
-                                        title="Nhân sự đang hoạt động" 
-                                        value={stats.staffCount} 
+                                    <Statistic
+                                        title="Nhân sự đang hoạt động"
+                                        value={stats.staffCount}
                                         valueStyle={{ color: "#fa8c16", fontWeight: 700 }}
                                         prefix={<TeamOutlined style={{ marginRight: 8, color: "#fa8c16" }} />}
                                         suffix="thợ"
@@ -868,9 +872,9 @@ export default function HomePage() {
                             </Col>
                             <Col xs={24} sm={12} lg={6}>
                                 <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
-                                    <Statistic 
-                                        title="Lịch hẹn mới hôm nay" 
-                                        value={stats.upcomingBookingsCount} 
+                                    <Statistic
+                                        title="Lịch hẹn mới hôm nay"
+                                        value={stats.upcomingBookingsCount}
                                         valueStyle={{ color: "#1890ff", fontWeight: 700 }}
                                         prefix={<ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} />}
                                     />
@@ -881,8 +885,8 @@ export default function HomePage() {
                         <Title level={4} style={{ marginBottom: 16 }}>⚡ Phím tắt Quản trị nhanh</Title>
                         <Row gutter={[20, 20]}>
                             <Col xs={24} sm={12} md={8}>
-                                <Card 
-                                    hoverable 
+                                <Card
+                                    hoverable
                                     onClick={() => navigate("/owner")}
                                     style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
                                 >
@@ -892,8 +896,8 @@ export default function HomePage() {
                                 </Card>
                             </Col>
                             <Col xs={24} sm={12} md={8}>
-                                <Card 
-                                    hoverable 
+                                <Card
+                                    hoverable
                                     onClick={() => navigate("/owner/staff")}
                                     style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
                                 >
@@ -903,8 +907,8 @@ export default function HomePage() {
                                 </Card>
                             </Col>
                             <Col xs={24} sm={12} md={8}>
-                                <Card 
-                                    hoverable 
+                                <Card
+                                    hoverable
                                     onClick={() => navigate("/owner/services")}
                                     style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
                                 >
@@ -930,10 +934,10 @@ export default function HomePage() {
                                     </Text>
                                 </Col>
                                 <Col>
-                                    <Button 
-                                        type="primary" 
-                                        ghost 
-                                        shape="round" 
+                                    <Button
+                                        type="primary"
+                                        ghost
+                                        shape="round"
                                         icon={<ArrowRightOutlined />}
                                         onClick={() => navigate("/services")}
                                     >
@@ -956,8 +960,8 @@ export default function HomePage() {
                                                         onMouseEnter={(e) => e.target.style.transform = "scale(1.08)"}
                                                         onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
                                                     />
-                                                    <Tag 
-                                                        color={item.tagColor} 
+                                                    <Tag
+                                                        color={item.tagColor}
                                                         style={{ position: "absolute", top: 12, right: 12, borderRadius: 10, fontWeight: 700, padding: "2px 10px" }}
                                                     >
                                                         {item.tag}
@@ -1054,11 +1058,11 @@ export default function HomePage() {
                                                     <div style={{ height: 180, overflow: "hidden", position: "relative" }}>
                                                         <img
                                                             alt={branch.name}
-                                                            src={i === 0 
-                                                                ? "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=800" 
-                                                                : i === 1 
-                                                                ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800"
-                                                                : "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800"
+                                                            src={i === 0
+                                                                ? "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=800"
+                                                                : i === 1
+                                                                    ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800"
+                                                                    : "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800"
                                                             }
                                                             style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                                         />
@@ -1132,15 +1136,15 @@ export default function HomePage() {
 
 function TagColor({ role }) {
     if (!role) return <Badge status="default" text="GUEST" />;
-    
+
     let color = "blue";
     if (role === "OWNER") color = "purple";
     if (role === "ADMIN") color = "red";
     if (role === "STAFF" || role === "MANAGER") color = "orange";
 
     return (
-        <span 
-            style={{ 
+        <span
+            style={{
                 backgroundColor: color === "purple" ? "#f9f0ff" : color === "red" ? "#fff1f0" : color === "orange" ? "#fff7e6" : "#e6f7ff",
                 color: color === "purple" ? "#722ed1" : color === "red" ? "#cf1322" : color === "orange" ? "#d46b08" : "#1890ff",
                 border: `1px solid ${color === "purple" ? "#d3adf7" : color === "red" ? "#ffa39e" : color === "orange" ? "#ffd591" : "#91d5ff"}`,

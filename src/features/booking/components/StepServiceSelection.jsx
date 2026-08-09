@@ -25,7 +25,7 @@ export default function StepServiceSelection({
     return (
         <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <label style={{ fontWeight: 600 }}>Bước 2: Chọn dịch vụ muốn đặt</label>
+                <label style={{ fontWeight: 600 }}>Chọn dịch vụ muốn đặt</label>
                 <Radio.Group value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
                     <Radio.Button value="service">Dịch vụ lẻ</Radio.Button>
                     <Radio.Button value="bundle">Gói Combo</Radio.Button>
