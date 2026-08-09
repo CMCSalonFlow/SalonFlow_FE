@@ -71,6 +71,7 @@ export const ENDPOINTS = {
     // Analytics
     ANALYTICS_OVERVIEW: "/api/v1/owner/analytics/overview",
     ANALYTICS_REVENUE: "/api/v1/owner/analytics/revenue",
+    ANALYTICS_PEAK_HOURS: "/api/v1/owner/analytics/peak-hours",
     CUSTOMER_ANALYTICS_OVERVIEW: "/api/v1/owner/analytics/customers/overview",
     CUSTOMER_ANALYTICS_FUNNEL: "/api/v1/owner/analytics/customers/funnel",
     CUSTOMER_ANALYTICS_SEGMENTS: "/api/v1/owner/analytics/customers/segments",

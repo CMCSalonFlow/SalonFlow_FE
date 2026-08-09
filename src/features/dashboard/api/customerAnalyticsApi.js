@@ -39,3 +39,12 @@ export const getCampaignHistoryApi = async (branchId = null) => {
     const res = await api.get(ENDPOINTS.CUSTOMER_ANALYTICS_CAMPAIGN_HISTORY, { params });
     return res.data;
 };
+
+export const getPeakHoursAnalyticsApi = async (branchId = null, from = null, to = null) => {
+    const params = {};
+    if (branchId) params.branchId = branchId;
+    if (from) params.from = from;
+    if (to) params.to = to;
+    const res = await api.get(ENDPOINTS.ANALYTICS_PEAK_HOURS, { params });
+    return res.data;
+};

@@ -24,6 +24,7 @@ import RevenuePeriodFilter from '../components/RevenuePeriodFilter';
 import RevenueTrendChart from '../components/RevenueTrendChart';
 import ServiceBreakdownChart from '../components/ServiceBreakdownChart';
 import CustomerAnalyticsPage from './CustomerAnalyticsPage';
+import PeakHourHeatmapChart from '../components/PeakHourHeatmapChart';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -393,6 +394,11 @@ export default function OwnerDashboardPage() {
                                     </Card>
                                 </Col>
                             </Row>
+
+                            {/* Peak Hour Density Heatmap Section */}
+                            <div style={{ marginTop: 24 }}>
+                                <PeakHourHeatmapChart branchId={selectedBranchId} />
+                            </div>
                         </>
                     )}
                 </>
