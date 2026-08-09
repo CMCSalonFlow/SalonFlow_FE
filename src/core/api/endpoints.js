@@ -70,8 +70,15 @@ export const ENDPOINTS = {
 
     // Analytics
     ANALYTICS_OVERVIEW: "/api/v1/owner/analytics/overview",
-    ANALYTICS_REVENUE: "/api/v1/owner/analytics/revenue"
+    ANALYTICS_REVENUE: "/api/v1/owner/analytics/revenue",
+    CUSTOMER_ANALYTICS_OVERVIEW: "/api/v1/owner/analytics/customers/overview",
+    CUSTOMER_ANALYTICS_FUNNEL: "/api/v1/owner/analytics/customers/funnel",
+    CUSTOMER_ANALYTICS_SEGMENTS: "/api/v1/owner/analytics/customers/segments",
+    CUSTOMER_ANALYTICS_AI_GENERATE: "/api/v1/owner/analytics/customers/campaigns/ai-generate",
+    CUSTOMER_ANALYTICS_EXECUTE_CAMPAIGN: "/api/v1/owner/analytics/customers/campaigns/execute",
+    CUSTOMER_ANALYTICS_CAMPAIGN_HISTORY: "/api/v1/owner/analytics/customers/campaigns/history"
 };
+
 
 
 

@@ -11,7 +11,8 @@ import {
     CloseCircleOutlined,
     PieChartOutlined,
     DashboardOutlined,
-    FallOutlined
+    FallOutlined,
+    TeamOutlined
 } from '@ant-design/icons';
 import { getOverviewAnalyticsApi, getRevenueAnalyticsApi } from '../api/analyticsApi';
 import { getMyBranchesApi } from '@/features/branch/api/branchApi';
@@ -22,6 +23,7 @@ import SparklineChart from '../components/SparklineChart';
 import RevenuePeriodFilter from '../components/RevenuePeriodFilter';
 import RevenueTrendChart from '../components/RevenueTrendChart';
 import ServiceBreakdownChart from '../components/ServiceBreakdownChart';
+import CustomerAnalyticsPage from './CustomerAnalyticsPage';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -150,7 +152,7 @@ export default function OwnerDashboardPage() {
                     {/* Loading Spinner */}
                     {overviewLoading ? (
                         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                            <Spin size="large" tip="Đang tải dữ liệu Dashboard..." />
+                            <Spin size="large" description="Đang tải dữ liệu Dashboard..." />
                         </div>
                     ) : (
                         <>
@@ -488,6 +490,18 @@ export default function OwnerDashboardPage() {
                     )}
                 </>
             )
+        },
+        {
+            key: 'customers',
+            label: (
+                <Space align="center">
+                    <TeamOutlined />
+                    <span>Phân Tích Khách Hàng</span>
+                </Space>
+            ),
+            children: (
+                <CustomerAnalyticsPage branchId={selectedBranchId} />
+            )
         }
     ];
 
@@ -495,9 +509,9 @@ export default function OwnerDashboardPage() {
         <div style={{ padding: '20px 24px', backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
             {/* Header Card */}
             <Card
-                bordered={false}
+                variant="borderless"
                 style={{ borderRadius: 16, marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-                bodyStyle={{ padding: '20px 24px' }}
+                styles={{ body: { padding: '20px 24px' } }}
             >
                 <Row align="middle" justify="space-between" gutter={[16, 16]}>
                     <Col xs={24} md={14}>
