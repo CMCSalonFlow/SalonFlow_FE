@@ -11,10 +11,12 @@ import {
     CloseCircleOutlined,
     PieChartOutlined,
     DashboardOutlined,
-    FallOutlined
+    FallOutlined,
+    BarChartOutlined
 } from '@ant-design/icons';
 import { getOverviewAnalyticsApi, getRevenueAnalyticsApi } from '../api/analyticsApi';
 import { getMyBranchesApi } from '@/features/branch/api/branchApi';
+import { getMySalonApi } from '@/features/salon/api/salonApi';
 import OverviewKpiCard from '../components/OverviewKpiCard';
 import RevenueAlertBanner from '../components/RevenueAlertBanner';
 import BranchSelector from '../components/BranchSelector';
@@ -22,6 +24,7 @@ import SparklineChart from '../components/SparklineChart';
 import RevenuePeriodFilter from '../components/RevenuePeriodFilter';
 import RevenueTrendChart from '../components/RevenueTrendChart';
 import ServiceBreakdownChart from '../components/ServiceBreakdownChart';
+import ReviewAnalyticsTab from '@/features/review/components/ReviewAnalyticsTab';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -40,22 +43,30 @@ export default function OwnerDashboardPage() {
 
     // Common State
     const [branches, setBranches] = useState([]);
+    const [salonId, setSalonId] = useState(null);
     const [selectedBranchId, setSelectedBranchId] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
 
-    // Fetch branches list for selector
+    // Fetch branches list + salon id
     useEffect(() => {
         let isMounted = true;
         getMyBranchesApi()
             .then((res) => {
-                if (isMounted) {
-                    setBranches(res || []);
-                }
+                if (isMounted) setBranches(res || []);
             })
             .catch((err) => {
                 console.error("Lỗi lấy danh sách chi nhánh:", err);
             });
+
+        getMySalonApi()
+            .then((data) => {
+                if (isMounted) setSalonId(data?.id || null);
+            })
+            .catch((err) => {
+                console.error("Lỗi lấy thông tin salon:", err);
+            });
+
         return () => {
             isMounted = false;
         };
@@ -102,15 +113,16 @@ export default function OwnerDashboardPage() {
     useEffect(() => {
         if (activeTab === 'overview') {
             fetchOverview(selectedBranchId);
-        } else {
+        } else if (activeTab === 'revenue-analytics') {
             fetchRevenueAnalytics(period, dateRange, selectedBranchId);
         }
+        // Tab 'review-analytics' tự fetch bên trong ReviewAnalyticsTab
     }, [activeTab, selectedBranchId, period, dateRange, fetchOverview, fetchRevenueAnalytics]);
 
     const handleRefreshAll = () => {
         if (activeTab === 'overview') {
             fetchOverview(selectedBranchId, true);
-        } else {
+        } else if (activeTab === 'revenue-analytics') {
             fetchRevenueAnalytics(period, dateRange, selectedBranchId, true);
         }
     };
@@ -487,6 +499,18 @@ export default function OwnerDashboardPage() {
                         </Row>
                     )}
                 </>
+            )
+        },
+        {
+            key: 'review-analytics',
+            label: (
+                <Space align="center">
+                    <BarChartOutlined />
+                    <span>Phân Tích Đánh Giá</span>
+                </Space>
+            ),
+            children: (
+                <ReviewAnalyticsTab salonId={salonId} branches={branches} />
             )
         }
     ];
