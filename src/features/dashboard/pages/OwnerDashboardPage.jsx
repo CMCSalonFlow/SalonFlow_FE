@@ -12,7 +12,8 @@ import {
     PieChartOutlined,
     DashboardOutlined,
     FallOutlined,
-    TeamOutlined
+    TeamOutlined,
+    TrophyOutlined
 } from '@ant-design/icons';
 import { getOverviewAnalyticsApi, getRevenueAnalyticsApi } from '../api/analyticsApi';
 import { getMyBranchesApi } from '@/features/branch/api/branchApi';
@@ -25,6 +26,7 @@ import RevenueTrendChart from '../components/RevenueTrendChart';
 import ServiceBreakdownChart from '../components/ServiceBreakdownChart';
 import CustomerAnalyticsPage from './CustomerAnalyticsPage';
 import PeakHourHeatmapChart from '../components/PeakHourHeatmapChart';
+import StaffPerformanceReportTab from '../components/StaffPerformanceReportTab';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -507,6 +509,18 @@ export default function OwnerDashboardPage() {
             ),
             children: (
                 <CustomerAnalyticsPage branchId={selectedBranchId} />
+            )
+        },
+        {
+            key: 'staff-performance',
+            label: (
+                <Space align="center">
+                    <TrophyOutlined />
+                    <span>Hiệu Suất Nhân Viên</span>
+                </Space>
+            ),
+            children: (
+                <StaffPerformanceReportTab selectedBranchId={selectedBranchId} />
             )
         }
     ];
