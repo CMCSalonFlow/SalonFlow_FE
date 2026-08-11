@@ -9,14 +9,16 @@ import {
     Space,
     Button,
     List,
-    message
+    message,
+    Upload
 } from "antd";
 import {
-    PlusOutlined,
-    DeleteOutlined
+    DeleteOutlined,
+    UploadOutlined
 } from "@ant-design/icons";
 
 import { getCategoriesApi } from "../api/serviceApi";
+import { uploadMediaApi } from "@/features/media/api/mediaApi";
 
 export default function ServiceFormModal({
     visible,
@@ -31,9 +33,8 @@ export default function ServiceFormModal({
 
     const [categories, setCategories] = useState([]);
 
-    const [photoUrls, setPhotoUrls] = useState([]);
-
-    const [newPhotoUrl, setNewPhotoUrl] = useState("");
+    const [photoList, setPhotoList] = useState([]);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
 
@@ -49,25 +50,26 @@ export default function ServiceFormModal({
             fetchCategories();
         }
     }, [visible]);
-    useEffect(() => {
-        if (!visible) return;
+    const syncModalState = () => {
         if (initialValues) {
             form.setFieldsValue({
-
                 name: initialValues.name,
                 price: initialValues.price,
                 durationMinutes: initialValues.durationMinutes,
                 categoryId: initialValues.categoryId,
                 description: initialValues.description,
                 isActive: initialValues.isActive !== false,
-
-                depositRequired:
-                    initialValues.depositRequired ?? false,
-
-                depositPercentage:
-                    initialValues.depositPercentage
+                depositRequired: initialValues.depositRequired ?? false,
+                depositPercentage: initialValues.depositPercentage
             });
-            setPhotoUrls(initialValues.images || []);
+            setPhotoList(
+                (initialValues.images || []).map((url, index) => ({
+                    uid: `existing-${index}-${url}`,
+                    name: `image-${index + 1}`,
+                    status: "done",
+                    url
+                }))
+            );
         } else {
             form.resetFields();
             form.setFieldsValue({
@@ -75,32 +77,64 @@ export default function ServiceFormModal({
                 depositRequired: false,
                 depositPercentage: null
             });
-            setPhotoUrls([]);
+            setPhotoList([]);
         }
-    }, [visible, initialValues, form]);
-    const handleAddPhoto = () => {
-        if (!newPhotoUrl.trim()) return;
+    };
 
-        if (
-            !newPhotoUrl.startsWith("http://") &&
-            !newPhotoUrl.startsWith("https://")
-        ) {
-            message.warning(
-                "Vui lòng nhập URL hợp lệ bắt đầu bằng http:// hoặc https://"
+    const handleCustomUpload = async ({ file, onSuccess, onError }) => {
+        try {
+            setUploading(true);
+            const localPreview = URL.createObjectURL(file);
+            const tempUid = file.uid || `photo-${Date.now()}-${Math.random()}`;
+
+            setPhotoList((prev) => [
+                ...prev,
+                {
+                    uid: tempUid,
+                    name: file.name || "image.png",
+                    status: "uploading",
+                    url: localPreview,
+                    thumbUrl: localPreview
+                }
+            ]);
+
+            const response = await uploadMediaApi(file);
+            const imageUrl = response?.url || response?.fileUrl;
+
+            if (!imageUrl) {
+                throw new Error("Không nhận được URL ảnh từ server");
+            }
+
+            setPhotoList((prev) =>
+                prev.map((item) =>
+                    item.uid === tempUid
+                        ? {
+                            ...item,
+                            status: "done",
+                            url: imageUrl,
+                            thumbUrl: imageUrl,
+                            serverUrl: imageUrl
+                        }
+                        : item
+                )
             );
-            return;
+
+            onSuccess?.(response, file);
+            message.success("Upload ảnh thành công");
+        } catch (error) {
+            setPhotoList((prev) => prev.filter((item) => item.uid !== file.uid));
+            message.error(error?.response?.data?.message || error.message || "Lỗi khi upload ảnh.");
+            onError?.(error);
+        } finally {
+            setUploading(false);
         }
-        setPhotoUrls([
-            ...photoUrls,
-            newPhotoUrl.trim()
-        ]);
-        setNewPhotoUrl("");
     };
-    const handleRemovePhoto = (index) => {
-        setPhotoUrls(
-            photoUrls.filter((_, i) => i !== index)
-        );
+
+    const handleRemovePhoto = (file) => {
+        setPhotoList((prev) => prev.filter((item) => item.uid !== file.uid));
+        return true;
     };
+
     const handleOk = async () => {
         try {
             const values = await form.validateFields();
@@ -112,7 +146,9 @@ export default function ServiceFormModal({
                     values.depositRequired
                         ? values.depositPercentage
                         : null,
-                images: photoUrls
+                images: photoList
+                    .filter((item) => item.status === "done" && (item.serverUrl || item.url))
+                    .map((item) => item.serverUrl || item.url)
             };
             onSubmit(payload);
         } catch (error) {
@@ -130,7 +166,13 @@ export default function ServiceFormModal({
             onCancel={onCancel}
             onOk={handleOk}
             width={650}
+            confirmLoading={uploading}
             destroyOnClose
+            afterOpenChange={(open) => {
+                if (open) {
+                    syncModalState();
+                }
+            }}
         >
 
             <Form
@@ -310,41 +352,31 @@ export default function ServiceFormModal({
                         Album hình ảnh
                     </label>
 
-                    <Space.Compact
-                        style={{
-                            width: "100%",
-                            marginBottom: 12
-                        }}
+                    <Upload
+                        customRequest={handleCustomUpload}
+                        fileList={photoList}
+                        onRemove={handleRemovePhoto}
+                        listType="picture-card"
+                        accept="image/*"
+                        maxCount={10}
                     >
-
-                        <Input
-                            placeholder="https://..."
-                            value={newPhotoUrl}
-                            onChange={(e) =>
-                                setNewPhotoUrl(e.target.value)
-                            }
-                            onPressEnter={handleAddPhoto}
-                        />
-
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddPhoto}
-                        >
-                            Thêm
-                        </Button>
-
-                    </Space.Compact>
+                        {photoList.length < 10 ? (
+                            <div>
+                                <UploadOutlined />
+                                <div style={{ marginTop: 8 }}>Tải ảnh</div>
+                            </div>
+                        ) : null}
+                    </Upload>
 
                     <List
                         bordered
                         size="small"
-                        dataSource={photoUrls}
+                        dataSource={photoList.filter((item) => item.status === "done")}
                         locale={{
                             emptyText:
                                 "Chưa có hình ảnh."
                         }}
-                        renderItem={(url, index) => (
+                        renderItem={(item) => (
 
                             <List.Item
                                 actions={[
@@ -352,9 +384,7 @@ export default function ServiceFormModal({
                                         type="text"
                                         danger
                                         icon={<DeleteOutlined />}
-                                        onClick={() =>
-                                            handleRemovePhoto(index)
-                                        }
+                                        onClick={() => handleRemovePhoto(item)}
                                     />
                                 ]}
                             >
@@ -362,7 +392,7 @@ export default function ServiceFormModal({
                                 <Space>
 
                                     <img
-                                        src={url}
+                                        src={item.url}
                                         alt=""
                                         style={{
                                             width: 40,
@@ -380,7 +410,7 @@ export default function ServiceFormModal({
                                             textOverflow: "ellipsis"
                                         }}
                                     >
-                                        {url}
+                                        {item.url}
                                     </span>
                                 </Space>
                             </List.Item>
