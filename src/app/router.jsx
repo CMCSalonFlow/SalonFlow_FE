@@ -80,6 +80,7 @@ import OwnerBookingWorkflowPage from "@/features/booking/pages/OwnerBookingWorkf
 import SmartSchedulingConfigPage from "@/features/ai/pages/SmartSchedulingConfigPage";
 import NoShowDashboardPage from "@/features/ai/pages/NoShowDashboardPage";
 import HairStyleAiPage from "@/features/hair-ai/pages/HairStyleAiPage";
+import ServiceDescriptionAiPage from "@/features/service-description-ai/pages/ServiceDescriptionAiPage";
 import ROLES from "@/core/constants/roles";
 
 const router = createBrowserRouter([
@@ -179,6 +180,10 @@ const router = createBrowserRouter([
             {
                 path: "services",
                 element: <ServiceManagementPage />
+            },
+            {
+                path: "services/ai",
+                element: <ServiceDescriptionAiPage />
             },
             {
                 path: "staff",

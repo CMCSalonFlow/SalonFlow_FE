@@ -43,11 +43,6 @@ export default function OwnerSidebar() {
             label: "Staff"
         },
         {
-            key: "/owner/services",
-            icon: <AppstoreOutlined />,
-            label: "Services"
-        },
-        {
             key: "/owner/ai-smart-schedule",
             icon: <RobotOutlined />,
             label: "AI Smart Schedule"
@@ -56,6 +51,16 @@ export default function OwnerSidebar() {
             key: "/owner/ai-no-show",
             icon: <AlertOutlined />,
             label: "AI No-Show Prediction"
+        },
+        {
+            key: "/owner/services/ai",
+            icon: <RobotOutlined />,
+            label: "Service AI"
+        },
+        {
+            key: "/owner/services",
+            icon: <AppstoreOutlined />,
+            label: "Services"
         },
         {
             key: "/owner/cancellation-policy",

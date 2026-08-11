@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, Select, Tabs, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin } from "antd";
 import { AppstoreOutlined, PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
     getServicesByBranchApi,
@@ -14,11 +15,11 @@ import {
 } from "../api/serviceApi";
 import ServiceFormModal from "../components/ServiceFormModal";
 import BundleFormModal from "../components/BundleFormModal";
-import ServiceDescriptionAiPanel from "@/features/service-description-ai/components/ServiceDescriptionAiPanel";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function ServiceManagementPage() {
+    const navigate = useNavigate();
     const [loadingBranches, setLoadingBranches] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
     const [branches, setBranches] = useState([]);
@@ -30,7 +31,6 @@ export default function ServiceManagementPage() {
     // Modals visibility
     const [serviceModalVisible, setServiceModalVisible] = useState(false);
     const [editingService, setEditingService] = useState(null);
-    const [serviceDraftInitialValues, setServiceDraftInitialValues] = useState(null);
 
     const [bundleModalVisible, setBundleModalVisible] = useState(false);
     const [editingBundle, setEditingBundle] = useState(null);
@@ -120,7 +120,6 @@ export default function ServiceManagementPage() {
             }
             setServiceModalVisible(false);
             setEditingService(null);
-            setServiceDraftInitialValues(null);
             loadData(selectedBranchId);
         } catch (error) {
             message.error(error.response?.data?.message || "Lỗi khi lưu dịch vụ.");
@@ -371,20 +370,29 @@ export default function ServiceManagementPage() {
                 </Col>
             </Row>
 
-            <ServiceDescriptionAiPanel
-                selectedBranchId={selectedBranchId}
-                services={services}
-                onSaved={() => loadData(selectedBranchId)}
-                onCreateDraft={(draftValues) => {
-                    setEditingService(null);
-                    setServiceDraftInitialValues(draftValues);
-                    setServiceModalVisible(true);
-                }}
-            />
-
-            <div style={{ height: 24 }} />
-
             <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
+                    <div>
+                        <Title level={4} style={{ marginBottom: 4 }}>Dịch vụ & Combo</Title>
+                        <Text type="secondary">Quản lý danh sách dịch vụ, combo và mở trang AI mô tả dịch vụ khi cần.</Text>
+                    </div>
+                    <Space wrap>
+                        <Button onClick={() => navigate("/owner/services/ai")}>
+                            Mở AI mô tả dịch vụ
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => {
+                                setEditingService(null);
+                                setServiceModalVisible(true);
+                            }}
+                        >
+                            Thêm dịch vụ đơn
+                        </Button>
+                    </Space>
+                </div>
+
                 {loadingData ? (
                     <div style={{ textAlign: "center", padding: "50px 0" }}>
                         <Spin tip="Đang tải dữ liệu dịch vụ..." />
@@ -405,7 +413,6 @@ export default function ServiceManagementPage() {
                                                 size="large"
                                                 onClick={() => {
                                                     setEditingService(null);
-                                                    setServiceDraftInitialValues(null);
                                                     setServiceModalVisible(true);
                                                 }}
                                             >
@@ -461,10 +468,9 @@ export default function ServiceManagementPage() {
                 onCancel={() => {
                     setServiceModalVisible(false);
                     setEditingService(null);
-                    setServiceDraftInitialValues(null);
                 }}
                 onSubmit={handleServiceSubmit}
-                initialValues={editingService || serviceDraftInitialValues}
+                initialValues={editingService}
             />
 
             {/* Bundle Edit/Create Form Modal */}
