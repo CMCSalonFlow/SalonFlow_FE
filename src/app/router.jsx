@@ -7,34 +7,6 @@ import { Spin } from "antd";
 
 // Layouts (eagerly loaded - needed immediately)
 import PublicLayout from "@/layouts/PublicLayout/PublicLayout";
-import SearchPage from "@/features/search/pages/SearchPage";
-import CategoryListUserPage
-    from "@/features/category/pages/CategoryListUserPage";
-import MySalonPage from "@/features/salon/pages/MySalonPage";
-import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
-import StaffManagementPage from "@/features/staff/pages/StaffManagementPage";
-import BookingPage from "@/features/booking/pages/BookingPage";
-import GuestBookingPage from "@/features/booking/pages/GuestBookingPage";
-import PayAtCounterSuccessPage from "@/features/booking/pages/PayAtCounterSuccessPage";
-import RecurringSuccessPage from "@/features/booking/pages/RecurringSuccessPage";
-import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
-import SchedulePage from "@/features/schedule/pages/SchedulePage";
-import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
-import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
-import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
-import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
-import StaffAppointmentsPage from "@/features/booking/pages/StaffAppointmentsPage";
-import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
-import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPage";
-import ProfilePage from "@/features/user/pages/ProfilePage";
-import CustomerNotificationsPage from "@/features/notification/pages/CustomerNotificationsPage";
-import ReviewAdminPage from "@/features/review/pages/ReviewAdminPage";
-import BookingStatusPage from "@/features/booking/pages/BookingStatusPage";
-import OwnerBookingWorkflowPage from "@/features/booking/pages/OwnerBookingWorkflowPage";
-import SmartSchedulingConfigPage from "@/features/ai/pages/SmartSchedulingConfigPage";
-import NoShowDashboardPage from "@/features/ai/pages/NoShowDashboardPage";
-import HairStyleAiPage from "@/features/hair-ai/pages/HairStyleAiPage";
-import ServiceDescriptionAiPage from "@/features/service-description-ai/pages/ServiceDescriptionAiPage";
 import CustomerLayout from "@/layouts/CustomerLayout/CustomerLayout";
 import ProtectedRoute from "@/core/components/ProtectedRoute";
 import ROLES from "@/core/constants/roles";
@@ -68,6 +40,7 @@ const VoucherManagementPage = lazy(() => import("@/features/voucher/pages/Vouche
 const OwnerDashboardPage = lazy(() => import("@/features/dashboard/pages/OwnerDashboardPage"));
 const MySalonPage = lazy(() => import("@/features/salon/pages/MySalonPage"));
 const ServiceManagementPage = lazy(() => import("@/features/service/pages/ServiceManagementPage"));
+const ServiceDescriptionAiPage = lazy(() => import("@/features/service-description-ai/pages/ServiceDescriptionAiPage"));
 const StaffManagementPage = lazy(() => import("@/features/staff/pages/StaffManagementPage"));
 const SchedulePage = lazy(() => import("@/features/schedule/pages/SchedulePage"));
 const ShiftTemplatePage = lazy(() => import("@/features/shift/pages/ShiftTemplatePage"));
@@ -226,7 +199,7 @@ const router = createBrowserRouter([
             },
             {
                 path: "services/ai",
-                element: <ServiceDescriptionAiPage />
+                element: withSuspense(ServiceDescriptionAiPage)
             },
             {
                 path: "staff",
