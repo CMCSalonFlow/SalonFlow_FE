@@ -12,6 +12,9 @@ import {
     CheckCircleOutlined,
     AlertOutlined,
     RobotOutlined,
+    CustomerServiceOutlined,
+    FileExcelOutlined,
+    RobotOutlined,
     QrcodeOutlined
 } from "@ant-design/icons";
 
@@ -27,6 +30,16 @@ export default function OwnerSidebar() {
             key: "/owner",
             icon: <DashboardOutlined />,
             label: "Dashboard"
+        },
+        {
+            key: "/owner/reports",
+            icon: <FileExcelOutlined />,
+            label: "Xuất Báo Cáo (Excel/PDF)"
+        },
+        {
+            key: "/owner/support",
+            icon: <CustomerServiceOutlined />,
+            label: "Trợ Giúp & Support"
         },
         {
             key: "/owner/salon",

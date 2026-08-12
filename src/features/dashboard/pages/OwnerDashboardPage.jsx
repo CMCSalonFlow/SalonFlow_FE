@@ -18,16 +18,18 @@ import {
     BarChartOutlined,
     BranchesOutlined,
     CalendarOutlined,
+    CheckCircleOutlined,
     DashboardOutlined,
     DollarOutlined,
     ReloadOutlined,
     RiseOutlined,
+    StarOutlined,
     TeamOutlined,
-    CheckCircleOutlined,
-    StarOutlined
+    TrophyOutlined
 } from "@ant-design/icons";
 
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
+import { getMySalonApi } from "@/features/salon/api/salonApi";
 import { getOverviewAnalyticsApi, getRevenueAnalyticsApi } from "@/features/dashboard/api/analyticsApi";
 import RevenueAlertBanner from "@/features/dashboard/components/RevenueAlertBanner";
 import OverviewKpiCard from "@/features/dashboard/components/OverviewKpiCard";
@@ -36,6 +38,8 @@ import RevenuePeriodFilter from "@/features/dashboard/components/RevenuePeriodFi
 import ServiceBreakdownChart from "@/features/dashboard/components/ServiceBreakdownChart";
 import PeakHourHeatmapChart from "@/features/dashboard/components/PeakHourHeatmapChart";
 import CustomerAnalyticsPage from "@/features/dashboard/pages/CustomerAnalyticsPage";
+import StaffPerformanceReportTab from "@/features/dashboard/components/StaffPerformanceReportTab";
+import ReviewAnalyticsTab from "@/features/review/components/ReviewAnalyticsTab";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -46,6 +50,7 @@ const getOverviewValue = (value) => (value === null || value === undefined ? 0 :
 
 export default function OwnerDashboardPage() {
     const [branches, setBranches] = useState([]);
+    const [salonId, setSalonId] = useState(null);
     const [selectedBranchId, setSelectedBranchId] = useState(() => localStorage.getItem("currentBranchId") || "");
     const [activeTab, setActiveTab] = useState("overview");
 
@@ -88,28 +93,38 @@ export default function OwnerDashboardPage() {
         const run = async () => {
             setLoadingBranches(true);
             try {
-                const data = await getMyBranchesApi();
+                const [branchesRes, salonRes] = await Promise.allSettled([
+                    getMyBranchesApi(),
+                    getMySalonApi()
+                ]);
+
                 if (cancelled) return;
 
-                const nextBranches = Array.isArray(data) ? data : [];
-                setBranches(nextBranches);
+                if (branchesRes.status === "fulfilled") {
+                    const nextBranches = Array.isArray(branchesRes.value) ? branchesRes.value : [];
+                    setBranches(nextBranches);
 
-                const storedBranchId = localStorage.getItem("currentBranchId");
-                const hasStoredBranch = storedBranchId
-                    ? nextBranches.some((branch) => String(branch.id) === String(storedBranchId))
-                    : false;
+                    const storedBranchId = localStorage.getItem("currentBranchId");
+                    const hasStoredBranch = storedBranchId
+                        ? nextBranches.some((branch) => String(branch.id) === String(storedBranchId))
+                        : false;
 
-                if (hasStoredBranch) {
-                    setSelectedBranchId(storedBranchId);
-                } else if (nextBranches.length > 0) {
-                    const nextBranchId = String(nextBranches[0].id);
-                    setSelectedBranchId(nextBranchId);
-                    localStorage.setItem("currentBranchId", nextBranchId);
-                }
-            } catch (loadError) {
-                if (!cancelled) {
-                    console.error(loadError);
+                    if (hasStoredBranch) {
+                        setSelectedBranchId(storedBranchId);
+                    } else if (nextBranches.length > 0) {
+                        const nextBranchId = String(nextBranches[0].id);
+                        setSelectedBranchId(nextBranchId);
+                        localStorage.setItem("currentBranchId", nextBranchId);
+                    }
+                } else {
+                    console.error("Lỗi lấy danh sách chi nhánh:", branchesRes.reason);
                     message.error("Không thể tải danh sách chi nhánh.");
+                }
+
+                if (salonRes.status === "fulfilled") {
+                    setSalonId(salonRes.value?.id || null);
+                } else {
+                    console.error("Lỗi lấy thông tin salon:", salonRes.reason);
                 }
             } finally {
                 if (!cancelled) {
@@ -401,7 +416,33 @@ export default function OwnerDashboardPage() {
                     <span>Khách hàng</span>
                 </Space>
             ),
-            children: <CustomerAnalyticsPage branchId={selectedBranchId} />
+            children: (
+                <CustomerAnalyticsPage branchId={selectedBranchId} />
+            )
+        },
+        {
+            key: "staff-performance",
+            label: (
+                <Space size={8}>
+                    <TrophyOutlined />
+                    <span>Hiệu suất nhân viên</span>
+                </Space>
+            ),
+            children: (
+                <StaffPerformanceReportTab selectedBranchId={selectedBranchId} />
+            )
+        },
+        {
+            key: "review-analytics",
+            label: (
+                <Space size={8}>
+                    <BarChartOutlined />
+                    <span>Phân tích đánh giá</span>
+                </Space>
+            ),
+            children: (
+                <ReviewAnalyticsTab salonId={salonId} branches={branches} />
+            )
         }
     ];
 

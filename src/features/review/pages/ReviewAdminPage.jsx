@@ -10,11 +10,13 @@ import {
     Space,
     Statistic,
     Table,
+    Tabs,
     Tag,
     Typography,
     Modal,
     message
 } from "antd";
+import { BarChartOutlined, TableOutlined } from "@ant-design/icons";
 
 import dayjs from "dayjs";
 
@@ -28,6 +30,8 @@ import {
 } from "../api/reviewAdminApi";
 import { replyReviewApi, reportReviewApi } from "../api/reviewReportApi";
 import ReviewDetailDrawer from "../components/ReviewDetailDrawer";
+import ReviewAnalyticsTab from "../components/ReviewAnalyticsTab";
+import { getMySalonApi } from "@/features/salon/api/salonApi";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -140,6 +144,7 @@ export default function ReviewAdminPage() {
     const [reviews, setReviews] = useState([]);
     const [summary, setSummary] = useState(null);
     const [branches, setBranches] = useState([]);
+    const [salonId, setSalonId] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedReviewId, setSelectedReviewId] = useState(null);
 
@@ -301,10 +306,10 @@ export default function ReviewAdminPage() {
 
     useEffect(() => {
         loadBranches();
-        loadReviews({
-            page: 1,
-            pageSize: 10
-        });
+        loadReviews({ page: 1, pageSize: 10 });
+        getMySalonApi()
+            .then((data) => setSalonId(data?.id || null))
+            .catch((err) => console.error("Không lấy được thông tin salon:", err));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -316,29 +321,18 @@ export default function ReviewAdminPage() {
     const summaryCards = useMemo(() => pickSummaryCards(summary), [summary]);
 
     const handleSearch = () => {
-        loadReviews({
-            page: 1,
-            query: searchText
-        });
+        loadReviews({ page: 1, query: searchText });
     };
 
     const handleReset = () => {
         setBranchId(undefined);
         setSentiment("");
         setSearchText("");
-        loadReviews({
-            page: 1,
-            branchId: undefined,
-            sentiment: "",
-            query: ""
-        });
+        loadReviews({ page: 1, branchId: undefined, sentiment: "", query: "" });
     };
 
     const handleTableChange = (nextPagination) => {
-        loadReviews({
-            page: nextPagination.current,
-            pageSize: nextPagination.pageSize
-        });
+        loadReviews({ page: nextPagination.current, pageSize: nextPagination.pageSize });
     };
 
     const columns = [
@@ -478,126 +472,147 @@ export default function ReviewAdminPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
                 <Title level={3} style={{ marginBottom: 4 }}>
-                    Quản lý review
+                    Quản lý & Phân tích Đánh giá
                 </Title>
                 <Text type="secondary">
-                    Theo dõi review của khách hàng theo chi nhánh, sentiment và nội dung tìm kiếm.
+                    Theo dõi, phản hồi review của khách hàng và xem báo cáo phân tích rating chi tiết.
                 </Text>
             </div>
 
-            <Card loading={summaryLoading}>
-                <Row gutter={[16, 16]}>
-                    {summaryCards.length > 0 ? (
-                        summaryCards.map((item) => (
-                            <Col xs={12} sm={8} lg={6} key={item.label}>
-                                <Card
-                                    size="small"
-                                    bordered
-                                    style={{
-                                        borderColor: "#f0f0f0",
-                                        borderRadius: 12
-                                    }}
-                                >
-                                    <Statistic
-                                        title={item.label}
-                                        value={item.value}
-                                        valueStyle={{
-                                            color: item.color === "default" ? undefined : item.color
+            <Tabs
+                type="card"
+                size="large"
+                items={[
+                    {
+                        key: "manage",
+                        label: (
+                            <span>
+                                <TableOutlined /> Danh sách Review
+                            </span>
+                        ),
+                        children: (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                <Card loading={summaryLoading}>
+                                    <Row gutter={[16, 16]}>
+                                        {summaryCards.length > 0 ? (
+                                            summaryCards.map((item) => (
+                                                <Col xs={12} sm={8} lg={6} key={item.label}>
+                                                    <Card
+                                                        size="small"
+                                                        bordered
+                                                        style={{
+                                                            borderColor: "#f0f0f0",
+                                                            borderRadius: 12
+                                                        }}
+                                                    >
+                                                        <Statistic
+                                                            title={item.label}
+                                                            value={item.value}
+                                                            valueStyle={{
+                                                                color: item.color === "default" ? undefined : item.color
+                                                            }}
+                                                        />
+                                                    </Card>
+                                                </Col>
+                                            ))
+                                        ) : (
+                                            <Col span={24}>
+                                                <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                                                    Chưa có dữ liệu thống kê review.
+                                                </Paragraph>
+                                            </Col>
+                                        )}
+                                    </Row>
+                                </Card>
+
+                                <Card>
+                                    <Space
+                                        wrap
+                                        style={{
+                                            width: "100%",
+                                            justifyContent: "space-between"
                                         }}
+                                    >
+                                        <Space wrap>
+                                            <Select
+                                                allowClear
+                                                placeholder="Chọn chi nhánh"
+                                                style={{ width: 240 }}
+                                                value={branchId}
+                                                onChange={(value) => {
+                                                    setBranchId(value);
+                                                    loadReviews({ page: 1, branchId: value });
+                                                }}
+                                                options={branches.map((branch) => ({
+                                                    value: branch.id,
+                                                    label: branch.name
+                                                }))}
+                                            />
+
+                                            <Input
+                                                allowClear
+                                                placeholder="Nhập sentiment"
+                                                style={{ width: 220 }}
+                                                value={sentiment}
+                                                onChange={(e) => setSentiment(e.target.value)}
+                                            />
+
+                                            <Input.Search
+                                                allowClear
+                                                placeholder="Tìm theo tiêu đề, nội dung, khách hàng..."
+                                                style={{ width: 360 }}
+                                                value={searchText}
+                                                onChange={(e) => setSearchText(e.target.value)}
+                                                onSearch={handleSearch}
+                                            />
+                                        </Space>
+
+                                        <Space>
+                                            {isSalonOwner && (
+                                                <Button
+                                                    type="primary"
+                                                    ghost
+                                                    onClick={handleTriggerAiReview}
+                                                    loading={triggerAiLoading}
+                                                >
+                                                    Trigger AI review
+                                                </Button>
+                                            )}
+                                            <Button onClick={handleReset}>Đặt lại</Button>
+                                            <Button type="primary" onClick={handleSearch}>
+                                                Tìm kiếm
+                                            </Button>
+                                        </Space>
+                                    </Space>
+                                </Card>
+
+                                <Card>
+                                    <Table
+                                        rowKey="id"
+                                        columns={columns}
+                                        dataSource={reviews}
+                                        loading={loading}
+                                        pagination={pagination}
+                                        onChange={handleTableChange}
+                                        scroll={{ x: 1500 }}
                                     />
                                 </Card>
-                            </Col>
-                        ))
-                    ) : (
-                        <Col span={24}>
-                            <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                                Chưa có dữ liệu thống kê review.
-                            </Paragraph>
-                        </Col>
-                    )}
-                </Row>
-            </Card>
-
-            <Card>
-                <Space
-                    wrap
-                    style={{
-                        width: "100%",
-                        justifyContent: "space-between"
-                    }}
-                >
-                    <Space wrap>
-                        <Select
-                            allowClear
-                            placeholder="Chọn chi nhánh"
-                            style={{ width: 240 }}
-                            value={branchId}
-                            onChange={(value) => {
-                                setBranchId(value);
-                                loadReviews({
-                                    page: 1,
-                                    branchId: value
-                                });
-                            }}
-                            options={branches.map((branch) => ({
-                                value: branch.id,
-                                label: branch.name
-                            }))}
-                        />
-
-                        <Input
-                            allowClear
-                            placeholder="Nhập sentiment"
-                            style={{ width: 220 }}
-                            value={sentiment}
-                            onChange={(e) => setSentiment(e.target.value)}
-                        />
-
-                        <Input.Search
-                            allowClear
-                            placeholder="Tìm theo tiêu đề, nội dung, khách hàng..."
-                            style={{ width: 360 }}
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            onSearch={handleSearch}
-                        />
-                    </Space>
-
-                    <Space>
-                        {isSalonOwner && (
-                            <Button
-                                type="primary"
-                                ghost
-                                onClick={handleTriggerAiReview}
-                                loading={triggerAiLoading}
-                            >
-                                Trigger AI review
-                            </Button>
-                        )}
-                        <Button onClick={handleReset}>
-                            Đặt lại
-                        </Button>
-                        <Button
-                            type="primary"
-                            onClick={handleSearch}
-                        >
-                            Tìm kiếm
-                        </Button>
-                    </Space>
-                </Space>
-            </Card>
-
-            <Card>
-                <Table
-                    rowKey="id"
-                    columns={columns}
-                    dataSource={reviews}
-                    loading={loading}
-                    pagination={pagination}
-                    onChange={handleTableChange}
-                    scroll={{ x: 1500 }}
-                />
-            </Card>
+                            </div>
+                        )
+                    },
+                    {
+                        key: "analytics",
+                        label: (
+                            <span>
+                                <BarChartOutlined /> Phân tích & Dashboard
+                            </span>
+                        ),
+                        children: (
+                            <ReviewAnalyticsTab salonId={salonId} branches={branches} />
+                        )
+                    }
+                ]}
+            />
 
             <ReviewDetailDrawer
                 open={drawerOpen}
