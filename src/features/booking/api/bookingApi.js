@@ -68,6 +68,16 @@ export const checkInBookingApi = async (bookingId) => {
     return response.data;
 };
 
+// Check-in bằng QR từ email booking
+export const checkInBookingByQrApi = async (bookingId, signature) => {
+    const response = await api.post(
+        `/api/v1/bookings/${bookingId}/checkin`,
+        { signature }
+    );
+
+    return response.data;
+};
+
 // Hoàn tất dịch vụ và chuyển booking sang COMPLETED
 export const completeBookingApi = async (bookingId) => {
     const response = await api.put(`/api/v1/bookings/${bookingId}/complete`);

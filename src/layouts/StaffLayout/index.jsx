@@ -1,7 +1,8 @@
-import { Layout, Menu, Button, Dropdown, Avatar, Space, Tag } from "antd";
+import { Layout, Button, Dropdown, Avatar, Space, Tag } from "antd";
 import {
     DesktopOutlined,
     CalendarOutlined,
+    QrcodeOutlined,
     UnorderedListOutlined,
     LogoutOutlined,
     UserOutlined,
@@ -34,6 +35,11 @@ export function StaffLayout() {
             key: "/staff/appointments",
             icon: <UnorderedListOutlined />,
             label: "Lịch Hẹn Phân Công"
+        },
+        {
+            key: "/staff/check-in-scanner",
+            icon: <QrcodeOutlined />,
+            label: "Quét QR Check-in"
         }
     ];
 

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import AuthForm from "../components/AuthForm";
 import SocialLogin from "../components/SocialLogin";
@@ -13,15 +13,44 @@ import ROLES from "@/core/constants/roles";
 export default function LoginPage() {
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { login } = useAuth();
+
+    const redirectTo =
+        typeof location.state?.from === "string" && location.state.from.startsWith("/")
+            ? location.state.from
+            : null;
+
+    const navigateAfterLogin = useCallback((roles) => {
+        if (redirectTo) {
+            navigate(redirectTo, { replace: true });
+            return;
+        }
+
+        if (roles.includes(ROLES.SUPER_ADMIN)) {
+            navigate("/admin");
+        } else if (roles.includes(ROLES.ADMIN)) {
+            navigate("/admin");
+        } else if (roles.includes(ROLES.SALON_OWNER)) {
+            navigate("/owner");
+        } else if (roles.includes(ROLES.BRANCH_MANAGER)) {
+            navigate("/staff");
+        } else if (roles.includes(ROLES.STAFF)) {
+            navigate("/staff");
+        } else if (roles.includes(ROLES.CUSTOMER)) {
+            navigate("/home");
+        } else {
+            navigate("/login");
+        }
+    }, [navigate, redirectTo]);
 
     useEffect(() => {
         const lastError = sessionStorage.getItem("lastAuthError");
         if (lastError) {
             try {
                 console.error("Last Authentication/Redirect Error:", JSON.parse(lastError));
-            } catch (e) {
+            } catch {
                 console.error("Last Authentication/Redirect Error:", lastError);
             }
             sessionStorage.removeItem("lastAuthError");
@@ -34,21 +63,13 @@ export default function LoginPage() {
                 const rolesStr = localStorage.getItem("roles");
                 if (rolesStr) {
                     const roles = JSON.parse(rolesStr);
-                    if (roles.includes(ROLES.SUPER_ADMIN)) {
-                        navigate("/admin");
-                    } else if (roles.includes(ROLES.SALON_OWNER)) {
-                        navigate("/owner");
-                    } else if (roles.includes(ROLES.STAFF)) {
-                        navigate("/staff");
-                    } else if (roles.includes(ROLES.CUSTOMER)) {
-                        navigate("/home");
-                    }
+                    navigateAfterLogin(roles);
                 }
-            } catch (e) {
+            } catch {
                 localStorage.clear();
             }
         }
-    }, [navigate]);
+    }, [navigateAfterLogin]);
 
     const [loading, setLoading] =
         useState(false);
@@ -69,23 +90,8 @@ export default function LoginPage() {
                     form.password
                 );
 
-           const roles = response.roles || [];
-
-            if (roles.includes(ROLES.SUPER_ADMIN)) {
-                navigate("/admin");
-            }
-            else if (roles.includes(ROLES.SALON_OWNER)) {
-                navigate("/owner");
-            }
-            else if (roles.includes(ROLES.STAFF)) {
-                navigate("/staff");
-            }
-            else if (roles.includes(ROLES.CUSTOMER)) {
-                navigate("/home");
-            }
-            else {
-                navigate("/login");
-            }
+            const roles = response.roles || [];
+            navigateAfterLogin(roles);
 
         } catch (err) {
 

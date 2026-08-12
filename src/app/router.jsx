@@ -70,6 +70,8 @@ import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
 import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
 import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
 import StaffAppointmentsPage from "@/features/booking/pages/StaffAppointmentsPage";
+import CheckInScannerPage from "@/features/booking/pages/CheckInScannerPage";
+import QrCheckInPage from "@/features/booking/pages/QrCheckInPage";
 import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
 import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPage";
 import ProfilePage from "@/features/user/pages/ProfilePage";
@@ -108,6 +110,10 @@ const router = createBrowserRouter([
     {
         path: "/reset-password",
         element: <ResetPasswordPage />,
+    },
+    {
+        path: "/check-in",
+        element: <QrCheckInPage />,
     },
 
     // ADMIN AREA
@@ -218,6 +224,10 @@ const router = createBrowserRouter([
                 element: <OwnerBookingWorkflowPage />
             },
             {
+                path: "check-in-scanner",
+                element: <CheckInScannerPage />
+            },
+            {
                 path: "ai-smart-schedule",
                 element: <SmartSchedulingConfigPage />
             },
@@ -258,6 +268,10 @@ const router = createBrowserRouter([
             {
                 path: "appointments",
                 element: <StaffAppointmentsPage />
+            },
+            {
+                path: "check-in-scanner",
+                element: <CheckInScannerPage />
             }
         ]
     },

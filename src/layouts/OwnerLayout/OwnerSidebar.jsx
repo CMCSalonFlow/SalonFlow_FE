@@ -11,7 +11,8 @@ import {
     MessageOutlined,
     CheckCircleOutlined,
     AlertOutlined,
-    RobotOutlined
+    RobotOutlined,
+    QrcodeOutlined
 } from "@ant-design/icons";
 
 import { Menu } from "antd";
@@ -76,6 +77,11 @@ export default function OwnerSidebar() {
             key: "/owner/bookings",
             icon: <CheckCircleOutlined />,
             label: "Check-in / Complete"
+        },
+        {
+            key: "/owner/check-in-scanner",
+            icon: <QrcodeOutlined />,
+            label: "Quét QR Check-in"
         },
         {
             key: "/owner/schedule",

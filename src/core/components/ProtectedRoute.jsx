@@ -1,10 +1,12 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { checkAuthSession, getToken, getRoles } from "../utils/auth";
 
 export default function ProtectedRoute({
     children,
     allowedRoles = [],
 }) {
+
+    const location = useLocation();
 
     const isSessionValid = checkAuthSession();
 
@@ -13,6 +15,7 @@ export default function ProtectedRoute({
             <Navigate
                 to="/login"
                 replace
+                state={{ from: `${location.pathname}${location.search}` }}
             />
         );
     }
@@ -27,6 +30,7 @@ export default function ProtectedRoute({
             <Navigate
                 to="/login"
                 replace
+                state={{ from: `${location.pathname}${location.search}` }}
             />
         );
     }
