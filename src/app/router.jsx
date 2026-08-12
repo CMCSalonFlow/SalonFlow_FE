@@ -2,87 +2,93 @@ import {
     createBrowserRouter,
     Navigate,
 } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { Spin } from "antd";
 
-import LoginPage from
-    "@/features/auth/pages/LoginPage";
-
-import RegisterPage from
-    "@/features/auth/pages/RegisterPage";
-import OAuth2SuccessPage from
-    "@/features/auth/pages/OAuth2SuccessPage";
-import VerifyEmailPage
-    from "@/features/auth/pages/VerifyEmailPage";
-
-import ForgotPasswordPage
-    from "@/features/auth/pages/ForgotPasswordPage";
-
-import ResetPasswordPage
-    from "@/features/auth/pages/ResetPasswordPage";
-
-import ProtectedRoute
-    from "@/core/components/ProtectedRoute";
-
-import AdminLayout
-    from "@/layouts/AdminLayout/AdminLayout";
-import OwnerLayout
-    from "@/layouts/OwnerLayout/OwnerLayout";
-import StaffLayout
-    from "@/layouts/StaffLayout";
-
-import CustomerLayout
-    from "@/layouts/CustomerLayout/CustomerLayout";
-import HomePage
-    from "@/features/auth/pages/HomePage";
-
-import AdminDashboardPage
-    from "@/features/dashboard/pages/AdminDashboardPage";
-import AdminReviewReportsPage
-    from "@/features/review/pages/AdminReviewReportsPage";
-import AdminSalonsPage
-    from "@/features/salon/pages/AdminSalonsPage";
-import OwnerDashboardPage
-    from "@/features/dashboard/pages/OwnerDashboardPage";
-import ReportsPage
-    from "@/features/reports/pages/ReportsPage";
-import UserListPage
-    from "@/features/user/pages/UserListPage";
-
-import RoleListPage
-    from "@/features/role/pages/RoleListPage";
-
-import BranchListPage
-    from "@/features/branch/pages/BranchListPage";
-import CategoryListPage
-    from "@/features/category/pages/CategoryListPage";
+// Layouts (eagerly loaded - needed immediately)
 import PublicLayout from "@/layouts/PublicLayout/PublicLayout";
-import SearchPage from "@/features/search/pages/SearchPage";
-import CategoryListUserPage
-    from "@/features/category/pages/CategoryListUserPage";
-import MySalonPage from "@/features/salon/pages/MySalonPage";
-import ServiceManagementPage from "@/features/service/pages/ServiceManagementPage";
-import StaffManagementPage from "@/features/staff/pages/StaffManagementPage";
-import BookingPage from "@/features/booking/pages/BookingPage";
-import GuestBookingPage from "@/features/booking/pages/GuestBookingPage";
-import PayAtCounterSuccessPage from "@/features/booking/pages/PayAtCounterSuccessPage";
-import RecurringSuccessPage from "@/features/booking/pages/RecurringSuccessPage";
-import AppointmentsPage from "@/features/booking/pages/AppointmentsPage";
-import SchedulePage from "@/features/schedule/pages/SchedulePage";
-import ShiftTemplatePage from "@/features/shift/pages/ShiftTemplatePage";
-import OffDayManagementPage from "@/features/offday/pages/OffDayManagementPage";
-import CancellationPolicyPage from "@/features/booking/pages/CancellationPolicyPage";
-import WalkInBookingPage from "@/features/booking/pages/WalkInBookingPage";
-import StaffAppointmentsPage from "@/features/booking/pages/StaffAppointmentsPage";
-import PaymentCallbackPage from "@/features/payment/pages/PaymentCallbackPage";
-import VoucherManagementPage from "@/features/voucher/pages/VoucherManagementPage";
-import ProfilePage from "@/features/user/pages/ProfilePage";
-import CustomerNotificationsPage from "@/features/notification/pages/CustomerNotificationsPage";
-import ReviewAdminPage from "@/features/review/pages/ReviewAdminPage";
-import BookingStatusPage from "@/features/booking/pages/BookingStatusPage";
-import OwnerBookingWorkflowPage from "@/features/booking/pages/OwnerBookingWorkflowPage";
-import SmartSchedulingConfigPage from "@/features/ai/pages/SmartSchedulingConfigPage";
-import NoShowDashboardPage from "@/features/ai/pages/NoShowDashboardPage";
-import HairStyleAiPage from "@/features/hair-ai/pages/HairStyleAiPage";
+import CustomerLayout from "@/layouts/CustomerLayout/CustomerLayout";
+import ProtectedRoute from "@/core/components/ProtectedRoute";
 import ROLES from "@/core/constants/roles";
+
+// Lazy-loaded layouts
+const AdminLayout = lazy(() => import("@/layouts/AdminLayout/AdminLayout"));
+const OwnerLayout = lazy(() => import("@/layouts/OwnerLayout/OwnerLayout"));
+const StaffLayout = lazy(() => import("@/layouts/StaffLayout"));
+
+// Auth pages (eagerly loaded - shown on first load)
+import LoginPage from "@/features/auth/pages/LoginPage";
+import RegisterPage from "@/features/auth/pages/RegisterPage";
+import OAuth2SuccessPage from "@/features/auth/pages/OAuth2SuccessPage";
+import VerifyEmailPage from "@/features/auth/pages/VerifyEmailPage";
+import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/features/auth/pages/ResetPasswordPage";
+import HomePage from "@/features/auth/pages/HomePage";
+
+// Lazy-loaded Admin pages
+const AdminDashboardPage = lazy(() => import("@/features/dashboard/pages/AdminDashboardPage"));
+const AdminReviewReportsPage = lazy(() => import("@/features/review/pages/AdminReviewReportsPage"));
+const AdminSalonsPage = lazy(() => import("@/features/salon/pages/AdminSalonsPage"));
+const AdminSupportTicketPage = lazy(() => import("@/features/support/pages/AdminSupportTicketPage"));
+const UserListPage = lazy(() => import("@/features/user/pages/UserListPage"));
+const RoleListPage = lazy(() => import("@/features/role/pages/RoleListPage"));
+const BranchListPage = lazy(() => import("@/features/branch/pages/BranchListPage"));
+const CategoryListPage = lazy(() => import("@/features/category/pages/CategoryListPage"));
+const VoucherManagementPage = lazy(() => import("@/features/voucher/pages/VoucherManagementPage"));
+
+// Lazy-loaded Owner pages
+const OwnerDashboardPage = lazy(() => import("@/features/dashboard/pages/OwnerDashboardPage"));
+const MySalonPage = lazy(() => import("@/features/salon/pages/MySalonPage"));
+const ServiceManagementPage = lazy(() => import("@/features/service/pages/ServiceManagementPage"));
+const StaffManagementPage = lazy(() => import("@/features/staff/pages/StaffManagementPage"));
+const SchedulePage = lazy(() => import("@/features/schedule/pages/SchedulePage"));
+const ShiftTemplatePage = lazy(() => import("@/features/shift/pages/ShiftTemplatePage"));
+const OffDayManagementPage = lazy(() => import("@/features/offday/pages/OffDayManagementPage"));
+const CancellationPolicyPage = lazy(() => import("@/features/booking/pages/CancellationPolicyPage"));
+const OwnerBookingWorkflowPage = lazy(() => import("@/features/booking/pages/OwnerBookingWorkflowPage"));
+const SmartSchedulingConfigPage = lazy(() => import("@/features/ai/pages/SmartSchedulingConfigPage"));
+const NoShowDashboardPage = lazy(() => import("@/features/ai/pages/NoShowDashboardPage"));
+const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
+const ReviewAdminPage = lazy(() => import("@/features/review/pages/ReviewAdminPage"));
+
+// Lazy-loaded Customer / Shared pages
+const BookingPage = lazy(() => import("@/features/booking/pages/BookingPage"));
+const GuestBookingPage = lazy(() => import("@/features/booking/pages/GuestBookingPage"));
+const AppointmentsPage = lazy(() => import("@/features/booking/pages/AppointmentsPage"));
+const PaymentCallbackPage = lazy(() => import("@/features/payment/pages/PaymentCallbackPage"));
+const ProfilePage = lazy(() => import("@/features/user/pages/ProfilePage"));
+const CustomerNotificationsPage = lazy(() => import("@/features/notification/pages/CustomerNotificationsPage"));
+const HairStyleAiPage = lazy(() => import("@/features/hair-ai/pages/HairStyleAiPage"));
+const SearchPage = lazy(() => import("@/features/search/pages/SearchPage"));
+const CategoryListUserPage = lazy(() => import("@/features/category/pages/CategoryListUserPage"));
+const BookingStatusPage = lazy(() => import("@/features/booking/pages/BookingStatusPage"));
+const WalkInBookingPage = lazy(() => import("@/features/booking/pages/WalkInBookingPage"));
+const StaffAppointmentsPage = lazy(() => import("@/features/booking/pages/StaffAppointmentsPage"));
+const PayAtCounterSuccessPage = lazy(() => import("@/features/booking/pages/PayAtCounterSuccessPage"));
+const RecurringSuccessPage = lazy(() => import("@/features/booking/pages/RecurringSuccessPage"));
+const HelpCenterPage = lazy(() => import("@/features/support/pages/HelpCenterPage"));
+
+// Reusable page loader fallback
+const PageLoader = () => (
+    <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "60vh",
+        flexDirection: "column",
+        gap: 16
+    }}>
+        <Spin size="large" />
+        <span style={{ color: "#64748b", fontSize: 14 }}>Đang tải trang...</span>
+    </div>
+);
+
+// Wrap lazy component with Suspense
+const withSuspense = (Component) => (
+    <Suspense fallback={<PageLoader />}>
+        <Component />
+    </Suspense>
+);
 
 const router = createBrowserRouter([
 
@@ -120,37 +126,43 @@ const router = createBrowserRouter([
                     "SUPER_ADMIN"
                 ]}
             >
-                <AdminLayout />
+                <Suspense fallback={<PageLoader />}>
+                    <AdminLayout />
+                </Suspense>
             </ProtectedRoute>
         ),
         children: [
             {
                 index: true,
-                element: <AdminDashboardPage />
+                element: withSuspense(AdminDashboardPage)
             },
             {
                 path: "users",
-                element: <UserListPage />
+                element: withSuspense(UserListPage)
             },
             {
                 path: "roles",
-                element: <RoleListPage />
+                element: withSuspense(RoleListPage)
             },
             {
                 path: "branches",
-                element: <BranchListPage />
+                element: withSuspense(BranchListPage)
             },
             {
                 path: "vouchers",
-                element: <VoucherManagementPage />
+                element: withSuspense(VoucherManagementPage)
             },
             {
                 path: "review-reports",
-                element: <AdminReviewReportsPage />
+                element: withSuspense(AdminReviewReportsPage)
             },
             {
                 path: "salons",
-                element: <AdminSalonsPage />
+                element: withSuspense(AdminSalonsPage)
+            },
+            {
+                path: "tickets",
+                element: withSuspense(AdminSupportTicketPage)
             },
         ]
     },
@@ -162,69 +174,79 @@ const router = createBrowserRouter([
                     "SALON_OWNER"
                 ]}
             >
-                <OwnerLayout />
+                <Suspense fallback={<PageLoader />}>
+                    <OwnerLayout />
+                </Suspense>
             </ProtectedRoute>
         ),
         children: [
             {
                 index: true,
-                element: <OwnerDashboardPage />
+                element: withSuspense(OwnerDashboardPage)
             },
             {
                 path: "branches",
-                element: <BranchListPage />
+                element: withSuspense(BranchListPage)
             },
             {
                 path: "salon",
-                element: <MySalonPage />
+                element: withSuspense(MySalonPage)
             },
             {
                 path: "services",
-                element: <ServiceManagementPage />
+                element: withSuspense(ServiceManagementPage)
             },
             {
                 path: "staff",
-                element: <StaffManagementPage />
+                element: withSuspense(StaffManagementPage)
             },
             {
                 path: "schedule",
-                element: <SchedulePage />
+                element: withSuspense(SchedulePage)
             },
             {
                 path: "shifts",
-                element: <ShiftTemplatePage />
+                element: withSuspense(ShiftTemplatePage)
             },
             {
                 path: "off-days",
-                element: <OffDayManagementPage />
-            },
-            {
-                path: "categories",
-                element: <CategoryListPage />
+                element: withSuspense(OffDayManagementPage)
             },
             {
                 path: "cancellation-policy",
-                element: <CancellationPolicyPage />
+                element: withSuspense(CancellationPolicyPage)
             },
             {
                 path: "reviews",
-                element: <ReviewAdminPage />
+                element: withSuspense(ReviewAdminPage)
+            },
+            {
+                path: "categories",
+                element: withSuspense(CategoryListPage)
+            },
+            {
+                path: "vouchers",
+                element: withSuspense(VoucherManagementPage)
             },
             {
                 path: "bookings",
-                element: <OwnerBookingWorkflowPage />
+                element: withSuspense(OwnerBookingWorkflowPage)
             },
             {
                 path: "ai-smart-schedule",
-                element: <SmartSchedulingConfigPage />
+                element: withSuspense(SmartSchedulingConfigPage)
             },
             {
                 path: "ai-no-show",
-                element: <NoShowDashboardPage />
+                element: withSuspense(NoShowDashboardPage)
             },
             {
                 path: "reports",
-                element: <ReportsPage />
+                element: withSuspense(ReportsPage)
+            },
+            {
+                path: "support",
+                element: withSuspense(HelpCenterPage)
             }
         ]
     },
@@ -233,111 +255,110 @@ const router = createBrowserRouter([
     {
         path: "/staff",
         element: (
-            <ProtectedRoute
-                allowedRoles={[
-                    "STAFF",
-                    "SALON_OWNER",
-                    "SUPER_ADMIN"
-                ]}
-            >
-                <StaffLayout />
+            <ProtectedRoute allowedRoles={["STAFF"]}>
+                <Suspense fallback={<PageLoader />}>
+                    <StaffLayout />
+                </Suspense>
             </ProtectedRoute>
         ),
         children: [
             {
-                index: true,
-                element: <WalkInBookingPage />
-            },
-            {
-                path: "pos",
-                element: <WalkInBookingPage />
-            },
-            {
-                path: "schedule",
-                element: <SchedulePage />
-            },
-            {
                 path: "appointments",
-                element: <StaffAppointmentsPage />
+                element: withSuspense(StaffAppointmentsPage)
+            },
+            {
+                path: "walk-in",
+                element: withSuspense(WalkInBookingPage)
+            },
+            {
+                path: "booking-status",
+                element: withSuspense(BookingStatusPage)
             }
         ]
     },
-    ///USER AREA///
+
+    // PUBLIC AREA (guest)
     {
+        path: "/",
         element: <PublicLayout />,
         children: [
             {
                 index: true,
-                element: <HomePage />
+                element: <HomePage />,
             },
             {
                 path: "home",
-                element: <HomePage />
+                element: <HomePage />,
             },
             {
                 path: "search",
-                element: <SearchPage />
+                element: withSuspense(SearchPage)
             },
             {
                 path: "services",
-                element: <CategoryListUserPage />
+                element: withSuspense(CategoryListUserPage)
             },
             {
                 path: "guest-booking",
-                element: <GuestBookingPage />
-            },
-            {
-                path: "public-booking",
-                element: <GuestBookingPage />
-            },
-            {
-                path: "booking/pay-at-counter-success",
-                element: <PayAtCounterSuccessPage />
+                element: withSuspense(GuestBookingPage)
             },
         ]
     },
+
+    // AUTHENTICATED CUSTOMER AREA
     {
-        element: <CustomerLayout />,
+        path: "/",
+        element: (
+            <ProtectedRoute allowedRoles={[ROLES.CUSTOMER, ROLES.SALON_OWNER, ROLES.STAFF, ROLES.SUPER_ADMIN]}>
+                <CustomerLayout />
+            </ProtectedRoute>
+        ),
         children: [
             {
                 path: "/booking",
-                element: <BookingPage />
+                element: withSuspense(BookingPage)
             },
             {
-                path: "/booking/status",
-                element: <Navigate to="/booking/status/confirmed" replace />
+                path: "/pay-at-counter-success",
+                element: withSuspense(PayAtCounterSuccessPage)
             },
             {
-                path: "/booking/status/:variant",
-                element: <BookingStatusPage />
-            },
-            {
-                path: "/booking/recurring-success",
-                element: <RecurringSuccessPage />
+                path: "/recurring-success",
+                element: withSuspense(RecurringSuccessPage)
             },
             {
                 path: "/appointments",
-                element: <AppointmentsPage />
+                element: withSuspense(AppointmentsPage)
             },
             {
                 path: "/payment/callback",
-                element: <PaymentCallbackPage />
+                element: withSuspense(PaymentCallbackPage)
             },
             {
                 path: "/profile",
-                element: <ProfilePage />
+                element: withSuspense(ProfilePage)
             },
             {
                 path: "/hair-ai",
                 element: (
                     <ProtectedRoute allowedRoles={[ROLES.CUSTOMER]}>
-                        <HairStyleAiPage />
+                        <Suspense fallback={<PageLoader />}>
+                            <HairStyleAiPage />
+                        </Suspense>
                     </ProtectedRoute>
                 )
             },
             {
                 path: "/notifications",
-                element: <CustomerNotificationsPage />
+                element: withSuspense(CustomerNotificationsPage)
+            },
+            {
+                path: "/support",
+                element: withSuspense(HelpCenterPage)
+            },
+            {
+                path: "/reports",
+                element: withSuspense(ReportsPage)
             }
         ]
     }
