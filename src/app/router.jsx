@@ -42,6 +42,8 @@ import AdminSalonsPage
     from "@/features/salon/pages/AdminSalonsPage";
 import OwnerDashboardPage
     from "@/features/dashboard/pages/OwnerDashboardPage";
+import ReportsPage
+    from "@/features/reports/pages/ReportsPage";
 import UserListPage
     from "@/features/user/pages/UserListPage";
 
@@ -224,6 +226,10 @@ const router = createBrowserRouter([
             {
                 path: "ai-no-show",
                 element: <NoShowDashboardPage />
+            },
+            {
+                path: "reports",
+                element: <ReportsPage />
             }
         ]
     },

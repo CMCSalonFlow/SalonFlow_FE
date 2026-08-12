@@ -24,7 +24,12 @@ import {
     RiseOutlined,
     TeamOutlined,
     CheckCircleOutlined,
-    StarOutlined
+    StarOutlined,
+    ClockCircleOutlined,
+    CloseCircleOutlined,
+    PieChartOutlined,
+    FallOutlined,
+    TrophyOutlined
 } from "@ant-design/icons";
 
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
@@ -36,6 +41,9 @@ import RevenuePeriodFilter from "@/features/dashboard/components/RevenuePeriodFi
 import ServiceBreakdownChart from "@/features/dashboard/components/ServiceBreakdownChart";
 import PeakHourHeatmapChart from "@/features/dashboard/components/PeakHourHeatmapChart";
 import CustomerAnalyticsPage from "@/features/dashboard/pages/CustomerAnalyticsPage";
+import BranchSelector from "@/features/dashboard/components/BranchSelector";
+import SparklineChart from "@/features/dashboard/components/SparklineChart";
+import StaffPerformanceReportTab from "@/features/dashboard/components/StaffPerformanceReportTab";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -401,7 +409,21 @@ export default function OwnerDashboardPage() {
                     <span>Khách hàng</span>
                 </Space>
             ),
-            children: <CustomerAnalyticsPage branchId={selectedBranchId} />
+            children: (
+                <CustomerAnalyticsPage branchId={selectedBranchId} />
+            )
+        },
+        {
+            key: 'staff-performance',
+            label: (
+                <Space align="center">
+                    <TrophyOutlined />
+                    <span>Hiệu Suất Nhân Viên</span>
+                </Space>
+            ),
+            children: (
+                <StaffPerformanceReportTab selectedBranchId={selectedBranchId} />
+            )
         }
     ];
 
