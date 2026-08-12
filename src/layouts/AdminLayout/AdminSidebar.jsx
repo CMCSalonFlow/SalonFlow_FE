@@ -8,7 +8,8 @@ import {
     TeamOutlined,
     ApartmentOutlined,
     MessageOutlined,
-    ShopOutlined
+    ShopOutlined,
+    CustomerServiceOutlined
 } from "@ant-design/icons";
 
 import {
@@ -44,6 +45,11 @@ export default function AdminSidebar() {
                 key: "/admin/salons",
                 icon: <ShopOutlined />,
                 label: "Duyệt Salon"
+            },
+            {
+                key: "/admin/tickets",
+                icon: <CustomerServiceOutlined />,
+                label: "Support Tickets (SLA)"
             },
             {
                 key: "/admin/users",

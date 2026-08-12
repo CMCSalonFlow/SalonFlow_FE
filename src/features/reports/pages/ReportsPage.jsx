@@ -26,7 +26,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [reportType, setReportType] = useState('doanh_thu');
-  const [dateRange, setDateRange] = useState([dayjs().minus(30, 'day'), dayjs()]);
+  const [dateRange, setDateRange] = useState([dayjs().subtract(30, 'day'), dayjs()]);
   const [branches, setBranches] = useState([]);
   const [selectedBranchId, setSelectedBranchId] = useState(null);
   const [reportData, setReportData] = useState(null);
