@@ -12,6 +12,7 @@ import {
     Radio,
     Space,
     Spin,
+    Tabs,
     Tag,
     Typography,
     Upload,
@@ -34,6 +35,7 @@ import {
     confirmHairStyleApi,
     getHairStyleProfileApi
 } from "../api/hairStyleAiApi";
+import VirtualTryOnView from "../components/VirtualTryOnView";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -76,6 +78,8 @@ const toPercent = (value) => {
 const extractMediaId = (payload) => payload?.id ?? payload?.mediaId ?? payload?.data?.id ?? payload?.data?.mediaId ?? null;
 
 export default function HairStyleAiPage() {
+    const [activeTab, setActiveTab] = useState("analysis");
+    const [selectedTryOnStyleId, setSelectedTryOnStyleId] = useState(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [analyzing, setAnalyzing] = useState(false);
     const [confirmingStyleId, setConfirmingStyleId] = useState(null);
@@ -84,6 +88,21 @@ export default function HairStyleAiPage() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState("");
     const [gender, setGender] = useState(null);
+
+    const handleOpenTryOn = (style) => {
+        const styleNameLower = (style?.styleName || "").toLowerCase();
+        let matchedId = "layered_bob";
+        if (styleNameLower.includes("curtain")) matchedId = "curtain_bangs";
+        else if (styleNameLower.includes("pixie")) matchedId = "pixie_cut";
+        else if (styleNameLower.includes("undercut")) matchedId = "undercut_fade";
+        else if (styleNameLower.includes("wave") || styleNameLower.includes("perm") || styleNameLower.includes("xoăn")) matchedId = "korean_perm";
+        else if (styleNameLower.includes("crop")) matchedId = "textured_crop";
+        else if (styleNameLower.includes("buzz")) matchedId = "buzz_cut";
+
+        setSelectedTryOnStyleId(matchedId);
+        setActiveTab("tryon");
+        message.info(`Đã mở Filter AR cho kiểu tóc: ${style.styleName}`);
+    };
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -202,459 +221,495 @@ export default function HairStyleAiPage() {
 
     return (
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "8px 0 24px" }}>
-            <div
-                style={{
-                    borderRadius: 24,
-                    padding: 24,
-                    marginBottom: 24,
-                    color: "#fff",
-                    background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 55%, #38bdf8 100%)",
-                    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.22)"
-                }}
-            >
-                <Row gutter={[24, 24]} align="middle">
-                    <Col xs={24} lg={16}>
-                        <Space direction="vertical" size={12} style={{ width: "100%" }}>
-                            <Space size={10} wrap>
-                                <Tag color="cyan" style={{ border: "none" }}>
-                                    AI Hair
-                                </Tag>
-                                <Tag color="blue" style={{ border: "none" }}>
-                                    Phân tích tóc và gợi ý kiểu tóc
-                                </Tag>
+            <Tabs
+                activeKey={activeTab}
+                onChange={setActiveTab}
+                size="large"
+                items={[
+                    {
+                        key: "analysis",
+                        label: (
+                            <Space style={{ fontSize: 16, fontWeight: 600 }}>
+                                <ThunderboltOutlined style={{ color: "#1677ff" }} />
+                                <span>1. AI Phân Tích & Gợi Ý Kiểu Tóc</span>
                             </Space>
-                            <Title level={2} style={{ color: "#fff", margin: 0 }}>
-                                Upload ảnh tóc, xem gợi ý kiểu phù hợp, rồi xác nhận vào hồ sơ của bạn.
-                            </Title>
-                            <Paragraph style={{ color: "rgba(255,255,255,0.88)", fontSize: 16, marginBottom: 0 }}>
-                                Hệ thống sẽ phân tích hình dạng khuôn mặt, độ dài, độ dày và kết cấu tóc để đề xuất những kiểu tóc phù hợp nhất.
-                            </Paragraph>
-                        </Space>
-                    </Col>
-                    <Col xs={24} lg={8}>
-                        <Card
-                            bordered={false}
-                            style={{
-                                borderRadius: 18,
-                                background: "rgba(255,255,255,0.12)",
-                                color: "#fff",
-                                backdropFilter: "blur(10px)"
-                            }}
-                        >
-                            <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                                <Text style={{ color: "rgba(255,255,255,0.9)" }}>Trạng thái hồ sơ hiện tại</Text>
-                                {confirmedStyle ? (
-                                    <>
-                                        <Title level={4} style={{ color: "#fff", margin: 0 }}>
-                                            {confirmedStyle.styleName}
-                                        </Title>
-                                        <Text style={{ color: "rgba(255,255,255,0.85)" }}>
-                                            {profile?.currentStyle || "Chưa có mô tả style hiện tại"}
-                                        </Text>
-                                    </>
-                                ) : (
-                                    <Text style={{ color: "rgba(255,255,255,0.85)" }}>
-                                        Chưa có kiểu tóc được xác nhận.
-                                    </Text>
-                                )}
-                            </Space>
-                        </Card>
-                    </Col>
-                </Row>
-            </div>
-
-            <Row gutter={[24, 24]}>
-                <Col xs={24} lg={14}>
-                    <Card
-                        style={{
-                            borderRadius: 20,
-                            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-                            border: "1px solid #eef2f7"
-                        }}
-                    >
-                        <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                            <div>
-                                <Title level={4} style={{ marginBottom: 4 }}>
-                                    <CameraOutlined style={{ color: "#1677ff", marginRight: 8 }} />
-                                    1. Chọn giới tính và upload ảnh tóc
-                                </Title>
-                                <Text type="secondary">
-                                    Chọn ảnh rõ nét, ánh sáng tốt để AI phân tích chính xác hơn.
-                                </Text>
-                            </div>
-
-                            <Card size="small" bordered style={{ borderRadius: 14, background: "#f8fbff" }}>
-                                <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                                    <Text strong>Giới tính</Text>
-                                    <Radio.Group
-                                        value={gender}
-                                        onChange={(e) => setGender(e.target.value)}
-                                        optionType="button"
-                                        buttonStyle="solid"
-                                    >
-                                        <Radio.Button value="MEN">Nam</Radio.Button>
-                                        <Radio.Button value="WOMEN">Nữ</Radio.Button>
-                                    </Radio.Group>
-                                    <Text type="secondary">
-                                        AI sẽ chỉ gợi ý các kiểu tóc cùng nhóm giới tính và chọn ảnh mẫu tương ứng.
-                                    </Text>
-                                </Space>
-                            </Card>
-
-                            <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*" multiple={false}>
+                        ),
+                        children: (
+                            <div style={{ paddingTop: 12 }}>
                                 <div
                                     style={{
-                                        border: "1.5px dashed #91caff",
-                                        borderRadius: 18,
-                                        background: previewUrl
-                                            ? "linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%)"
-                                            : "linear-gradient(180deg, #fdfdfd 0%, #f8fbff 100%)",
-                                        padding: 18,
-                                        textAlign: "center",
-                                        cursor: "pointer"
+                                        borderRadius: 24,
+                                        padding: 24,
+                                        marginBottom: 24,
+                                        color: "#fff",
+                                        background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 55%, #38bdf8 100%)",
+                                        boxShadow: "0 16px 40px rgba(15, 23, 42, 0.22)"
                                     }}
                                 >
-                                    {previewUrl ? (
-                                        <Space direction="vertical" size={12} style={{ width: "100%" }}>
-                                            <Image
-                                                src={previewUrl}
-                                                alt="Hair preview"
-                                                height={280}
-                                                style={{ objectFit: "cover", borderRadius: 14 }}
-                                                preview={false}
-                                            />
-                                            <Space wrap style={{ justifyContent: "center", width: "100%" }}>
-                                                <Tag color="blue">Ảnh đã chọn</Tag>
-                                                <Text strong>{selectedFile?.name}</Text>
+                                    <Row gutter={[24, 24]} align="middle">
+                                        <Col xs={24} lg={16}>
+                                            <Space direction="vertical" size={12} style={{ width: "100%" }}>
+                                                <Space size={10} wrap>
+                                                    <Tag color="cyan" style={{ border: "none" }}>
+                                                        AI Hair
+                                                    </Tag>
+                                                    <Tag color="blue" style={{ border: "none" }}>
+                                                        Phân tích tóc và gợi ý kiểu tóc
+                                                    </Tag>
+                                                </Space>
+                                                <Title level={2} style={{ color: "#fff", margin: 0 }}>
+                                                    Upload ảnh tóc, xem gợi ý kiểu phù hợp và xác nhận hồ sơ.
+                                                </Title>
+                                                <Paragraph style={{ color: "rgba(255,255,255,0.88)", fontSize: 16, marginBottom: 0 }}>
+                                                    Hệ thống sẽ phân tích hình dạng khuôn mặt, độ dài, độ dày và kết cấu tóc để đề xuất những kiểu tóc phù hợp nhất.
+                                                </Paragraph>
                                             </Space>
-                                        </Space>
-                                    ) : (
-                                        <Space direction="vertical" size={10} style={{ padding: "36px 12px" }}>
-                                            <UploadOutlined style={{ fontSize: 38, color: "#1677ff" }} />
-                                            <Title level={4} style={{ margin: 0 }}>
-                                                Kéo thả hoặc bấm để chọn ảnh
-                                            </Title>
-                                            <Text type="secondary">
-                                                Hỗ trợ ảnh JPG, PNG, WebP.
-                                            </Text>
-                                        </Space>
-                                    )}
+                                        </Col>
+                                        <Col xs={24} lg={8}>
+                                            <Card
+                                                bordered={false}
+                                                style={{
+                                                    borderRadius: 18,
+                                                    background: "rgba(255,255,255,0.12)",
+                                                    color: "#fff",
+                                                    backdropFilter: "blur(10px)"
+                                                }}
+                                            >
+                                                <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                                                    <Text style={{ color: "rgba(255,255,255,0.9)" }}>Trạng thái hồ sơ hiện tại</Text>
+                                                    {confirmedStyle ? (
+                                                        <>
+                                                            <Title level={4} style={{ color: "#fff", margin: 0 }}>
+                                                                {confirmedStyle.styleName}
+                                                            </Title>
+                                                            <Text style={{ color: "rgba(255,255,255,0.85)" }}>
+                                                                {profile?.currentStyle || "Chưa có mô tả style hiện tại"}
+                                                            </Text>
+                                                        </>
+                                                    ) : (
+                                                        <Text style={{ color: "rgba(255,255,255,0.85)" }}>
+                                                            Chưa có kiểu tóc được xác nhận.
+                                                        </Text>
+                                                    )}
+                                                </Space>
+                                            </Card>
+                                        </Col>
+                                    </Row>
                                 </div>
-                            </Upload>
 
-                            <Space wrap>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        icon={<ThunderboltOutlined />}
-                                        onClick={handleAnalyze}
-                                        loading={analyzing}
-                                        disabled={!selectedFile || !gender}
-                                    >
-                                        Phân tích tóc
-                                    </Button>
-                                <Button
-                                    size="large"
-                                    icon={<ReloadOutlined />}
-                                    onClick={resetAnalysis}
-                                    disabled={!selectedFile && !analysisResponse}
-                                >
-                                    Làm lại
-                                </Button>
-                            </Space>
+                                <Row gutter={[24, 24]}>
+                                    <Col xs={24} lg={14}>
+                                        <Card
+                                            style={{
+                                                borderRadius: 20,
+                                                boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+                                                border: "1px solid #eef2f7"
+                                            }}
+                                        >
+                                            <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                                                <div>
+                                                    <Title level={4} style={{ marginBottom: 4 }}>
+                                                        <CameraOutlined style={{ color: "#1677ff", marginRight: 8 }} />
+                                                        1. Chọn giới tính và upload ảnh tóc
+                                                    </Title>
+                                                    <Text type="secondary">
+                                                        Chọn ảnh rõ nét, ánh sáng tốt để AI phân tích chính xác hơn.
+                                                    </Text>
+                                                </div>
 
-                            <Alert
-                                type="info"
-                                showIcon
-                                message="Luồng xử lý"
-                                description="Chọn giới tính -> upload ảnh -> AI phân tích -> chọn một kiểu tóc gợi ý -> xác nhận để lưu hồ sơ tóc."
-                            />
-                        </Space>
-                    </Card>
+                                                <Card size="small" bordered style={{ borderRadius: 14, background: "#f8fbff" }}>
+                                                    <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                                                        <Text strong>Giới tính</Text>
+                                                        <Radio.Group
+                                                            value={gender}
+                                                            onChange={(e) => setGender(e.target.value)}
+                                                            optionType="button"
+                                                            buttonStyle="solid"
+                                                        >
+                                                            <Radio.Button value="MEN">Nam</Radio.Button>
+                                                            <Radio.Button value="WOMEN">Nữ</Radio.Button>
+                                                        </Radio.Group>
+                                                        <Text type="secondary">
+                                                            AI sẽ chỉ gợi ý các kiểu tóc cùng nhóm giới tính và chọn ảnh mẫu tương ứng.
+                                                        </Text>
+                                                    </Space>
+                                                </Card>
 
-                    <Card
-                        title={
-                            <Space>
-                                <ScissorOutlined />
-                                <span>2. Kết quả phân tích</span>
-                            </Space>
-                        }
-                        style={{
-                            marginTop: 24,
-                            borderRadius: 20,
-                            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-                            border: "1px solid #eef2f7"
-                        }}
-                    >
-                        {analyzing ? (
-                            <div style={{ textAlign: "center", padding: "48px 0" }}>
-                                <Spin size="large" tip="AI đang phân tích mái tóc..." />
-                            </div>
-                        ) : analysis ? (
-                            <Row gutter={[16, 16]}>
-                                <Col xs={12} sm={8}>
-                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                        <Text type="secondary">Face shape</Text>
-                                        <div style={{ fontSize: 18, fontWeight: 700 }}>{formatLabel(analysis.faceShape)}</div>
-                                    </Card>
-                                </Col>
-                                <Col xs={12} sm={8}>
-                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                        <Text type="secondary">Hair texture</Text>
-                                        <div style={{ fontSize: 18, fontWeight: 700 }}>{formatLabel(analysis.hairTexture)}</div>
-                                    </Card>
-                                </Col>
-                                <Col xs={12} sm={8}>
-                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                        <Text type="secondary">Hair length</Text>
-                                        <div style={{ fontSize: 18, fontWeight: 700 }}>{formatLabel(analysis.hairLength)}</div>
-                                    </Card>
-                                </Col>
-                                <Col xs={12} sm={8}>
-                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                        <Text type="secondary">Hair density</Text>
-                                        <div style={{ fontSize: 18, fontWeight: 700 }}>{formatLabel(analysis.hairDensity)}</div>
-                                    </Card>
-                                </Col>
-                                <Col xs={12} sm={8}>
-                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                        <Text type="secondary">Current style</Text>
-                                        <div style={{ fontSize: 18, fontWeight: 700 }}>{analysis.currentStyle || "-"}</div>
-                                    </Card>
-                                </Col>
-                                <Col xs={12} sm={8}>
-                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                        <Text type="secondary">Confidence</Text>
-                                        <div style={{ fontSize: 18, fontWeight: 700 }}>{formatConfidence(analysis.confidence)}</div>
-                                        <Progress percent={confidencePercent} size="small" style={{ marginTop: 8 }} />
-                                    </Card>
-                                </Col>
-                                <Col span={24}>
-                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                        <Space wrap>
-                                            <Tag color="blue">Provider: {analysis.provider || "-"}</Tag>
-                                            <Tag color="purple">Analysis result ID: {analysisResponse?.analysisResultId || "-"}</Tag>
-                                            {analysisResponse?.analyzedAt ? <Tag color="cyan">Analyzed at: {new Date(analysisResponse.analyzedAt).toLocaleString()}</Tag> : null}
-                                        </Space>
-                                    </Card>
-                                </Col>
-                            </Row>
-                        ) : (
-                            <Empty
-                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                description="Chưa có dữ liệu phân tích. Hãy upload ảnh và bấm Phân tích tóc."
-                            />
-                        )}
-                    </Card>
-                </Col>
+                                                <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*" multiple={false}>
+                                                    <div
+                                                        style={{
+                                                            border: "1.5px dashed #91caff",
+                                                            borderRadius: 18,
+                                                            background: previewUrl
+                                                                ? "linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%)"
+                                                                : "linear-gradient(180deg, #fdfdfd 0%, #f8fbff 100%)",
+                                                            padding: 18,
+                                                            textAlign: "center",
+                                                            cursor: "pointer"
+                                                        }}
+                                                    >
+                                                        {previewUrl ? (
+                                                            <Space direction="vertical" size={12} style={{ width: "100%" }}>
+                                                                <Image
+                                                                    src={previewUrl}
+                                                                    alt="Hair preview"
+                                                                    height={280}
+                                                                    style={{ objectFit: "cover", borderRadius: 14 }}
+                                                                    preview={false}
+                                                                />
+                                                                <Space wrap style={{ justifyContent: "center", width: "100%" }}>
+                                                                    <Tag color="blue">Ảnh đã chọn</Tag>
+                                                                    <Text strong>{selectedFile?.name}</Text>
+                                                                </Space>
+                                                            </Space>
+                                                        ) : (
+                                                            <Space direction="vertical" size={10} style={{ padding: "36px 12px" }}>
+                                                                <UploadOutlined style={{ fontSize: 38, color: "#1677ff" }} />
+                                                                <Title level={4} style={{ margin: 0 }}>
+                                                                    Kéo thả hoặc bấm để chọn ảnh
+                                                                </Title>
+                                                                <Text type="secondary">
+                                                                    Hỗ trợ ảnh JPG, PNG, WebP.
+                                                                </Text>
+                                                            </Space>
+                                                        )}
+                                                    </div>
+                                                </Upload>
 
-                <Col xs={24} lg={10}>
-                    <Card
-                        title={
-                            <Space>
-                                <StarOutlined />
-                                <span>Hồ sơ tóc đã xác nhận</span>
-                            </Space>
-                        }
-                        style={{
-                            borderRadius: 20,
-                            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-                            border: "1px solid #eef2f7"
-                        }}
-                    >
-                        {loadingProfile ? (
-                            <div style={{ textAlign: "center", padding: "48px 0" }}>
-                                <Spin tip="Đang tải hồ sơ tóc..." />
-                            </div>
-                        ) : confirmedStyle ? (
-                            <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                                <Card
-                                    style={{
-                                        borderRadius: 16,
-                                        background: "linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%)",
-                                        border: "1px solid #d6e8ff"
-                                    }}
-                                >
-                                    <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                                        <Tag color="success" icon={<CheckCircleOutlined />}>
-                                            Đã xác nhận
-                                        </Tag>
-                                        <Title level={4} style={{ margin: 0 }}>
-                                            {confirmedStyle.styleName}
-                                        </Title>
-                                        <Text type="secondary">
-                                            {confirmedStyle.description || "Không có mô tả"}
-                                        </Text>
-                                    </Space>
-                                </Card>
+                                                <Space wrap>
+                                                    <Button
+                                                        type="primary"
+                                                        size="large"
+                                                        icon={<ThunderboltOutlined />}
+                                                        onClick={handleAnalyze}
+                                                        loading={analyzing}
+                                                        disabled={!selectedFile || !gender}
+                                                    >
+                                                        Phân tích tóc
+                                                    </Button>
+                                                    <Button
+                                                        size="large"
+                                                        icon={<ReloadOutlined />}
+                                                        onClick={resetAnalysis}
+                                                        disabled={!selectedFile && !analysisResponse}
+                                                    >
+                                                        Làm lại
+                                                    </Button>
+                                                </Space>
 
-                                <Row gutter={[12, 12]}>
-                                    <Col span={12}>
-                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                            <Text type="secondary">Face shape</Text>
-                                            <div style={{ fontWeight: 600 }}>{formatLabel(profile?.faceShape)}</div>
+                                                <Alert
+                                                    type="info"
+                                                    showIcon
+                                                    message="Luồng xử lý"
+                                                    description="Chọn giới tính -> upload ảnh -> AI phân tích -> chọn một kiểu tóc gợi ý -> xác nhận để lưu hồ sơ tóc."
+                                                />
+                                            </Space>
+                                        </Card>
+
+                                        <Card
+                                            title={
+                                                <Space>
+                                                    <ScissorOutlined />
+                                                    <span>2. Kết quả phân tích</span>
+                                                </Space>
+                                            }
+                                            style={{
+                                                marginTop: 24,
+                                                borderRadius: 20,
+                                                boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+                                                border: "1px solid #eef2f7"
+                                            }}
+                                        >
+                                            {analyzing ? (
+                                                <div style={{ textAlign: "center", padding: "48px 0" }}>
+                                                    <Spin size="large" tip="AI đang phân tích mái tóc..." />
+                                                </div>
+                                            ) : analysis ? (
+                                                <Row gutter={[16, 16]}>
+                                                    <Col xs={12} sm={8}>
+                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                            <Text type="secondary">Face shape</Text>
+                                                            <div style={{ fontSize: 18, fontWeight: 700 }}>{formatLabel(analysis.faceShape)}</div>
+                                                        </Card>
+                                                    </Col>
+                                                    <Col xs={12} sm={8}>
+                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                            <Text type="secondary">Hair texture</Text>
+                                                            <div style={{ fontSize: 18, fontWeight: 700 }}>{formatLabel(analysis.hairTexture)}</div>
+                                                        </Card>
+                                                    </Col>
+                                                    <Col xs={12} sm={8}>
+                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                            <Text type="secondary">Hair length</Text>
+                                                            <div style={{ fontSize: 18, fontWeight: 700 }}>{formatLabel(analysis.hairLength)}</div>
+                                                        </Card>
+                                                    </Col>
+                                                    <Col xs={12} sm={8}>
+                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                            <Text type="secondary">Hair density</Text>
+                                                            <div style={{ fontSize: 18, fontWeight: 700 }}>{formatLabel(analysis.hairDensity)}</div>
+                                                        </Card>
+                                                    </Col>
+                                                    <Col xs={12} sm={8}>
+                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                            <Text type="secondary">Current style</Text>
+                                                            <div style={{ fontSize: 18, fontWeight: 700 }}>{analysis.currentStyle || "-"}</div>
+                                                        </Card>
+                                                    </Col>
+                                                    <Col xs={12} sm={8}>
+                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                            <Text type="secondary">Confidence</Text>
+                                                            <div style={{ fontSize: 18, fontWeight: 700 }}>{formatConfidence(analysis.confidence)}</div>
+                                                            <Progress percent={confidencePercent} size="small" style={{ marginTop: 8 }} />
+                                                        </Card>
+                                                    </Col>
+                                                    <Col span={24}>
+                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                            <Space wrap>
+                                                                <Tag color="blue">Provider: {analysis.provider || "-"}</Tag>
+                                                                <Tag color="purple">Analysis result ID: {analysisResponse?.analysisResultId || "-"}</Tag>
+                                                                {analysisResponse?.analyzedAt ? <Tag color="cyan">Analyzed at: {new Date(analysisResponse.analyzedAt).toLocaleString()}</Tag> : null}
+                                                            </Space>
+                                                        </Card>
+                                                    </Col>
+                                                </Row>
+                                            ) : (
+                                                <Empty
+                                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                                    description="Chưa có dữ liệu phân tích. Hãy upload ảnh và bấm Phân tích tóc."
+                                                />
+                                            )}
                                         </Card>
                                     </Col>
-                                    <Col span={12}>
-                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                            <Text type="secondary">Hair texture</Text>
-                                            <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairTexture)}</div>
+
+                                    <Col xs={24} lg={10}>
+                                        <Card
+                                            title={
+                                                <Space>
+                                                    <StarOutlined />
+                                                    <span>Hồ sơ tóc đã xác nhận</span>
+                                                </Space>
+                                            }
+                                            style={{
+                                                borderRadius: 20,
+                                                boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+                                                border: "1px solid #eef2f7"
+                                            }}
+                                        >
+                                            {loadingProfile ? (
+                                                <div style={{ textAlign: "center", padding: "48px 0" }}>
+                                                    <Spin tip="Đang tải hồ sơ tóc..." />
+                                                </div>
+                                            ) : confirmedStyle ? (
+                                                <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                                                    <Card
+                                                        style={{
+                                                            borderRadius: 16,
+                                                            background: "linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%)",
+                                                            border: "1px solid #d6e8ff"
+                                                        }}
+                                                    >
+                                                        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                                                            <Tag color="success" icon={<CheckCircleOutlined />}>
+                                                                Đã xác nhận
+                                                            </Tag>
+                                                            <Title level={4} style={{ margin: 0 }}>
+                                                                {confirmedStyle.styleName}
+                                                            </Title>
+                                                            <Text type="secondary">
+                                                                {confirmedStyle.description || "Không có mô tả"}
+                                                            </Text>
+                                                        </Space>
+                                                    </Card>
+
+                                                    <Row gutter={[12, 12]}>
+                                                        <Col span={12}>
+                                                            <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                                <Text type="secondary">Face shape</Text>
+                                                                <div style={{ fontWeight: 600 }}>{formatLabel(profile?.faceShape)}</div>
+                                                            </Card>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                                <Text type="secondary">Hair texture</Text>
+                                                                <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairTexture)}</div>
+                                                            </Card>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                                <Text type="secondary">Hair length</Text>
+                                                                <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairLength)}</div>
+                                                            </Card>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                                <Text type="secondary">Hair density</Text>
+                                                                <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairDensity)}</div>
+                                                            </Card>
+                                                        </Col>
+                                                    </Row>
+
+                                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                        <Space direction="vertical" size={6} style={{ width: "100%" }}>
+                                                            <Text type="secondary">Current style</Text>
+                                                            <Text strong>{profile?.currentStyle || "-"}</Text>
+                                                            {profile?.profileSyncedAt ? (
+                                                                <Text type="secondary">
+                                                                    Đồng bộ lúc: {new Date(profile.profileSyncedAt).toLocaleString()}
+                                                                </Text>
+                                                            ) : null}
+                                                        </Space>
+                                                    </Card>
+
+                                                    {profile?.analysis ? (
+                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
+                                                            <Text type="secondary">Độ tin cậy AI</Text>
+                                                            <div style={{ marginTop: 4, fontWeight: 700 }}>
+                                                                {formatConfidence(profile.analysis.confidence)}
+                                                            </div>
+                                                        </Card>
+                                                    ) : null}
+                                                </Space>
+                                            ) : (
+                                                <Empty
+                                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                                    description="Chưa có hồ sơ tóc được lưu."
+                                                />
+                                            )}
                                         </Card>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                            <Text type="secondary">Hair length</Text>
-                                            <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairLength)}</div>
-                                        </Card>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                            <Text type="secondary">Hair density</Text>
-                                            <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairDensity)}</div>
+
+                                        <Card
+                                            title={
+                                                <Space>
+                                                    <CheckCircleOutlined />
+                                                    <span>3. Kiểu tóc gợi ý</span>
+                                                </Space>
+                                            }
+                                            style={{
+                                                marginTop: 24,
+                                                borderRadius: 20,
+                                                boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+                                                border: "1px solid #eef2f7"
+                                            }}
+                                        >
+                                            {suggestedStyles.length > 0 ? (
+                                                <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                                                    {suggestedStyles.map((style) => {
+                                                        const isSelected = profile?.selectedStyle?.styleId
+                                                            ? String(profile.selectedStyle.styleId) === String(style.styleId)
+                                                            : false;
+
+                                                        return (
+                                                            <Card
+                                                                key={style.styleId}
+                                                                style={{
+                                                                    borderRadius: 18,
+                                                                    overflow: "hidden",
+                                                                    border: isSelected ? "1px solid #1677ff" : "1px solid #edf0f5",
+                                                                    boxShadow: isSelected ? "0 10px 25px rgba(22, 119, 255, 0.12)" : "none"
+                                                                }}
+                                                                bodyStyle={{ padding: 0 }}
+                                                            >
+                                                                <Row gutter={0}>
+                                                                    <Col xs={24} sm={9}>
+                                                                        <div style={{ height: "100%", minHeight: 180, background: "#f5f7fa" }}>
+                                                                            {style.sampleImage?.url ? (
+                                                                                <Image
+                                                                                    src={style.sampleImage.url}
+                                                                                    alt={style.styleName}
+                                                                                    style={{ width: "100%", height: 180, objectFit: "cover" }}
+                                                                                    preview={false}
+                                                                                />
+                                                                            ) : (
+                                                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 180 }}>
+                                                                                    <PictureOutlined style={{ fontSize: 28, color: "#bfbfbf" }} />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </Col>
+                                                                    <Col xs={24} sm={15}>
+                                                                        <div style={{ padding: 16 }}>
+                                                                            <Space direction="vertical" size={10} style={{ width: "100%" }}>
+                                                                                <Space wrap>
+                                                                                    <Title level={5} style={{ margin: 0 }}>
+                                                                                        {style.styleName}
+                                                                                    </Title>
+                                                                                    {isSelected ? <Tag color="success">Đã chọn</Tag> : null}
+                                                                                </Space>
+                                                                                <Text type="secondary">{style.description || "Không có mô tả"}</Text>
+
+                                                                                <Space wrap>
+                                                                                    {style.difficultyLevel ? (
+                                                                                        <Tag color="orange">Độ khó: {formatLabel(style.difficultyLevel)}</Tag>
+                                                                                    ) : null}
+                                                                                    {style.maintenanceLevel ? (
+                                                                                        <Tag color="blue">Bảo trì: {formatLabel(style.maintenanceLevel)}</Tag>
+                                                                                    ) : null}
+                                                                                    {style.priceRange ? <Tag color="purple">{style.priceRange}</Tag> : null}
+                                                                                </Space>
+
+                                                                                <Space wrap>
+                                                                                    <Tag color="geekblue">AI: {style.aiScore ?? "-"}</Tag>
+                                                                                    <Tag color="cyan">Rule: {style.ruleScore ?? "-"}</Tag>
+                                                                                    <Tag color="gold">Final: {style.finalScore ?? "-"}</Tag>
+                                                                                </Space>
+
+                                                                                {Array.isArray(style.reasons) && style.reasons.length > 0 ? (
+                                                                                    <Space wrap>
+                                                                                        {style.reasons.map((reason) => (
+                                                                                            <Tag key={reason}>{reason}</Tag>
+                                                                                        ))}
+                                                                                    </Space>
+                                                                                ) : null}
+
+                                                                                <Divider style={{ margin: "8px 0" }} />
+
+                                                                                <Space wrap>
+                                                                                    <Button
+                                                                                        type={isSelected ? "default" : "primary"}
+                                                                                        icon={<CheckCircleOutlined />}
+                                                                                        loading={confirmingStyleId === style.styleId}
+                                                                                        onClick={() => handleConfirmStyle(style)}
+                                                                                    >
+                                                                                        {isSelected ? "Đã xác nhận" : "Chọn kiểu này"}
+                                                                                    </Button>
+                                                                                </Space>
+                                                                            </Space>
+                                                                        </div>
+                                                                    </Col>
+                                                                </Row>
+                                                            </Card>
+                                                        );
+                                                    })}
+                                                </Space>
+                                            ) : (
+                                                <Empty
+                                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                                    description="Sau khi phân tích, các kiểu tóc gợi ý sẽ xuất hiện ở đây."
+                                                />
+                                            )}
                                         </Card>
                                     </Col>
                                 </Row>
-
-                                <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                    <Space direction="vertical" size={6} style={{ width: "100%" }}>
-                                        <Text type="secondary">Current style</Text>
-                                        <Text strong>{profile?.currentStyle || "-"}</Text>
-                                        {profile?.profileSyncedAt ? (
-                                            <Text type="secondary">
-                                                Đồng bộ lúc: {new Date(profile.profileSyncedAt).toLocaleString()}
-                                            </Text>
-                                        ) : null}
-                                    </Space>
-                                </Card>
-
-                                {profile?.analysis ? (
-                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                        <Text type="secondary">Độ tin cậy AI</Text>
-                                        <div style={{ marginTop: 4, fontWeight: 700 }}>
-                                            {formatConfidence(profile.analysis.confidence)}
-                                        </div>
-                                    </Card>
-                                ) : null}
+                            </div>
+                        )
+                    },
+                    {
+                        key: "tryon",
+                        label: (
+                            <Space style={{ fontSize: 16, fontWeight: 600 }}>
+                                <CameraOutlined style={{ color: "#ec4899" }} />
+                                <span>2. Live AI Thử Màu Tóc (Filter TikTok)</span>
                             </Space>
-                        ) : (
-                            <Empty
-                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                description="Chưa có hồ sơ tóc được lưu."
-                            />
-                        )}
-                    </Card>
-
-                    <Card
-                        title={
-                            <Space>
-                                <CheckCircleOutlined />
-                                <span>3. Kiểu tóc gợi ý</span>
-                            </Space>
-                        }
-                        style={{
-                            marginTop: 24,
-                            borderRadius: 20,
-                            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-                            border: "1px solid #eef2f7"
-                        }}
-                    >
-                        {suggestedStyles.length > 0 ? (
-                            <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                                {suggestedStyles.map((style) => {
-                                    const isSelected = profile?.selectedStyle?.styleId
-                                        ? String(profile.selectedStyle.styleId) === String(style.styleId)
-                                        : false;
-
-                                    return (
-                                        <Card
-                                            key={style.styleId}
-                                            style={{
-                                                borderRadius: 18,
-                                                overflow: "hidden",
-                                                border: isSelected ? "1px solid #1677ff" : "1px solid #edf0f5",
-                                                boxShadow: isSelected ? "0 10px 25px rgba(22, 119, 255, 0.12)" : "none"
-                                            }}
-                                            bodyStyle={{ padding: 0 }}
-                                        >
-                                            <Row gutter={0}>
-                                                <Col xs={24} sm={9}>
-                                                    <div style={{ height: "100%", minHeight: 180, background: "#f5f7fa" }}>
-                                                        {style.sampleImage?.url ? (
-                                                            <Image
-                                                                src={style.sampleImage.url}
-                                                                alt={style.styleName}
-                                                                style={{ width: "100%", height: 180, objectFit: "cover" }}
-                                                                preview={false}
-                                                            />
-                                                        ) : (
-                                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 180 }}>
-                                                                <PictureOutlined style={{ fontSize: 28, color: "#bfbfbf" }} />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </Col>
-                                                <Col xs={24} sm={15}>
-                                                    <div style={{ padding: 16 }}>
-                                                        <Space direction="vertical" size={10} style={{ width: "100%" }}>
-                                                            <Space wrap>
-                                                                <Title level={5} style={{ margin: 0 }}>
-                                                                    {style.styleName}
-                                                                </Title>
-                                                                {isSelected ? <Tag color="success">Đã chọn</Tag> : null}
-                                                            </Space>
-                                                            <Text type="secondary">{style.description || "Không có mô tả"}</Text>
-
-                                                            <Space wrap>
-                                                                {style.difficultyLevel ? (
-                                                                    <Tag color="orange">Độ khó: {formatLabel(style.difficultyLevel)}</Tag>
-                                                                ) : null}
-                                                                {style.maintenanceLevel ? (
-                                                                    <Tag color="blue">Bảo trì: {formatLabel(style.maintenanceLevel)}</Tag>
-                                                                ) : null}
-                                                                {style.priceRange ? <Tag color="purple">{style.priceRange}</Tag> : null}
-                                                            </Space>
-
-                                                            <Space wrap>
-                                                                <Tag color="geekblue">AI: {style.aiScore ?? "-"}</Tag>
-                                                                <Tag color="cyan">Rule: {style.ruleScore ?? "-"}</Tag>
-                                                                <Tag color="gold">Final: {style.finalScore ?? "-"}</Tag>
-                                                            </Space>
-
-                                                            {Array.isArray(style.reasons) && style.reasons.length > 0 ? (
-                                                                <Space wrap>
-                                                                    {style.reasons.map((reason) => (
-                                                                        <Tag key={reason}>{reason}</Tag>
-                                                                    ))}
-                                                                </Space>
-                                                            ) : null}
-
-                                                            <Divider style={{ margin: "8px 0" }} />
-
-                                                            <Button
-                                                                type={isSelected ? "default" : "primary"}
-                                                                icon={<CheckCircleOutlined />}
-                                                                loading={confirmingStyleId === style.styleId}
-                                                                onClick={() => handleConfirmStyle(style)}
-                                                            >
-                                                                {isSelected ? "Đã xác nhận" : "Chọn kiểu này"}
-                                                            </Button>
-                                                        </Space>
-                                                    </div>
-                                                </Col>
-                                            </Row>
-                                        </Card>
-                                    );
-                                })}
-                            </Space>
-                        ) : (
-                            <Empty
-                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                description="Sau khi phân tích, các kiểu tóc gợi ý sẽ xuất hiện ở đây."
-                            />
-                        )}
-                    </Card>
-                </Col>
-            </Row>
+                        ),
+                        children: (
+                            <div style={{ paddingTop: 12 }}>
+                                <VirtualTryOnView />
+                            </div>
+                        )
+                    }
+                ]}
+            />
         </div>
     );
 }
