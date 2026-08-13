@@ -405,10 +405,6 @@ const router = createBrowserRouter([
                 element: withSuspense(CustomerNotificationsPage)
             },
             {
-                path: "/support",
-                element: withSuspense(HelpCenterPage)
-            },
-            {
                 path: "/reports",
                 element: withSuspense(ReportsPage)
             }

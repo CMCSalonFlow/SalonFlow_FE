@@ -45,7 +45,7 @@ export default function HelpCenterPage() {
       setPagination(prev => ({ ...prev, current: page, total: res.totalElements || 0 }));
     } catch (err) {
       console.error("Lỗi lấy danh sách ticket:", err);
-      message.error("Không thể tải danh sách Ticket hỗ trợ!");
+      message.error("Không thể tải danh sách yêu cầu hỗ trợ!");
     } finally {
       setLoadingTickets(false);
     }
@@ -62,12 +62,12 @@ export default function HelpCenterPage() {
     setSubmitting(true);
     try {
       const res = await createTicketApi(values);
-      message.success(`Tạo Ticket #${res.ticketCode} thành công! Thời hạn cam kết SLA: ${res.priorityName}`);
+      message.success(`Đã gửi yêu cầu #${res.ticketCode} thành công!`);
       form.resetFields();
       setActiveTab('2');
     } catch (err) {
       console.error("Lỗi tạo ticket:", err);
-      message.error(err.response?.data?.message || "Lỗi khi gửi yêu cầu hỗ trợ!");
+      message.error(err.response?.data?.message || "Không thể gửi yêu cầu hỗ trợ!");
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +82,7 @@ export default function HelpCenterPage() {
       setSelectedTicketDetail(res);
     } catch (err) {
       console.error("Lỗi xem chi tiết ticket:", err);
-      message.error("Không thể tải thông tin ticket!");
+      message.error("Không thể tải thông tin yêu cầu!");
     } finally {
       setLoadingDetail(false);
     }
@@ -93,15 +93,14 @@ export default function HelpCenterPage() {
     if (!replyText.trim()) return;
     setSendingReply(true);
     try {
-      const res = await addReplyApi(selectedTicketDetail.ticket.id, { message: replyText, isInternalNote: false });
-      message.success("Đã gửi phản hồi thành công!");
+      await addReplyApi(selectedTicketDetail.ticket.id, { message: replyText, isInternalNote: false });
+      message.success("Đã gửi phản hồi!");
       setReplyText('');
-      // Refresh detail
       const updatedDetail = await getTicketDetailsApi(selectedTicketDetail.ticket.id);
       setSelectedTicketDetail(updatedDetail);
     } catch (err) {
       console.error("Lỗi gửi reply:", err);
-      message.error("Lỗi khi gửi phản hồi!");
+      message.error("Không thể gửi phản hồi!");
     } finally {
       setSendingReply(false);
     }
@@ -109,9 +108,9 @@ export default function HelpCenterPage() {
 
   // Render Priority Badge
   const renderPriorityBadge = (priority) => {
-    if (priority === 'P1') return <Tag color="red" style={{ fontWeight: 700 }}>🚨 P1 - Khẩn cấp (SLA &lt; 4h)</Tag>;
-    if (priority === 'P2') return <Tag color="orange" style={{ fontWeight: 700 }}>⚡ P2 - Cao (SLA &lt; 24h)</Tag>;
-    return <Tag color="blue" style={{ fontWeight: 600 }}>📌 P3 - Bình thường (SLA &lt; 72h)</Tag>;
+    if (priority === 'P1') return <Tag color="red" style={{ fontWeight: 600 }}>P1 - Khẩn cấp (&lt; 4h)</Tag>;
+    if (priority === 'P2') return <Tag color="orange" style={{ fontWeight: 600 }}>P2 - Cao (&lt; 24h)</Tag>;
+    return <Tag color="blue" style={{ fontWeight: 500 }}>P3 - Bình thường (&lt; 72h)</Tag>;
   };
 
   // Render Status Badge
@@ -128,27 +127,27 @@ export default function HelpCenterPage() {
       return <Tag color="gray">Đã hoàn tất</Tag>;
     }
     if (ticket.slaBreached) {
-      return <Tag color="error" icon={<ExclamationCircleOutlined />}>Quá hạn SLA</Tag>;
+      return <Tag color="error" icon={<ExclamationCircleOutlined />}>Quá hạn</Tag>;
     }
     if (ticket.remainingMinutes < 120) {
-      return <Tag color="warning" icon={<ClockCircleOutlined />}>Sắp hết hạn ({Math.max(0, ticket.remainingMinutes)}m)</Tag>;
+      return <Tag color="warning" icon={<ClockCircleOutlined />}>Sắp hết hạn ({Math.max(0, ticket.remainingMinutes)} phút)</Tag>;
     }
-    return <Tag color="green" icon={<CheckCircleOutlined />}>Trong SLA</Tag>;
+    return <Tag color="green" icon={<CheckCircleOutlined />}>Đúng hạn</Tag>;
   };
 
   const columns = [
-    { title: 'Mã Ticket', dataIndex: 'ticketCode', key: 'ticketCode', render: (t) => <Text strong color="primary">#{t}</Text> },
+    { title: 'Mã yêu cầu', dataIndex: 'ticketCode', key: 'ticketCode', render: (t) => <Text strong style={{ color: '#0284c7' }}>#{t}</Text> },
     { title: 'Tiêu đề', dataIndex: 'subject', key: 'subject', render: (t, r) => <div><Text strong>{t}</Text><br/><Text type="secondary" style={{ fontSize: 12 }}>{r.categoryName}</Text></div> },
-    { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority', render: (p) => renderPriorityBadge(p) },
+    { title: 'Mức độ', dataIndex: 'priority', key: 'priority', render: (p) => renderPriorityBadge(p) },
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => renderStatusBadge(s) },
-    { title: 'Cam kết SLA', key: 'sla', render: (_, r) => renderSlaBadge(r) },
+    { title: 'Hạn xử lý', key: 'sla', render: (_, r) => renderSlaBadge(r) },
     { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt', render: (d) => dayjs(d).format('HH:mm DD/MM/YYYY') },
     {
-      title: 'Thao tác',
+      title: '',
       key: 'action',
       render: (_, r) => (
         <Button type="link" size="small" onClick={() => handleOpenDetail(r.id)}>
-          Trao đổi / Chi tiết
+          Xem chi tiết
         </Button>
       )
     }
@@ -157,19 +156,19 @@ export default function HelpCenterPage() {
   return (
     <div style={{ padding: '24px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       {/* HEADER BANNER */}
-      <Card style={{ borderRadius: 16, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+      <Card style={{ borderRadius: 16, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle">
           <Col>
             <Space align="center" size="middle">
-              <div style={{ background: 'linear-gradient(135deg, #0284c7, #2563eb)', padding: '14px 16px', borderRadius: 14, color: '#fff' }}>
-                <CustomerServiceOutlined style={{ fontSize: 28 }} />
+              <div style={{ background: '#0284c7', padding: '12px 14px', borderRadius: 12, color: '#fff' }}>
+                <CustomerServiceOutlined style={{ fontSize: 24 }} />
               </div>
               <div>
-                <Title level={3} style={{ margin: 0, fontWeight: 800 }}>
-                  Trung Tâm Hỗ Trợ Nội Bộ (Help Center)
+                <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
+                  Trung tâm hỗ trợ Salon
                 </Title>
                 <Text type="secondary" style={{ fontSize: 13 }}>
-                  Gửi yêu cầu hỗ trợ kỹ thuật, vận hành, thanh toán - Cam kết thời gian phản hồi SLA tức thì
+                  Gửi yêu cầu trợ giúp về kỹ thuật, thanh toán hoặc vận hành salon
                 </Text>
               </div>
             </Space>
@@ -178,7 +177,7 @@ export default function HelpCenterPage() {
       </Card>
 
       {/* MAIN TABS */}
-      <Card style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+      <Card style={{ borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -186,16 +185,16 @@ export default function HelpCenterPage() {
           items={[
             {
               key: '1',
-              label: <span><PlusCircleOutlined /> Gửi Yêu Cầu Hỗ Trợ Mới</span>,
+              label: <span><PlusCircleOutlined /> Tạo yêu cầu mới</span>,
               children: (
                 <div style={{ maxWidth: 720, margin: '20px auto 0 auto' }}>
                   <Alert
-                    message="Cam Kết Thời Gian Xử Lý (SLA Guarantee)"
+                    message="Thời gian phản hồi hỗ trợ (SLA)"
                     description={
-                      <div style={{ fontSize: 13, marginTop: 4 }}>
-                        • <strong>P1 - Khẩn Cấp</strong>: Hệ thống lỗi nghiêm trọng, gián đoạn kinh doanh $\rightarrow$ Xử lý &lt; <strong>4 giờ</strong>.<br />
-                        • <strong>P2 - Cao</strong>: Lỗi chức năng quan trọng $\rightarrow$ Xử lý &lt; <strong>24 giờ</strong>.<br />
-                        • <strong>P3 - Bình Thường</strong>: Thắc mắc, góp ý, hướng dẫn $\rightarrow$ Xử lý &lt; <strong>72 giờ</strong>.
+                      <div style={{ fontSize: 13, marginTop: 4, lineHeight: 1.6 }}>
+                        • <strong>P1 - Khẩn cấp</strong>: Sự cố lớn gián đoạn hoạt động — Phản hồi trong <strong>4 giờ</strong>.<br />
+                        • <strong>P2 - Cao</strong>: Lỗi chức năng ảnh hưởng vận hành — Phản hồi trong <strong>24 giờ</strong>.<br />
+                        • <strong>P3 - Bình thường</strong>: Câu hỏi, góp ý hoặc hướng dẫn — Phản hồi trong <strong>72 giờ</strong>.
                       </div>
                     }
                     type="info"
@@ -206,25 +205,25 @@ export default function HelpCenterPage() {
                   <Form form={form} layout="vertical" onFinish={handleCreateTicket}>
                     <Form.Item
                       name="subject"
-                      label={<Text strong>Tiêu đề yêu cầu</Text>}
-                      rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
+                      label={<Text strong>Tiêu đề</Text>}
+                      rules={[{ required: true, message: 'Vui lòng nhập tiêu đề yêu cầu!' }]}
                     >
-                      <Input placeholder="Ví dụ: Không thể mở ca làm việc cho nhân viên Stylist A" size="large" style={{ borderRadius: 8 }} />
+                      <Input placeholder="Ví dụ: Không mở được ca làm việc cho nhân viên" size="large" style={{ borderRadius: 8 }} />
                     </Form.Item>
 
                     <Row gutter={16}>
                       <Col span={12}>
                         <Form.Item
                           name="category"
-                          label={<Text strong>Danh mục sự cố</Text>}
+                          label={<Text strong>Danh mục</Text>}
                           rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}
                         >
                           <Select placeholder="Chọn danh mục" size="large" style={{ borderRadius: 8 }}>
-                            <Option value="TECHNICAL">💻 Sự cố kỹ thuật</Option>
-                            <Option value="BILLING">💰 Thanh toán & Hóa đơn</Option>
-                            <Option value="ACCOUNT">🔑 Tài khoản & Phân quyền</Option>
-                            <Option value="SALON_OPERATION">✂️ Vận hành Salon</Option>
-                            <Option value="OTHER">❓ Khác</Option>
+                            <Option value="TECHNICAL">Sự cố kỹ thuật</Option>
+                            <Option value="BILLING">Thanh toán & Hóa đơn</Option>
+                            <Option value="ACCOUNT">Tài khoản & Phân quyền</Option>
+                            <Option value="SALON_OPERATION">Vận hành salon</Option>
+                            <Option value="OTHER">Vấn đề khác</Option>
                           </Select>
                         </Form.Item>
                       </Col>
@@ -232,13 +231,13 @@ export default function HelpCenterPage() {
                       <Col span={12}>
                         <Form.Item
                           name="priority"
-                          label={<Text strong>Mức độ ưu tiên (SLA)</Text>}
-                          rules={[{ required: true, message: 'Vui lòng chọn độ ưu tiên!' }]}
+                          label={<Text strong>Mức độ ưu tiên</Text>}
+                          rules={[{ required: true, message: 'Vui lòng chọn mức độ ưu tiên!' }]}
                         >
-                          <Select placeholder="Chọn độ ưu tiên" size="large" style={{ borderRadius: 8 }}>
-                            <Option value="P1">🚨 P1 - Khẩn cấp (&lt; 4h)</Option>
-                            <Option value="P2">⚡ P2 - Cao (&lt; 24h)</Option>
-                            <Option value="P3">📌 P3 - Bình thường (&lt; 72h)</Option>
+                          <Select placeholder="Chọn mức độ ưu tiên" size="large" style={{ borderRadius: 8 }}>
+                            <Option value="P1">P1 - Khẩn cấp (&lt; 4h)</Option>
+                            <Option value="P2">P2 - Cao (&lt; 24h)</Option>
+                            <Option value="P3">P3 - Bình thường (&lt; 72h)</Option>
                           </Select>
                         </Form.Item>
                       </Col>
@@ -246,10 +245,10 @@ export default function HelpCenterPage() {
 
                     <Form.Item
                       name="description"
-                      label={<Text strong>Mô tả chi tiết nội dung sự cố</Text>}
-                      rules={[{ required: true, message: 'Vui lòng nhập mô tả chi tiết!' }]}
+                      label={<Text strong>Nội dung chi tiết</Text>}
+                      rules={[{ required: true, message: 'Vui lòng mô tả chi tiết vấn đề!' }]}
                     >
-                      <TextArea rows={5} placeholder="Mô tả cụ thể các bước xảy ra lỗi, tên chi nhánh, thời gian bị lỗi..." style={{ borderRadius: 8 }} />
+                      <TextArea rows={5} placeholder="Mô tả cụ thể diễn biến sự cố, thời điểm phát sinh và chi nhánh bị ảnh hưởng..." style={{ borderRadius: 8 }} />
                     </Form.Item>
 
                     <Form.Item>
@@ -260,9 +259,9 @@ export default function HelpCenterPage() {
                         icon={<SendOutlined />}
                         loading={submitting}
                         block
-                        style={{ borderRadius: 8, fontWeight: 700, height: 46, background: 'linear-gradient(135deg, #0284c7, #2563eb)' }}
+                        style={{ borderRadius: 8, fontWeight: 600, height: 44, backgroundColor: '#0284c7' }}
                       >
-                        Gửi Ticket Hỗ Trợ
+                        Gửi yêu cầu
                       </Button>
                     </Form.Item>
                   </Form>
@@ -271,7 +270,7 @@ export default function HelpCenterPage() {
             },
             {
               key: '2',
-              label: <span><HistoryOutlined /> Lịch Sử Ticket Của Tôi</span>,
+              label: <span><HistoryOutlined /> Lịch sử yêu cầu</span>,
               children: (
                 <Table
                   dataSource={tickets}
@@ -296,7 +295,7 @@ export default function HelpCenterPage() {
         title={
           selectedTicketDetail && (
             <Space align="center">
-              <Text strong style={{ fontSize: 16 }}>Ticket #{selectedTicketDetail.ticket.ticketCode}</Text>
+              <Text strong style={{ fontSize: 16 }}>Yêu cầu #{selectedTicketDetail.ticket.ticketCode}</Text>
               {renderStatusBadge(selectedTicketDetail.ticket.status)}
               {renderSlaBadge(selectedTicketDetail.ticket)}
             </Space>
@@ -305,21 +304,21 @@ export default function HelpCenterPage() {
         open={detailModalOpen}
         onCancel={() => setDetailModalOpen(false)}
         footer={null}
-        width={760}
+        width={720}
       >
         {loadingDetail || !selectedTicketDetail ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <Spin size="large" tip="Đang tải chi tiết ticket..." />
+            <Spin size="large" tip="Đang tải dữ liệu..." />
           </div>
         ) : (
           <div>
             <Card style={{ background: '#f8fafc', borderRadius: 12, marginBottom: 20 }}>
-              <Title level={4} style={{ margin: 0, color: '#1e293b' }}>{selectedTicketDetail.ticket.subject}</Title>
+              <Title level={5} style={{ margin: 0, color: '#1e293b' }}>{selectedTicketDetail.ticket.subject}</Title>
               <div style={{ marginTop: 8, fontSize: 13, color: '#64748b' }}>
                 <Space split={<Divider type="vertical" />}>
                   <span>Danh mục: <strong>{selectedTicketDetail.ticket.categoryName}</strong></span>
-                  <span>Độ ưu tiên: {renderPriorityBadge(selectedTicketDetail.ticket.priority)}</span>
-                  <span>Cán bộ xử lý: <strong>{selectedTicketDetail.ticket.assignedToUserName}</strong></span>
+                  <span>Mức độ: {renderPriorityBadge(selectedTicketDetail.ticket.priority)}</span>
+                  <span>Phụ trách: <strong>{selectedTicketDetail.ticket.assignedToUserName}</strong></span>
                 </Space>
               </div>
               <Paragraph style={{ marginTop: 12, fontSize: 14, color: '#334155', background: '#fff', padding: 12, borderRadius: 8 }}>
@@ -327,12 +326,12 @@ export default function HelpCenterPage() {
               </Paragraph>
             </Card>
 
-            <Title level={5}>💬 Trao Đổi Phản Hồi (Thread Replies)</Title>
+            <Title level={5} style={{ fontSize: 15 }}>Lịch sử trao đổi</Title>
             <Divider style={{ margin: '12px 0' }} />
 
             <div style={{ maxHeight: 340, overflowY: 'auto', paddingRight: 8, marginBottom: 20 }}>
               {selectedTicketDetail.replies.length === 0 ? (
-                <Text type="secondary">Chưa có phản hồi nào trong trao đổi này.</Text>
+                <Text type="secondary">Chưa có phản hồi nào.</Text>
               ) : (
                 selectedTicketDetail.replies.map((reply) => (
                   <div
@@ -347,7 +346,7 @@ export default function HelpCenterPage() {
                     <Avatar icon={<UserOutlined />} style={{ backgroundColor: reply.isAdmin ? '#4f46e5' : '#0284c7' }} />
                     <div style={{ maxWidth: '80%' }}>
                       <div style={{ fontSize: 12, color: '#64748b', textAlign: reply.isAdmin ? 'right' : 'left', marginBottom: 2 }}>
-                        <strong>{reply.userName}</strong> {reply.isAdmin && <Tag color="purple">Admin Support</Tag>} • {dayjs(reply.createdAt).format('HH:mm DD/MM/YYYY')}
+                        <strong>{reply.userName}</strong> {reply.isAdmin && <Tag color="purple">Hỗ trợ viên</Tag>} • {dayjs(reply.createdAt).format('HH:mm DD/MM/YYYY')}
                       </div>
                       <div
                         style={{
@@ -374,7 +373,7 @@ export default function HelpCenterPage() {
                   rows={3}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Nhập nội dung phản hồi của bạn..."
+                  placeholder="Nhập phản hồi của bạn..."
                   style={{ borderRadius: 8, marginBottom: 12 }}
                 />
                 <Button
@@ -382,13 +381,13 @@ export default function HelpCenterPage() {
                   icon={<SendOutlined />}
                   loading={sendingReply}
                   onClick={handleSendReply}
-                  style={{ borderRadius: 8, fontWeight: 600 }}
+                  style={{ borderRadius: 8, fontWeight: 600, backgroundColor: '#0284c7' }}
                 >
-                  Gửi Phản Hồi
+                  Gửi phản hồi
                 </Button>
               </Card>
             ) : (
-              <Alert message="Ticket này đã được đóng." type="warning" showIcon />
+              <Alert message="Yêu cầu này đã được đóng." type="info" showIcon />
             )}
           </div>
         )}
