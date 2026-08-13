@@ -14,7 +14,6 @@ import {
     RobotOutlined,
     CustomerServiceOutlined,
     FileExcelOutlined,
-    RobotOutlined,
     QrcodeOutlined
 } from "@ant-design/icons";
 
