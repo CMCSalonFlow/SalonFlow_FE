@@ -12,6 +12,7 @@ import ProtectedRoute from "@/core/components/ProtectedRoute";
 import CheckInScannerPage from "@/features/booking/pages/CheckInScannerPage";
 import QrCheckInPage from "@/features/booking/pages/QrCheckInPage";
 import ROLES from "@/core/constants/roles";
+import { SubscriptionProvider } from "@/features/subscription/context/SubscriptionContext";
 
 // Lazy-loaded layouts
 const AdminLayout = lazy(() => import("@/layouts/AdminLayout/AdminLayout"));
@@ -53,6 +54,11 @@ const SmartSchedulingConfigPage = lazy(() => import("@/features/ai/pages/SmartSc
 const NoShowDashboardPage = lazy(() => import("@/features/ai/pages/NoShowDashboardPage"));
 const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
 const ReviewAdminPage = lazy(() => import("@/features/review/pages/ReviewAdminPage"));
+
+// Lazy-loaded Subscription pages
+const SubscriptionPage = lazy(() => import("@/features/subscription/pages/SubscriptionPage"));
+const SubscriptionSuccessPage = lazy(() => import("@/features/subscription/pages/SubscriptionSuccessPage"));
+const SubscriptionCancelPage = lazy(() => import("@/features/subscription/pages/SubscriptionCancelPage"));
 
 // Lazy-loaded Customer / Shared pages
 const BookingPage = lazy(() => import("@/features/booking/pages/BookingPage"));
@@ -181,9 +187,11 @@ const router = createBrowserRouter([
                     "SALON_OWNER"
                 ]}
             >
-                <Suspense fallback={<PageLoader />}>
-                    <OwnerLayout />
-                </Suspense>
+                <SubscriptionProvider>
+                    <Suspense fallback={<PageLoader />}>
+                        <OwnerLayout />
+                    </Suspense>
+                </SubscriptionProvider>
             </ProtectedRoute>
         ),
         children: [
@@ -262,6 +270,18 @@ const router = createBrowserRouter([
             {
                 path: "support",
                 element: withSuspense(HelpCenterPage)
+            },
+            {
+                path: "subscription",
+                element: withSuspense(SubscriptionPage)
+            },
+            {
+                path: "subscription/success",
+                element: withSuspense(SubscriptionSuccessPage)
+            },
+            {
+                path: "subscription/cancel",
+                element: withSuspense(SubscriptionCancelPage)
             }
         ]
     },

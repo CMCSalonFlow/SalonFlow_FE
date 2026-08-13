@@ -14,15 +14,22 @@ import {
     RobotOutlined,
     CustomerServiceOutlined,
     FileExcelOutlined,
-    QrcodeOutlined
+    QrcodeOutlined,
+    CrownOutlined,
+    LockOutlined
 } from "@ant-design/icons";
 
-import { Menu } from "antd";
+import { Menu, Tag } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 
 export default function OwnerSidebar() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { features } = useSubscription();
+
+    const hasAnalytics = features?.analyticsAdvanced ?? false;
+    const hasAi = features?.aiFeatures ?? false;
 
     const items = [
         {
@@ -31,9 +38,19 @@ export default function OwnerSidebar() {
             label: "Dashboard"
         },
         {
+            key: "/owner/subscription",
+            icon: <CrownOutlined style={{ color: "#faad14" }} />,
+            label: <span style={{ fontWeight: 600 }}>Gói Dịch Vụ</span>
+        },
+        {
             key: "/owner/reports",
             icon: <FileExcelOutlined />,
-            label: "Xuất Báo Cáo (Excel/PDF)"
+            label: (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                    <span>Báo Cáo Doanh Thu</span>
+                    {!hasAnalytics && <Tag color="blue" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>PRO</Tag>}
+                </div>
+            )
         },
         {
             key: "/owner/support",
@@ -58,17 +75,32 @@ export default function OwnerSidebar() {
         {
             key: "/owner/ai-smart-schedule",
             icon: <RobotOutlined />,
-            label: "AI Smart Schedule"
+            label: (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                    <span>AI Smart Schedule</span>
+                    {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
+                </div>
+            )
         },
         {
             key: "/owner/ai-no-show",
             icon: <AlertOutlined />,
-            label: "AI No-Show Prediction"
+            label: (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                    <span>AI No-Show Prediction</span>
+                    {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
+                </div>
+            )
         },
         {
             key: "/owner/services/ai",
             icon: <RobotOutlined />,
-            label: "Service AI"
+            label: (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                    <span>Service AI</span>
+                    {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
+                </div>
+            )
         },
         {
             key: "/owner/services",
@@ -105,7 +137,6 @@ export default function OwnerSidebar() {
             icon: <CalendarOutlined />,
             label: "Off Days"
         },
-        
         {
             key: "/owner/shifts",
             icon: <ClockCircleOutlined />,
@@ -116,9 +147,7 @@ export default function OwnerSidebar() {
             icon: <TagsOutlined />,
             label: "Categories"
         }
-
     ];
-
 
     const selectedKey =
         items.find(item =>

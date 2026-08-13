@@ -86,7 +86,14 @@ export const ENDPOINTS = {
     CUSTOMER_ANALYTICS_SEGMENTS: "/api/v1/owner/analytics/customers/segments",
     CUSTOMER_ANALYTICS_AI_GENERATE: "/api/v1/owner/analytics/customers/campaigns/ai-generate",
     CUSTOMER_ANALYTICS_EXECUTE_CAMPAIGN: "/api/v1/owner/analytics/customers/campaigns/execute",
-    CUSTOMER_ANALYTICS_CAMPAIGN_HISTORY: "/api/v1/owner/analytics/customers/campaigns/history"
+    CUSTOMER_ANALYTICS_CAMPAIGN_HISTORY: "/api/v1/owner/analytics/customers/campaigns/history",
+
+    // Subscriptions
+    SUBSCRIPTION_ME: "/api/v1/subscriptions/me",
+    SUBSCRIPTION_HISTORY: "/api/v1/subscriptions/history",
+    SUBSCRIPTION_CHECKOUT: "/api/v1/subscriptions/checkout",
+    SUBSCRIPTION_PORTAL: "/api/v1/subscriptions/portal",
+    SUBSCRIPTION_ADMIN_MANUAL: "/api/v1/subscriptions/admin/manual"
 };
 
 

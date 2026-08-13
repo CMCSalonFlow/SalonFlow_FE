@@ -20,8 +20,10 @@ import BranchUserModal from "../components/BranchUserModal";
 import {
     useBranch
 } from "../hooks/useBranch";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 
 export default function BranchListPage() {
+    const { openLimitModal } = useSubscription();
 
     const {
 
@@ -147,7 +149,11 @@ export default function BranchListPage() {
         } catch (error) {
             console.error("Submit error:", error);
             const errorMsg = error.response?.data?.message || error.message || "Đã xảy ra lỗi khi lưu!";
-            message.error(errorMsg);
+            if (errorMsg.includes("Giới hạn") || errorMsg.includes("hạn mức") || errorMsg.includes("vượt quá") || errorMsg.includes("gói đăng ký")) {
+                openLimitModal(errorMsg);
+            } else {
+                message.error(errorMsg);
+            }
         }
     };
 

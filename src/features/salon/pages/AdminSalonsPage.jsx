@@ -24,7 +24,8 @@ import {
     ShopOutlined,
     EyeOutlined,
     ExclamationCircleOutlined,
-    ClockCircleOutlined
+    ClockCircleOutlined,
+    CrownOutlined
 } from "@ant-design/icons";
 import {
     getAllSalonsApi,
@@ -33,6 +34,7 @@ import {
     rejectSalonApi,
     getSalonAuditsApi
 } from "../api/salonApi";
+import { activateManualEnterpriseApi } from "@/features/subscription/api/subscriptionApi";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -55,6 +57,11 @@ export default function AdminSalonsPage() {
 
     // Modal View Detail State
     const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+    // Enterprise Manual Activation State
+    const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false);
+    const [enterpriseForm] = Form.useForm();
+    const [submittingEnterprise, setSubmittingEnterprise] = useState(false);
 
     useEffect(() => {
         fetchSalons();
@@ -123,6 +130,34 @@ export default function AdminSalonsPage() {
             message.error("Không thể tải lịch sử Audit!");
         } finally {
             setLoadingAudits(false);
+        }
+    };
+
+    const handleOpenEnterpriseModal = (salon) => {
+        setSelectedSalon(salon);
+        enterpriseForm.resetFields();
+        setEnterpriseModalOpen(true);
+    };
+
+    const handleEnterpriseSubmit = async (values) => {
+        if (!selectedSalon) return;
+        setSubmittingEnterprise(true);
+        try {
+            await activateManualEnterpriseApi({
+                salonId: selectedSalon.id,
+                plan: "ENTERPRISE",
+                billingCycle: "MANUAL",
+                price: Number(values.price),
+                durationDays: Number(values.durationDays)
+            });
+            message.success("Đã kích hoạt gói Enterprise thành công cho Salon!");
+            setEnterpriseModalOpen(false);
+            fetchSalons();
+        } catch (error) {
+            console.error(error);
+            message.error(error.response?.data?.message || "Kích hoạt Enterprise thất bại!");
+        } finally {
+            setSubmittingEnterprise(false);
         }
     };
 
@@ -217,6 +252,16 @@ export default function AdminSalonsPage() {
                     >
                         Audit Log
                     </Button>
+
+                    {record.status === "APPROVED" && (
+                        <Button
+                            type="text"
+                            icon={<CrownOutlined style={{ color: "#faad14" }} />}
+                            onClick={() => handleOpenEnterpriseModal(record)}
+                        >
+                            Enterprise
+                        </Button>
+                    )}
 
                     {record.status === "PENDING" && (
                         <>
@@ -404,6 +449,46 @@ export default function AdminSalonsPage() {
                         )}
                     </Space>
                 )}
+            </Modal>
+
+            {/* Modal Enterprise Activation */}
+            <Modal
+                title={`Kích hoạt gói Enterprise cho Salon: ${selectedSalon?.name}`}
+                open={enterpriseModalOpen}
+                onCancel={() => setEnterpriseModalOpen(false)}
+                footer={null}
+            >
+                <Form
+                    form={enterpriseForm}
+                    layout="vertical"
+                    initialValues={{ price: 15000000, durationDays: 365 }}
+                    onFinish={handleEnterpriseSubmit}
+                >
+                    <Form.Item
+                        name="price"
+                        label="Chi phí thanh toán thỏa thuận (VND)"
+                        rules={[{ required: true, message: "Vui lòng nhập chi phí!" }]}
+                    >
+                        <Input type="number" placeholder="Ví dụ: 15000000" />
+                    </Form.Item>
+                    
+                    <Form.Item
+                        name="durationDays"
+                        label="Thời hạn sử dụng (ngày)"
+                        rules={[{ required: true, message: "Vui lòng nhập số ngày!" }]}
+                    >
+                        <Input type="number" placeholder="Ví dụ: 365" />
+                    </Form.Item>
+
+                    <div style={{ textAlign: "right", marginTop: 16 }}>
+                        <Space>
+                            <Button onClick={() => setEnterpriseModalOpen(false)}>Hủy</Button>
+                            <Button type="primary" htmlType="submit" loading={submittingEnterprise} style={{ backgroundColor: "#faad14", borderColor: "#faad14" }}>
+                                Xác nhận kích hoạt
+                            </Button>
+                        </Space>
+                    </div>
+                </Form>
             </Modal>
         </div>
     );

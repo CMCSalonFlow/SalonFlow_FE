@@ -7,10 +7,13 @@ import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import { getServicesByBranchApi, createServiceApi, updateServiceApi } from "@/features/service/api/serviceApi";
 import ServiceFormModal from "@/features/service/components/ServiceFormModal";
 import ServiceDescriptionAiPanel from "../components/ServiceDescriptionAiPanel";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
+import FeatureLockOverlay from "@/features/subscription/components/FeatureLockOverlay";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function ServiceDescriptionAiPage() {
+    const { features } = useSubscription();
     const navigate = useNavigate();
 
     const [loadingBranches, setLoadingBranches] = useState(true);
@@ -132,7 +135,12 @@ export default function ServiceDescriptionAiPage() {
     }
 
     return (
-        <div style={{ maxWidth: 1240, margin: "0 auto", padding: "8px 0 24px" }}>
+        <FeatureLockOverlay
+            allowed={features?.aiFeatures}
+            requiredPlan="ENTERPRISE"
+            description="Nâng cấp gói ENTERPRISE để mở khóa tính năng AI tự động đề xuất mô tả dịch vụ thu hút khách hàng."
+        >
+            <div style={{ maxWidth: 1240, margin: "0 auto", padding: "8px 0 24px" }}>
             <Card style={{ borderRadius: 18, marginBottom: 20 }}>
                 <Space direction="vertical" size={12} style={{ width: "100%" }}>
                     <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate("/owner/services")}>
@@ -202,5 +210,6 @@ export default function ServiceDescriptionAiPage() {
                 description="Nếu bạn đang cần tạo dịch vụ mới, hãy dùng nút 'Đưa vào form tạo mới' trong panel AI để điền nhanh mô tả, rồi bổ sung giá, thời lượng và danh mục trong dialog."
             />
         </div>
+        </FeatureLockOverlay>
     );
 }

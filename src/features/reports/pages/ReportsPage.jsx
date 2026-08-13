@@ -17,12 +17,15 @@ import { getReportDataApi, triggerWeeklyEmailApi } from '../api/reportApi';
 import { getMyBranchesApi } from '@/features/branch/api/branchApi';
 import { exportReportToExcel } from '../utils/excelReportGenerator';
 import { exportReportToPdf } from '../utils/pdfReportGenerator';
+import { useSubscription } from '@/features/subscription/hooks/useSubscription';
+import FeatureLockOverlay from '@/features/subscription/components/FeatureLockOverlay';
 
 const { Title, Text, Paragraph } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 export default function ReportsPage() {
+  const { features } = useSubscription();
   const [loading, setLoading] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [reportType, setReportType] = useState('doanh_thu');
@@ -146,146 +149,152 @@ export default function ReportsPage() {
   };
 
   return (
-    <div style={{ padding: '24px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      {/* CONTROL & FILTER CARD */}
-      <Card style={{ borderRadius: 16, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-        <Row justify="space-between" align="middle" gutter={[16, 16]}>
-          <Col>
-            <Space align="center" size="middle">
-              <div style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', padding: '12px 14px', borderRadius: 12, color: '#fff' }}>
-                <LineChartOutlined style={{ fontSize: 24 }} />
-              </div>
-              <div>
-                <Title level={3} style={{ margin: 0, fontWeight: 800 }}>
-                  Trung Tâm Xuất Báo Cáo SalonFlow
-                </Title>
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                  Xuất dữ liệu Excel/PDF theo khoảng thời gian tùy chọn & Cấu hình gửi Email định kỳ 8:00 AM Thứ 2 hàng tuần
-                </Text>
-              </div>
-            </Space>
-          </Col>
+    <FeatureLockOverlay
+      allowed={features?.analyticsAdvanced}
+      requiredPlan="PRO"
+      description="Nâng cấp gói PRO để mở khóa công cụ xuất báo cáo doanh số, hiệu suất nhân viên và dịch vụ sang định dạng Excel/PDF."
+    >
+      <div style={{ padding: '24px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+        {/* CONTROL & FILTER CARD */}
+        <Card style={{ borderRadius: 16, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+          <Row justify="space-between" align="middle" gutter={[16, 16]}>
+            <Col>
+              <Space align="center" size="middle">
+                <div style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', padding: '12px 14px', borderRadius: 12, color: '#fff' }}>
+                  <LineChartOutlined style={{ fontSize: 24 }} />
+                </div>
+                <div>
+                  <Title level={3} style={{ margin: 0, fontWeight: 800 }}>
+                    Trung Tâm Xuất Báo Cáo SalonFlow
+                  </Title>
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    Xuất dữ liệu Excel/PDF theo khoảng thời gian tùy chọn & Cấu hình gửi Email định kỳ 8:00 AM Thứ 2 hàng tuần
+                  </Text>
+                </div>
+              </Space>
+            </Col>
 
-          <Col>
-            <Space wrap size="small">
-              <Button
-                type="primary"
-                icon={<FileExcelOutlined />}
-                size="large"
-                style={{ backgroundColor: '#10b981', borderColor: '#10b981', borderRadius: 8, fontWeight: 600 }}
-                onClick={handleExportExcel}
-              >
-                Xuất Excel (.xlsx)
-              </Button>
+            <Col>
+              <Space wrap size="small">
+                <Button
+                  type="primary"
+                  icon={<FileExcelOutlined />}
+                  size="large"
+                  style={{ backgroundColor: '#10b981', borderColor: '#10b981', borderRadius: 8, fontWeight: 600 }}
+                  onClick={handleExportExcel}
+                >
+                  Xuất Excel (.xlsx)
+                </Button>
 
-              <Button
-                type="primary"
-                icon={<FilePdfOutlined />}
-                size="large"
-                style={{ backgroundColor: '#ef4444', borderColor: '#ef4444', borderRadius: 8, fontWeight: 600 }}
-                onClick={handleExportPdf}
-              >
-                Xuất PDF (.pdf)
-              </Button>
+                <Button
+                  type="primary"
+                  icon={<FilePdfOutlined />}
+                  size="large"
+                  style={{ backgroundColor: '#ef4444', borderColor: '#ef4444', borderRadius: 8, fontWeight: 600 }}
+                  onClick={handleExportPdf}
+                >
+                  Xuất PDF (.pdf)
+                </Button>
 
-              <Button
-                type="default"
-                icon={<MailOutlined />}
-                size="large"
-                loading={emailLoading}
-                style={{ borderRadius: 8, borderColor: '#6366f1', color: '#6366f1', fontWeight: 600 }}
-                onClick={handleTriggerEmail}
-              >
-                Gửi Email 8h Sáng T2
-              </Button>
-            </Space>
-          </Col>
-        </Row>
+                <Button
+                  type="default"
+                  icon={<MailOutlined />}
+                  size="large"
+                  loading={emailLoading}
+                  style={{ borderRadius: 8, borderColor: '#6366f1', color: '#6366f1', fontWeight: 600 }}
+                  onClick={handleTriggerEmail}
+                >
+                  Gửi Email 8h Sáng T2
+                </Button>
+              </Space>
+            </Col>
+          </Row>
 
-        <Divider style={{ margin: '16px 0' }} />
+          <Divider style={{ margin: '16px 0' }} />
 
-        <Row justify="space-between" align="middle" gutter={[16, 16]}>
-          <Col>
-            <Space wrap size="middle">
-              <Text strong style={{ fontSize: 14 }}>Loại báo cáo:</Text>
-              <Segmented
-                options={[
-                  { label: '💰 Doanh Thu', value: 'doanh_thu', icon: <LineChartOutlined /> },
-                  { label: '👥 Hiệu Suất Nhân Viên', value: 'nhan_vien', icon: <TeamOutlined /> },
-                  { label: '✂️ Sử Dụng Dịch Vụ', value: 'dich_vu', icon: <ScissorOutlined /> }
-                ]}
-                value={reportType}
-                onChange={(val) => setReportType(val)}
-                size="large"
-              />
-            </Space>
-          </Col>
+          <Row justify="space-between" align="middle" gutter={[16, 16]}>
+            <Col>
+              <Space wrap size="middle">
+                <Text strong style={{ fontSize: 14 }}>Loại báo cáo:</Text>
+                <Segmented
+                  options={[
+                    { label: '💰 Doanh Thu', value: 'doanh_thu', icon: <LineChartOutlined /> },
+                    { label: '👥 Hiệu Suất Nhân Viên', value: 'nhan_vien', icon: <TeamOutlined /> },
+                    { label: '✂️ Sử Dụng Dịch Vụ', value: 'dich_vu', icon: <ScissorOutlined /> }
+                  ]}
+                  value={reportType}
+                  onChange={(val) => setReportType(val)}
+                  size="large"
+                />
+              </Space>
+            </Col>
 
-          <Col>
-            <Space wrap size="middle">
-              <Text strong style={{ fontSize: 14 }}>Kỳ báo cáo:</Text>
-              <RangePicker
-                value={dateRange}
-                onChange={(dates) => setDateRange(dates)}
-                size="large"
-                style={{ borderRadius: 8 }}
-              />
+            <Col>
+              <Space wrap size="middle">
+                <Text strong style={{ fontSize: 14 }}>Kỳ báo cáo:</Text>
+                <RangePicker
+                  value={dateRange}
+                  onChange={(dates) => setDateRange(dates)}
+                  size="large"
+                  style={{ borderRadius: 8 }}
+                />
 
-              <Select
-                placeholder="Tất cả chi nhánh"
-                value={selectedBranchId}
-                onChange={(val) => setSelectedBranchId(val)}
-                allowClear
-                style={{ width: 180, borderRadius: 8 }}
-                size="large"
-              >
-                {branches.map((b) => (
-                  <Option key={b.id} value={b.id}>{b.name}</Option>
-                ))}
-              </Select>
+                <Select
+                  placeholder="Tất cả chi nhánh"
+                  value={selectedBranchId}
+                  onChange={(val) => setSelectedBranchId(val)}
+                  allowClear
+                  style={{ width: 180, borderRadius: 8 }}
+                  size="large"
+                >
+                  {branches.map((b) => (
+                    <Option key={b.id} value={b.id}>{b.name}</Option>
+                  ))}
+                </Select>
 
-              <Button
-                icon={<ReloadOutlined />}
-                size="large"
-                style={{ borderRadius: 8 }}
-                onClick={fetchReportData}
-              >
-                Tải lại
-              </Button>
-            </Space>
-          </Col>
-        </Row>
-      </Card>
+                <Button
+                  icon={<ReloadOutlined />}
+                  size="large"
+                  style={{ borderRadius: 8 }}
+                  onClick={fetchReportData}
+                >
+                  Tải lại
+                </Button>
+              </Space>
+            </Col>
+          </Row>
+        </Card>
 
-      {/* PRINTABLE PREVIEW CONTAINER FOR PDF & EXCEL DATA */}
-      <Card
-        id="printable-report-area"
-        style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.03)', padding: 12 }}
-      >
-        {/* REPORT PRINT HEADER BANNER */}
-        <div style={{ textAlign: 'center', marginBottom: 24, paddingBottom: 16, borderBottom: '2px solid #4f46e5' }}>
-          <Title level={3} style={{ margin: 0, color: '#4f46e5', fontWeight: 800 }}>
-            📊 BÁO CÁO SALONFLOW - {reportType === 'nhan_vien' ? 'HIỆU SUẤT NHÂN VIÊN' : reportType === 'dich_vu' ? 'SỬ DỤNG DỊCH VỤ' : 'DOANH THU KINH DOANH'}
-          </Title>
-          <Text type="secondary" style={{ fontSize: 13, marginTop: 4, display: 'block' }}>
-            Thời gian từ: <strong>{dateRange && dateRange[0] ? dateRange[0].format('DD/MM/YYYY') : '---'}</strong> đến: <strong>{dateRange && dateRange[1] ? dateRange[1].format('DD/MM/YYYY') : '---'}</strong>
-          </Text>
-        </div>
-
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <Spin size="large" tip="Đang tổng hợp dữ liệu báo cáo..." />
+        {/* PRINTABLE PREVIEW CONTAINER FOR PDF & EXCEL DATA */}
+        <Card
+          id="printable-report-area"
+          style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.03)', padding: 12 }}
+        >
+          {/* REPORT PRINT HEADER BANNER */}
+          <div style={{ textAlign: 'center', marginBottom: 24, paddingBottom: 16, borderBottom: '2px solid #4f46e5' }}>
+            <Title level={3} style={{ margin: 0, color: '#4f46e5', fontWeight: 800 }}>
+              📊 BÁO CÁO SALONFLOW - {reportType === 'nhan_vien' ? 'HIỆU SUẤT NHÂN VIÊN' : reportType === 'dich_vu' ? 'SỬ DỤNG DỊCH VỤ' : 'DOANH THU KINH DOANH'}
+            </Title>
+            <Text type="secondary" style={{ fontSize: 13, marginTop: 4, display: 'block' }}>
+              Thời gian từ: <strong>{dateRange && dateRange[0] ? dateRange[0].format('DD/MM/YYYY') : '---'}</strong> đến: <strong>{dateRange && dateRange[1] ? dateRange[1].format('DD/MM/YYYY') : '---'}</strong>
+            </Text>
           </div>
-        ) : (
-          <Table
-            dataSource={getDataSource()}
-            columns={getTableColumns()}
-            rowKey={(r, i) => r.staffId || r.serviceId || i}
-            pagination={{ pageSize: 15 }}
-            bordered
-          />
-        )}
-      </Card>
-    </div>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <Spin size="large" tip="Đang tổng hợp dữ liệu báo cáo..." />
+            </div>
+          ) : (
+            <Table
+              dataSource={getDataSource()}
+              columns={getTableColumns()}
+              rowKey={(r, i) => r.staffId || r.serviceId || i}
+              pagination={{ pageSize: 15 }}
+              bordered
+            />
+          )}
+        </Card>
+      </div>
+    </FeatureLockOverlay>
   );
 }

@@ -3,6 +3,7 @@ import { Card, Select, Button, Table, Tag, Space, Popconfirm, message, Typograph
 import { UserAddOutlined, EditOutlined, DeleteOutlined, ShopOutlined, IdcardOutlined, ContactsOutlined } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import { getServicesByBranchApi } from "@/features/service/api/serviceApi";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 import {
     getStaffByBranchApi,
     createStaffApi,
@@ -17,6 +18,7 @@ const { Title, Text, Paragraph } = Typography;
  * Trang quản lý nhân sự (StaffManagementPage) dành cho chủ Salon (Owner).
  */
 export default function StaffManagementPage() {
+    const { openLimitModal } = useSubscription();
     const [loadingBranches, setLoadingBranches] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
     const [branches, setBranches] = useState([]);
@@ -90,7 +92,12 @@ export default function StaffManagementPage() {
             setEditingStaff(null);
             loadData(selectedBranchId);
         } catch (error) {
-            message.error(error.response?.data?.message || "Lỗi khi lưu thông tin nhân viên.");
+            const errorMsg = error.response?.data?.message || "Lỗi khi lưu thông tin nhân viên.";
+            if (errorMsg.includes("Giới hạn") || errorMsg.includes("hạn mức") || errorMsg.includes("vượt quá") || errorMsg.includes("gói đăng ký")) {
+                openLimitModal(errorMsg);
+            } else {
+                message.error(errorMsg);
+            }
             setLoadingData(false);
         }
     };

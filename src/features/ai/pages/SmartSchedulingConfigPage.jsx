@@ -34,10 +34,13 @@ import {
 } from "@/features/ai/api/smartSchedulingApi";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import dayjs from "dayjs";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
+import FeatureLockOverlay from "@/features/subscription/components/FeatureLockOverlay";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function SmartSchedulingConfigPage() {
+    const { features } = useSubscription();
     const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState(null);
     const [loadingConfig, setLoadingConfig] = useState(false);
@@ -192,7 +195,12 @@ export default function SmartSchedulingConfigPage() {
     ];
 
     return (
-        <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
+        <FeatureLockOverlay
+            allowed={features?.aiFeatures}
+            requiredPlan="ENTERPRISE"
+            description="Nâng cấp gói ENTERPRISE để mở khóa thuật toán AI Smart Scheduling giúp tự động tính toán, sắp xếp lịch hẹn tối ưu công suất chi nhánh."
+        >
+            <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
                 <div>
@@ -442,5 +450,6 @@ export default function SmartSchedulingConfigPage() {
                 )}
             </Modal>
         </div>
+        </FeatureLockOverlay>
     );
 }

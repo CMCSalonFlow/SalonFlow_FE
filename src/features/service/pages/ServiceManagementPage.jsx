@@ -15,10 +15,13 @@ import {
 } from "../api/serviceApi";
 import ServiceFormModal from "../components/ServiceFormModal";
 import BundleFormModal from "../components/BundleFormModal";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
+import { Tooltip } from "antd";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function ServiceManagementPage() {
+    const { features } = useSubscription();
     const navigate = useNavigate();
     const [loadingBranches, setLoadingBranches] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
@@ -377,9 +380,14 @@ export default function ServiceManagementPage() {
                         <Text type="secondary">Quản lý danh sách dịch vụ, combo và mở trang AI mô tả dịch vụ khi cần.</Text>
                     </div>
                     <Space wrap>
-                        <Button onClick={() => navigate("/owner/services/ai")}>
-                            Mở AI mô tả dịch vụ
-                        </Button>
+                        <Tooltip title={!(features?.aiFeatures) ? "Yêu cầu nâng cấp gói ENTERPRISE để sử dụng tính năng AI" : ""}>
+                            <Button 
+                                disabled={!(features?.aiFeatures)}
+                                onClick={() => navigate("/owner/services/ai")}
+                            >
+                                Mở AI mô tả dịch vụ
+                            </Button>
+                        </Tooltip>
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}

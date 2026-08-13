@@ -40,6 +40,8 @@ import PeakHourHeatmapChart from "@/features/dashboard/components/PeakHourHeatma
 import CustomerAnalyticsPage from "@/features/dashboard/pages/CustomerAnalyticsPage";
 import StaffPerformanceReportTab from "@/features/dashboard/components/StaffPerformanceReportTab";
 import ReviewAnalyticsTab from "@/features/review/components/ReviewAnalyticsTab";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
+import FeatureLockOverlay from "@/features/subscription/components/FeatureLockOverlay";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -49,6 +51,7 @@ const formatCurrency = (amount) =>
 const getOverviewValue = (value) => (value === null || value === undefined ? 0 : value);
 
 export default function OwnerDashboardPage() {
+    const { features } = useSubscription();
     const [branches, setBranches] = useState([]);
     const [salonId, setSalonId] = useState(null);
     const [selectedBranchId, setSelectedBranchId] = useState(() => localStorage.getItem("currentBranchId") || "");
@@ -316,7 +319,13 @@ export default function OwnerDashboardPage() {
                         </Col>
                     </Row>
 
-                    <PeakHourHeatmapChart branchId={selectedBranchId} />
+                    <FeatureLockOverlay 
+                        allowed={features?.analyticsAdvanced} 
+                        requiredPlan="PRO"
+                        description="Xem biểu đồ giờ cao điểm chi tiết để tối ưu hóa thời gian mở cửa và ca kíp nhân viên."
+                    >
+                        <PeakHourHeatmapChart branchId={selectedBranchId} />
+                    </FeatureLockOverlay>
                 </Space>
             )
         },
@@ -329,83 +338,89 @@ export default function OwnerDashboardPage() {
                 </Space>
             ),
             children: (
-                <Space direction="vertical" size={20} style={{ width: "100%" }}>
-                    <Card bordered={false} style={{ borderRadius: 16, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-                        <Row align="middle" justify="space-between" gutter={[16, 16]}>
-                            <Col xs={24} lg={18}>
-                                <RevenuePeriodFilter
-                                    period={period}
-                                    onPeriodChange={setPeriod}
-                                    dateRange={dateRange}
-                                    onDateRangeChange={setDateRange}
-                                />
-                            </Col>
-                            <Col xs={24} lg={6} style={{ textAlign: "right" }}>
-                                <Text type="secondary">
-                                    Khoảng lọc: {revenueData?.fromDate || "..."} → {revenueData?.toDate || "..."}
-                                </Text>
-                            </Col>
-                        </Row>
-                    </Card>
-
-                    <Row gutter={[16, 16]}>
-                        <Col xs={24} md={8}>
-                            <Card bordered={false} style={{ borderRadius: 16 }}>
-                                <Statistic
-                                    title="Tổng doanh thu"
-                                    value={revenueData?.totalRevenue || 0}
-                                    formatter={(value) => formatCurrency(value)}
-                                />
-                            </Card>
-                        </Col>
-                        <Col xs={24} md={8}>
-                            <Card bordered={false} style={{ borderRadius: 16 }}>
-                                <Statistic
-                                    title="Cùng kỳ năm ngoái"
-                                    value={revenueData?.totalPreviousYearRevenue || 0}
-                                    formatter={(value) => formatCurrency(value)}
-                                />
-                            </Card>
-                        </Col>
-                        <Col xs={24} md={8}>
-                            <Card bordered={false} style={{ borderRadius: 16 }}>
-                                <Statistic
-                                    title="Tăng trưởng YoY"
-                                    value={revenueData?.overallYoYGrowthRate || 0}
-                                    precision={1}
-                                    suffix="%"
-                                />
-                            </Card>
-                        </Col>
-                    </Row>
-
-                    {revenueLoading ? (
-                        <div style={{ textAlign: "center", padding: "60px 0" }}>
-                            <Spin size="large" tip="Đang tải dữ liệu doanh thu..." />
-                        </div>
-                    ) : (
-                        <Row gutter={[16, 16]}>
-                            <Col xs={24} lg={14}>
-                                <Card bordered={false} style={{ borderRadius: 16, height: "100%" }}>
-                                    <RevenueTrendChart
-                                        timeline={revenueTimeline}
+                <FeatureLockOverlay
+                    allowed={features?.analyticsAdvanced}
+                    requiredPlan="PRO"
+                    description="Theo dõi chi tiết doanh thu thực tế, so sánh doanh số cùng kỳ năm ngoái và phân tích dịch vụ hàng đầu."
+                >
+                    <Space direction="vertical" size={20} style={{ width: "100%" }}>
+                        <Card bordered={false} style={{ borderRadius: 16, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                            <Row align="middle" justify="space-between" gutter={[16, 16]}>
+                                <Col xs={24} lg={18}>
+                                    <RevenuePeriodFilter
                                         period={period}
-                                        peakPeriod={revenueData?.peakPeriod || null}
-                                        overallYoY={revenueData?.overallYoYGrowthRate || 0}
+                                        onPeriodChange={setPeriod}
+                                        dateRange={dateRange}
+                                        onDateRangeChange={setDateRange}
+                                    />
+                                </Col>
+                                <Col xs={24} lg={6} style={{ textAlign: "right" }}>
+                                    <Text type="secondary">
+                                        Khoảng lọc: {revenueData?.fromDate || "..."} → {revenueData?.toDate || "..."}
+                                    </Text>
+                                </Col>
+                            </Row>
+                        </Card>
+
+                        <Row gutter={[16, 16]}>
+                            <Col xs={24} md={8}>
+                                <Card bordered={false} style={{ borderRadius: 16 }}>
+                                    <Statistic
+                                        title="Tổng doanh thu"
+                                        value={revenueData?.totalRevenue || 0}
+                                        formatter={(value) => formatCurrency(value)}
                                     />
                                 </Card>
                             </Col>
-                            <Col xs={24} lg={10}>
-                                <Card bordered={false} style={{ borderRadius: 16, height: "100%" }}>
-                                    <ServiceBreakdownChart
-                                        breakdown={serviceBreakdown}
-                                        totalRevenue={revenueData?.totalRevenue || 0}
+                            <Col xs={24} md={8}>
+                                <Card bordered={false} style={{ borderRadius: 16 }}>
+                                    <Statistic
+                                        title="Cùng kỳ năm ngoái"
+                                        value={revenueData?.totalPreviousYearRevenue || 0}
+                                        formatter={(value) => formatCurrency(value)}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col xs={24} md={8}>
+                                <Card bordered={false} style={{ borderRadius: 16 }}>
+                                    <Statistic
+                                        title="Tăng trưởng YoY"
+                                        value={revenueData?.overallYoYGrowthRate || 0}
+                                        precision={1}
+                                        suffix="%"
                                     />
                                 </Card>
                             </Col>
                         </Row>
-                    )}
-                </Space>
+
+                        {revenueLoading ? (
+                            <div style={{ textAlign: "center", padding: "60px 0" }}>
+                                <Spin size="large" tip="Đang tải dữ liệu doanh thu..." />
+                            </div>
+                        ) : (
+                            <Row gutter={[16, 16]}>
+                                <Col xs={24} lg={14}>
+                                    <Card bordered={false} style={{ borderRadius: 16, height: "100%" }}>
+                                        <RevenueTrendChart
+                                            timeline={revenueTimeline}
+                                            period={period}
+                                            peakPeriod={revenueData?.peakPeriod || null}
+                                            overallYoY={revenueData?.overallYoYGrowthRate || 0}
+                                        />
+                                    </Card>
+                                </Col>
+                                <Col xs={24} lg={10}>
+                                    <Card bordered={false} style={{ borderRadius: 16, height: "100%" }}>
+                                        <ServiceBreakdownChart
+                                            breakdown={serviceBreakdown}
+                                            totalRevenue={revenueData?.totalRevenue || 0}
+                                        />
+                                    </Card>
+                                </Col>
+                            </Row>
+                        )}
+                    </Space>
+                </FeatureLockOverlay>
             )
         },
         {
@@ -417,7 +432,13 @@ export default function OwnerDashboardPage() {
                 </Space>
             ),
             children: (
-                <CustomerAnalyticsPage branchId={selectedBranchId} />
+                <FeatureLockOverlay
+                    allowed={features?.analyticsAdvanced}
+                    requiredPlan="PRO"
+                    description="Phân tích phân khúc khách hàng, tỷ lệ chuyển đổi và đề xuất chiến dịch marketing thông minh."
+                >
+                    <CustomerAnalyticsPage branchId={selectedBranchId} />
+                </FeatureLockOverlay>
             )
         },
         {
@@ -429,7 +450,13 @@ export default function OwnerDashboardPage() {
                 </Space>
             ),
             children: (
-                <StaffPerformanceReportTab selectedBranchId={selectedBranchId} />
+                <FeatureLockOverlay
+                    allowed={features?.analyticsAdvanced}
+                    requiredPlan="PRO"
+                    description="Đánh giá hiệu suất phục vụ, năng suất lịch hẹn và doanh số mang lại từ từng nhân viên."
+                >
+                    <StaffPerformanceReportTab selectedBranchId={selectedBranchId} />
+                </FeatureLockOverlay>
             )
         },
         {

@@ -14,10 +14,13 @@ import {
 } from '../api/noShowApi';
 import NoShowWarningBadge from '../components/NoShowWarningBadge';
 import { getMyBranchesApi } from '@/features/branch/api/branchApi';
+import { useSubscription } from '@/features/subscription/hooks/useSubscription';
+import FeatureLockOverlay from '@/features/subscription/components/FeatureLockOverlay';
 
 const { Title, Text } = Typography;
 
 const NoShowDashboardPage = () => {
+    const { features } = useSubscription();
     const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -211,7 +214,12 @@ const NoShowDashboardPage = () => {
     }, '');
 
     return (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 0" }} className="space-y-6">
+        <FeatureLockOverlay
+            allowed={features?.aiFeatures}
+            requiredPlan="ENTERPRISE"
+            description="Nâng cấp gói ENTERPRISE để mở khóa tính năng AI No-Show Prediction giúp dự đoán và cảnh báo những lịch đặt hẹn có nguy cơ bùng kèo cao."
+        >
+            <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 0" }} className="space-y-6">
             {/* Header Banner - Chuẩn Layout Hệ Thống */}
             <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
                 <Col>
@@ -524,6 +532,7 @@ const NoShowDashboardPage = () => {
                 />
             </Card>
         </div>
+        </FeatureLockOverlay>
     );
 };
 
