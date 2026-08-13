@@ -134,9 +134,9 @@ export default function ReportsPage() {
     // Doanh thu
     return [
       { title: '#', render: (_, __, i) => i + 1, width: 60 },
-      { title: 'Thời Gian', dataIndex: 'dateLabel', key: 'dateLabel', render: (t, r) => <Text strong>{t || r.periodLabel}</Text> },
+      { title: 'Thời Gian', dataIndex: 'label', key: 'label', render: (t, r) => <Text strong>{t || r.dateLabel || r.periodLabel}</Text> },
       { title: 'Số Đơn Hàng', dataIndex: 'bookingCount', key: 'bookingCount', render: (v) => <Tag color="green">{v || 0} đơn</Tag> },
-      { title: 'Doanh Thu', dataIndex: 'revenue', key: 'revenue', render: (v) => <Text strong style={{ color: '#4f46e5', fontSize: 15 }}>{Number(v || 0).toLocaleString('vi-VN')} đ</Text> },
+      { title: 'Doanh Thu', dataIndex: 'currentRevenue', key: 'currentRevenue', render: (v, r) => <Text strong style={{ color: '#4f46e5', fontSize: 15 }}>{Number(v || r.revenue || 0).toLocaleString('vi-VN')} đ</Text> },
       { title: 'Trạng Thái', render: () => <Tag color="success">Đã hoàn thành</Tag> }
     ];
   };
