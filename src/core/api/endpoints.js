@@ -93,7 +93,9 @@ export const ENDPOINTS = {
     SUBSCRIPTION_HISTORY: "/api/v1/subscriptions/history",
     SUBSCRIPTION_CHECKOUT: "/api/v1/subscriptions/checkout",
     SUBSCRIPTION_PORTAL: "/api/v1/subscriptions/portal",
-    SUBSCRIPTION_ADMIN_MANUAL: "/api/v1/subscriptions/admin/manual"
+    SUBSCRIPTION_ADMIN_MANUAL: "/api/v1/subscriptions/admin/manual",
+    SUBSCRIPTION_ADMIN_LIST: "/api/v1/subscriptions/admin",
+    SUBSCRIPTION_ADMIN_BY_ID: (id) => `/api/v1/subscriptions/admin/${id}`
 };
 
 

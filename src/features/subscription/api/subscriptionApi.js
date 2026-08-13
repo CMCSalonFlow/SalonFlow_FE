@@ -53,3 +53,37 @@ export const activateManualEnterpriseApi = async (payload) => {
     const res = await api.post(ENDPOINTS.SUBSCRIPTION_ADMIN_MANUAL, payload);
     return res.data;
 };
+
+/**
+ * Lấy danh sách toàn bộ gói đăng ký (Phân trang & Lọc) - Dành cho Admin
+ * @param {Object} params
+ * @param {number} [params.salonId]
+ * @param {string} [params.plan]
+ * @param {string} [params.status]
+ * @param {number} [params.page]
+ * @param {number} [params.size]
+ * @param {string} [params.sort]
+ */
+export const getSubscriptionsAdminApi = async (params) => {
+    const res = await api.get(ENDPOINTS.SUBSCRIPTION_ADMIN_LIST, { params });
+    return res.data;
+};
+
+/**
+ * Cập nhật thông tin gói đăng ký - Dành cho Admin
+ * @param {number|string} id
+ * @param {Object} payload
+ */
+export const updateSubscriptionAdminApi = async (id, payload) => {
+    const res = await api.put(ENDPOINTS.SUBSCRIPTION_ADMIN_BY_ID(id), payload);
+    return res.data;
+};
+
+/**
+ * Hủy/Thu hồi gói đăng ký của Salon - Dành cho Admin
+ * @param {number|string} id
+ */
+export const deleteSubscriptionAdminApi = async (id) => {
+    const res = await api.delete(ENDPOINTS.SUBSCRIPTION_ADMIN_BY_ID(id));
+    return res.data;
+};

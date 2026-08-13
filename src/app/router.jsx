@@ -59,6 +59,7 @@ const ReviewAdminPage = lazy(() => import("@/features/review/pages/ReviewAdminPa
 const SubscriptionPage = lazy(() => import("@/features/subscription/pages/SubscriptionPage"));
 const SubscriptionSuccessPage = lazy(() => import("@/features/subscription/pages/SubscriptionSuccessPage"));
 const SubscriptionCancelPage = lazy(() => import("@/features/subscription/pages/SubscriptionCancelPage"));
+const AdminSubscriptionPage = lazy(() => import("@/features/subscription/pages/AdminSubscriptionPage"));
 
 // Lazy-loaded Customer / Shared pages
 const BookingPage = lazy(() => import("@/features/booking/pages/BookingPage"));
@@ -176,6 +177,10 @@ const router = createBrowserRouter([
             {
                 path: "tickets",
                 element: withSuspense(AdminSupportTicketPage)
+            },
+            {
+                path: "subscriptions",
+                element: withSuspense(AdminSubscriptionPage)
             },
         ]
     },

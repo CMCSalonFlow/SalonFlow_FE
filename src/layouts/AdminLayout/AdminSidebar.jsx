@@ -9,7 +9,8 @@ import {
     ApartmentOutlined,
     MessageOutlined,
     ShopOutlined,
-    CustomerServiceOutlined
+    CustomerServiceOutlined,
+    CreditCardOutlined
 } from "@ant-design/icons";
 
 import {
@@ -45,6 +46,11 @@ export default function AdminSidebar() {
                 key: "/admin/salons",
                 icon: <ShopOutlined />,
                 label: "Duyệt Salon"
+            },
+            {
+                key: "/admin/subscriptions",
+                icon: <CreditCardOutlined />,
+                label: "Quản lý Gói đăng ký"
             },
             {
                 key: "/admin/tickets",
