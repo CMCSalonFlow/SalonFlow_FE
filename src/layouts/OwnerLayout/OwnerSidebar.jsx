@@ -15,8 +15,7 @@ import {
     CustomerServiceOutlined,
     FileExcelOutlined,
     QrcodeOutlined,
-    CrownOutlined,
-    LockOutlined
+    CrownOutlined
 } from "@ant-design/icons";
 
 import { Menu, Tag } from "antd";
@@ -88,16 +87,6 @@ export default function OwnerSidebar() {
             label: (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                     <span>AI No-Show Prediction</span>
-                    {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
-                </div>
-            )
-        },
-        {
-            key: "/owner/services/ai",
-            icon: <RobotOutlined />,
-            label: (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                    <span>Service AI</span>
                     {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
                 </div>
             )

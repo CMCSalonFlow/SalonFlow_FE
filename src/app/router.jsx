@@ -43,7 +43,6 @@ const VoucherManagementPage = lazy(() => import("@/features/voucher/pages/Vouche
 const OwnerDashboardPage = lazy(() => import("@/features/dashboard/pages/OwnerDashboardPage"));
 const MySalonPage = lazy(() => import("@/features/salon/pages/MySalonPage"));
 const ServiceManagementPage = lazy(() => import("@/features/service/pages/ServiceManagementPage"));
-const ServiceDescriptionAiPage = lazy(() => import("@/features/service-description-ai/pages/ServiceDescriptionAiPage"));
 const StaffManagementPage = lazy(() => import("@/features/staff/pages/StaffManagementPage"));
 const SchedulePage = lazy(() => import("@/features/schedule/pages/SchedulePage"));
 const ShiftTemplatePage = lazy(() => import("@/features/shift/pages/ShiftTemplatePage"));
@@ -215,10 +214,6 @@ const router = createBrowserRouter([
             {
                 path: "services",
                 element: withSuspense(ServiceManagementPage)
-            },
-            {
-                path: "services/ai",
-                element: withSuspense(ServiceDescriptionAiPage)
             },
             {
                 path: "staff",

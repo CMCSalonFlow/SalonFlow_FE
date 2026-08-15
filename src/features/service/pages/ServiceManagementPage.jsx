@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, Select, Tabs, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin } from "antd";
 import { AppstoreOutlined, PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
     getServicesByBranchApi,
@@ -16,13 +15,11 @@ import {
 import ServiceFormModal from "../components/ServiceFormModal";
 import BundleFormModal from "../components/BundleFormModal";
 import { useSubscription } from "@/features/subscription/hooks/useSubscription";
-import { Tooltip } from "antd";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function ServiceManagementPage() {
     const { features } = useSubscription();
-    const navigate = useNavigate();
     const [loadingBranches, setLoadingBranches] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
     const [branches, setBranches] = useState([]);
@@ -377,17 +374,9 @@ export default function ServiceManagementPage() {
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
                     <div>
                         <Title level={4} style={{ marginBottom: 4 }}>Dịch vụ & Combo</Title>
-                        <Text type="secondary">Quản lý danh sách dịch vụ, combo và mở trang AI mô tả dịch vụ khi cần.</Text>
+                        <Text type="secondary">Quản lý danh sách dịch vụ, combo và tạo mô tả bằng AI ngay trong form thêm/sửa.</Text>
                     </div>
                     <Space wrap>
-                        <Tooltip title={!(features?.aiFeatures) ? "Yêu cầu nâng cấp gói ENTERPRISE để sử dụng tính năng AI" : ""}>
-                            <Button 
-                                disabled={!(features?.aiFeatures)}
-                                onClick={() => navigate("/owner/services/ai")}
-                            >
-                                Mở AI mô tả dịch vụ
-                            </Button>
-                        </Tooltip>
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
@@ -479,6 +468,7 @@ export default function ServiceManagementPage() {
                 }}
                 onSubmit={handleServiceSubmit}
                 initialValues={editingService}
+                enableAiDescription={features?.aiFeatures}
             />
 
             {/* Bundle Edit/Create Form Modal */}
