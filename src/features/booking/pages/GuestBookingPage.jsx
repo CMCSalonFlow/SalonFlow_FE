@@ -9,6 +9,7 @@ import { getPublicStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getPublicAvailabilityApi, createPublicBookingApi } from "../api/bookingApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
+import AiBookingChatbot from "@/features/chatbot/components/AiBookingChatbot";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -367,6 +368,7 @@ export default function GuestBookingPage() {
     const { price: totalPrice, duration: totalDuration } = getBookingSummary();
     const depositAmount = getBookingDepositAmount();
     const payableAmount = depositAmount > 0 ? depositAmount : totalPrice;
+    const selectedBranchName = branches.find(b => b.id === selectedBranchId)?.name;
 
     return (
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 0" }}>
@@ -792,6 +794,16 @@ export default function GuestBookingPage() {
                     </Card>
                 </Col>
             </Row>
+
+            <AiBookingChatbot
+                branchId={selectedBranchId}
+                branchName={selectedBranchName}
+                bookingMode="guest"
+                onHumanHandoff={() => {
+                    setCurrentStep(0);
+                    message.info("Bạn có thể tiếp tục đặt lịch bằng biểu mẫu thường.");
+                }}
+            />
         </div>
     );
 }

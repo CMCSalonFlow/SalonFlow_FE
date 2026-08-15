@@ -19,6 +19,7 @@ import StepServiceSelection from "../components/StepServiceSelection";
 import StepTimeSlots from "../components/StepTimeSlots";
 import NormalBookingForm from "../components/NormalBookingForm";
 import RecurringBookingForm from "../components/RecurringBookingForm";
+import AiBookingChatbot from "@/features/chatbot/components/AiBookingChatbot";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -602,6 +603,7 @@ export default function BookingPage() {
     const { price: totalPrice, duration: totalDuration } = getBookingSummary();
     const depositAmount = getBookingDepositAmount();
     const payableAmount = depositAmount > 0 ? depositAmount : totalPrice;
+    const selectedBranchName = branches.find(b => b.id === selectedBranchId)?.name;
 
     return (
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 0" }}>
@@ -859,6 +861,17 @@ export default function BookingPage() {
                     />
                 </Col>
             </Row>
+
+            <AiBookingChatbot
+                branchId={selectedBranchId}
+                branchName={selectedBranchName}
+                bookingMode="customer"
+                onHumanHandoff={() => {
+                    setCurrentStep(0);
+                    setIsRecurringMode(false);
+                    message.info("Bạn có thể tiếp tục đặt lịch bằng biểu mẫu thường.");
+                }}
+            />
         </div>
     );
 }
