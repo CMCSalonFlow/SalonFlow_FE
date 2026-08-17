@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Rate, Input, Upload, Button, Alert, message, Typography } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { createBookingReviewApi } from "../api/reviewApi";
 import { uploadMediaApi } from "@/features/media/api/mediaApi";
 
@@ -9,6 +9,7 @@ const { TextArea } = Input;
 
 const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
     const [rating, setRating] = useState(5);
+    const [title, setTitle] = useState("");
     const [comment, setComment] = useState("");
     const [fileList, setFileList] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
@@ -18,6 +19,7 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
     useEffect(() => {
         if (isOpen) {
             setRating(5);
+            setTitle("");
             setComment("");
             setFileList([]);
             setErrorMsg("");
@@ -36,7 +38,6 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
         setIsUploading(true);
         setErrorMsg("");
 
-        // Tạo preview URL từ trình duyệt để hiển thị ảnh tức thì không bị lỗi
         const localPreviewUrl = URL.createObjectURL(file);
         const fileUid = file.uid || `photo-${Date.now()}-${Math.random()}`;
 
@@ -97,29 +98,26 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
 
             const payload = {
                 rating,
+                title: title.trim() || undefined,
                 comment,
                 photos
             };
 
             await createBookingReviewApi(booking.id, payload);
-            message.success("Đánh giá dịch vụ thành công!");
+            message.success("Cảm ơn bạn đã gửi đánh giá dịch vụ!");
             if (onSuccess) onSuccess(booking.id);
             onClose();
         } catch (err) {
             console.error("Lỗi khi gửi đánh giá:", err);
-            const status = err.response?.status;
-            const msg = err.response?.data?.message || "Có lỗi xảy ra khi gửi đánh giá.";
-            if (status === 403) {
-                setErrorMsg(msg || "Bạn không đủ điều kiện thực hiện đánh giá cho lịch hẹn này.");
-            } else {
-                setErrorMsg(msg);
-            }
+            const msg = err.response?.data?.message || "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.";
+            setErrorMsg(msg);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const ratingTexts = ["", "Không hài lòng", "Tạm được", "Bình thường", "Hài lòng", "Tuyệt vời!"];
+    const staffName = booking.assignedStaffName || booking.preferredStaffName || "Hệ thống tự động phân bổ";
 
     return (
         <Modal
@@ -150,7 +148,7 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
             ]}
             destroyOnClose
             centered
-            width={520}
+            width={540}
         >
             <div style={{ padding: "12px 0" }}>
                 {errorMsg && (
@@ -164,6 +162,28 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
                     />
                 )}
 
+                {/* Performing Staff Info Banner */}
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 14px",
+                        backgroundColor: "#f0f5ff",
+                        border: "1px solid #adc6ff",
+                        borderRadius: 10,
+                        marginBottom: 16
+                    }}
+                >
+                    <UserOutlined style={{ fontSize: 22, color: "#2f54eb" }} />
+                    <div>
+                        <Text type="secondary" style={{ fontSize: 12, display: "block" }}>Nhân viên thực hiện:</Text>
+                        <Text strong style={{ fontSize: 14, color: "#1d39c4" }}>
+                            {staffName}
+                        </Text>
+                    </div>
+                </div>
+
                 {/* Rating Stars Section */}
                 <div
                     style={{
@@ -172,7 +192,7 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
                         background: "#fffbe6",
                         border: "1px solid #ffe58f",
                         borderRadius: 12,
-                        marginBottom: 20
+                        marginBottom: 16
                     }}
                 >
                     <Text strong style={{ display: "block", marginBottom: 8, fontSize: 14 }}>
@@ -190,8 +210,22 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
                     )}
                 </div>
 
+                {/* Title Input Field */}
+                <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 6 }}>
+                        Tiêu đề nhận xét:
+                    </Text>
+                    <Input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        maxLength={200}
+                        placeholder="Ví dụ: Cắt tóc rất đẹp, Phục vụ tận tình..."
+                        style={{ borderRadius: 8 }}
+                    />
+                </div>
+
                 {/* Comment Input */}
-                <div style={{ marginBottom: 20 }}>
+                <div style={{ marginBottom: 16 }}>
                     <Text strong style={{ display: "block", marginBottom: 6 }}>
                         Nhận xét chi tiết (tùy chọn):
                     </Text>
@@ -233,5 +267,3 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
 };
 
 export default ReviewModal;
-
-
