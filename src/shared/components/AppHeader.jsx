@@ -142,10 +142,6 @@ export default function AppHeader() {
                 label: "Đặt lịch"
             },
             {
-                key: "/support",
-                label: "Hỗ trợ (Help Center)"
-            },
-            {
                 key: "/appointments",
                 label: "Lịch hẹn"
             }
@@ -162,10 +158,6 @@ export default function AppHeader() {
             {
                 key: "/services",
                 label: "Dịch vụ"
-            },
-            {
-                key: "/support",
-                label: "Hỗ trợ (Help Center)"
             },
             {
                 key: "/guest-booking",

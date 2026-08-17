@@ -59,9 +59,9 @@ export const exportReportToExcel = async ({ reportType, fromDate, toDate, data, 
     timeline.forEach((t, idx) => {
       rows.push([
         idx + 1,
-        t.dateLabel || t.periodLabel || '',
+        t.label || t.dateLabel || t.periodLabel || '',
         t.bookingCount || 0,
-        Number(t.revenue || 0),
+        Number(t.currentRevenue || t.revenue || 0),
         t.yoyGrowthRate || 0,
         'Thành công'
       ]);
