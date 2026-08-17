@@ -37,11 +37,6 @@ export default function OAuth2SuccessPage() {
                 ?.split(",") || []
     };
 
-    console.log(
-        "Saving auth:",
-        authData
-    );
-
     saveAuthData(authData);
 
     navigate(
