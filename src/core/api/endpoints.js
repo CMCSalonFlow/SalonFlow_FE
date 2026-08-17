@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://localhost:9090";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:9090";
 
 export const ENDPOINTS = {
     LOGIN: "/api/v1/auth/login",
@@ -97,6 +97,8 @@ export const ENDPOINTS = {
     SUBSCRIPTION_ADMIN_LIST: "/api/v1/subscriptions/admin",
     SUBSCRIPTION_ADMIN_BY_ID: (id) => `/api/v1/subscriptions/admin/${id}`
 };
+
+
 
 
 

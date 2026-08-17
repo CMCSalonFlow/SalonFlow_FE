@@ -35,6 +35,14 @@ export function attachInterceptors(api) {
 
     api.interceptors.request.use(
         (config) => {
+            if (!navigator.onLine) {
+                const method = config.method ? config.method.toUpperCase() : "GET";
+                if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
+                    const error = new Error("Bạn đang offline. Không thể thực hiện thao tác này.");
+                    error.isOfflineError = true;
+                    return Promise.reject(error);
+                }
+            }
             const skipAuth = config.skipAuth === true;
 
             const token =
