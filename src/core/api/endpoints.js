@@ -36,6 +36,7 @@ export const ENDPOINTS = {
     // Salons
     SALONS: "/api/v1/salons",
     MY_SALON: "/api/v1/salons/me",
+    SALONS_NEARBY: "/api/v1/salons/nearby",
     SEARCH_BRANCHES: "/api/v1/branches/search",
 
     // Vouchers
