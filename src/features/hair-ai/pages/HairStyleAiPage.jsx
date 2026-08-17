@@ -35,7 +35,7 @@ import {
     confirmHairStyleApi,
     getHairStyleProfileApi
 } from "../api/hairStyleAiApi";
-import VirtualTryOnView from "../components/VirtualTryOnView";
+import HairColorTryOnView from "../components/HairColorTryOnView";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -698,15 +698,11 @@ export default function HairStyleAiPage() {
                         key: "tryon",
                         label: (
                             <Space style={{ fontSize: 16, fontWeight: 600 }}>
-                                <CameraOutlined style={{ color: "#ec4899" }} />
-                                <span>2. Live AI Thử Màu Tóc (Filter TikTok)</span>
+                                <ScissorOutlined style={{ color: "#d946ef" }} />
+                                <span>2. Thử Màu Tóc Realtime</span>
                             </Space>
                         ),
-                        children: (
-                            <div style={{ paddingTop: 12 }}>
-                                <VirtualTryOnView />
-                            </div>
-                        )
+                        children: <HairColorTryOnView />
                     }
                 ]}
             />
