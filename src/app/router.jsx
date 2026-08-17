@@ -77,6 +77,7 @@ const PayAtCounterSuccessPage = lazy(() => import("@/features/booking/pages/PayA
 const RecurringSuccessPage = lazy(() => import("@/features/booking/pages/RecurringSuccessPage"));
 const HelpCenterPage = lazy(() => import("@/features/support/pages/HelpCenterPage"));
 const NearbySalonsPage = lazy(() => import("@/features/geolocation/pages/NearbySalonsPage"));
+const SystemMonitoringPage = lazy(() => import("@/features/monitoring/pages/SystemMonitoringPage"));
 
 // Reusable page loader fallback
 const PageLoader = () => (
@@ -182,7 +183,15 @@ const router = createBrowserRouter([
                 path: "subscriptions",
                 element: withSuspense(AdminSubscriptionPage)
             },
+            {
+                path: "monitoring",
+                element: withSuspense(SystemMonitoringPage)
+            },
         ]
+    },
+    {
+        path: "/monitoring",
+        element: withSuspense(SystemMonitoringPage)
     },
     {
         path: "/owner",
