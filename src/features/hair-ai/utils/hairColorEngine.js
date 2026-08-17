@@ -152,18 +152,21 @@ export function applyHairColorToCanvas(targetCanvas, originalImage, hairMaskData
         brightnessShift = 0
     } = options;
 
-    if (!targetCanvas || !originalImage || !hairMaskData) return 0;
+    if (!targetCanvas || !originalImage) return 0;
 
     const ctx = targetCanvas.getContext("2d", { willReadFrequently: true });
     const width = targetCanvas.width;
     const height = targetCanvas.height;
 
+    // Draw original image first
+    ctx.drawImage(originalImage, 0, 0, width, height);
+
+    // If no color selected or no mask data, return original image as-is
+    if (!hairMaskData || !hexColor) return 0;
+
     // Auto-calculate optimal feather radius based on image width
     const autoFeatherPx = Math.max(3, Math.min(8, Math.round(width / 220)));
     const effectiveFeather = typeof feather === "number" ? feather : autoFeatherPx;
-
-    // Draw original image first
-    ctx.drawImage(originalImage, 0, 0, width, height);
 
     // Create edge-feathered mask
     const featheredAlphaData = createFeatheredMask(hairMaskData, maskW, maskH, width, height, effectiveFeather);
