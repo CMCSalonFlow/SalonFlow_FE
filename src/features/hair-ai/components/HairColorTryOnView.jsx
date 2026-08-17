@@ -63,16 +63,16 @@ export default function HairColorTryOnView() {
     const [isCameraLoading, setIsCameraLoading] = useState(false);
     const [cameraFacingMode, setCameraFacingMode] = useState("user");
 
-    // Selected image & mask state
-    const [selectedImageSrc, setSelectedImageSrc] = useState(SAMPLE_PHOTOS[0].url);
+    // Selected image & mask state (Empty by default)
+    const [selectedImageSrc, setSelectedImageSrc] = useState(null);
     const [hairMaskData, setHairMaskData] = useState(null);
     const [maskWidth, setMaskWidth] = useState(0);
     const [maskHeight, setMaskHeight] = useState(0);
     const [isSegmenting, setIsSegmenting] = useState(false);
     const [dyedPixelsCount, setDyedPixelsCount] = useState(0);
 
-    // Hair color options
-    const [selectedPresetId, setSelectedPresetId] = useState("honey_blonde");
+    // Hair color options (No color selected by default)
+    const [selectedPresetId, setSelectedPresetId] = useState(null);
     const [customHex, setCustomHex] = useState("#d9ab55");
     const [activeColorCategory, setActiveColorCategory] = useState("all");
 
@@ -93,10 +93,10 @@ export default function HairColorTryOnView() {
     const streamRef = useRef(null);
     const isDraggingRef = useRef(false);
 
-    // Current active color hex calculation
+    // Current active color hex calculation (null if no color selected)
     const activeHexColor = selectedPresetId === "custom"
         ? customHex
-        : (HAIR_COLOR_PRESETS.find((p) => p.id === selectedPresetId)?.hex || "#d9ab55");
+        : (selectedPresetId ? HAIR_COLOR_PRESETS.find((p) => p.id === selectedPresetId)?.hex : null);
 
     /**
      * Process & segment static image
@@ -207,40 +207,6 @@ export default function HairColorTryOnView() {
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText("↔", splitX, centerY);
-
-            // Render Labels: "Ảnh Thực Tế" on left, "Ảnh Nhuộm AI" on right
-            const fontSize = Math.max(13, Math.round(targetW / 40));
-            ctx.font = `600 ${fontSize}px sans-serif`;
-            ctx.textBaseline = "top";
-
-            // Left Label (Ảnh Thực Tế)
-            if (splitX > 110) {
-                const labelText = "📷 Ảnh Thực Tế";
-                const metrics = ctx.measureText(labelText);
-                const labelW = metrics.width + 24;
-                ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-                ctx.beginPath();
-                ctx.roundRect(16, 16, labelW, fontSize + 16, 8);
-                ctx.fill();
-                ctx.fillStyle = "#ffffff";
-                ctx.textAlign = "left";
-                ctx.fillText(labelText, 28, 24);
-            }
-
-            // Right Label (Ảnh Nhuộm AI)
-            if (targetW - splitX > 110) {
-                const labelText = "✨ Ảnh Nhuộm AI";
-                const metrics = ctx.measureText(labelText);
-                const labelW = metrics.width + 24;
-                const rightX = targetW - labelW - 16;
-                ctx.fillStyle = "rgba(147, 51, 234, 0.85)";
-                ctx.beginPath();
-                ctx.roundRect(rightX, 16, labelW, fontSize + 16, 8);
-                ctx.fill();
-                ctx.fillStyle = "#ffffff";
-                ctx.textAlign = "left";
-                ctx.fillText(labelText, rightX + 12, 24);
-            }
 
             ctx.restore();
         }
@@ -431,91 +397,146 @@ export default function HairColorTryOnView() {
                         }
                     >
                         {/* Hidden native source image element */}
-                        <img
-                            ref={sourceImageRef}
-                            src={selectedImageSrc}
-                            alt="Original hair source"
-                            crossOrigin="anonymous"
-                            onLoad={handleSourceImageLoad}
-                            style={{ display: "none" }}
-                        />
-
-                        {/* Output Canvas Preview Container */}
-                        <div
-                            onMouseDown={(e) => {
-                                if (!isCompareActive) return;
-                                isDraggingRef.current = true;
-                                const rect = outputCanvasRef.current?.getBoundingClientRect();
-                                if (rect) {
-                                    const x = e.clientX - rect.left;
-                                    setSplitPosition(Math.min(100, Math.max(0, Math.round((x / rect.width) * 100))));
-                                }
-                            }}
-                            onMouseMove={(e) => {
-                                if (!isDraggingRef.current || !isCompareActive) return;
-                                const rect = outputCanvasRef.current?.getBoundingClientRect();
-                                if (rect) {
-                                    const x = e.clientX - rect.left;
-                                    setSplitPosition(Math.min(100, Math.max(0, Math.round((x / rect.width) * 100))));
-                                }
-                            }}
-                            onMouseUp={() => { isDraggingRef.current = false; }}
-                            onMouseLeave={() => { isDraggingRef.current = false; }}
-                            onTouchStart={(e) => {
-                                if (!isCompareActive) return;
-                                isDraggingRef.current = true;
-                                const rect = outputCanvasRef.current?.getBoundingClientRect();
-                                if (rect && e.touches[0]) {
-                                    const x = e.touches[0].clientX - rect.left;
-                                    setSplitPosition(Math.min(100, Math.max(0, Math.round((x / rect.width) * 100))));
-                                }
-                            }}
-                            onTouchMove={(e) => {
-                                if (!isDraggingRef.current || !isCompareActive) return;
-                                const rect = outputCanvasRef.current?.getBoundingClientRect();
-                                if (rect && e.touches[0]) {
-                                    const x = e.touches[0].clientX - rect.left;
-                                    setSplitPosition(Math.min(100, Math.max(0, Math.round((x / rect.width) * 100))));
-                                }
-                            }}
-                            onTouchEnd={() => { isDraggingRef.current = false; }}
-                            style={{
-                                position: "relative",
-                                width: "100%",
-                                minHeight: 460,
-                                borderRadius: 18,
-                                overflow: "hidden",
-                                background: "#0f172a",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                cursor: isCompareActive ? "ew-resize" : "default",
-                                userSelect: "none"
-                            }}
-                        >
-                            {isSegmenting ? (
-                                <div style={{ position: "absolute", zIndex: 10, textAlign: "center", color: "#fff" }}>
-                                    <Spin size="large" />
-                                    <div style={{ marginTop: 12, fontWeight: 600 }}>
-                                        AI đang bóc tách mái tóc...
-                                    </div>
-                                </div>
-                            ) : null}
-
-                            {/* Main Output Canvas */}
-                            <canvas
-                                ref={outputCanvasRef}
-                                style={{
-                                    maxWidth: "100%",
-                                    maxHeight: 560,
-                                    width: "auto",
-                                    height: "auto",
-                                    borderRadius: 16,
-                                    objectFit: "contain",
-                                    display: "block"
-                                }}
+                        {selectedImageSrc && (
+                            <img
+                                ref={sourceImageRef}
+                                src={selectedImageSrc}
+                                alt="Original hair source"
+                                crossOrigin="anonymous"
+                                onLoad={handleSourceImageLoad}
+                                style={{ display: "none" }}
                             />
-                        </div>
+                        )}
+
+                        {/* Output Canvas Preview Container or Empty Placeholder */}
+                        {!selectedImageSrc ? (
+                            <div
+                                style={{
+                                    position: "relative",
+                                    width: "100%",
+                                    minHeight: 460,
+                                    borderRadius: 18,
+                                    overflow: "hidden",
+                                    background: "#0f172a",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    padding: 24,
+                                    textAlign: "center"
+                                }}
+                            >
+                                <Empty
+                                    image={<PictureOutlined style={{ fontSize: 64, color: "#38bdf8" }} />}
+                                    description={
+                                        <Space direction="vertical" size={6} style={{ marginTop: 12 }}>
+                                            <Text strong style={{ color: "#fff", fontSize: 16 }}>
+                                                Chưa chọn ảnh thử màu
+                                            </Text>
+                                            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 14, maxWidth: 440 }}>
+                                                Vui lòng tải ảnh của bạn lên, chụp từ Camera hoặc chọn một ảnh mẫu bên dưới để bắt đầu thử màu tóc AI.
+                                            </Text>
+                                        </Space>
+                                    }
+                                >
+                                    <Space wrap style={{ marginTop: 12 }}>
+                                        <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*">
+                                            <Button type="primary" size="large" icon={<CloudUploadOutlined />} style={{ borderRadius: 12 }}>
+                                                Tải Ảnh Của Bạn
+                                            </Button>
+                                        </Upload>
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            icon={<CameraOutlined />}
+                                            onClick={() => startCameraModal()}
+                                            style={{
+                                                background: "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
+                                                border: "none",
+                                                borderRadius: 12
+                                            }}
+                                        >
+                                            Chụp Ảnh Camera
+                                        </Button>
+                                    </Space>
+                                </Empty>
+                            </div>
+                        ) : (
+                            <div
+                                onMouseDown={(e) => {
+                                    if (!isCompareActive) return;
+                                    isDraggingRef.current = true;
+                                    const rect = outputCanvasRef.current?.getBoundingClientRect();
+                                    if (rect) {
+                                        const x = e.clientX - rect.left;
+                                        setSplitPosition(Math.min(100, Math.max(0, Math.round((x / rect.width) * 100))));
+                                    }
+                                }}
+                                onMouseMove={(e) => {
+                                    if (!isDraggingRef.current || !isCompareActive) return;
+                                    const rect = outputCanvasRef.current?.getBoundingClientRect();
+                                    if (rect) {
+                                        const x = e.clientX - rect.left;
+                                        setSplitPosition(Math.min(100, Math.max(0, Math.round((x / rect.width) * 100))));
+                                    }
+                                }}
+                                onMouseUp={() => { isDraggingRef.current = false; }}
+                                onMouseLeave={() => { isDraggingRef.current = false; }}
+                                onTouchStart={(e) => {
+                                    if (!isCompareActive) return;
+                                    isDraggingRef.current = true;
+                                    const rect = outputCanvasRef.current?.getBoundingClientRect();
+                                    if (rect && e.touches[0]) {
+                                        const x = e.touches[0].clientX - rect.left;
+                                        setSplitPosition(Math.min(100, Math.max(0, Math.round((x / rect.width) * 100))));
+                                    }
+                                }}
+                                onTouchMove={(e) => {
+                                    if (!isDraggingRef.current || !isCompareActive) return;
+                                    const rect = outputCanvasRef.current?.getBoundingClientRect();
+                                    if (rect && e.touches[0]) {
+                                        const x = e.touches[0].clientX - rect.left;
+                                        setSplitPosition(Math.min(100, Math.max(0, Math.round((x / rect.width) * 100))));
+                                    }
+                                }}
+                                onTouchEnd={() => { isDraggingRef.current = false; }}
+                                style={{
+                                    position: "relative",
+                                    width: "100%",
+                                    minHeight: 460,
+                                    borderRadius: 18,
+                                    overflow: "hidden",
+                                    background: "#0f172a",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: isCompareActive ? "ew-resize" : "default",
+                                    userSelect: "none"
+                                }}
+                            >
+                                {isSegmenting ? (
+                                    <div style={{ position: "absolute", zIndex: 10, textAlign: "center", color: "#fff" }}>
+                                        <Spin size="large" />
+                                        <div style={{ marginTop: 12, fontWeight: 600 }}>
+                                            AI đang bóc tách mái tóc...
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {/* Main Output Canvas */}
+                                <canvas
+                                    ref={outputCanvasRef}
+                                    style={{
+                                        maxWidth: "100%",
+                                        maxHeight: 560,
+                                        width: "auto",
+                                        height: "auto",
+                                        borderRadius: 16,
+                                        objectFit: "contain",
+                                        display: "block"
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         {/* Interactive Toolbar below preview */}
                         <div style={{ marginTop: 16 }}>
