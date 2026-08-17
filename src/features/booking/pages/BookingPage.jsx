@@ -101,20 +101,18 @@ export default function BookingPage() {
             socket = new WebSocket(socketUrl);
 
             socket.onopen = () => {
-                console.log("WebSocket connected to bookings room.");
+                // WebSocket connected
             };
 
             socket.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data);
                     if (msg.type === "BOOKING_UPDATE") {
-                        console.log("Booking update notification received:", msg);
                         const matchBranch = String(msg.branchId) === String(selectedBranchId);
                         const matchDate = selectedDate && msg.date === selectedDate.format("YYYY-MM-DD");
                         const matchStaff = !selectedStaff || !msg.staffId || String(msg.staffId) === String(selectedStaff.id);
 
                         if (matchBranch && matchDate && matchStaff) {
-                            console.log("Refreshing availability slots...");
                             setRefreshCounter(prev => prev + 1);
                         }
                     }
@@ -124,7 +122,6 @@ export default function BookingPage() {
             };
 
             socket.onclose = () => {
-                console.log("WebSocket connection closed. Reconnecting in 3s...");
                 reconnectTimer = setTimeout(connectWS, 3000);
             };
 

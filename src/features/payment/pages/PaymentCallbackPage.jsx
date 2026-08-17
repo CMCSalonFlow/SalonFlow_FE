@@ -74,8 +74,6 @@ export default function PaymentCallbackPage() {
                     bookingContext.bookingMode === "public" ? { skipAuth: true } : {}
                 );
 
-                console.log("Payment response:", response);
-
                 setResult(response);
             } catch (err) {
                 console.error("Xác minh thanh toán thất bại:", err);
