@@ -403,17 +403,12 @@ export default function OwnerBookingWorkflowPage() {
             )
         },
         {
-            title: "Cọc / Tổng",
+            title: "Tổng tiền",
             width: 150,
             render: (_, record) => (
-                <Space direction="vertical" size={0}>
-                    <Text strong style={{ color: "#cf1322" }}>
-                        {formatCurrency(record.depositAmount || record.payableAmount || 0)} đ
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                        Tổng {formatCurrency(record.totalPrice || 0)} đ
-                    </Text>
-                </Space>
+                <Text strong style={{ color: "#389e0d" }}>
+                    {formatCurrency(record.totalPrice || 0)} đ
+                </Text>
             )
         },
         {
@@ -655,9 +650,7 @@ export default function OwnerBookingWorkflowPage() {
                             <Descriptions.Item label="Ngày / Giờ">
                                 {formatDate(selectedBooking.bookingDate)} {formatTime(selectedBooking.startTime)} - {formatTime(selectedBooking.endTime)}
                             </Descriptions.Item>
-                            <Descriptions.Item label="Tiền cọc">
-                                {formatCurrency(selectedBooking.depositAmount || selectedBooking.payableAmount || 0)} đ
-                            </Descriptions.Item>
+
                             <Descriptions.Item label="Tổng giá trị">
                                 {formatCurrency(selectedBooking.totalPrice || 0)} đ
                             </Descriptions.Item>
