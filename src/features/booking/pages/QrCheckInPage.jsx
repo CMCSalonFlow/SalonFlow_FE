@@ -84,12 +84,9 @@ export default function QrCheckInPage() {
     }, []);
 
     const scannerPath = useMemo(() => {
-        const roles = getRoles();
-        if (roles.includes("SALON_OWNER")) {
-            return "/owner/check-in-scanner";
-        }
-        return "/staff/check-in-scanner";
+        return "/manager/bookings";
     }, []);
+
 
     const immediateError = useMemo(() => {
         if (!checkAuthSession()) return null;

@@ -186,8 +186,23 @@ export default function AppHeader() {
 
     const isSalonOwner = roles.includes("SALON_OWNER");
     const isSuperAdmin = roles.includes("SUPER_ADMIN");
+    const isManagerRole = roles.includes("MANAGER") || roles.includes("BRANCH_MANAGER");
     const isStaffRole = roles.includes("STAFF");
-    const hasAdminOrOwnerAccess = isSalonOwner || isSuperAdmin || isStaffRole;
+    const hasAdminOrOwnerAccess = isSalonOwner || isSuperAdmin || isManagerRole || isStaffRole;
+
+    const getDashboardLabel = () => {
+        if (isSuperAdmin) return "Trang Super Admin";
+        if (isSalonOwner) return "Trang Quản Lý Salon";
+        if (isManagerRole) return "Trang Lễ Tân / Quản Lý";
+        return "Trang Workstation Thợ";
+    };
+
+    const getDashboardPath = () => {
+        if (isSuperAdmin) return "/admin";
+        if (isSalonOwner) return "/owner";
+        if (isManagerRole) return "/manager/pos";
+        return "/staff/schedule";
+    };
 
     const userMenu = {
         items: [
@@ -195,11 +210,12 @@ export default function AppHeader() {
                 {
                     key: "dashboard",
                     icon: <UserOutlined style={{ color: "#1890ff" }} />,
-                    label: isSuperAdmin ? "Trang Super Admin" : isSalonOwner ? "Trang Quản Lý Salon" : "Trang Staff",
-                    onClick: () => navigate(isSuperAdmin ? "/admin" : isSalonOwner ? "/owner" : "/staff")
+                    label: getDashboardLabel(),
+                    onClick: () => navigate(getDashboardPath())
                 },
                 { type: "divider" }
             ] : []),
+
             {
                 key: "profile",
                 icon: <UserOutlined />,

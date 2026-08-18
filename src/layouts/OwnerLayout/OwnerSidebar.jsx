@@ -107,17 +107,8 @@ export default function OwnerSidebar() {
             label: "Reviews"
         },
         {
-            key: "/owner/bookings",
-            icon: <CheckCircleOutlined />,
-            label: "Check-in / Complete"
-        },
-        {
-            key: "/owner/check-in-scanner",
-            icon: <QrcodeOutlined />,
-            label: "Quét QR Check-in"
-        },
-        {
             key: "/owner/schedule",
+
             icon: <CalendarOutlined />,
             label: "Schedule"
         },

@@ -1,12 +1,10 @@
 import { Layout, Button, Dropdown, Avatar, Space, Tag } from "antd";
 import {
-    DesktopOutlined,
     CalendarOutlined,
-    QrcodeOutlined,
     UnorderedListOutlined,
     LogoutOutlined,
     UserOutlined,
-    ShopOutlined
+    ScissorOutlined
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
@@ -22,28 +20,18 @@ export function StaffLayout() {
 
     const navItems = [
         {
-            key: "/staff/pos",
-            icon: <DesktopOutlined />,
-            label: "Hệ Thống POS (Walk-in)"
-        },
-        {
             key: "/staff/schedule",
             icon: <CalendarOutlined />,
-            label: "Lịch Làm Việc"
+            label: "Lịch Làm Việc Cá Nhân"
         },
         {
             key: "/staff/appointments",
             icon: <UnorderedListOutlined />,
-            label: "Lịch Hẹn Phân Công"
-        },
-        {
-            key: "/staff/check-in-scanner",
-            icon: <QrcodeOutlined />,
-            label: "Quét QR Check-in"
+            label: "Danh Sách Khách Sắp Tới"
         }
     ];
 
-    const currentKey = navItems.find(item => location.pathname.startsWith(item.key))?.key || "/staff/pos";
+    const currentKey = navItems.find(item => location.pathname.startsWith(item.key))?.key || "/staff/schedule";
 
     const userMenu = {
         items: [
@@ -82,10 +70,10 @@ export function StaffLayout() {
                             gap: 8,
                             cursor: "pointer"
                         }}
-                        onClick={() => navigate("/staff/pos")}
+                        onClick={() => navigate("/staff/schedule")}
                     >
-                        <ShopOutlined style={{ color: "#1890ff", fontSize: 24 }} />
-                        <span>SalonFlow <Tag color="blue" style={{ fontSize: 11, marginLeft: 4 }}>POS TERMINAL</Tag></span>
+                        <ScissorOutlined style={{ color: "#1890ff", fontSize: 24 }} />
+                        <span>SalonFlow <Tag color="blue" style={{ fontSize: 11, marginLeft: 4 }}>WORKSTATION THỢ</Tag></span>
                     </div>
                 </div>
 
