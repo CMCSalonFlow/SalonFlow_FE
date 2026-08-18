@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import { Modal, Form, Input, Select, Upload, Button, message, Space, Avatar } from "antd";
-import { UploadOutlined, UserOutlined } from "@ant-design/icons";
-import { uploadMediaApi } from "@/features/media/api/mediaApi";
-import { getUsersApi } from "@/features/user/api/userApi";
+import { Modal, Form, Input, Select } from "antd";
 import { getCategoriesApi } from "@/features/service/api/serviceApi";
 
 /**
@@ -10,10 +7,10 @@ import { getCategoriesApi } from "@/features/service/api/serviceApi";
  */
 export default function StaffFormModal({ visible, onCancel, onSubmit, initialValues, services }) {
     const [form] = Form.useForm();
-    const [uploading, setUploading] = useState(false);
-    const [avatarPreview, setAvatarPreview] = useState("");
     const [categories, setCategories] = useState([]);
 
+    const currentRoleCode = Form.useWatch("roleCode", form);
+    const isStaff = currentRoleCode === "STAFF";
     const selectedSpecialties = Form.useWatch("specialties", form) || [];
     const currentServiceIds = Form.useWatch("serviceIds", form) || [];
 
@@ -57,73 +54,45 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
     useEffect(() => {
         if (visible) {
             if (initialValues) {
-                // Chuyển đổi chuỗi specialties (dạng "Cắt, Uốn, Gội") thành mảng để hiển thị dạng Tag Select
                 const specialtiesArray = initialValues.specialties 
                     ? initialValues.specialties.split(",").map(s => s.trim()).filter(Boolean)
                     : [];
 
-                // Chuyển đổi danh sách thực thể dịch vụ thành mảng ID
                 const serviceIds = initialValues.services 
                     ? initialValues.services.map(s => s.id)
                     : [];
 
                 form.setFieldsValue({
                     name: initialValues.name,
-                    avatarUrl: initialValues.avatarUrl,
                     bio: initialValues.bio,
                     specialties: specialtiesArray,
                     serviceIds: serviceIds,
+                    roleCode: initialValues.roleCode || undefined,
                     email: initialValues.email || "",
                     phone: initialValues.phone || "",
                     password: ""
                 });
-                setAvatarPreview(initialValues.avatarUrl || "");
             } else {
                 form.resetFields();
-                setAvatarPreview("");
             }
         }
     }, [visible, initialValues, form]);
-
-    // Xử lý upload file lên server thông qua API
-    const handleUpload = async ({ file, onSuccess, onError }) => {
-        try {
-            setUploading(true);
-            const response = await uploadMediaApi(file);
-            if (response && response.url) {
-                form.setFieldsValue({ avatarUrl: response.url });
-                setAvatarPreview(response.url);
-                message.success("Tải ảnh đại diện lên thành công!");
-                onSuccess(null, file);
-            } else {
-                throw new Error("Không nhận được URL ảnh từ máy chủ");
-            }
-        } catch (error) {
-            message.error("Lỗi khi tải ảnh lên: " + (error.message || error));
-            onError(error);
-        } finally {
-            setUploading(false);
-        }
-    };
-
-
 
     const handleOk = async () => {
         try {
             const values = await form.validateFields();
             
-            // Định dạng lại các trường gửi lên Backend:
-            // Chuyển mảng Specialties thành chuỗi phân tách bằng dấu phẩy
             const specialtiesString = values.specialties && values.specialties.length > 0
                 ? values.specialties.join(", ")
                 : "";
 
             const payload = {
                 name: values.name,
-                avatarUrl: values.avatarUrl,
+                avatarUrl: initialValues?.avatarUrl || "",
                 bio: values.bio,
-                specialties: specialtiesString,
-                serviceIds: values.serviceIds || [],
+                specialties: values.roleCode === "STAFF" ? specialtiesString : "",
+                serviceIds: values.roleCode === "STAFF" ? (values.serviceIds || []) : [],
+                roleCode: values.roleCode,
                 email: values.email,
                 phone: values.phone
             };
@@ -144,84 +113,75 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
             open={visible}
             onCancel={onCancel}
             onOk={handleOk}
-            width={650}
-            confirmLoading={uploading}
+            width={600}
             destroyOnClose
             okText="Lưu lại"
             cancelText="Hủy bỏ"
         >
             <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
-                <div style={{ display: "flex", gap: 24, alignItems: "flex-start", marginBottom: 16 }}>
-                    <div style={{ textAlign: "center" }}>
-                        <Avatar
-                            size={100}
-                            src={avatarPreview}
-                            icon={<UserOutlined />}
-                            style={{ border: "2px solid #f0f0f0", marginBottom: 12 }}
-                        />
-                        <Upload
-                            customRequest={handleUpload}
-                            showUploadList={false}
-                            accept="image/*"
-                        >
-                            <Button icon={<UploadOutlined />} loading={uploading} size="small">
-                                Chọn ảnh
-                            </Button>
-                        </Upload>
-                    </div>
+                <Form.Item
+                    name="name"
+                    label="Tên nhân viên"
+                    rules={[{ required: true, message: "Vui lòng nhập tên nhân viên!" }]}
+                >
+                    <Input placeholder="Ví dụ: Nguyễn Văn A" size="large" />
+                </Form.Item>
 
-                    <div style={{ flex: 1 }}>
+                <Form.Item
+                    name="roleCode"
+                    label="Vai trò"
+                    rules={[{ required: true, message: "Vui lòng chọn vai trò nhân viên!" }]}
+                    tooltip="Thợ (STAFF) thực hiện làm dịch vụ. Lễ tân / Quản lý (MANAGER) tiếp đón khách tại quầy, check-in và thu ngân POS."
+                >
+                    <Select size="large" placeholder="Chọn vai trò nhân viên...">
+                        <Select.Option value="STAFF">Thợ làm dịch vụ (Role STAFF)</Select.Option>
+                        <Select.Option value="MANAGER">Lễ tân / Quản lý salon (Role MANAGER)</Select.Option>
+                    </Select>
+                </Form.Item>
+
+                {isStaff && (
+                    <>
                         <Form.Item
-                            name="name"
-                            label="Tên nhân viên"
-                            rules={[{ required: true, message: "Vui lòng nhập tên nhân viên!" }]}
+                            name="specialties"
+                            label="Chuyên môn"
+                            tooltip="Chọn chuyên môn tương ứng với các danh mục dịch vụ"
                         >
-                            <Input placeholder="Ví dụ: Nguyễn Văn A" size="large" />
+
+
+                            <Select
+                                mode="tags"
+                                style={{ width: "100%" }}
+                                placeholder="Chọn hoặc thêm chuyên môn..."
+                                tokenSeparators={[","]}
+                                options={categories.map(cat => ({
+                                    label: cat.name,
+                                    value: cat.name
+                                }))}
+                                size="large"
+                            />
                         </Form.Item>
 
-                        <Form.Item name="avatarUrl" noStyle>
-                            <Input type="hidden" />
+                        <Form.Item
+                            name="serviceIds"
+                            label="Các dịch vụ được phép thực hiện"
+                            rules={[{ required: true, message: "Chọn ít nhất một dịch vụ!" }]}
+                        >
+                            <Select
+                                mode="multiple"
+                                allowClear
+                                style={{ width: "100%" }}
+                                placeholder={selectedSpecialties.length === 0 ? "Vui lòng chọn chuyên môn / tag kỹ năng trước..." : "Chọn danh sách dịch vụ..."}
+                                disabled={selectedSpecialties.length === 0}
+                                optionFilterProp="label"
+                                options={filteredServices.map(s => ({
+                                    label: `${s.name} (Danh mục: ${s.categoryName || "Chưa phân loại"} - ${parseFloat(s.price).toLocaleString()} đ - ${s.durationMinutes} phút)`,
+                                    value: s.id
+                                }))}
+                                size="large"
+                            />
                         </Form.Item>
-                    </div>
-                </div>
-
-                <Form.Item
-                    name="specialties"
-                    label="Chuyên môn / Tag kỹ năng"
-                    tooltip="Chọn chuyên môn tương ứng với các danh mục dịch vụ"
-                >
-                    <Select
-                        mode="tags"
-                        style={{ width: "100%" }}
-                        placeholder="Chọn hoặc thêm chuyên môn..."
-                        tokenSeparators={[","]}
-                        options={categories.map(cat => ({
-                            label: cat.name,
-                            value: cat.name
-                        }))}
-                        size="large"
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="serviceIds"
-                    label="Các dịch vụ được phép thực hiện"
-                    rules={[{ required: true, message: "Chọn ít nhất một dịch vụ!" }]}
-                >
-                    <Select
-                        mode="multiple"
-                        allowClear
-                        style={{ width: "100%" }}
-                        placeholder={selectedSpecialties.length === 0 ? "Vui lòng chọn chuyên môn / tag kỹ năng trước..." : "Chọn danh sách dịch vụ..."}
-                        disabled={selectedSpecialties.length === 0}
-                        optionFilterProp="label"
-                        options={filteredServices.map(s => ({
-                            label: `${s.name} (Danh mục: ${s.categoryName || "Chưa phân loại"} - ${parseFloat(s.price).toLocaleString()} đ - ${s.durationMinutes} phút)`,
-                            value: s.id
-                        }))}
-                        size="large"
-                    />
-                </Form.Item>
+                    </>
+                )}
 
                 {!initialValues ? (
                     <div style={{ border: "1px solid #e6f7ff", padding: "16px", borderRadius: "8px", marginBottom: "20px", backgroundColor: "#f0f5ff" }}>

@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import jsQR from "jsqr";
 import {
     Alert,
     Button,
@@ -29,15 +31,21 @@ import {
     SearchOutlined,
     ShoppingOutlined,
     TeamOutlined,
-    UserOutlined
+    UserOutlined,
+    ShopOutlined,
+    QrcodeOutlined,
+    CameraOutlined,
+    LinkOutlined
 } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
     checkInBookingApi,
+    checkInBookingByQrApi,
     completeBookingApi,
     confirmBookingApi,
     getBookingsByBranchApi
 } from "../api/bookingApi";
+
 import NoShowWarningBadge from "@/features/ai/components/NoShowWarningBadge";
 
 const { Title, Text, Paragraph } = Typography;
@@ -54,7 +62,7 @@ const STATUS_META = {
 
 const ACTION_TEXT = {
     confirm: "Xác nhận lịch",
-    checkin: "Check-in khách",
+    checkin: "Quét QR Check-in",
     complete: "Hoàn thành dịch vụ"
 };
 
@@ -95,7 +103,7 @@ const getWorkflowAction = (status) => {
     }
 
     if (status === "CONFIRMED") {
-        return { key: "checkin", label: ACTION_TEXT.checkin, color: "gold", icon: <ClockCircleOutlined /> };
+        return { key: "checkin", label: ACTION_TEXT.checkin, color: "gold", icon: <QrcodeOutlined /> };
     }
 
     if (status === "CHECKED_IN") {
@@ -105,7 +113,244 @@ const getWorkflowAction = (status) => {
     return null;
 };
 
+/**
+ * Sub-component Modal Quét Mã QR Check-in trực tiếp
+ */
+function QrScannerModal({ open, onCancel, onSuccess }) {
+    const videoRef = useRef(null);
+    const streamRef = useRef(null);
+    const frameRef = useRef(null);
+    const detectedRef = useRef(false);
+
+    const [manualInput, setManualInput] = useState("");
+    const [cameraReady, setCameraReady] = useState(false);
+    const [cameraError, setCameraError] = useState("");
+    const [scanError, setScanError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    const stopCamera = useCallback(() => {
+        if (frameRef.current) {
+            cancelAnimationFrame(frameRef.current);
+            frameRef.current = null;
+        }
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        setCameraReady(false);
+    }, []);
+
+    const processCheckInValue = useCallback(async (rawValue) => {
+        const value = (rawValue || "").trim();
+        if (!value) {
+            setScanError("Vui lòng dán URL hoặc nhập mã QR / Booking ID!");
+            return;
+        }
+
+        let bookingId = null;
+        let signature = null;
+
+        try {
+            const url = new URL(value, window.location.origin);
+            bookingId = url.searchParams.get("bookingId");
+            signature = url.searchParams.get("signature");
+        } catch {
+            if (/^\d+$/.test(value)) {
+                bookingId = value;
+            }
+        }
+
+        if (!bookingId) {
+            setScanError("Mã QR hoặc URL không hợp lệ (không chứa thông tin bookingId).");
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            setScanError("");
+            stopCamera();
+
+            if (signature) {
+                await checkInBookingByQrApi(bookingId, signature);
+            } else {
+                await checkInBookingApi(bookingId);
+            }
+
+            message.success(`Check-in thành công cho booking #${bookingId}!`);
+            onSuccess();
+        } catch (err) {
+            console.error(err);
+            const msg = err.response?.data?.message || err.message || "Check-in thất bại.";
+            setScanError(msg);
+        } finally {
+            setSubmitting(false);
+        }
+    }, [stopCamera, onSuccess]);
+
+    const handleQrValue = useCallback((val) => {
+        if (detectedRef.current) return;
+        detectedRef.current = true;
+        processCheckInValue(val);
+    }, [processCheckInValue]);
+
+    const startCamera = useCallback(async () => {
+        setCameraError("");
+        setScanError("");
+        detectedRef.current = false;
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setCameraError("Trình duyệt không hỗ trợ camera hoặc đang chạy ở kết nối HTTP không an toàn. Vui lòng dán URL hoặc nhập Mã Booking ở bên dưới.");
+            return;
+        }
+
+        try {
+            stopCamera();
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: "environment" } },
+                audio: false
+            });
+            streamRef.current = stream;
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.setAttribute("playsinline", "true");
+                await videoRef.current.play();
+                setCameraReady(true);
+            }
+
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+
+            const scan = () => {
+                if (!videoRef.current || detectedRef.current) return;
+                const video = videoRef.current;
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+                    if (code && code.data) {
+                        handleQrValue(code.data);
+                        return;
+                    }
+                }
+                frameRef.current = requestAnimationFrame(scan);
+            };
+
+            frameRef.current = requestAnimationFrame(scan);
+        } catch (err) {
+            console.error("Camera error:", err);
+            setCameraError("Không thể bật camera. Vui lòng cấp quyền camera trong trình duyệt hoặc dán URL / Mã booking bên dưới.");
+        }
+    }, [handleQrValue, stopCamera]);
+
+    useEffect(() => {
+        if (open) {
+            startCamera();
+        } else {
+            stopCamera();
+            setManualInput("");
+            setScanError("");
+            setCameraError("");
+        }
+        return () => stopCamera();
+    }, [open, startCamera, stopCamera]);
+
+    return (
+        <Modal
+            title={
+                <Space>
+                    <QrcodeOutlined style={{ color: "#fa8c16", fontSize: 20 }} />
+                    <span style={{ fontWeight: 600 }}>Quét mã QR Check-in Khách hàng</span>
+                </Space>
+            }
+            open={open}
+            onCancel={() => { stopCamera(); onCancel(); }}
+            footer={null}
+            width={600}
+            destroyOnClose
+        >
+            <Space direction="vertical" size={16} style={{ width: "100%", marginTop: 12 }}>
+                {cameraError && <Alert type="warning" message={cameraError} showIcon />}
+                {scanError && <Alert type="error" message={scanError} showIcon />}
+
+                <div
+                    style={{
+                        position: "relative",
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        background: "#111827",
+                        aspectRatio: "16/9",
+                        display: "grid",
+                        placeItems: "center"
+                    }}
+                >
+                    <video
+                        ref={videoRef}
+                        muted
+                        playsInline
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: cameraReady ? "block" : "none"
+                        }}
+                    />
+                    {!cameraReady && (
+                        <Space direction="vertical" align="center">
+                            <CameraOutlined style={{ color: "#fff", fontSize: 40 }} />
+                            <Text style={{ color: "#fff" }}>Đang chuẩn bị camera...</Text>
+                        </Space>
+                    )}
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Space size="small">
+                        <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={startCamera}>
+                            Bật lại camera
+                        </Button>
+                        <Button size="small" icon={<CameraOutlined />} onClick={stopCamera}>
+                            Tắt camera
+                        </Button>
+                    </Space>
+                </div>
+
+                <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
+                    <Text type="secondary" style={{ fontSize: 13, marginBottom: 6, display: "block" }}>
+                        Nhập hoặc dán URL / Mã Booking thủ công:
+                    </Text>
+                    <Space.Compact style={{ width: "100%" }}>
+                        <Input
+                            prefix={<LinkOutlined />}
+                            placeholder="Dán URL QR hoặc nhập mã Booking (ví dụ: 12)"
+                            value={manualInput}
+                            onChange={(e) => setManualInput(e.target.value)}
+                            onPressEnter={() => processCheckInValue(manualInput)}
+                            size="large"
+                        />
+                        <Button
+                            type="primary"
+                            size="large"
+                            loading={submitting}
+                            style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
+                            onClick={() => processCheckInValue(manualInput)}
+                        >
+                            Check-in
+                        </Button>
+                    </Space.Compact>
+                </div>
+            </Space>
+        </Modal>
+    );
+}
+
 export default function OwnerBookingWorkflowPage() {
+    const location = useLocation();
+    const isManagerPage = location.pathname.startsWith("/manager");
+
     const [branches, setBranches] = useState([]);
     const [branchId, setBranchId] = useState(() => localStorage.getItem("currentBranchId") || "");
     const [bookings, setBookings] = useState([]);
@@ -116,6 +361,7 @@ export default function OwnerBookingWorkflowPage() {
     const [dateRange, setDateRange] = useState(null);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [detailOpen, setDetailOpen] = useState(false);
+    const [qrModalOpen, setQrModalOpen] = useState(false);
     const [actionLoadingKey, setActionLoadingKey] = useState("");
 
     const selectedBranch = useMemo(
@@ -135,14 +381,9 @@ export default function OwnerBookingWorkflowPage() {
                 ? nextBranches.some((branch) => String(branch.id) === String(storedBranchId))
                 : false;
 
-            if (!branchId && nextBranches.length > 0) {
-                const firstBranchId = String(nextBranches[0].id);
-                setBranchId(firstBranchId);
-                localStorage.setItem("currentBranchId", firstBranchId);
-                return;
-            }
-
-            if (storedBranchId && !hasStoredBranch && nextBranches.length > 0) {
+            if (storedBranchId && hasStoredBranch) {
+                setBranchId(String(storedBranchId));
+            } else if (nextBranches.length > 0) {
                 const firstBranchId = String(nextBranches[0].id);
                 setBranchId(firstBranchId);
                 localStorage.setItem("currentBranchId", firstBranchId);
@@ -255,18 +496,17 @@ export default function OwnerBookingWorkflowPage() {
     };
 
     const runWorkflowAction = (booking, actionKey) => {
+        if (actionKey === "checkin") {
+            setQrModalOpen(true);
+            return;
+        }
+
         const actionMap = {
             confirm: {
                 title: "Xác nhận lịch hẹn",
                 description: "Dùng khi booking đang ở trạng thái chờ xử lý.",
                 api: confirmBookingApi,
                 success: "Đã xác nhận lịch hẹn."
-            },
-            checkin: {
-                title: "Xác nhận khách đã đến",
-                description: "Đánh dấu khách đã đến salon và bắt đầu phục vụ.",
-                api: checkInBookingApi,
-                success: "Đã check-in khách."
             },
             complete: {
                 title: "Hoàn thành dịch vụ",
@@ -326,27 +566,24 @@ export default function OwnerBookingWorkflowPage() {
             dataIndex: "id",
             width: 110,
             render: (value, record) => (
-                <Space direction="vertical" size={0}>
-                    <Text strong>#{value}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                        {formatDate(record.bookingDate)}
-                    </Text>
-                </Space>
+                <Text strong style={{ color: "#1677ff" }}>
+                    #{value}
+                </Text>
             )
         },
         {
             title: "Khách hàng",
-            width: 230,
+            width: 220,
             render: (_, record) => {
                 const pred = record.noShowPrediction;
                 return (
                     <Space direction="vertical" size={2}>
-                        <Space size={8}>
+                        <Space>
                             <UserOutlined />
-                            <Text strong>{record.customerName || record.customer?.name || "-"}</Text>
+                            <Text strong>{record.customerName || record.customer?.name || "Khách hàng"}</Text>
                         </Space>
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                            {record.customerPhone || "-"}
+                            {record.customerPhone || "Không có SĐT"}
                         </Text>
                         {pred && (
                             <NoShowWarningBadge
@@ -444,18 +681,14 @@ export default function OwnerBookingWorkflowPage() {
                                 icon={isBusy ? <LoadingOutlined /> : workflowAction.icon}
                                 loading={isBusy}
                                 style={{
-                                    backgroundColor: workflowAction.color === "green" ? "#52c41a" : undefined,
-                                    borderColor: workflowAction.color === "green" ? "#52c41a" : undefined
+                                    backgroundColor: workflowAction.color === "green" ? "#52c41a" : (workflowAction.color === "gold" ? "#fa8c16" : undefined),
+                                    borderColor: workflowAction.color === "green" ? "#52c41a" : (workflowAction.color === "gold" ? "#fa8c16" : undefined)
                                 }}
                                 onClick={() => runWorkflowAction(record, workflowAction.key)}
                             >
                                 {workflowAction.label}
                             </Button>
-                        ) : (
-                            <Tag color={STATUS_META[record.status]?.color || "default"}>
-                                {STATUS_META[record.status]?.label || "Không có thao tác"}
-                            </Tag>
-                        )}
+                        ) : null}
                     </Space>
                 );
             }
@@ -469,7 +702,7 @@ export default function OwnerBookingWorkflowPage() {
                     Check-in & Hoàn thành booking
                 </Title>
                 <Text type="secondary">
-                    Màn hình dành cho owner/staff để theo dõi booking, xác nhận khách đến và chuyển sang hoàn thành sau khi phục vụ xong.
+                    Màn hình theo dõi booking, quét QR xác nhận khách đến (Check-in) và hoàn thành phục vụ tại chi nhánh.
                 </Text>
             </div>
 
@@ -501,19 +734,26 @@ export default function OwnerBookingWorkflowPage() {
                 <Space direction="vertical" size={16} style={{ width: "100%" }}>
                     <Space wrap style={{ width: "100%", justifyContent: "space-between" }}>
                         <Space wrap>
-                            <Select
-                                showSearch
-                                style={{ width: 260 }}
-                                placeholder="Chọn chi nhánh"
-                                value={branchId || undefined}
-                                onChange={handleBranchChange}
-                                loading={loadingBranches}
-                                options={branches.map((branch) => ({
-                                    value: String(branch.id),
-                                    label: branch.name
-                                }))}
-                                optionFilterProp="label"
-                            />
+                            {isManagerPage || branches.length <= 1 ? (
+                                <Tag color="orange" style={{ fontSize: 14, padding: "5px 14px", borderRadius: 6, fontWeight: 600, display: "inline-flex", alignItems: "center", height: 32 }}>
+                                    <ShopOutlined style={{ marginRight: 6 }} />
+                                    Chi nhánh: {selectedBranch?.name || "Đang tải..."}
+                                </Tag>
+                            ) : (
+                                <Select
+                                    showSearch
+                                    style={{ width: 260 }}
+                                    placeholder="Chọn chi nhánh"
+                                    value={branchId || undefined}
+                                    onChange={handleBranchChange}
+                                    loading={loadingBranches}
+                                    options={branches.map((branch) => ({
+                                        value: String(branch.id),
+                                        label: branch.name
+                                    }))}
+                                    optionFilterProp="label"
+                                />
+                            )}
 
                             <Select
                                 style={{ width: 180 }}
@@ -537,6 +777,14 @@ export default function OwnerBookingWorkflowPage() {
                         </Space>
 
                         <Space wrap>
+                            <Button
+                                type="primary"
+                                icon={<QrcodeOutlined />}
+                                style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
+                                onClick={() => setQrModalOpen(true)}
+                            >
+                                Quét mã QR Check-in
+                            </Button>
                             <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loadingBookings}>
                                 Làm mới
                             </Button>
@@ -691,6 +939,15 @@ export default function OwnerBookingWorkflowPage() {
                     </Space>
                 ) : null}
             </Modal>
+
+            <QrScannerModal
+                open={qrModalOpen}
+                onCancel={() => setQrModalOpen(false)}
+                onSuccess={() => {
+                    setQrModalOpen(false);
+                    loadBookings(branchId);
+                }}
+            />
         </div>
     );
 }

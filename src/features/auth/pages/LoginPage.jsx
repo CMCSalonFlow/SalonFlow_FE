@@ -34,10 +34,10 @@ export default function LoginPage() {
             navigate("/admin");
         } else if (roles.includes(ROLES.SALON_OWNER)) {
             navigate("/owner");
-        } else if (roles.includes(ROLES.BRANCH_MANAGER)) {
-            navigate("/staff");
+        } else if (roles.includes(ROLES.MANAGER) || roles.includes(ROLES.BRANCH_MANAGER)) {
+            navigate("/manager/pos");
         } else if (roles.includes(ROLES.STAFF)) {
-            navigate("/staff");
+            navigate("/staff/schedule");
         } else if (roles.includes(ROLES.CUSTOMER)) {
             navigate("/home");
         } else {

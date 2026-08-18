@@ -9,8 +9,8 @@ import { Spin } from "antd";
 import PublicLayout from "@/layouts/PublicLayout/PublicLayout";
 import CustomerLayout from "@/layouts/CustomerLayout/CustomerLayout";
 import ProtectedRoute from "@/core/components/ProtectedRoute";
-import CheckInScannerPage from "@/features/booking/pages/CheckInScannerPage";
 import QrCheckInPage from "@/features/booking/pages/QrCheckInPage";
+
 import ROLES from "@/core/constants/roles";
 import { SubscriptionProvider } from "@/features/subscription/context/SubscriptionContext";
 
@@ -18,6 +18,7 @@ import { SubscriptionProvider } from "@/features/subscription/context/Subscripti
 const AdminLayout = lazy(() => import("@/layouts/AdminLayout/AdminLayout"));
 const OwnerLayout = lazy(() => import("@/layouts/OwnerLayout/OwnerLayout"));
 const StaffLayout = lazy(() => import("@/layouts/StaffLayout"));
+const ManagerLayout = lazy(() => import("@/layouts/ManagerLayout"));
 
 // Auth pages (eagerly loaded - shown on first load)
 import LoginPage from "@/features/auth/pages/LoginPage";
@@ -258,17 +259,10 @@ const router = createBrowserRouter([
                 element: withSuspense(VoucherManagementPage)
             },
             {
-                path: "bookings",
-                element: withSuspense(OwnerBookingWorkflowPage)
-            },
-            {
-                path: "check-in-scanner",
-                element: <CheckInScannerPage />
-            },
-            {
                 path: "ai-smart-schedule",
                 element: withSuspense(SmartSchedulingConfigPage)
             },
+
             {
                 path: "ai-no-show",
                 element: withSuspense(NoShowDashboardPage)
@@ -296,7 +290,7 @@ const router = createBrowserRouter([
         ]
     },
 
-    // STAFF / POS AREA
+    // STAFF AREA (Thợ)
     {
         path: "/staff",
         element: (
@@ -308,16 +302,8 @@ const router = createBrowserRouter([
         ),
         children: [
             {
-                path: "appointments",
-                element: withSuspense(StaffAppointmentsPage)
-            },
-            {
-                path: "walk-in",
-                element: withSuspense(WalkInBookingPage)
-            },
-            {
-                path: "booking-status",
-                element: withSuspense(BookingStatusPage)
+                index: true,
+                element: <Navigate to="/staff/schedule" replace />
             },
             {
                 path: "schedule",
@@ -325,14 +311,44 @@ const router = createBrowserRouter([
             },
             {
                 path: "appointments",
-                element: <StaffAppointmentsPage />
-            },
-            {
-                path: "check-in-scanner",
-                element: <CheckInScannerPage />
+                element: withSuspense(StaffAppointmentsPage)
             }
         ]
     },
+
+    // MANAGER / POS AREA (Lễ tân / Quản lý)
+    {
+        path: "/manager",
+        element: (
+            <ProtectedRoute allowedRoles={["MANAGER", "BRANCH_MANAGER", "SALON_OWNER"]}>
+                <Suspense fallback={<PageLoader />}>
+                    <ManagerLayout />
+                </Suspense>
+            </ProtectedRoute>
+        ),
+        children: [
+            {
+                index: true,
+                element: <Navigate to="/manager/walk-in" replace />
+            },
+            {
+                path: "pos",
+                element: <Navigate to="/manager/walk-in" replace />
+            },
+            {
+                path: "walk-in",
+                element: withSuspense(WalkInBookingPage)
+            },
+
+            {
+                path: "bookings",
+                element: withSuspense(OwnerBookingWorkflowPage)
+            }
+        ]
+    },
+
+
+
 
     // PUBLIC AREA (guest)
     {

@@ -183,8 +183,27 @@ export default function StaffManagementPage() {
                     ) : (
                         <Text type="secondary">Chưa phân công dịch vụ</Text>
                     )}
+
                 </Space>
             )
+        },
+
+        {
+            title: "Vai trò",
+            key: "roleCode",
+            width: "15%",
+            render: (_, record) => {
+                const isManager = record.roleCode === "MANAGER";
+                return isManager ? (
+                    <Tag color="gold" style={{ borderRadius: 12, padding: "2px 10px", fontWeight: 600 }}>
+                        Lễ tân / Quản lý
+                    </Tag>
+                ) : (
+                    <Tag color="blue" style={{ borderRadius: 12, padding: "2px 10px", fontWeight: 600 }}>
+                        Thợ (Staff)
+                    </Tag>
+                );
+            }
         },
         {
             title: "Thao tác",
