@@ -408,7 +408,7 @@ const router = createBrowserRouter([
                 element: withSuspense(BookingPage)
             },
             {
-                path: "/pay-at-counter-success",
+                path: "/booking/pay-at-counter-success",
                 element: withSuspense(PayAtCounterSuccessPage)
             },
             {
