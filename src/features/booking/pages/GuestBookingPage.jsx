@@ -300,7 +300,7 @@ export default function GuestBookingPage() {
                 customerName: guestName.trim(),
                 customerPhone: guestPhone.trim(),
                 bookingChannel: "PUBLIC",
-                paymentMethod
+                paymentMethod: "PAY_AT_COUNTER"
             };
 
             if (guestEmail.trim()) {
@@ -329,35 +329,10 @@ export default function GuestBookingPage() {
                     returnPath: "/guest-booking"
                 })
             );
-            sessionStorage.setItem("salonflow_last_booking_detail", JSON.stringify(bookingDetail));
+            sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingDetail));
 
-            if (paymentMethod === "VNPAY") {
-                message.loading({ content: "Đang chuyển hướng sang cổng thanh toán VNPay...", key: "payment_redirect" });
-
-                const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-                const returnUrl = window.location.origin + "/payment/callback";
-                const depositAmount = Number(bookingDetail.depositAmount || bookingDetail.totalPrice || 0);
-
-                const paymentRes = await createPaymentUrlApi({
-                    bookingId: bookingDetail.id,
-                    paymentMethod: "VNPAY",
-                    amount: depositAmount,
-                    idempotencyKey,
-                    returnUrl
-                }, { skipAuth: true });
-
-                if (paymentRes.paymentUrl) {
-                    window.location.href = paymentRes.paymentUrl;
-                } else {
-                    throw new Error("Không thể tạo liên kết thanh toán VNPay.");
-                }
-            } else {
-                const bookingWithAmounts = bookingDetail;
-
-                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingWithAmounts));
-                message.success("Đặt lịch hẹn thành công!");
-                navigate("/booking/pay-at-counter-success", { state: { booking: bookingWithAmounts, bookingMode: "public" } });
-            }
+            message.success("Đặt lịch hẹn thành công!");
+            navigate("/booking/pay-at-counter-success", { state: { booking: bookingDetail, bookingMode: "public" } });
         } catch (error) {
             message.error({ content: error.response?.data?.message || error.message || "Lỗi khi tạo đặt lịch hẹn.", key: "payment_redirect" });
         } finally {
@@ -776,19 +751,13 @@ export default function GuestBookingPage() {
                         </div>
 
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                            <Text type="secondary" style={{ fontSize: 16 }}>Tiền cọc phải thanh toán:</Text>
-                            <Text strong style={{ color: "#faad14", fontSize: 22 }}>{payableAmount.toLocaleString()} đ</Text>
+                            <Text type="secondary" style={{ fontSize: 16 }}>Tổng số tiền (Thanh toán tại quầy):</Text>
+                            <Text strong style={{ color: "#1890ff", fontSize: 22 }}>{payableAmount.toLocaleString()} đ</Text>
                         </div>
 
                         <div style={{ marginTop: 8 }}>
                             <Text type="secondary" style={{ fontSize: 12 }}>
-                                {paymentMethod === "PAY_AT_COUNTER"
-                                    ? (depositAmount > 0
-                                        ? `Với lựa chọn thanh toán tại quầy, bạn vẫn cần thanh toán tiền cọc online để giữ lịch: ${formatCurrency(depositAmount)} đ. Phần còn lại sẽ thanh toán tại salon.`
-                                        : "Hiện chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên.")
-                                    : (depositAmount > 0
-                                        ? `Tiền cọc sẽ được thanh toán online qua VNPay: ${formatCurrency(depositAmount)} đ.`
-                                        : "Hiện chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên.")}
+                                💡 Đặt lịch trực tuyến hoàn toàn miễn phí. Khách hàng sẽ thanh toán giá trị dịch vụ trực tiếp tại quầy sau khi thực hiện xong tại Salon.
                             </Text>
                         </div>
                     </Card>
