@@ -411,7 +411,7 @@ export default function BookingPage() {
                 preferredStaffId: selectedStaff ? selectedStaff.id : null,
                 notes,
                 customerPhone,
-                paymentMethod
+                paymentMethod: "PAY_AT_COUNTER"
             };
 
             if (bookingType === "service") {
@@ -427,40 +427,14 @@ export default function BookingPage() {
                 depositAmount: Number(res.depositAmount || getBookingDepositAmount() || res.totalPrice || 0),
                 totalPrice: Number(res.totalPrice || totalPrice || 0)
             };
-            sessionStorage.setItem("salonflow_last_booking_detail", JSON.stringify(bookingDetail));
+            sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingDetail));
             
-            if (paymentMethod === "VNPAY") {
-                message.loading({ content: "Đang chuyển hướng sang cổng thanh toán VNPay...", key: "payment_redirect" });
-                
-                const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-                const returnUrl = window.location.origin + "/payment/callback";
-                const depositAmountVal = Number(bookingDetail.depositAmount || bookingDetail.totalPrice || 0);
-                
-                const paymentPayload = {
-                    bookingId: bookingDetail.id,
-                    paymentMethod: "VNPAY",
-                    amount: depositAmountVal,
-                    idempotencyKey: idempotencyKey,
-                    returnUrl: returnUrl
-                };
-                
-                const paymentRes = await createPaymentUrlApi(paymentPayload);
-                if (paymentRes.paymentUrl) {
-                    window.location.href = paymentRes.paymentUrl;
-                } else {
-                    throw new Error("Không thể tạo liên kết thanh toán VNPay.");
+            message.success("Đặt lịch hẹn thành công!");
+            navigate("/booking/pay-at-counter-success", {
+                state: {
+                    booking: bookingDetail
                 }
-            } else {
-                const bookingWithAmounts = bookingDetail;
-
-                sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingWithAmounts));
-                message.success("Đặt lịch hẹn thành công!");
-                navigate("/booking/pay-at-counter-success", {
-                    state: {
-                        booking: bookingWithAmounts
-                    }
-                });
-            }
+            });
         } catch (error) {
             message.error({ content: error.response?.data?.message || error.message || "Lỗi khi tạo đặt lịch hẹn.", key: "payment_redirect" });
         } finally {

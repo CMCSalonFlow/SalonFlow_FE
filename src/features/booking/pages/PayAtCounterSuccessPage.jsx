@@ -58,7 +58,7 @@ export default function PayAtCounterSuccessPage() {
     const bookingItems = booking?.items || [];
     const totalPrice = Number(booking?.totalPrice || 0);
     const depositAmount = Number(booking?.depositAmount || booking?.payableAmount || booking?.bookingDepositAmount || 0);
-    const payableAmount = depositAmount > 0 ? depositAmount : totalPrice;
+    const payableAmount = totalPrice;
     const bookingId = booking?.id;
     const branchId = booking?.branchId || booking?.branch?.id;
 
@@ -137,13 +137,10 @@ export default function PayAtCounterSuccessPage() {
                 bodyStyle={{ padding: 0 }}
             >
                 <Result
-                    status="info"
-                        title={<Title level={2} style={{ marginBottom: 0 }}>Đặt lịch đã được ghi nhận</Title>}
-                        subTitle="Bạn đã chọn thanh toán tại quầy, nhưng vẫn cần thanh toán tiền cọc online để giữ lịch."
+                    status="success"
+                        title={<Title level={2} style={{ marginBottom: 0 }}>Đặt lịch thành công!</Title>}
+                        subTitle="Lịch hẹn của bạn đã được ghi nhận và xác nhận thành công."
                         extra={[
-                        <Button key="pay" type="primary" size="large" onClick={handlePayDeposit}>
-                                Thanh toán cọc ngay
-                            </Button>,
                             <Button
                                 key="status"
                                 size="large"
@@ -270,7 +267,7 @@ export default function PayAtCounterSuccessPage() {
                                         </div>
                                         <div style={{ marginTop: 4 }}>
                                             <Text type="secondary" style={{ fontSize: 12 }}>
-                                                Đây là tiền cọc cần thanh toán online trước. Phần còn lại sẽ được thanh toán tại salon khi bạn đến làm dịch vụ.
+                                                Lịch hẹn của bạn hoàn toàn miễn phí đặt trước. Bạn sẽ thanh toán trực tiếp số tiền này tại salon khi đến sử dụng dịch vụ.
                                             </Text>
                                         </div>
                                     </div>
