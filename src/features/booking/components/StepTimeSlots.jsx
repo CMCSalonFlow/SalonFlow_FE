@@ -280,24 +280,6 @@ export default function StepTimeSlots({
                             style={{ borderRadius: 8 }}
                         />
                     </div>
-
-                    <div style={{ marginBottom: 20 }}>
-                        <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Phương thức thanh toán</label>
-                        <Radio.Group
-                            value={paymentMethod}
-                            onChange={(e) => setPaymentMethod(e.target.value)}
-                            style={{ width: "100%" }}
-                        >
-                            <Space direction="vertical" style={{ width: "100%" }}>
-                                <Radio value="VNPAY" style={{ padding: "4px 0", fontSize: 15 }}>
-                                    <strong>Thanh toán Online qua cổng VNPay</strong> (Xác nhận lịch hẹn & Thanh toán cọc)
-                                </Radio>
-                            </Space>
-                        </Radio.Group>
-                        <div style={{ marginTop: 8, color: "#8c8c8c", fontSize: 12 }}>
-                            💡 Đặt lịch trực tuyến áp dụng thanh toán cọc online qua VNPay. Khách hàng thực hiện thanh toán tiền mặt tại quầy trực tiếp khi đến làm dịch vụ tại Salon.
-                        </div>
-                    </div>
                 </div>
             )}
         </div>

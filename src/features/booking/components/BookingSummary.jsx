@@ -134,31 +134,17 @@ export default function BookingSummary({
                 <>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                         <Text type="secondary" style={{ fontSize: 16 }}>
-                            Tiền cọc phải thanh toán:
+                            Tổng số tiền (Thanh toán tại quầy):
                         </Text>
-                        <Text strong style={{ color: "#faad14", fontSize: 22 }}>
+                        <Text strong style={{ color: "#1890ff", fontSize: 22 }}>
                             {payableAmount.toLocaleString()} đ
                         </Text>
                     </div>
                     <div style={{ marginTop: 8 }}>
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                            {paymentMethod === "PAY_AT_COUNTER"
-                                ? (depositAmount > 0
-                                    ? `Với lựa chọn thanh toán tại quầy, bạn vẫn cần thanh toán tiền cọc online để giữ lịch: ${formatCurrency(depositAmount)} đ. Phần còn lại sẽ thanh toán tại salon.`
-                                    : "Hiện chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên.")
-                                : (depositAmount > 0
-                                    ? `Tiền cọc sẽ được thanh toán online qua VNPay: ${formatCurrency(depositAmount)} đ.`
-                                    : "Hiện chưa có cấu hình cọc cho các dịch vụ đã chọn, hệ thống sẽ dùng giá trị hiển thị phía trên.")
-                            }
+                            💡 Đặt lịch trực tuyến hoàn toàn miễn phí. Khách hàng sẽ thanh toán giá trị dịch vụ trực tiếp tại quầy sau khi thực hiện xong tại Salon.
                         </Text>
                     </div>
-                    {paymentMethod === "VNPAY" && (
-                        <div style={{ marginTop: 8 }}>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                                Thanh toán trực tuyến sẽ được xử lý qua VNPay ngay sau khi tạo booking.
-                            </Text>
-                        </div>
-                    )}
                 </>
             ) : (
                 <div>
