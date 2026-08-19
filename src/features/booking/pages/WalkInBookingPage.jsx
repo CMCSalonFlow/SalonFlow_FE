@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Button,
     Card,
@@ -31,7 +32,8 @@ import {
     PlusOutlined,
     CreditCardOutlined,
     FileTextOutlined,
-    SafetyCertificateOutlined
+    SafetyCertificateOutlined,
+    QrcodeOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -47,6 +49,7 @@ import { processPosCashPaymentApi } from "@/features/payment/api/paymentApi";
 const { Title, Text } = Typography;
 
 export default function WalkInBookingPage() {
+    const navigate = useNavigate();
     const [form] = Form.useForm();
     const thermalReceiptRef = useRef(null);
 
@@ -678,8 +681,11 @@ export default function WalkInBookingPage() {
                 open={!!successData}
                 onCancel={() => setSuccessData(null)}
                 footer={[
+                    <Button key="checkout" icon={<QrcodeOutlined />} style={{ color: "#fa8c16", borderColor: "#fa8c16" }} onClick={() => navigate(`/manager/checkout/${successData?.bookingId}`)}>
+                        Trang Checkout (VietQR)
+                    </Button>,
                     <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={handlePrintThermalReceipt} style={{ background: "#1890ff" }}>
-                        In Hóa Đơn Nhiệt (K80 Printer)
+                        In Hóa Đơn (K80)
                     </Button>,
                     <Button key="new" icon={<PlusOutlined />} onClick={() => setSuccessData(null)}>
                         Tạo Đơn Mới

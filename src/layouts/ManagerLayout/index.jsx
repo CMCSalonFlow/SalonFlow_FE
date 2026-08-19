@@ -30,6 +30,11 @@ export function ManagerLayout() {
             key: "/manager/bookings",
             icon: <CheckCircleOutlined />,
             label: "Check-in & Hoàn Thành"
+        },
+        {
+            key: "/manager/checkout",
+            icon: <QrcodeOutlined />,
+            label: "Thanh Toán & QR Checkout"
         }
     ];
 

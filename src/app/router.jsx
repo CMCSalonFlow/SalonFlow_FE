@@ -66,6 +66,7 @@ const BookingPage = lazy(() => import("@/features/booking/pages/BookingPage"));
 const GuestBookingPage = lazy(() => import("@/features/booking/pages/GuestBookingPage"));
 const AppointmentsPage = lazy(() => import("@/features/booking/pages/AppointmentsPage"));
 const PaymentCallbackPage = lazy(() => import("@/features/payment/pages/PaymentCallbackPage"));
+const ManagerCheckoutPage = lazy(() => import("@/features/payment/pages/ManagerCheckoutPage"));
 const ProfilePage = lazy(() => import("@/features/user/pages/ProfilePage"));
 const CustomerNotificationsPage = lazy(() => import("@/features/notification/pages/CustomerNotificationsPage"));
 const HairStyleAiPage = lazy(() => import("@/features/hair-ai/pages/HairStyleAiPage"));
@@ -343,6 +344,14 @@ const router = createBrowserRouter([
             {
                 path: "bookings",
                 element: withSuspense(OwnerBookingWorkflowPage)
+            },
+            {
+                path: "checkout",
+                element: withSuspense(ManagerCheckoutPage)
+            },
+            {
+                path: "checkout/:bookingId",
+                element: withSuspense(ManagerCheckoutPage)
             }
         ]
     },
@@ -383,6 +392,14 @@ const router = createBrowserRouter([
                 path: "guest-booking",
                 element: withSuspense(GuestBookingPage)
             },
+            {
+                path: "booking/status/:variant",
+                element: withSuspense(BookingStatusPage)
+            },
+            {
+                path: "booking/status",
+                element: withSuspense(BookingStatusPage)
+            },
         ]
     },
 
@@ -410,6 +427,14 @@ const router = createBrowserRouter([
             {
                 path: "/booking/pay-at-counter-success",
                 element: withSuspense(PayAtCounterSuccessPage)
+            },
+            {
+                path: "/booking/status/:variant",
+                element: withSuspense(BookingStatusPage)
+            },
+            {
+                path: "/booking/status",
+                element: withSuspense(BookingStatusPage)
             },
             {
                 path: "/recurring-success",
