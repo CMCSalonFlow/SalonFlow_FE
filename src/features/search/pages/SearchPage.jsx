@@ -15,7 +15,8 @@ import {
     Segmented,
     Alert,
     Divider,
-    message
+    message,
+    Grid
 } from "antd";
 import {
     CompassOutlined,
@@ -40,6 +41,7 @@ const DEFAULT_COORDINATES = {
 };
 
 export default function SearchPage() {
+    const screens = Grid.useBreakpoint();
     const {
         branches,
         loading,
@@ -274,7 +276,7 @@ export default function SearchPage() {
             >
                 <Row gutter={[16, 16]} align="middle">
                     {/* Keyword search input */}
-                    <Col xs={24} md={10}>
+                    <Col xs={24} md={8} lg={9}>
                         <Space.Compact style={{ width: "100%" }}>
                             <Input
                                 placeholder="Tìm theo tên salon, chi nhánh, dịch vụ..."
@@ -298,15 +300,15 @@ export default function SearchPage() {
                     </Col>
 
                     {/* Price Range inputs */}
-                    <Col xs={24} sm={12} md={6}>
-                        <Space style={{ width: "100%" }}>
+                    <Col xs={24} sm={12} md={6} lg={6}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
                             <InputNumber
                                 placeholder="Giá từ"
                                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                 parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
                                 value={priceMinInput}
                                 onChange={setPriceMinInput}
-                                style={{ width: "100%", borderRadius: 10 }}
+                                style={{ flex: 1, borderRadius: 10, width: "100%" }}
                             />
                             <Text style={{ color: "#94a3b8" }}>-</Text>
                             <InputNumber
@@ -315,13 +317,13 @@ export default function SearchPage() {
                                 parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
                                 value={priceMaxInput}
                                 onChange={setPriceMaxInput}
-                                style={{ width: "100%", borderRadius: 10 }}
+                                style={{ flex: 1, borderRadius: 10, width: "100%" }}
                             />
-                        </Space>
+                        </div>
                     </Col>
 
                     {/* Min Rating Radio Button */}
-                    <Col xs={24} sm={12} md={5}>
+                    <Col xs={24} sm={12} md={6} lg={6}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <Text strong style={{ fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>
                                 Đánh giá:
@@ -341,7 +343,7 @@ export default function SearchPage() {
                     </Col>
 
                     {/* Apply Filters Trigger */}
-                    <Col xs={24} md={3}>
+                    <Col xs={24} md={4} lg={3}>
                         <Button
                             type="default"
                             onClick={handleSearchSubmit}
@@ -424,7 +426,7 @@ export default function SearchPage() {
                     </Col>
 
                     {/* View Modes (Split / Map / List) */}
-                    <Col xs={24} lg={8} style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <Col xs={24} lg={8} style={{ display: "flex", justifyContent: screens.lg ? "flex-end" : "center", width: "100%" }}>
                         <Segmented
                             value={viewMode}
                             onChange={setViewMode}

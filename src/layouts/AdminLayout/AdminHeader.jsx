@@ -2,20 +2,22 @@ import {
     Avatar,
     Button,
     Dropdown,
-    Space
+    Space,
+    Grid
 } from "antd";
 
 import {
     UserOutlined,
-    LogoutOutlined
+    LogoutOutlined,
+    MenuOutlined
 } from "@ant-design/icons";
 
 import {
     logout
 } from "@/core/utils/auth";
 
-export default function AdminHeader() {
-
+export default function AdminHeader({ showMobileToggle, onToggleMobileMenu }) {
+    const screens = Grid.useBreakpoint();
     const username =
         localStorage.getItem(
             "username"
@@ -34,21 +36,33 @@ export default function AdminHeader() {
         <div
             style={{
                 display: "flex",
-                justifyContent:
-                    "space-between",
+                justifyContent: "space-between",
                 alignItems: "center",
                 height: "64px",
-                padding: "0 24px",
+                padding: screens.md ? "0 24px" : "0 12px",
+                width: "100%",
                 background: "#fff"
             }}
         >
-            <h3
-                style={{
-                    margin: 0
-                }}
-            >
-                SalonFlow Admin
-            </h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {showMobileToggle && (
+                    <Button
+                        type="text"
+                        icon={<MenuOutlined />}
+                        onClick={onToggleMobileMenu}
+                        style={{ fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    />
+                )}
+                {screens.sm && (
+                    <h3
+                        style={{
+                            margin: 0
+                        }}
+                    >
+                        SalonFlow Admin
+                    </h3>
+                )}
+            </div>
 
             <Dropdown
                 menu={{
@@ -57,15 +71,16 @@ export default function AdminHeader() {
             >
                 <Button
                     type="text"
+                    style={{ padding: screens.md ? "4px 15px" : "4px 0" }}
                 >
-                    <Space>
+                    <Space size={screens.md ? 8 : 4}>
                         <Avatar
                             icon={
                                 <UserOutlined />
                             }
                         />
 
-                        {username}
+                        {screens.sm && username}
                     </Space>
                 </Button>
             </Dropdown>

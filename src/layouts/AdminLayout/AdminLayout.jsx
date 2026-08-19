@@ -1,11 +1,14 @@
 import {
-    Layout
+    Layout,
+    Grid,
+    Drawer,
+    Button
 } from "antd";
 
 import { Outlet }
 from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
-import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { MenuFoldOutlined, MenuUnfoldOutlined, MenuOutlined } from "@ant-design/icons";
 
 import AdminSidebar
 from "./AdminSidebar";
@@ -20,6 +23,8 @@ const {
 } = Layout;
 
 export default function AdminLayout() {
+    const screens = Grid.useBreakpoint();
+    const [drawerVisible, setDrawerVisible] = useState(false);
     const [collapsed, setCollapsed] = useState(() => {
         const saved = localStorage.getItem("admin-sidebar-collapsed");
         return saved === "true";
@@ -69,124 +74,139 @@ export default function AdminLayout() {
     };
 
     return (
-
         <Layout
             style={{
                 minHeight: "100vh"
             }}
         >
-
-            <Sider
-                width={width}
-                collapsible
-                collapsed={collapsed}
-                trigger={null}
-                collapsedWidth={80}
-                style={{
-                    position: "relative",
-                    transition: isResizing ? "none" : "width 0.2s, min-width 0.2s, max-width 0.2s",
-                }}
-            >
-
-                <div
+            {screens.lg ? (
+                <Sider
+                    width={width}
+                    collapsible
+                    collapsed={collapsed}
+                    trigger={null}
+                    collapsedWidth={80}
                     style={{
-                        height: 64,
-                        color: "#fff",
-                        display: "flex",
-                        alignItems:
-                            "center",
-                        justifyContent:
-                            "center",
-                        fontSize: collapsed ? 16 : 20,
-                        fontWeight: 600,
-                        transition: "all 0.3s",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden"
+                        position: "relative",
+                        transition: isResizing ? "none" : "width 0.2s, min-width 0.2s, max-width 0.2s",
                     }}
                 >
-                    {collapsed ? "SF" : "SalonFlow"}
-                </div>
-
-                <AdminSidebar />
-
-                {/* Drag handle */}
-                {!collapsed && (
                     <div
-                        onMouseDown={startResizing}
+                        style={{
+                            height: 64,
+                            color: "#fff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: collapsed ? 16 : 20,
+                            fontWeight: 600,
+                            transition: "all 0.3s",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden"
+                        }}
+                    >
+                        {collapsed ? "SF" : "SalonFlow"}
+                    </div>
+
+                    <AdminSidebar />
+
+                    {/* Drag handle */}
+                    {!collapsed && (
+                        <div
+                            onMouseDown={startResizing}
+                            style={{
+                                position: "absolute",
+                                top: 0,
+                                right: 0,
+                                width: "6px",
+                                height: "100%",
+                                cursor: "col-resize",
+                                zIndex: 100,
+                                backgroundColor: isResizing ? "#1890ff" : "transparent",
+                                transition: "background-color 0.2s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1890ff" }}
+                            onMouseLeave={(e) => { if (!isResizing) e.currentTarget.style.backgroundColor = "transparent" }}
+                        />
+                    )}
+
+                    {/* Floating Collapse Trigger */}
+                    <div
+                        onClick={() => handleCollapse(!collapsed)}
                         style={{
                             position: "absolute",
-                            top: 0,
-                            right: 0,
-                            width: "6px",
-                            height: "100%",
-                            cursor: "col-resize",
-                            zIndex: 100,
-                            backgroundColor: isResizing ? "#1890ff" : "transparent",
-                            transition: "background-color 0.2s",
+                            top: 20,
+                            right: -12,
+                            width: 24,
+                            height: 24,
+                            borderRadius: "50%",
+                            backgroundColor: "#fff",
+                            border: "1px solid #d9d9d9",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            zIndex: 101,
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                            transition: "all 0.3s",
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1890ff" }}
-                        onMouseLeave={(e) => { if (!isResizing) e.currentTarget.style.backgroundColor = "transparent" }}
-                    />
-                )}
-
-                {/* Floating Collapse Trigger */}
-                <div
-                    onClick={() => handleCollapse(!collapsed)}
-                    style={{
-                        position: "absolute",
-                        top: 20,
-                        right: -12,
-                        width: 24,
-                        height: 24,
-                        borderRadius: "50%",
-                        backgroundColor: "#fff",
-                        border: "1px solid #d9d9d9",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        zIndex: 101,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                        transition: "all 0.3s",
-                    }}
+                    >
+                        {collapsed ? (
+                            <MenuUnfoldOutlined style={{ fontSize: 12, color: "#1890ff" }} />
+                        ) : (
+                            <MenuFoldOutlined style={{ fontSize: 12, color: "#1890ff" }} />
+                        )}
+                    </div>
+                </Sider>
+            ) : (
+                <Drawer
+                    placement="left"
+                    closable={false}
+                    onClose={() => setDrawerVisible(false)}
+                    open={drawerVisible}
+                    styles={{ body: { padding: 0, backgroundColor: "#001529" } }}
+                    width={250}
                 >
-                    {collapsed ? (
-                        <MenuUnfoldOutlined style={{ fontSize: 12, color: "#1890ff" }} />
-                    ) : (
-                        <MenuFoldOutlined style={{ fontSize: 12, color: "#1890ff" }} />
-                    )}
-                </div>
-
-            </Sider>
+                    <div
+                        style={{
+                            height: 64,
+                            color: "#fff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 20,
+                            fontWeight: 600
+                        }}
+                    >
+                        SalonFlow
+                    </div>
+                    <AdminSidebar onMenuClick={() => setDrawerVisible(false)} />
+                </Drawer>
+            )}
 
             <Layout>
-
                 <Header
                     style={{
                         padding: 0,
-                        background:
-                            "#fff"
+                        background: "#fff",
+                        zIndex: 1,
+                        boxShadow: "0 1px 4px rgba(0, 21, 41, 0.08)"
                     }}
                 >
-                    <AdminHeader />
+                    <AdminHeader showMobileToggle={!screens.lg} onToggleMobileMenu={() => setDrawerVisible(true)} />
                 </Header>
 
                 <Content
                     style={{
-                        margin: 24,
-                        padding: 24,
-                        background:
-                            "#fff",
+                        margin: screens.lg ? 24 : 12,
+                        padding: screens.lg ? 24 : 12,
+                        background: "#fff",
                         borderRadius: 12
                     }}
                 >
-
                     <Outlet />
-
                 </Content>
-
             </Layout>
-
         </Layout>
     );
 }

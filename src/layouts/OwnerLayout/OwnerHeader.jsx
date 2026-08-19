@@ -4,13 +4,15 @@ import {
     Dropdown,
     Space,
     Tag,
-    Tooltip
+    Tooltip,
+    Grid
 } from "antd";
 
 import {
     UserOutlined,
     LogoutOutlined,
-    CrownOutlined
+    CrownOutlined,
+    MenuOutlined
 } from "@ant-design/icons";
 
 import {
@@ -19,8 +21,9 @@ import {
 import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
 
-export default function OwnerHeader() {
+export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
     const navigate = useNavigate();
+    const screens = Grid.useBreakpoint();
     const { subscription } = useSubscription();
     const plan = subscription?.plan || "FREE";
 
@@ -58,24 +61,35 @@ export default function OwnerHeader() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "0 24px",
-                borderBottom:
-                    "1px solid #f0f0f0"
+                padding: screens.md ? "0 24px" : "0 12px",
+                width: "100%"
             }}
         >
-            <h3
-                style={{
-                    margin: 0
-                }}
-            >
-                SalonFlow Owner
-            </h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {showMobileToggle && (
+                    <Button
+                        type="text"
+                        icon={<MenuOutlined />}
+                        onClick={onToggleMobileMenu}
+                        style={{ fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    />
+                )}
+                {screens.sm && (
+                    <h3
+                        style={{
+                            margin: 0
+                        }}
+                    >
+                        SalonFlow Owner
+                    </h3>
+                )}
+            </div>
 
             <div
                 style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 16
+                    gap: screens.md ? 16 : 8
                 }}
             >
                 <Tooltip title="Xem chi tiết gói đăng ký">
@@ -84,11 +98,12 @@ export default function OwnerHeader() {
                         onClick={() => navigate("/owner/subscription")}
                         style={{ 
                             fontWeight: "bold", 
-                            padding: "4px 12px", 
+                            padding: screens.md ? "4px 12px" : "2px 8px", 
                             borderRadius: 12, 
                             margin: 0,
                             cursor: "pointer",
-                            boxShadow: plan !== "FREE" ? "0 2px 8px rgba(0,0,0,0.06)" : "none"
+                            boxShadow: plan !== "FREE" ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
+                            fontSize: screens.md ? "13px" : "11px"
                         }}
                     >
                         {plan} MEMBER
@@ -102,15 +117,16 @@ export default function OwnerHeader() {
                 >
                     <Button
                         type="text"
+                        style={{ padding: screens.md ? "4px 15px" : "4px 0" }}
                     >
-                        <Space>
+                        <Space size={screens.md ? 8 : 4}>
                             <Avatar
                                 icon={
                                     <UserOutlined />
                                 }
                             />
 
-                            {username}
+                            {screens.sm && username}
                         </Space>
                     </Button>
                 </Dropdown>
