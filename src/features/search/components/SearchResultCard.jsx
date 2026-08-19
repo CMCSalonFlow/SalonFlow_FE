@@ -29,7 +29,7 @@ export default function SearchResultCard({
 
     const handleBookNow = (e) => {
         e.stopPropagation();
-        navigate(`${bookingPath}?branchId=${item.branchId}`);
+        navigate(`${bookingPath}?branchId=${item.branchId}&salonId=${item.salonId}`);
     };
 
     return (
