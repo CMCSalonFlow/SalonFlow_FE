@@ -1,6 +1,7 @@
 import { Modal, Form, Input, Select, message } from "antd";
 import { useEffect, useState } from "react";
 import WeeklyScheduleGrid from "./WeeklyScheduleGrid";
+import { getBranchApi } from "@/features/branch/api/branchApi";
 
 export default function ShiftTemplateFormModal({
     open,
@@ -8,37 +9,59 @@ export default function ShiftTemplateFormModal({
     onSuccess,
     initialValues,
     users = [],
-    branches = [],
 }) {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [details, setDetails] = useState([]); // [{ dayOfWeek, startTime, endTime }]
+    const [branchHours, setBranchHours] = useState([]);
 
     const isEditing = !!(initialValues && initialValues.id);
 
     useEffect(() => {
-        if (open) {
-            if (initialValues) {
-                form.setFieldsValue({
-                    userId: initialValues.userId,
-                    branchId: initialValues.branchId,
-                    name: initialValues.name,
-                    description: initialValues.description,
-                });
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setDetails(
-                    (initialValues.details || []).map((d) => ({
-                        dayOfWeek: d.dayOfWeek,
-                        startTime: d.startTime,
-                        endTime: d.endTime,
-                    }))
-                );
-            } else {
-                form.resetFields();
-                setDetails([]);
-            }
+        if (!open) return;
+
+        const bId = initialValues?.branchId;
+
+        if (initialValues && initialValues.id) {
+            form.setFieldsValue({
+                userId: initialValues.userId,
+                name: initialValues.name,
+                description: initialValues.description,
+            });
+            setDetails(
+                (initialValues.details || []).map((d) => ({
+                    dayOfWeek: d.dayOfWeek,
+                    startTime: d.startTime ? d.startTime.slice(0, 5) : "09:00",
+                    endTime: d.endTime ? d.endTime.slice(0, 5) : "21:00",
+                }))
+            );
+        } else {
+            form.resetFields();
+            setDetails([]);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
+        if (bId) {
+            getBranchApi(bId).then((bData) => {
+                if (bData && bData.hours && bData.hours.length > 0) {
+                    setBranchHours(bData.hours);
+                    if (!initialValues || !initialValues.id) {
+                        // Tự động bật và điền khung giờ mặc định theo giờ mở cửa của chi nhánh cho các ngày hoạt động
+                        const defaultDetails = bData.hours
+                            .filter((h) => !h.isClosed)
+                            .map((h) => ({
+                                dayOfWeek: h.dayOfWeek === 0 ? 7 : h.dayOfWeek,
+                                startTime: h.openTime ? h.openTime.slice(0, 5) : "09:00",
+                                endTime: h.closeTime ? h.closeTime.slice(0, 5) : "21:00",
+                            }));
+                        if (defaultDetails.length > 0) {
+                            setDetails(defaultDetails);
+                        }
+                    }
+                }
+            }).catch((err) => {
+                console.error("Error fetching branch hours:", err);
+            });
+        }
     }, [open, initialValues]);
 
     const handleOk = async () => {
@@ -64,7 +87,11 @@ export default function ShiftTemplateFormModal({
             }
 
             setLoading(true);
-            await onSuccess({ ...values, details });
+            await onSuccess({
+                ...values,
+                branchId: initialValues?.branchId,
+                details
+            });
         } catch {
             // validation error
         } finally {
@@ -82,6 +109,8 @@ export default function ShiftTemplateFormModal({
             okText={isEditing ? "Cập nhật" : "Tạo mới"}
             cancelText="Hủy"
             width={640}
+            centered
+            destroyOnClose
         >
             <Form form={form} layout="vertical">
                 <Form.Item
@@ -94,21 +123,6 @@ export default function ShiftTemplateFormModal({
                         options={users.map((u) => ({
                             value: u.id,
                             label: u.fullName || u.username,
-                        }))}
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="branchId"
-                    label="Chi nhánh"
-                    rules={[{ required: true, message: "Vui lòng chọn chi nhánh" }]}
-                >
-                    <Select
-                        placeholder="Chọn chi nhánh"
-                        disabled={true}
-                        options={branches.map((b) => ({
-                            value: b.id,
-                            label: b.name,
                         }))}
                     />
                 </Form.Item>
@@ -129,6 +143,7 @@ export default function ShiftTemplateFormModal({
                     <WeeklyScheduleGrid
                         value={details}
                         onChange={setDetails}
+                        branchHours={branchHours}
                     />
                 </Form.Item>
             </Form>

@@ -492,7 +492,7 @@ export default function OwnerDashboardPage() {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <Card
-                bordered={false}
+                variant="borderless"
                 style={{
                     borderRadius: 18,
                     boxShadow: "0 2px 10px rgba(0,0,0,0.04)"

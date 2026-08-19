@@ -55,6 +55,7 @@ export default function ScheduleToolbar({
   onPrev,
   onNext,
   onViewChange,
+  branchSelect = null,
 }) {
   return (
     <div className="schedule-toolbar">
@@ -76,6 +77,11 @@ export default function ScheduleToolbar({
         {formatTitle(currentDate, currentView)}
       </div>
       <div className="toolbar-spacer" />
+      {branchSelect && (
+        <div style={{ marginRight: 16, display: "flex", alignItems: "center" }}>
+          {branchSelect}
+        </div>
+      )}
       {/* View selector */}
       <div className="toolbar-view-selector">
         {VIEWS.map((v) => (

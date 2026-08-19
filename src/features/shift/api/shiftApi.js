@@ -39,6 +39,14 @@ export const applyTemplate = async (templateId, weekStartDate, overwrite = false
     return response.data;
 };
 
+export const applyAllTemplatesApi = async (branchId, weekStartDate, overwrite = false) => {
+    const response = await api.post(
+        `/api/v1/shifts/branch/${branchId}/templates/apply-all`,
+        { weekStartDate, overwrite }
+    );
+    return response.data;
+};
+
 // ── Query shifts ─────────────────────────────────────────────
 
 export const getShiftsByUserAndWeek = async (userId, weekStartDate) => {

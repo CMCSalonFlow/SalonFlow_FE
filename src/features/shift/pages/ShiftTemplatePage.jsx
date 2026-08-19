@@ -24,7 +24,6 @@ import {
     CalendarOutlined,
     CheckOutlined,
     ShopOutlined,
-    TeamOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
@@ -35,6 +34,7 @@ import {
     updateTemplate,
     deleteTemplate,
     applyTemplate,
+    applyAllTemplatesApi,
 } from "../api/shiftApi";
 
 import ShiftTemplateFormModal from "../components/ShiftTemplateFormModal";
@@ -65,7 +65,6 @@ export default function ShiftTemplatePage() {
     const [branches, setBranches] = useState([]);
     const [users, setUsers] = useState([]);
     const [branchId, setBranchId] = useState(null);
-    const [selectedUserId, setSelectedUserId] = useState(null);
 
     // Modal tạo/sửa template
     const [formOpen, setFormOpen] = useState(false);
@@ -104,7 +103,7 @@ export default function ShiftTemplatePage() {
 
         setLoading(true);
         try {
-            const data = await getTemplates(selectedUserId || undefined, branchId);
+            const data = await getTemplates(undefined, branchId);
             setTemplates(data);
         } catch {
             message.error("Không thể tải danh sách template");
@@ -125,7 +124,7 @@ export default function ShiftTemplatePage() {
 
     useEffect(() => {
         loadTemplates();
-    }, [branchId, selectedUserId]);
+    }, [branchId]);
     const openCreate = () => {
         setEditingTemplate({ branchId });
         setFormOpen(true);
@@ -150,7 +149,6 @@ export default function ShiftTemplatePage() {
         } catch (err) {
             const msg = err?.response?.data?.message || "Có lỗi xảy ra";
             message.error(msg);
-            throw err;
         }
     };
 
@@ -192,16 +190,30 @@ export default function ShiftTemplatePage() {
         setApplyLoading(true);
         try {
             const weekStartDate = applyWeek.format("YYYY-MM-DD");
-            const shifts = await applyTemplate(
-                applyingTemplate.id,
-                weekStartDate,
-                applyOverwrite
-            );
-            message.success(
-                Array.isArray(shifts)
-                    ? `Đã tạo ${shifts.length} ca làm việc`
-                    : "Áp dụng template thành công"
-            );
+            
+            if (applyingTemplate) {
+                // Áp dụng 1 template lẻ
+                const shifts = await applyTemplate(
+                    applyingTemplate.id,
+                    weekStartDate,
+                    applyOverwrite
+                );
+                message.success(
+                    Array.isArray(shifts)
+                        ? `Đã tạo ${shifts.length} ca làm việc cho ${applyingTemplate.userName || "nhân viên"}`
+                        : "Áp dụng template thành công"
+                );
+            } else {
+                // Áp dụng tất cả template cho tất cả nhân viên qua 1 API batch tốc độ siêu nhanh
+                const shifts = await applyAllTemplatesApi(
+                    branchId,
+                    weekStartDate,
+                    applyOverwrite
+                );
+                message.success(
+                    `Đã áp dụng thành công ${templates.length} template (tạo ${shifts.length} ca làm việc cho tất cả nhân viên)!`
+                );
+            }
             setApplyOpen(false);
         } catch (err) {
             const msg = err?.response?.data?.message || "Áp dụng thất bại";
@@ -235,12 +247,6 @@ export default function ShiftTemplatePage() {
             dataIndex: "userName",
             key: "userName",
             render: (userName, record) => record.user?.fullName || record.user?.username || userName || "N/A"
-        },
-        {
-            title: "Chi nhánh",
-            dataIndex: "branchName",
-            key: "branchName",
-            render: (branchName, record) => record.branch?.name || branchName || "N/A"
         },
         {
             title: "Lịch trong tuần",
@@ -315,7 +321,6 @@ export default function ShiftTemplatePage() {
                                 value={branchId}
                                 onChange={(val) => {
                                     setBranchId(val);
-                                    setSelectedUserId(null);
                                 }}
                                 options={branches.map((b) => ({
                                     label: b.name,
@@ -323,21 +328,16 @@ export default function ShiftTemplatePage() {
                                 }))}
                             />
                         </Space>
-                        <Space>
-                            <TeamOutlined style={{ color: "#1890ff" }} />
-                            <Text strong>Nhân viên:</Text>
-                            <Select
-                                style={{ width: 180 }}
-                                value={selectedUserId}
-                                onChange={setSelectedUserId}
-                                placeholder="Tất cả nhân viên"
-                                allowClear
-                                options={users.map((u) => ({
-                                    label: u.fullName || u.username,
-                                    value: u.id,
-                                }))}
-                            />
-                        </Space>
+                        <Button
+                            type="primary"
+                            ghost
+                            icon={<CalendarOutlined />}
+                            onClick={() => openApply(null)}
+                            disabled={templates.length === 0}
+                            style={{ fontWeight: 600 }}
+                        >
+                            ⚡ Áp dụng tất cả template ({templates.length})
+                        </Button>
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
@@ -370,14 +370,35 @@ export default function ShiftTemplatePage() {
 
             {/* Modal áp dụng template vào tuần */}
             <Modal
-                title={`Áp dụng template: ${applyingTemplate?.name}`}
+                title={
+                    applyingTemplate
+                        ? `Áp dụng template: ${applyingTemplate.name}`
+                        : `Áp dụng tất cả template cho tất cả nhân viên`
+                }
                 open={applyOpen}
                 onCancel={() => setApplyOpen(false)}
                 onOk={handleApplyConfirm}
                 confirmLoading={applyLoading}
-                okText="Xác nhận áp dụng"
+                okText={applyingTemplate ? "Xác nhận áp dụng" : `Áp dụng tất cả (${templates.length} template)`}
                 cancelText="Hủy"
+                centered
             >
+                {!applyingTemplate && (
+                    <Card
+                        size="small"
+                        style={{
+                            background: "#e6f7ff",
+                            borderColor: "#91d5ff",
+                            marginBottom: 16,
+                            borderRadius: 8
+                        }}
+                    >
+                        <Text strong style={{ color: "#096dd9" }}>
+                            ⚡ Hệ thống sẽ áp dụng đồng loạt toàn bộ {templates.length} template của tất cả nhân viên thuộc chi nhánh này!
+                        </Text>
+                    </Card>
+                )}
+
                 <div style={{ marginBottom: 16 }}>
                     <Text>Chọn tuần muốn áp dụng:</Text>
                 </div>

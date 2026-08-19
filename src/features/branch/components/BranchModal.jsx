@@ -11,9 +11,11 @@ import {
     List,
     Typography,
     Button,
-    message
+    message,
+    Tooltip
 } from "antd";
 import { useEffect, useState } from "react";
+import { CopyOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -261,6 +263,23 @@ export default function BranchModal({
         );
     };
 
+    const handleApplyDayToRemaining = (sourceDay) => {
+        if (!sourceDay) return;
+        setHours(prev =>
+            prev.map(item =>
+                item.dayOfWeek === sourceDay.dayOfWeek
+                    ? item
+                    : {
+                        ...item,
+                        isClosed: sourceDay.isClosed,
+                        openTime: sourceDay.openTime,
+                        closeTime: sourceDay.closeTime
+                    }
+            )
+        );
+        message.success(`Đã áp dụng khung giờ của ${sourceDay.dayName} cho tất cả các ngày còn lại!`);
+    };
+
     const handleOk = async () => {
         const values = await form.validateFields();
         const hoursPayload = hours.map(h => ({
@@ -454,12 +473,12 @@ export default function BranchModal({
                             bordered
                             dataSource={hours}
                             renderItem={item => (
-                                <List.Item style={{ padding: "12px 16px" }}>
-                                    <Row style={{ width: "100%", alignItems: "center" }} gutter={16}>
-                                        <Col span={7}>
+                                <List.Item style={{ padding: "10px 16px" }}>
+                                    <Row style={{ width: "100%", alignItems: "center" }} gutter={12}>
+                                        <Col span={5}>
                                             <Text strong>{item.dayName}</Text>
                                         </Col>
-                                        <Col span={5}>
+                                        <Col span={4}>
                                             <Switch
                                                 checked={!item.isClosed}
                                                 onChange={(checked) => handleHoursChange(item.dayOfWeek, "isClosed", !checked)}
@@ -467,30 +486,44 @@ export default function BranchModal({
                                                 unCheckedChildren="Nghỉ"
                                             />
                                         </Col>
-                                        <Col span={12}>
-                                            {!item.isClosed ? (
-                                                <Space>
-                                                    <TimePicker
-                                                        value={item.openTime}
-                                                        format="HH:mm"
-                                                        onChange={(time) => handleHoursChange(item.dayOfWeek, "openTime", time)}
-                                                        allowClear={false}
+                                        <Col span={15}>
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                {!item.isClosed ? (
+                                                    <Space size={6}>
+                                                        <TimePicker
+                                                            value={item.openTime}
+                                                            format="HH:mm"
+                                                            onChange={(time) => handleHoursChange(item.dayOfWeek, "openTime", time)}
+                                                            allowClear={false}
+                                                            size="small"
+                                                            placeholder="Giờ mở"
+                                                        />
+                                                        <Text>-</Text>
+                                                        <TimePicker
+                                                            value={item.closeTime}
+                                                            format="HH:mm"
+                                                            onChange={(time) => handleHoursChange(item.dayOfWeek, "closeTime", time)}
+                                                            allowClear={false}
+                                                            size="small"
+                                                            placeholder="Giờ đóng"
+                                                        />
+                                                    </Space>
+                                                ) : (
+                                                    <Text type="secondary" style={{ fontSize: 13 }}>Nghỉ cả ngày</Text>
+                                                )}
+
+                                                <Tooltip title={`Áp dụng khung giờ của ${item.dayName} cho tất cả các ngày còn lại`}>
+                                                    <Button
+                                                        type="text"
                                                         size="small"
-                                                        placeholder="Giờ mở"
-                                                    />
-                                                    <Text>-</Text>
-                                                    <TimePicker
-                                                        value={item.closeTime}
-                                                        format="HH:mm"
-                                                        onChange={(time) => handleHoursChange(item.dayOfWeek, "closeTime", time)}
-                                                        allowClear={false}
-                                                        size="small"
-                                                        placeholder="Giờ đóng"
-                                                    />
-                                                </Space>
-                                            ) : (
-                                                <Text type="secondary" style={{ fontSize: 13 }}>Nghỉ cả ngày</Text>
-                                            )}
+                                                        icon={<CopyOutlined style={{ color: "#1890ff" }} />}
+                                                        onClick={() => handleApplyDayToRemaining(item)}
+                                                        style={{ fontSize: 12, color: "#1890ff", padding: "0 6px" }}
+                                                    >
+                                                        Áp dụng cho ngày khác
+                                                    </Button>
+                                                </Tooltip>
+                                            </div>
                                         </Col>
                                     </Row>
                                 </List.Item>

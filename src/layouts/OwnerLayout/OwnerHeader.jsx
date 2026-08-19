@@ -74,15 +74,6 @@ export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
                         style={{ fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
                     />
                 )}
-                {screens.sm && (
-                    <h3
-                        style={{
-                            margin: 0
-                        }}
-                    >
-                        SalonFlow Owner
-                    </h3>
-                )}
             </div>
 
             <div

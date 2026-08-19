@@ -40,9 +40,12 @@ export const ENDPOINTS = {
     SEARCH_BRANCHES: "/api/v1/branches/search",
 
     // Vouchers
-    VOUCHERS: "/api/vouchers",
-    VOUCHERS_BATCH: "/api/vouchers/batch",
-    VOUCHERS_VALIDATE: "/api/vouchers/validate",
+    VOUCHERS: "/api/v1/vouchers",
+    VOUCHERS_BATCH: "/api/v1/vouchers/batch",
+    VOUCHERS_VALIDATE: "/api/v1/vouchers/validate",
+
+    // System Off-Days / Holidays
+    SYSTEM_OFF_DAYS: "/api/v1/system-off-days",
 
     // Notifications
     NOTIFICATIONS: "/api/v1/notifications",

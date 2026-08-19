@@ -62,15 +62,6 @@ export default function BranchTable({
                         Sửa
                     </Button>
 
-                    <Button
-                        type="link"
-                        onClick={() =>
-                            onUsers(record)
-                        }
-                    >
-                        Nhân viên
-                    </Button>
-
                     <Popconfirm
                         title="Xóa chi nhánh?"
                         onConfirm={() =>

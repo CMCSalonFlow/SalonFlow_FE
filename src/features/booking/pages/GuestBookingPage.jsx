@@ -10,6 +10,7 @@ import { getPublicAvailabilityApi, createPublicBookingApi } from "../api/booking
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
 import AiBookingChatbot from "@/features/chatbot/components/AiBookingChatbot";
+import offdayApi from "@/features/offday/api/offdayApi";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -146,6 +147,8 @@ export default function GuestBookingPage() {
         loadBranches();
     }, [selectedSalonId]);
 
+    const [systemOffDays, setSystemOffDays] = useState([]);
+
     useEffect(() => {
         if (!selectedBranchId) return;
 
@@ -168,6 +171,13 @@ export default function GuestBookingPage() {
                 setServices((servicesData || []).filter(s => s.isActive !== false));
                 setBundles(bundlesData || []);
                 setStaffList(staffData || []);
+
+                // Fetch System Off-Days for the selected branch
+                const todayStr = dayjs().format("YYYY-MM-DD");
+                const nextRangeStr = dayjs().add(90, "day").format("YYYY-MM-DD");
+                offdayApi.getOffDaysForBranchRange(selectedBranchId, todayStr, nextRangeStr)
+                    .then(data => setSystemOffDays(Array.isArray(data) ? data : []))
+                    .catch(() => setSystemOffDays([]));
             } catch {
                 message.error("Lỗi tải thông tin dịch vụ, combo và nhân viên.");
             } finally {
@@ -506,15 +516,36 @@ export default function GuestBookingPage() {
 
                                 {currentStep === 1 && (
                                     <div>
+                                        {systemOffDays.length > 0 && (
+                                            <div style={{ marginBottom: 20, padding: '12px 16px', backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 12 }}>
+                                                <Text strong style={{ color: '#d46b08' }}>📢 Thông báo Lịch nghỉ lễ / Đóng cửa của Chi nhánh:</Text>
+                                                <div style={{ marginTop: 4 }}>
+                                                    {systemOffDays.map(off => (
+                                                        <div key={off.id} style={{ fontSize: 13, color: '#8c6b00', marginTop: 2 }}>
+                                                            • <b>{off.title}</b> ({dayjs(off.dateFrom).format("DD/MM/YYYY")} ➔ {dayjs(off.dateTo).format("DD/MM/YYYY")}): Các ngày này đã được khóa đặt lịch.
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div style={{ marginBottom: 24 }}>
                                             <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Chọn Ngày hẹn</label>
                                             <DatePicker
                                                 style={{ width: "100%" }}
                                                 size="large"
                                                 format="YYYY-MM-DD"
-                                                disabledDate={current => current && current.valueOf() < Date.now() - 24 * 60 * 60 * 1000}
+                                                disabledDate={current => {
+                                                    if (!current) return false;
+                                                    if (current.valueOf() < Date.now() - 24 * 60 * 60 * 1000) return true;
+                                                    const dateStr = current.format("YYYY-MM-DD");
+                                                    return systemOffDays.some(off => dateStr >= off.dateFrom && dateStr <= off.dateTo);
+                                                }}
                                                 value={selectedDate}
                                                 onChange={setSelectedDate}
+                                                placeholder="Chọn ngày bạn muốn hẹn lịch..."
+                                            />
+                                        </div>                            onChange={setSelectedDate}
                                                 placeholder="Chọn ngày bạn muốn hẹn lịch..."
                                             />
                                         </div>

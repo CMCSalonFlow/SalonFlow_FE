@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-
 import { getBranchUsersApi } from "@/features/branch/api/branchApi";
-
 import { scheduleApi } from "../api/scheduleApi";
+import offdayApi from "@/features/offday/api/offdayApi";
 
 const RESOURCE_COLORS = [
   "#1a73e8",
@@ -22,24 +21,6 @@ const toDateKey = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-const buildDateRange = (start, end) => {
-  if (!start || !end) return [];
-
-  const dates = [];
-  const cursor = new Date(start);
-  cursor.setHours(0, 0, 0, 0);
-
-  const limit = new Date(end);
-  limit.setHours(0, 0, 0, 0);
-
-  while (cursor < limit) {
-    dates.push(toDateKey(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-
-  return dates;
-};
-
 const formatShiftDateTime = (shiftDate, time) => {
   if (!shiftDate || !time) return null;
   return `${shiftDate}T${time}`;
@@ -51,6 +32,7 @@ const normalizeLabel = (user) =>
 export const useScheduleData = (branchId, visibleRange) => {
   const [events, setEvents] = useState([]);
   const [resources, setResources] = useState([]);
+  const [systemOffDays, setSystemOffDays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshToken, setRefreshToken] = useState(0);
 
@@ -66,6 +48,7 @@ export const useScheduleData = (branchId, visibleRange) => {
       if (!branchId || !visibleRange?.start || !visibleRange?.end) {
         setEvents([]);
         setResources([]);
+        setSystemOffDays([]);
         setLoading(false);
         return;
       }
@@ -73,18 +56,19 @@ export const useScheduleData = (branchId, visibleRange) => {
       setLoading(true);
 
       try {
-        const [branchUsers, dateKeys] = await Promise.all([
+        const startKey = toDateKey(visibleRange.start);
+        const endKey = toDateKey(visibleRange.end);
+
+        const [branchUsers, shifts, offDaysData] = await Promise.all([
           getBranchUsersApi(branchId).catch(() => []),
-          Promise.resolve(buildDateRange(visibleRange.start, visibleRange.end)),
+          scheduleApi.getShiftsByBranchAndRange(branchId, startKey, endKey).catch(() => []),
+          offdayApi.getOffDaysForBranchRange(branchId, startKey, endKey).catch(() => []),
         ]);
 
-        const shiftsByDate = await Promise.all(
-          dateKeys.map((date) =>
-            scheduleApi.getShiftsByBranchAndDate(branchId, date).catch(() => [])
-          )
-        );
-
-        const shifts = shiftsByDate.flat();
+        const offDays = Array.isArray(offDaysData) ? offDaysData : [];
+        if (active) {
+          setSystemOffDays(offDays);
+        }
 
         const resourcesFromUsers = (branchUsers || []).map((user, index) => ({
           id: String(user.id),
@@ -131,16 +115,30 @@ export const useScheduleData = (branchId, visibleRange) => {
 
             if (!start || !end) return null;
 
+            // Check if shift falls on a system holiday
+            const holiday = offDays.find(
+              (off) => shift.shiftDate >= off.dateFrom && shift.shiftDate <= off.dateTo
+            );
+
+            const bgColor = holiday ? "#ff4d4f" : resource?.color || RESOURCE_COLORS[0];
+            const titleText = holiday
+              ? `🎉 NGHỈ LỄ: ${holiday.title} (${shift.userName || resource?.title})`
+              : (shift.userName || `User ${shift.userId}`);
+
             return {
               id: String(shift.id),
-              title: shift.userName || `User ${shift.userId}`,
+              title: titleText,
               start,
               end,
               resourceId,
-              backgroundColor: resource?.color || RESOURCE_COLORS[0],
-              borderColor: resource?.color || RESOURCE_COLORS[0],
+              backgroundColor: bgColor,
+              borderColor: holiday ? "#d9363e" : bgColor,
               textColor: "#fff",
-              extendedProps: shift,
+              extendedProps: {
+                ...shift,
+                isHoliday: !!holiday,
+                holidayTitle: holiday?.title
+              },
             };
           })
           .filter(Boolean)
@@ -166,7 +164,10 @@ export const useScheduleData = (branchId, visibleRange) => {
   return {
     events,
     resources,
+    systemOffDays,
     loading,
     reload: () => setRefreshToken((value) => value + 1),
   };
 };
+
+export default useScheduleData;

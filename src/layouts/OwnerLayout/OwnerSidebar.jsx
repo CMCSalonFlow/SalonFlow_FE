@@ -15,7 +15,8 @@ import {
     CustomerServiceOutlined,
     FileExcelOutlined,
     QrcodeOutlined,
-    CrownOutlined
+    CrownOutlined,
+    GiftOutlined
 } from "@ant-design/icons";
 
 import { Menu, Tag } from "antd";
@@ -34,12 +35,7 @@ export default function OwnerSidebar({ onMenuClick }) {
         {
             key: "/owner",
             icon: <DashboardOutlined />,
-            label: "Dashboard"
-        },
-        {
-            key: "/owner/subscription",
-            icon: <CrownOutlined style={{ color: "#faad14" }} />,
-            label: <span style={{ fontWeight: 600 }}>Gói Dịch Vụ</span>
+            label: "Bảng Điều Khiển"
         },
         {
             key: "/owner/reports",
@@ -52,31 +48,61 @@ export default function OwnerSidebar({ onMenuClick }) {
             )
         },
         {
-            key: "/owner/support",
-            icon: <CustomerServiceOutlined />,
-            label: "Trợ Giúp & Support"
-        },
-        {
             key: "/owner/salon",
             icon: <HomeOutlined />,
-            label: "My Salon"
+            label: "Salon Của Tôi"
         },
         {
             key: "/owner/branches",
             icon: <ShopOutlined />,
-            label: "Branches"
+            label: "Chi Nhánh"
+        },
+        {
+            key: "/owner/categories",
+            icon: <TagsOutlined />,
+            label: "Danh Mục Dịch Vụ"
+        },
+        {
+            key: "/owner/services",
+            icon: <AppstoreOutlined />,
+            label: "Dịch Vụ"
+        },
+        {
+            key: "/owner/vouchers",
+            icon: <GiftOutlined />,
+            label: "Quản Lý Voucher"
         },
         {
             key: "/owner/staff",
             icon: <TeamOutlined />,
-            label: "Staff"
+            label: "Nhân Viên"
+        },
+        {
+            key: "/owner/shifts",
+            icon: <ClockCircleOutlined />,
+            label: "Mẫu Ca Làm Việc"
+        },
+        {
+            key: "/owner/schedule",
+            icon: <CalendarOutlined />,
+            label: "Lịch Làm Việc"
+        },
+        {
+            key: "/owner/off-days",
+            icon: <CalendarOutlined />,
+            label: "Ngày Nghỉ"
+        },
+        {
+            key: "/owner/reviews",
+            icon: <MessageOutlined />,
+            label: "Đánh Giá"
         },
         {
             key: "/owner/ai-smart-schedule",
             icon: <RobotOutlined />,
             label: (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                    <span>AI Smart Schedule</span>
+                    <span>AI Lịch Thông Minh</span>
                     {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
                 </div>
             )
@@ -86,52 +112,28 @@ export default function OwnerSidebar({ onMenuClick }) {
             icon: <AlertOutlined />,
             label: (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                    <span>AI No-Show Prediction</span>
+                    <span>AI Dự Đoán Vắng Mặt</span>
                     {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
                 </div>
             )
         },
         {
-            key: "/owner/services",
-            icon: <AppstoreOutlined />,
-            label: "Services"
+            key: "/owner/support",
+            icon: <CustomerServiceOutlined />,
+            label: "Trợ Giúp & Hỗ Trợ"
         },
         {
-            key: "/owner/cancellation-policy",
-            icon: <DollarOutlined />,
-            label: "Cancellation Policy"
-        },
-        {
-            key: "/owner/reviews",
-            icon: <MessageOutlined />,
-            label: "Reviews"
-        },
-        {
-            key: "/owner/schedule",
-
-            icon: <CalendarOutlined />,
-            label: "Schedule"
-        },
-        {
-            key: "/owner/off-days",
-            icon: <CalendarOutlined />,
-            label: "Off Days"
-        },
-        {
-            key: "/owner/shifts",
-            icon: <ClockCircleOutlined />,
-            label: "Shift Templates"
-        },
-        {
-            key: "/owner/categories",
-            icon: <TagsOutlined />,
-            label: "Categories"
+            key: "/owner/subscription",
+            icon: <CrownOutlined style={{ color: "#faad14" }} />,
+            label: <span style={{ fontWeight: 600 }}>Gói Dịch Vụ</span>
         }
     ];
 
     const selectedKey =
         items.find(item =>
-            location.pathname.startsWith(item.key)
+            item.key === "/owner"
+                ? location.pathname === "/owner"
+                : location.pathname.startsWith(item.key)
         )?.key;
 
     return (

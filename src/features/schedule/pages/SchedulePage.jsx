@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-import { message } from "antd";
+import dayjs from "dayjs";
+import { message, Select, Typography, Space } from "antd";
+import { ShopOutlined, CalendarOutlined } from "@ant-design/icons";
+
+const { Text } = Typography;
 
 import "../schedule.css";
 
@@ -35,7 +39,7 @@ export default function SchedulePage() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [anchorPos, setAnchorPos] = useState(null);
 
-  const { events, resources, loading, reload } = useScheduleData(
+  const { events, resources, systemOffDays, loading, reload } = useScheduleData(
     branchId,
     visibleRange
   );
@@ -236,6 +240,20 @@ export default function SchedulePage() {
         />
 
         <div className="schedule-main">
+          {systemOffDays && systemOffDays.length > 0 && (
+            <div style={{ padding: "8px 16px", backgroundColor: "#fffbe6", borderBottom: "1px solid #ffe58f", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <CalendarOutlined style={{ color: "#fa8c16", fontSize: 16 }} />
+              <Text strong style={{ color: "#d46b08", fontSize: 13 }}>
+                📢 Chi nhánh có lịch nghỉ lễ / đóng cửa trong khoảng thời gian này:
+              </Text>
+              {systemOffDays.map((off) => (
+                <span key={off.id} style={{ fontSize: 13, color: "#8c6b00", backgroundColor: "#fff1b8", padding: "2px 10px", borderRadius: 6, fontWeight: 600 }}>
+                  🎉 {off.title} ({dayjs(off.dateFrom).format("DD/MM/YYYY")}{off.dateFrom !== off.dateTo ? ` ➔ ${dayjs(off.dateTo).format("DD/MM/YYYY")}` : ""})
+                </span>
+              ))}
+            </div>
+          )}
+
           <ScheduleToolbar
             currentDate={currentDate}
             currentView={currentView}
@@ -243,13 +261,29 @@ export default function SchedulePage() {
             onPrev={handlePrev}
             onNext={handleNext}
             onViewChange={handleViewChange}
+            branchSelect={
+              !isStaffPage && branches.length > 0 ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <ShopOutlined style={{ color: "#1890ff", fontSize: 16 }} />
+                  <Text strong style={{ fontSize: 13 }}>Chi nhánh:</Text>
+                  <Select
+                    style={{ width: 190 }}
+                    size="middle"
+                    value={branchId ? String(branchId) : undefined}
+                    onChange={(val) => {
+                      setBranchId(val);
+                      localStorage.setItem("currentBranchId", val);
+                    }}
+                    options={branches.map((b) => ({
+                      label: b.name,
+                      value: String(b.id),
+                    }))}
+                    placeholder="Chọn chi nhánh"
+                  />
+                </div>
+              ) : null
+            }
           />
-
-          {branchName && (
-            <div style={{ marginBottom: 12, color: "var(--gc-gray-600)", fontSize: 14 }}>
-              Chi nhánh hiện tại: <strong>{branchName}</strong>
-            </div>
-          )}
 
           <ScheduleCalendar
             ref={calendarRef}

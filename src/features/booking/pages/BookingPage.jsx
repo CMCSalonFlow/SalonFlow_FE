@@ -21,6 +21,8 @@ import NormalBookingForm from "../components/NormalBookingForm";
 import RecurringBookingForm from "../components/RecurringBookingForm";
 import AiBookingChatbot from "@/features/chatbot/components/AiBookingChatbot";
 
+import offdayApi from "@/features/offday/api/offdayApi";
+
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
@@ -36,6 +38,7 @@ export default function BookingPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("VNPAY");
+    const [systemOffDays, setSystemOffDays] = useState([]);
 
     // Dữ liệu nguồn
     const [salons, setSalons] = useState([]);
@@ -217,6 +220,13 @@ export default function BookingPage() {
                 setServices(servicesData.filter(s => s.isActive));
                 setBundles(bundlesData);
                 setStaffList(staffData);
+
+                // Fetch System Off-Days for the selected branch
+                const todayStr = dayjs().format("YYYY-MM-DD");
+                const nextRangeStr = dayjs().add(90, "day").format("YYYY-MM-DD");
+                offdayApi.getOffDaysForBranchRange(selectedBranchId, todayStr, nextRangeStr)
+                    .then(data => setSystemOffDays(Array.isArray(data) ? data : []))
+                    .catch(() => setSystemOffDays([]));
             } catch {
                 message.error("Lỗi tải thông tin dịch vụ và nhân viên.");
             } finally {
@@ -703,6 +713,7 @@ export default function BookingPage() {
                                                 loadingStaff={loadingStaff}
                                                 getQualifiedStaff={getQualifiedStaff}
                                                 selectedStaff={selectedStaff}
+                                                systemOffDays={systemOffDays}
                                             />
                                         ) : (
                                             <RecurringBookingForm

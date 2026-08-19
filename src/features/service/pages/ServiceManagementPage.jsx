@@ -403,19 +403,6 @@ export default function ServiceManagementPage() {
                                 label: <span style={{ fontSize: 16 }}>Dịch vụ đơn lẻ</span>,
                                 children: (
                                     <div>
-                                        <div style={{ textAlign: "right", marginBottom: 16 }}>
-                                            <Button
-                                                type="primary"
-                                                icon={<PlusOutlined />}
-                                                size="large"
-                                                onClick={() => {
-                                                    setEditingService(null);
-                                                    setServiceModalVisible(true);
-                                                }}
-                                            >
-                                                Thêm dịch vụ đơn
-                                            </Button>
-                                        </div>
                                         <Table
                                             columns={serviceColumns}
                                             dataSource={services}

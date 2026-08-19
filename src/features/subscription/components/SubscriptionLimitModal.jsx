@@ -20,7 +20,7 @@ export default function SubscriptionLimitModal({ open, message, onClose }) {
             footer={null}
             centered
             width={480}
-            bodyStyle={{ padding: "32px 24px" }}
+            styles={{ body: { padding: "32px 24px" } }}
             style={{ borderRadius: 16 }}
         >
             <div style={{ textAlign: "center" }}>

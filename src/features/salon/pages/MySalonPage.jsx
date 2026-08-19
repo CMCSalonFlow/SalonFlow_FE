@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
     Card, Button, Form, Input, TimePicker, Switch,
     Steps, Row, Col, Typography, Divider, Space,
-    Upload, message, Spin, List, Image, Tag, Popconfirm, Drawer, Alert
+    Upload, message, Spin, List, Image, Tag, Popconfirm, Drawer, Alert, Tooltip, Carousel
 } from "antd";
 import {
     UploadOutlined,
@@ -201,8 +201,24 @@ export default function MySalonPage() {
         return false;
     };
 
-    const handleRemoveExistingPhoto = (id) => {
-        setEditExistingPhotos(prev => prev.filter(p => p.id !== id));
+    const handleRemoveExistingPhoto = (targetId) => {
+        setEditExistingPhotos(prev => {
+            const filtered = prev.filter(p => (p.mediaId || p.id) !== targetId);
+            return filtered.map((p, idx) => ({ ...p, isPrimary: idx === 0 }));
+        });
+    };
+
+    const handleSetPrimaryExistingPhoto = (targetId) => {
+        setEditExistingPhotos(prev => {
+            const index = prev.findIndex(p => (p.mediaId || p.id) === targetId);
+            if (index < 0) return prev;
+            const target = prev[index];
+            const others = prev.filter(p => (p.mediaId || p.id) !== targetId);
+            return [target, ...others].map((p, idx) => ({
+                ...p,
+                isPrimary: idx === 0
+            }));
+        });
     };
 
     const handleRemoveNewPhoto = (index) => {
@@ -233,7 +249,7 @@ export default function MySalonPage() {
             const payload = {
                 ...cleanedInfo,
                 photoMediaIds: [
-                    ...editExistingPhotos.map(p => p.id),
+                    ...editExistingPhotos.map(p => p.mediaId || p.id),
                     ...uploadedPhotos.map(p => p.id)
                 ]
             };
@@ -541,24 +557,34 @@ export default function MySalonPage() {
                         }}
                         styles={{ body: { padding: 0 } }}
                     >
-                        <div style={{ position: "relative", height: 260, backgroundColor: "#001529" }}>
-                            {primaryPhoto && (
-                                <img
-                                    src={primaryPhoto}
-                                    alt={salon.name}
-                                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.65 }}
-                                />
+                        <div style={{ position: "relative", height: 260, backgroundColor: "#001529", overflow: "hidden" }}>
+                            {salon.photos && salon.photos.length > 0 ? (
+                                <Carousel autoplay autoplaySpeed={3500} effect="fade">
+                                    {salon.photos.map((photo, idx) => (
+                                        <div key={photo.id || photo.mediaId || idx}>
+                                            <div style={{ height: 260, width: "100%", position: "relative" }}>
+                                                <img
+                                                    src={photo.url}
+                                                    alt={`${salon.name} slide ${idx}`}
+                                                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.65 }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </Carousel>
+                            ) : (
+                                <div style={{ height: 260, backgroundColor: "#001529" }} />
                             )}
-                            <div style={{ position: "absolute", bottom: 24, left: 24, right: 24, color: "#fff" }}>
-                                <Space align="baseline">
-                                    <Title level={1} style={{ color: "#fff", margin: 0, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
+                            <div style={{ position: "absolute", bottom: 24, left: 24, right: 24, color: "#fff", zIndex: 10, pointerEvents: "none" }}>
+                                <Space align="baseline" style={{ pointerEvents: "auto" }}>
+                                    <Title level={1} style={{ color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.7)" }}>
                                         {salon.name}
                                     </Title>
                                     {salon.status === "APPROVED" && <Tag color="success" style={{ marginLeft: 8 }}>ĐÃ DUYỆT / ĐANG HOẠT ĐỘNG</Tag>}
                                     {salon.status === "PENDING" && <Tag color="warning" style={{ marginLeft: 8 }}>CHỜ SUPER ADMIN DUYỆT</Tag>}
                                     {salon.status === "REJECTED" && <Tag color="error" style={{ marginLeft: 8 }}>BỊ TỪ CHỐI</Tag>}
                                 </Space>
-                                <Paragraph style={{ color: "rgba(255,255,255,0.85)", fontSize: 16, margin: "8px 0 0 0", maxWidth: 650 }}>
+                                <Paragraph style={{ color: "rgba(255,255,255,0.95)", fontSize: 16, margin: "8px 0 0 0", maxWidth: 650, textShadow: "0 1px 4px rgba(0,0,0,0.7)", pointerEvents: "auto" }}>
                                     {salon.description || "Chưa có mô tả nào cho salon này."}
                                 </Paragraph>
                             </div>
@@ -767,37 +793,60 @@ export default function MySalonPage() {
                         <>
                             <Text type="secondary" style={{ fontSize: 12 }}>Ảnh hiện có:</Text>
                             <Row gutter={[8, 8]} style={{ marginTop: 8, marginBottom: 16 }}>
-                                {editExistingPhotos.map((photo, index) => (
-                                    <Col key={photo.id} span={6}>
-                                        <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", height: 80 }}>
-                                            <img
-                                                src={photo.url}
-                                                alt={`existing-${index}`}
-                                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                            />
-                                            {photo.isPrimary && (
-                                                <Tag
-                                                    color="gold"
-                                                    style={{ position: "absolute", top: 4, left: 4, margin: 0, fontSize: 10, padding: "0 4px" }}
-                                                >
-                                                    Chính
-                                                </Tag>
-                                            )}
-                                            <Button
-                                                type="text"
-                                                danger
-                                                icon={<DeleteOutlined />}
-                                                size="small"
-                                                onClick={() => handleRemoveExistingPhoto(photo.id)}
-                                                style={{
-                                                    position: "absolute", top: 4, right: 4,
-                                                    background: "rgba(255,255,255,0.85)",
-                                                    borderRadius: 4, padding: "0 4px"
-                                                }}
-                                            />
-                                        </div>
-                                    </Col>
-                                ))}
+                                {editExistingPhotos.map((photo, index) => {
+                                    const photoId = photo.mediaId || photo.id;
+                                    return (
+                                        <Col key={photoId || index} span={6}>
+                                            <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", height: 80 }}>
+                                                <img
+                                                    src={photo.url}
+                                                    alt={`existing-${index}`}
+                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                                />
+                                                {photo.isPrimary ? (
+                                                    <Tag
+                                                        color="gold"
+                                                        style={{ position: "absolute", top: 4, left: 4, margin: 0, fontSize: 10, padding: "0 4px", zIndex: 10 }}
+                                                    >
+                                                        Chính
+                                                    </Tag>
+                                                ) : (
+                                                    <Tooltip title="Đặt làm ảnh chính">
+                                                        <Button
+                                                            type="text"
+                                                            icon={<StarOutlined style={{ color: "#faad14" }} />}
+                                                            size="small"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleSetPrimaryExistingPhoto(photoId);
+                                                            }}
+                                                            style={{
+                                                                position: "absolute", top: 4, left: 4,
+                                                                background: "rgba(255,255,255,0.9)",
+                                                                borderRadius: 4, padding: "0 4px", zIndex: 10
+                                                            }}
+                                                        />
+                                                    </Tooltip>
+                                                )}
+                                                <Button
+                                                    type="text"
+                                                    danger
+                                                    icon={<DeleteOutlined />}
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRemoveExistingPhoto(photoId);
+                                                    }}
+                                                    style={{
+                                                        position: "absolute", top: 4, right: 4,
+                                                        background: "rgba(255,255,255,0.9)",
+                                                        borderRadius: 4, padding: "0 4px", zIndex: 10
+                                                    }}
+                                                />
+                                            </div>
+                                        </Col>
+                                    );
+                                })}
                             </Row>
                         </>
                     )}

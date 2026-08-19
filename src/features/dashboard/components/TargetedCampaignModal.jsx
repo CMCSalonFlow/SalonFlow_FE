@@ -50,21 +50,30 @@ export default function TargetedCampaignModal({
 
     const handleGenerateAi = async (overrideSegment = null) => {
         const seg = overrideSegment || form.getFieldValue('segmentType') || 'AT_RISK';
+        const values = form.getFieldsValue();
         try {
             setLoadingAi(true);
-            const res = await generateAiCampaignApi({ segmentType: seg, branchId });
+            const res = await generateAiCampaignApi({
+                segmentType: seg,
+                branchId,
+                goalDescription: values.goalDescription,
+                discountType: values.discountType,
+                discountValue: values.discountValue,
+                minOrderAmount: values.minOrderAmount,
+                maxDiscountAmount: values.maxDiscountAmount
+            });
             if (res) {
                 form.setFieldsValue({
                     campaignName: res.campaignName || form.getFieldValue('campaignName'),
                     messageTitle: res.suggestedTitle,
                     messageContent: res.suggestedMessage,
-                    discountType: res.discountType || 'PERCENTAGE',
-                    discountValue: res.discountValue || 20,
-                    minOrderAmount: res.minOrderAmount || 200000,
-                    maxDiscountAmount: res.maxDiscountAmount || 100000
+                    discountType: res.discountType || form.getFieldValue('discountType') || 'PERCENTAGE',
+                    discountValue: res.discountValue ?? form.getFieldValue('discountValue'),
+                    minOrderAmount: res.minOrderAmount ?? form.getFieldValue('minOrderAmount'),
+                    maxDiscountAmount: res.maxDiscountAmount ?? form.getFieldValue('maxDiscountAmount')
                 });
                 setAiExplanation(res.strategyExplanation || '');
-                message.success('Đã tự động tạo gợi ý thông điệp chiến dịch từ AI!');
+                message.success('Đã tạo gợi ý thông điệp từ AI theo thông tin bạn vừa nhập!');
             }
         } catch (err) {
             console.error('AI Campaign Generation Error:', err);
@@ -132,6 +141,44 @@ export default function TargetedCampaignModal({
                     </Select>
                 </Form.Item>
 
+
+                {/* Toggle Voucher settings */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '12px 16px', background: '#fafafa', borderRadius: 12 }}>
+                    <Space size={10}>
+                        <GiftOutlined style={{ color: '#fa8c16', fontSize: 18 }} />
+                        <div>
+                            <div style={{ fontWeight: 700 }}>Đính kèm Voucher Khuyến mại Tự động</div>
+                            <Text type="secondary" style={{ fontSize: 11 }}>Hệ thống sẽ tự sinh mã Voucher và gửi trực tiếp cho khách hàng trong phân khúc</Text>
+                        </div>
+                    </Space>
+                    <Switch checked={createVoucher} onChange={(val) => setCreateVoucher(val)} />
+                </div>
+
+                {createVoucher && (
+                    <Card size="small" style={{ marginBottom: 20, borderRadius: 12, backgroundColor: '#fffbe6', borderColor: '#ffe58f' }}>
+                        <Space size={16} wrap>
+                            <Form.Item name="discountType" label="Loại giảm giá" style={{ marginBottom: 8, width: 140 }}>
+                                <Select style={{ borderRadius: 8 }}>
+                                    <Option value="PERCENTAGE">Phần trăm (%)</Option>
+                                    <Option value="FIXED">Số tiền cố định (VNĐ)</Option>
+                                </Select>
+                            </Form.Item>
+
+                            <Form.Item name="discountValue" label="Giá trị giảm" style={{ marginBottom: 8, width: 140 }}>
+                                <InputNumber min={1} style={{ width: '100%', borderRadius: 8 }} />
+                            </Form.Item>
+
+                            <Form.Item name="minOrderAmount" label="Đơn tối thiểu (VNĐ)" style={{ marginBottom: 8, width: 160 }}>
+                                <InputNumber min={0} step={50000} style={{ width: '100%', borderRadius: 8 }} />
+                            </Form.Item>
+
+                            <Form.Item name="validDays" label="Hạn dùng (Ngày)" style={{ marginBottom: 8, width: 120 }}>
+                                <InputNumber min={1} max={90} style={{ width: '100%', borderRadius: 8 }} />
+                            </Form.Item>
+                        </Space>
+                    </Card>
+                )}
+
                 {/* AI Rationale Banner */}
                 <Card
                     size="small"
@@ -176,43 +223,6 @@ export default function TargetedCampaignModal({
                 <Form.Item name="messageContent" label="Nội dung Tin nhắn Cá nhân hóa" rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}>
                     <TextArea rows={4} placeholder="Nội dung gửi đến ứng dụng khách hàng..." style={{ borderRadius: 8 }} />
                 </Form.Item>
-
-                {/* Toggle Voucher settings */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '12px 16px', background: '#fafafa', borderRadius: 12 }}>
-                    <Space size={10}>
-                        <GiftOutlined style={{ color: '#fa8c16', fontSize: 18 }} />
-                        <div>
-                            <div style={{ fontWeight: 700 }}>Đính kèm Voucher Khuyến mại Tự động</div>
-                            <Text type="secondary" style={{ fontSize: 11 }}>Hệ thống sẽ tự sinh mã Voucher và gửi trực tiếp cho khách hàng trong phân khúc</Text>
-                        </div>
-                    </Space>
-                    <Switch checked={createVoucher} onChange={(val) => setCreateVoucher(val)} />
-                </div>
-
-                {createVoucher && (
-                    <Card size="small" style={{ marginBottom: 20, borderRadius: 12, backgroundColor: '#fffbe6', borderColor: '#ffe58f' }}>
-                        <Space size={16} wrap>
-                            <Form.Item name="discountType" label="Loại giảm giá" style={{ marginBottom: 8, width: 140 }}>
-                                <Select style={{ borderRadius: 8 }}>
-                                    <Option value="PERCENTAGE">Phần trăm (%)</Option>
-                                    <Option value="FIXED">Số tiền cố định (VNĐ)</Option>
-                                </Select>
-                            </Form.Item>
-
-                            <Form.Item name="discountValue" label="Giá trị giảm" style={{ marginBottom: 8, width: 140 }}>
-                                <InputNumber min={1} style={{ width: '100%', borderRadius: 8 }} />
-                            </Form.Item>
-
-                            <Form.Item name="minOrderAmount" label="Đơn tối thiểu (VNĐ)" style={{ marginBottom: 8, width: 160 }}>
-                                <InputNumber min={0} step={50000} style={{ width: '100%', borderRadius: 8 }} />
-                            </Form.Item>
-
-                            <Form.Item name="validDays" label="Hạn dùng (Ngày)" style={{ marginBottom: 8, width: 120 }}>
-                                <InputNumber min={1} max={90} style={{ width: '100%', borderRadius: 8 }} />
-                            </Form.Item>
-                        </Space>
-                    </Card>
-                )}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
                     <Button onClick={onClose} style={{ borderRadius: 8 }}>Hủy bỏ</Button>

@@ -20,24 +20,39 @@ const DAYS = [
  * Props:
  *   value: [{ dayOfWeek, startTime, endTime }]
  *   onChange: (newDetails) => void
+ *   branchHours: danh sách giờ hoạt động của chi nhánh
  */
-export default function WeeklyScheduleGrid({ value = [], onChange }) {
-
+export default function WeeklyScheduleGrid({ value = [], onChange, branchHours = [] }) {
     // Lấy config của 1 ngày từ value
     const getDayConfig = (dayOfWeek) => {
         return value.find((d) => d.dayOfWeek === dayOfWeek) || null;
     };
 
+    const getDefaultTimesForDay = (dayOfWeek) => {
+        if (branchHours && branchHours.length > 0) {
+            const match = branchHours.find(
+                (h) => h.dayOfWeek === dayOfWeek || (dayOfWeek === 7 && h.dayOfWeek === 0) || (dayOfWeek === 0 && h.dayOfWeek === 7)
+            );
+            if (match && match.openTime && match.closeTime) {
+                return {
+                    startTime: match.openTime.slice(0, 5),
+                    endTime: match.closeTime.slice(0, 5),
+                };
+            }
+        }
+        return { startTime: "09:00", endTime: "21:00" };
+    };
+
     // Bật/tắt ngày
     const toggleDay = (dayOfWeek, checked) => {
         if (checked) {
-            // Bật: thêm config mặc định 08:00 - 17:00
+            const { startTime, endTime } = getDefaultTimesForDay(dayOfWeek);
             onChange([
                 ...value,
                 {
                     dayOfWeek,
-                    startTime: "08:00",
-                    endTime: "17:00",
+                    startTime,
+                    endTime,
                 },
             ]);
         } else {
