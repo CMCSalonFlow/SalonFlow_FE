@@ -456,22 +456,6 @@ export default function HairStyleAiPage() {
                                                             <div style={{ fontSize: 18, fontWeight: 700 }}>{analysis.currentStyle || "-"}</div>
                                                         </Card>
                                                     </Col>
-                                                    <Col xs={12} sm={8}>
-                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                                            <Text type="secondary">Confidence</Text>
-                                                            <div style={{ fontSize: 18, fontWeight: 700 }}>{formatConfidence(analysis.confidence)}</div>
-                                                            <Progress percent={confidencePercent} size="small" style={{ marginTop: 8 }} />
-                                                        </Card>
-                                                    </Col>
-                                                    <Col span={24}>
-                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                                            <Space wrap>
-                                                                <Tag color="blue">Provider: {analysis.provider || "-"}</Tag>
-                                                                <Tag color="purple">Analysis result ID: {analysisResponse?.analysisResultId || "-"}</Tag>
-                                                                {analysisResponse?.analyzedAt ? <Tag color="cyan">Analyzed at: {new Date(analysisResponse.analyzedAt).toLocaleString()}</Tag> : null}
-                                                            </Space>
-                                                        </Card>
-                                                    </Col>
                                                 </Row>
                                             ) : (
                                                 <Empty
@@ -560,15 +544,6 @@ export default function HairStyleAiPage() {
                                                             ) : null}
                                                         </Space>
                                                     </Card>
-
-                                                    {profile?.analysis ? (
-                                                        <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                                            <Text type="secondary">Độ tin cậy AI</Text>
-                                                            <div style={{ marginTop: 4, fontWeight: 700 }}>
-                                                                {formatConfidence(profile.analysis.confidence)}
-                                                            </div>
-                                                        </Card>
-                                                    ) : null}
                                                 </Space>
                                             ) : (
                                                 <Empty

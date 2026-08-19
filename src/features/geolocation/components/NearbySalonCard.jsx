@@ -29,7 +29,9 @@ export default function NearbySalonCard({
 
     const handleBookNow = (e) => {
         e.stopPropagation();
-        navigate(`/booking?branchId=${salon.branchId}`);
+        const isLogin = !!localStorage.getItem("accessToken");
+        const bookingPath = isLogin ? "/booking" : "/guest-booking";
+        navigate(`${bookingPath}?branchId=${salon.branchId}&salonId=${salon.salonId}`);
     };
 
     return (

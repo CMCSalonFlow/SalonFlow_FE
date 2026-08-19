@@ -18,7 +18,7 @@ import {
     useLocation
 } from "react-router-dom";
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ onMenuClick }) {
 
     const navigate =
         useNavigate();
@@ -89,9 +89,10 @@ export default function AdminSidebar() {
                 location.pathname
             ]}
             items={items}
-            onClick={({ key }) =>
-                navigate(key)
-            }
+            onClick={({ key }) => {
+                navigate(key);
+                if (onMenuClick) onMenuClick();
+            }}
             style={{
                 height: "100%"
             }}

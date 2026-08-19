@@ -4,10 +4,104 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
   min-width: 320px;
   min-height: 100vh;
   font-family: Arial, Helvetica, sans-serif;
+  background-color: #f8fafc;
+}
+
+/* Ant Design Table Mobile Responsiveness */
+@media (max-width: 992px) {
+  .ant-table {
+    width: 100% !important;
+  }
+  .ant-table-container {
+    overflow-x: auto !important;
+  }
+  .ant-table-content {
+    overflow-x: auto !important;
+  }
+  /* Force minimum width on table structure to allow clean horizontal scrolling */
+  .ant-table-content table,
+  .ant-table-container table,
+  .ant-table table {
+    min-width: 750px !important;
+    table-layout: auto !important;
+  }
+  /* Prevent cell content wrapping & overlapping text */
+  .ant-table-cell {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}
+
+/* Ant Design Card Padding Adjustment */
+@media (max-width: 576px) {
+  .ant-card-body {
+    padding: 12px !important;
+  }
+  .ant-card-head {
+    padding: 0 12px !important;
+    min-height: 40px !important;
+  }
+  .ant-card-head-title {
+    font-size: 14px !important;
+  }
+}
+
+/* Ant Design Space Wrapping on mobile and tablets */
+@media (max-width: 768px) {
+  .ant-space {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .ant-space-item {
+    margin-bottom: 4px !important;
+  }
+}
+
+/* Ant Design Form Responsiveness */
+@media (max-width: 576px) {
+  .ant-form-item {
+    flex-direction: column !important;
+    margin-bottom: 12px !important;
+  }
+  .ant-form-item-label {
+    text-align: left !important;
+    padding-bottom: 4px !important;
+  }
+  .ant-form-item-control {
+    width: 100% !important;
+  }
+  /* Force inputs and dropdowns to expand fully */
+  .ant-input-number,
+  .ant-picker,
+  .ant-select {
+    width: 100% !important;
+  }
+}
+
+/* General responsive utility scrollbar */
+.responsive-scroll-x {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Recharts responsive container adjustments on narrow viewports */
+.recharts-responsive-container {
+  width: 100% !important;
+  height: 300px !important;
+}
+
+@media (max-width: 576px) {
+  .recharts-responsive-container {
+    height: 220px !important;
+  }
 }
 
 /* ── Dark Checkout Modal Centering & Styling Overrides ── */
