@@ -382,11 +382,11 @@ const router = createBrowserRouter([
             },
             {
                 path: "nearby",
-                element: withSuspense(NearbySalonsPage)
+                element: withSuspense(SearchPage)
             },
             {
                 path: "salons/nearby",
-                element: withSuspense(NearbySalonsPage)
+                element: withSuspense(SearchPage)
             },
             {
                 path: "guest-booking",
@@ -414,11 +414,11 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "/nearby",
-                element: withSuspense(NearbySalonsPage)
+                element: withSuspense(SearchPage)
             },
             {
                 path: "/salons/nearby",
-                element: withSuspense(NearbySalonsPage)
+                element: withSuspense(SearchPage)
             },
             {
                 path: "/booking",

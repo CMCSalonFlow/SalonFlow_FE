@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 import { searchBranchesApi } from "../api/searchApi";
 
@@ -7,58 +7,37 @@ export default function useBranchSearch() {
     const [branches, setBranches] = useState([]);
     const [cursor, setCursor] = useState(null);
     const [hasNext, setHasNext] = useState(false);
-    const search = async (params) => {
-        setLoading(true);
 
+    const search = useCallback(async (params) => {
+        setLoading(true);
         try {
-            const response =
-                await searchBranchesApi(params);
+            const response = await searchBranchesApi(params);
             setBranches(response.items);
             setCursor(response.nextCursor);
-            setHasNext(
-                response.nextCursor != null
-            );
-
-        }
-        finally {
+            setHasNext(response.nextCursor != null);
+        } finally {
             setLoading(false);
         }
+    }, []);
 
-    };
-
-    const loadMore = async (params) => {
-
+    const loadMore = useCallback(async (params) => {
         if (!cursor) return;
-
         setLoading(true);
         try {
-            const response =
-                await searchBranchesApi({
-
-                    ...params,
-
-                    cursor
-
-                });
-
+            const response = await searchBranchesApi({
+                ...params,
+                cursor
+            });
             setBranches(prev => [
-
                 ...prev,
-
                 ...response.items
-
             ]);
-            setCursor(
-                response.nextCursor
-            );
-            setHasNext(
-                response.nextCursor != null
-            );
-        }
-        finally {
+            setCursor(response.nextCursor);
+            setHasNext(response.nextCursor != null);
+        } finally {
             setLoading(false);
         }
-    };
+    }, [cursor]);
 
     return {
         loading,
