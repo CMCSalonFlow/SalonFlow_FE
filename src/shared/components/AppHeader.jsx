@@ -7,7 +7,10 @@ import {
     Space,
     Badge,
     Tooltip,
-    notification
+    notification,
+    Grid,
+    Drawer,
+    Typography
 } from "antd";
 
 import {
@@ -16,12 +19,15 @@ import {
     BellOutlined,
     BellFilled,
     CalendarOutlined,
-    CustomerServiceOutlined
+    CustomerServiceOutlined,
+    MenuOutlined
 } from "@ant-design/icons";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
+
+const { Text } = Typography;
 import { useFirebaseMessaging } from "@/features/notification/hooks/useFirebaseMessaging";
 import { useNotificationWebSocket } from "@/features/notification/hooks/useNotificationWebSocket";
 
@@ -46,6 +52,8 @@ const BellMutedIcon = ({ style }) => (
 );
 
 export default function AppHeader() {
+    const screens = Grid.useBreakpoint();
+    const [drawerVisible, setDrawerVisible] = useState(false);
     const { unreadCount } = useNotificationWebSocket();
 
     const navigate = useNavigate();
@@ -240,7 +248,7 @@ export default function AppHeader() {
                 alignItems: "center",
                 background: "#fff",
                 borderBottom: "1px solid #eee",
-                padding: "0 24px",
+                padding: "0 16px",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
             }}
         >
@@ -248,7 +256,7 @@ export default function AppHeader() {
                 style={{
                     color: "#1677ff",
                     fontWeight: 700,
-                    fontSize: 22,
+                    fontSize: 20,
                     cursor: "pointer"
                 }}
                 onClick={() => navigate(isLogin ? "/home" : "/")}
@@ -256,99 +264,189 @@ export default function AppHeader() {
                 SalonFlow
             </div>
 
-            <Menu
-                mode="horizontal"
-                selectedKeys={[selectedKey]}
-                items={menuItems}
-                onClick={({ key }) => navigate(key)}
-                style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    borderBottom: 0
-                }}
-            />
+            {screens.md ? (
+                <>
+                    <Menu
+                        mode="horizontal"
+                        selectedKeys={[selectedKey]}
+                        items={menuItems}
+                        onClick={({ key }) => navigate(key)}
+                        style={{
+                            flex: 1,
+                            justifyContent: "center",
+                            borderBottom: 0
+                        }}
+                    />
 
-            {isLogin ? (
-                <Space size={12}>
-                    <Dropdown menu={userMenu}>
-                        <Button type="text">
-                            <Space>
-                                <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
-                                <span>{displayName}</span>
-                            </Space>
-                        </Button>
-                    </Dropdown>
+                    {isLogin ? (
+                        <Space size={12}>
+                            <Dropdown menu={userMenu}>
+                                <Button type="text">
+                                    <Space>
+                                        <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
+                                        <span>{displayName}</span>
+                                    </Space>
+                                </Button>
+                            </Dropdown>
 
-                    <Badge count={unreadCount} size="small" overflowCount={99}>
-                        <Button
-                            type="text"
-                            icon={<BellOutlined />}
-                            onClick={() => navigate("/notifications")}
-                        >
-                            Thông báo
-                        </Button>
-                    </Badge>
+                            <Badge count={unreadCount} size="small" overflowCount={99}>
+                                <Button
+                                    type="text"
+                                    icon={<BellOutlined />}
+                                    onClick={() => navigate("/notifications")}
+                                >
+                                    Thông báo
+                                </Button>
+                            </Badge>
 
-                    {messagingSupported ? (
-                        <Tooltip
-                            title={
-                                permission === "denied"
-                                    ? "Trình duyệt đang chặn thông báo. Hãy mở quyền trong cài đặt trình duyệt."
-                                    : isNotificationOn
-                                    ? "Đang BẬT nhận thông báo. Bấm để TẮT"
-                                    : "Đang TẮT nhận thông báo. Bấm để BẬT"
-                            }
-                        >
+                            {messagingSupported ? (
+                                <Tooltip
+                                    title={
+                                        permission === "denied"
+                                            ? "Trình duyệt đang chặn thông báo. Hãy mở quyền trong cài đặt trình duyệt."
+                                            : isNotificationOn
+                                            ? "Đang BẬT nhận thông báo. Bấm để TẮT"
+                                            : "Đang TẮT nhận thông báo. Bấm để BẬT"
+                                    }
+                                >
+                                    <Button
+                                        type="text"
+                                        shape="circle"
+                                        size="large"
+                                        loading={messagingLoading}
+                                        disabled={permission === "denied"}
+                                        onClick={isNotificationOn ? handleDisableNotifications : handleEnableNotifications}
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            background: isNotificationOn ? "#e6f4ff" : "#f5f5f5",
+                                            border: `1px solid ${isNotificationOn ? "#91caff" : "#d9d9d9"}`,
+                                            boxShadow: isNotificationOn ? "0 2px 8px rgba(22, 119, 255, 0.18)" : "none",
+                                            transition: "all 0.3s ease"
+                                        }}
+                                        icon={
+                                            isNotificationOn ? (
+                                                <BellFilled style={{ fontSize: 18, color: "#1677ff" }} />
+                                            ) : (
+                                                <BellMutedIcon style={{ fontSize: 18 }} />
+                                            )
+                                        }
+                                    />
+                                </Tooltip>
+                            ) : null}
+                        </Space>
+                    ) : (
+                        <Space>
+                            <Button
+                                type="primary"
+                                onClick={() => navigate("/guest-booking")}
+                            >
+                                Đặt lịch ngay
+                            </Button>
+
+                            <Button
+                                onClick={() => navigate("/login")}
+                            >
+                                Đăng nhập
+                            </Button>
+
+                            <Button
+                                type="primary"
+                                onClick={() => navigate("/register")}
+                            >
+                                Đăng ký
+                            </Button>
+                        </Space>
+                    )}
+                </>
+            ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {isLogin && (
+                        <Badge count={unreadCount} size="small" overflowCount={99}>
                             <Button
                                 type="text"
-                                shape="circle"
-                                size="large"
-                                loading={messagingLoading}
-                                disabled={permission === "denied"}
-                                onClick={isNotificationOn ? handleDisableNotifications : handleEnableNotifications}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    background: isNotificationOn ? "#e6f4ff" : "#f5f5f5",
-                                    border: `1px solid ${isNotificationOn ? "#91caff" : "#d9d9d9"}`,
-                                    boxShadow: isNotificationOn ? "0 2px 8px rgba(22, 119, 255, 0.18)" : "none",
-                                    transition: "all 0.3s ease"
-                                }}
-                                icon={
-                                    isNotificationOn ? (
-                                        <BellFilled style={{ fontSize: 18, color: "#1677ff" }} />
-                                    ) : (
-                                        <BellMutedIcon style={{ fontSize: 18 }} />
-                                    )
-                                }
+                                icon={<BellOutlined />}
+                                onClick={() => navigate("/notifications")}
+                                style={{ display: "flex", alignItems: "center" }}
                             />
-                        </Tooltip>
-                    ) : null}
-                </Space>
-            ) : (
-                <Space>
+                        </Badge>
+                    )}
                     <Button
-                        type="primary"
-                        onClick={() => navigate("/guest-booking")}
-                    >
-                        Đặt lịch ngay
-                    </Button>
-
-                    <Button
-                        onClick={() => navigate("/login")}
-                    >
-                        Đăng nhập
-                    </Button>
-
-                    <Button
-                        type="primary"
-                        onClick={() => navigate("/register")}
-                    >
-                        Đăng ký
-                    </Button>
-                </Space>
+                        icon={<MenuOutlined />}
+                        onClick={() => setDrawerVisible(true)}
+                        type="text"
+                        size="large"
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                    />
+                </div>
             )}
+
+            <Drawer
+                title="SalonFlow"
+                placement="right"
+                onClose={() => setDrawerVisible(false)}
+                open={drawerVisible}
+                width={260}
+            >
+                <Menu
+                    mode="inline"
+                    selectedKeys={[selectedKey]}
+                    items={menuItems}
+                    onClick={({ key }) => {
+                        navigate(key);
+                        setDrawerVisible(false);
+                    }}
+                    style={{ borderRight: 0 }}
+                />
+
+                {isLogin ? (
+                    <div style={{ marginTop: 24, padding: "0 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                            <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
+                            <Text strong>{displayName}</Text>
+                        </div>
+                        <Button
+                            block
+                            type="dashed"
+                            icon={<UserOutlined />}
+                            onClick={() => { navigate("/profile"); setDrawerVisible(false); }}
+                            style={{ marginBottom: 8 }}
+                        >
+                            Hồ sơ
+                        </Button>
+                        <Button
+                            block
+                            type="dashed"
+                            icon={<CalendarOutlined />}
+                            onClick={() => { navigate("/appointments"); setDrawerVisible(false); }}
+                            style={{ marginBottom: 8 }}
+                        >
+                            Lịch hẹn
+                        </Button>
+                        <Button
+                            block
+                            danger
+                            icon={<LogoutOutlined />}
+                            onClick={() => { logout(); setDrawerVisible(false); }}
+                        >
+                            Đăng xuất
+                        </Button>
+                    </div>
+                ) : (
+                    <div style={{ marginTop: 24, padding: "0 8px", display: "flex", flexDirection: "column", gap: 8 }}>
+                        <Button type="primary" block onClick={() => { navigate("/guest-booking"); setDrawerVisible(false); }}>
+                            Đặt lịch ngay
+                        </Button>
+                        <Button block onClick={() => { navigate("/login"); setDrawerVisible(false); }}>
+                            Đăng nhập
+                        </Button>
+                        <Button type="primary" block onClick={() => { navigate("/register"); setDrawerVisible(false); }}>
+                            Đăng ký
+                        </Button>
+                    </div>
+                )}
+            </Drawer>
         </Header>
     );
 }

@@ -22,7 +22,7 @@ import { Menu, Tag } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 
-export default function OwnerSidebar() {
+export default function OwnerSidebar({ onMenuClick }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { features } = useSubscription();
@@ -139,7 +139,10 @@ export default function OwnerSidebar() {
             mode="inline"
             selectedKeys={[selectedKey]}
             items={items}
-            onClick={(e) => navigate(e.key)}
+            onClick={(e) => {
+                navigate(e.key);
+                if (onMenuClick) onMenuClick();
+            }}
             style={{ height: "100%" }}
         />
     );
