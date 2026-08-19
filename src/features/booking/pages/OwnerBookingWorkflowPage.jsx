@@ -35,7 +35,8 @@ import {
     ShopOutlined,
     QrcodeOutlined,
     CameraOutlined,
-    LinkOutlined
+    LinkOutlined,
+    DollarOutlined
 } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
@@ -47,6 +48,8 @@ import {
 } from "../api/bookingApi";
 
 import NoShowWarningBadge from "@/features/ai/components/NoShowWarningBadge";
+import ManagerCheckoutModal from "@/features/payment/components/ManagerCheckoutModal";
+import { getInvoiceUrl } from "@/features/media/api/mediaApi";
 
 const { Title, Text, Paragraph } = Typography;
 const { RangePicker } = DatePicker;
@@ -63,7 +66,7 @@ const STATUS_META = {
 const ACTION_TEXT = {
     confirm: "Xác nhận lịch",
     checkin: "Quét QR Check-in",
-    complete: "Hoàn thành dịch vụ"
+    complete: "Thanh toán & Hoàn thành"
 };
 
 const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
@@ -107,7 +110,7 @@ const getWorkflowAction = (status) => {
     }
 
     if (status === "CHECKED_IN") {
-        return { key: "complete", label: ACTION_TEXT.complete, color: "green", icon: <CheckCircleOutlined /> };
+        return { key: "complete", label: ACTION_TEXT.complete, color: "green", icon: <DollarOutlined /> };
     }
 
     return null;
@@ -362,6 +365,8 @@ export default function OwnerBookingWorkflowPage() {
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [detailOpen, setDetailOpen] = useState(false);
     const [qrModalOpen, setQrModalOpen] = useState(false);
+    const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+    const [checkoutBooking, setCheckoutBooking] = useState(null);
     const [actionLoadingKey, setActionLoadingKey] = useState("");
 
     const selectedBranch = useMemo(
@@ -460,14 +465,7 @@ export default function OwnerBookingWorkflowPage() {
 
                 return buildSearchText(booking).includes(normalizedSearch);
             })
-            .sort((a, b) => {
-                const dateA = dayjs(`${a?.bookingDate || ""}T${a?.startTime || "00:00:00"}`);
-                const dateB = dayjs(`${b?.bookingDate || ""}T${b?.startTime || "00:00:00"}`);
-                if (dateA.isValid() && dateB.isValid()) {
-                    return dateB.valueOf() - dateA.valueOf();
-                }
-                return String(b?.id || "").localeCompare(String(a?.id || ""));
-            });
+            .sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
     }, [bookings, searchText, statusFilter, dateRange]);
 
     const summary = useMemo(() => {
@@ -501,18 +499,18 @@ export default function OwnerBookingWorkflowPage() {
             return;
         }
 
+        if (actionKey === "complete") {
+            setCheckoutBooking(booking);
+            setCheckoutModalOpen(true);
+            return;
+        }
+
         const actionMap = {
             confirm: {
                 title: "Xác nhận lịch hẹn",
                 description: "Dùng khi booking đang ở trạng thái chờ xử lý.",
                 api: confirmBookingApi,
                 success: "Đã xác nhận lịch hẹn."
-            },
-            complete: {
-                title: "Hoàn thành dịch vụ",
-                description: "Chuyển booking sang trạng thái hoàn thành để customer có thể đánh giá.",
-                api: completeBookingApi,
-                success: "Đã chuyển booking sang trạng thái hoàn thành."
             }
         };
 
@@ -565,6 +563,7 @@ export default function OwnerBookingWorkflowPage() {
             title: "Mã booking",
             dataIndex: "id",
             width: 110,
+            sorter: (a, b) => Number(a?.id || 0) - Number(b?.id || 0),
             render: (value, record) => (
                 <Text strong style={{ color: "#1677ff" }}>
                     #{value}
@@ -683,7 +682,33 @@ export default function OwnerBookingWorkflowPage() {
                             >
                                 {workflowAction.label}
                             </Button>
-                        ) : null}
+                        ) : (
+                            record.status === "COMPLETED" && (
+                                <Button
+                                    size="small"
+                                    type="default"
+                                    icon={<DollarOutlined />}
+                                    style={{ borderColor: "#52c41a", color: "#52c41a" }}
+                                    onClick={async () => {
+                                        if (record?.invoiceUrl) {
+                                            try {
+                                                const url = await getInvoiceUrl(record.invoiceUrl);
+                                                if (url) {
+                                                    window.open(url, "_blank");
+                                                    return;
+                                                }
+                                            } catch (e) {
+                                                console.error("Lỗi lấy hóa đơn PDF:", e);
+                                            }
+                                        }
+                                        setCheckoutBooking(record);
+                                        setCheckoutModalOpen(true);
+                                    }}
+                                >
+                                    Xem hóa đơn
+                                </Button>
+                            )
+                        )}
                     </Space>
                 );
             }
@@ -938,6 +963,16 @@ export default function OwnerBookingWorkflowPage() {
                 onCancel={() => setQrModalOpen(false)}
                 onSuccess={() => {
                     setQrModalOpen(false);
+                    loadBookings(branchId);
+                }}
+            />
+
+            <ManagerCheckoutModal
+                open={checkoutModalOpen}
+                booking={checkoutBooking}
+                onCancel={() => setCheckoutModalOpen(false)}
+                onSuccess={() => {
+                    setCheckoutModalOpen(false);
                     loadBookings(branchId);
                 }}
             />

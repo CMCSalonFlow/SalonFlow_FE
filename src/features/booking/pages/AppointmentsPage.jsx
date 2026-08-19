@@ -356,6 +356,7 @@ export default function AppointmentsPage() {
         {
             title: "Mã đặt",
             dataIndex: "id",
+            sorter: (a, b) => Number(a?.id || 0) - Number(b?.id || 0),
             render: (id) => <Text strong>#{id}</Text>
         },
         {

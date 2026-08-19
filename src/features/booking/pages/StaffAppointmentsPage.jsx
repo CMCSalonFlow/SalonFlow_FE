@@ -212,6 +212,7 @@ export default function StaffAppointmentsPage() {
             dataIndex: "id",
             key: "id",
             width: 90,
+            sorter: (a, b) => Number(a?.id || 0) - Number(b?.id || 0),
             render: (id) => <Text strong style={{ color: "#1677ff" }}>#{id}</Text>
         },
         {
