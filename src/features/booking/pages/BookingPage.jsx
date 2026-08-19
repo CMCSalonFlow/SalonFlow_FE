@@ -149,6 +149,13 @@ export default function BookingPage() {
                 setLoading(true);
                 const data = await getPublicSalonsApi();
                 setSalons(data);
+
+                // Auto-select salon from search params if present
+                const searchParams = new URLSearchParams(window.location.search);
+                const querySalonId = searchParams.get("salonId");
+                if (querySalonId && data.some(s => String(s.id) === String(querySalonId))) {
+                    setSelectedSalonId(Number(querySalonId));
+                }
             } catch {
                 message.error("Không thể tải danh sách Salon.");
             } finally {
@@ -167,7 +174,15 @@ export default function BookingPage() {
                 setLoading(true);
                 const data = await getPublicBranchesApi(selectedSalonId);
                 setBranches(data);
-                setSelectedBranchId(null);
+
+                // Auto-select branch from search params if present and belongs to this salon
+                const searchParams = new URLSearchParams(window.location.search);
+                const queryBranchId = searchParams.get("branchId");
+                if (queryBranchId && data.some(b => String(b.id) === String(queryBranchId))) {
+                    setSelectedBranchId(Number(queryBranchId));
+                } else {
+                    setSelectedBranchId(null);
+                }
             } catch {
                 message.error("Lỗi tải danh sách chi nhánh của Salon này.");
             } finally {
