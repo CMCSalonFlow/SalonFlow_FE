@@ -8,22 +8,19 @@ import {
     Switch,
     Space,
     Button,
-    List,
     message,
-    Upload,
     Alert,
     Tooltip,
     Progress,
-    Tag
+    Tag,
+    Row,
+    Col
 } from "antd";
 import {
-    DeleteOutlined,
-    RocketOutlined,
-    UploadOutlined
+    RocketOutlined
 } from "@ant-design/icons";
 
 import { getCategoriesApi } from "../api/serviceApi";
-import { uploadMediaApi } from "@/features/media/api/mediaApi";
 import { getMySalonApi } from "@/features/salon/api/salonApi";
 import {
     generateServiceDescriptionApi,
@@ -42,15 +39,10 @@ export default function ServiceFormModal({
     initialValues,
     enableAiDescription = false
 }) {
-
     const [form] = Form.useForm();
-
     const depositRequired = Form.useWatch("depositRequired", form);
 
     const [categories, setCategories] = useState([]);
-
-    const [photoList, setPhotoList] = useState([]);
-    const [uploading, setUploading] = useState(false);
     const [salon, setSalon] = useState(null);
     const [quota, setQuota] = useState(null);
     const [loadingAiMeta, setLoadingAiMeta] = useState(false);
@@ -58,11 +50,10 @@ export default function ServiceFormModal({
     const [descriptionKeywords, setDescriptionKeywords] = useState([]);
 
     useEffect(() => {
-
         const fetchCategories = async () => {
             try {
                 const data = await getCategoriesApi();
-                setCategories(data);
+                setCategories(data || []);
             } catch (error) {
                 console.error("Error fetching categories:", error);
             }
@@ -73,9 +64,7 @@ export default function ServiceFormModal({
     }, [visible]);
 
     useEffect(() => {
-        if (!visible || !enableAiDescription) {
-            return;
-        }
+        if (!visible || !enableAiDescription) return;
 
         let cancelled = false;
 
@@ -116,23 +105,15 @@ export default function ServiceFormModal({
     const syncModalState = () => {
         if (initialValues) {
             form.setFieldsValue({
+                categoryId: initialValues.categoryId,
                 name: initialValues.name,
                 price: initialValues.price,
                 durationMinutes: initialValues.durationMinutes,
-                categoryId: initialValues.categoryId,
                 description: initialValues.description,
-                isActive: initialValues.isActive !== false,
                 depositRequired: initialValues.depositRequired ?? false,
-                depositPercentage: initialValues.depositPercentage
+                depositPercentage: initialValues.depositPercentage,
+                isActive: initialValues.isActive !== false
             });
-            setPhotoList(
-                (initialValues.images || []).map((url, index) => ({
-                    uid: `existing-${index}-${url}`,
-                    name: `image-${index + 1}`,
-                    status: "done",
-                    url
-                }))
-            );
             setDescriptionKeywords([]);
         } else {
             form.resetFields();
@@ -141,63 +122,8 @@ export default function ServiceFormModal({
                 depositRequired: false,
                 depositPercentage: null
             });
-            setPhotoList([]);
             setDescriptionKeywords([]);
         }
-    };
-
-    const handleCustomUpload = async ({ file, onSuccess, onError }) => {
-        try {
-            setUploading(true);
-            const localPreview = URL.createObjectURL(file);
-            const tempUid = file.uid || `photo-${Date.now()}-${Math.random()}`;
-
-            setPhotoList((prev) => [
-                ...prev,
-                {
-                    uid: tempUid,
-                    name: file.name || "image.png",
-                    status: "uploading",
-                    url: localPreview,
-                    thumbUrl: localPreview
-                }
-            ]);
-
-            const response = await uploadMediaApi(file);
-            const imageUrl = response?.url || response?.fileUrl;
-
-            if (!imageUrl) {
-                throw new Error("Không nhận được URL ảnh từ server");
-            }
-
-            setPhotoList((prev) =>
-                prev.map((item) =>
-                    item.uid === tempUid
-                        ? {
-                            ...item,
-                            status: "done",
-                            url: imageUrl,
-                            thumbUrl: imageUrl,
-                            serverUrl: imageUrl
-                        }
-                        : item
-                )
-            );
-
-            onSuccess?.(response, file);
-            message.success("Upload ảnh thành công");
-        } catch (error) {
-            setPhotoList((prev) => prev.filter((item) => item.uid !== file.uid));
-            message.error(error?.response?.data?.message || error.message || "Lỗi khi upload ảnh.");
-            onError?.(error);
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    const handleRemovePhoto = (file) => {
-        setPhotoList((prev) => prev.filter((item) => item.uid !== file.uid));
-        return true;
     };
 
     const handleOk = async () => {
@@ -205,15 +131,8 @@ export default function ServiceFormModal({
             const values = await form.validateFields();
             const payload = {
                 ...values,
-                depositRequired:
-                    values.depositRequired ?? false,
-                depositPercentage:
-                    values.depositRequired
-                        ? values.depositPercentage
-                        : null,
-                images: photoList
-                    .filter((item) => item.status === "done" && (item.serverUrl || item.url))
-                    .map((item) => item.serverUrl || item.url)
+                depositRequired: values.depositRequired ?? false,
+                depositPercentage: values.depositRequired ? values.depositPercentage : null
             };
             onSubmit(payload);
         } catch (error) {
@@ -285,16 +204,12 @@ export default function ServiceFormModal({
 
     return (
         <Modal
-            title={
-                initialValues
-                    ? "Chỉnh sửa dịch vụ"
-                    : "Thêm dịch vụ mới"
-            }
+            title={initialValues ? "Chỉnh sửa dịch vụ" : "Thêm dịch vụ mới"}
             open={visible}
             onCancel={onCancel}
             onOk={handleOk}
-            width={650}
-            confirmLoading={uploading}
+            width={600}
+            centered
             destroyOnClose
             afterOpenChange={(open) => {
                 if (open) {
@@ -302,13 +217,36 @@ export default function ServiceFormModal({
                 }
             }}
         >
-
             <Form
                 form={form}
                 layout="vertical"
                 style={{ marginTop: 20 }}
             >
+                {/* 1. Danh mục dịch vụ */}
+                <Form.Item
+                    name="categoryId"
+                    label="Danh mục dịch vụ"
+                    rules={[
+                        {
+                            required: true,
+                            message: "Vui lòng chọn danh mục dịch vụ!"
+                        }
+                    ]}
+                >
+                    <Select
+                        placeholder="Chọn danh mục"
+                        allowClear
+                        size="large"
+                    >
+                        {categories.map(cat => (
+                            <Select.Option key={cat.id} value={cat.id}>
+                                {cat.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
 
+                {/* 2. Tên dịch vụ */}
                 <Form.Item
                     name="name"
                     label="Tên dịch vụ"
@@ -319,35 +257,11 @@ export default function ServiceFormModal({
                         }
                     ]}
                 >
-                    <Input placeholder="Ví dụ: Cắt tóc nam Standard" />
+                    <Input placeholder="Ví dụ: Cắt tóc nam Standard" size="large" />
                 </Form.Item>
 
-                <Form.Item
-                    name="categoryId"
-                    label="Danh mục dịch vụ"
-                >
-                    <Select
-                        placeholder="Chọn danh mục"
-                        allowClear
-                    >
-                        {categories.map(cat => (
-                            <Select.Option
-                                key={cat.id}
-                                value={cat.id}
-                            >
-                                {cat.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
-                </Form.Item>
-
-                <div
-                    style={{
-                        display: "flex",
-                        gap: 16
-                    }}
-                >
-
+                {/* 3. Giá dịch vụ & Thời gian */}
+                <div style={{ display: "flex", gap: 16 }}>
                     <Form.Item
                         name="price"
                         label="Giá dịch vụ"
@@ -361,18 +275,13 @@ export default function ServiceFormModal({
                     >
                         <InputNumber
                             min={0}
+                            size="large"
                             style={{ width: "100%" }}
-                            formatter={(value) =>
-                                `${value}`.replace(
-                                    /\B(?=(\d{3})+(?!\d))/g,
-                                    ","
-                                )
-                            }
-                            parser={(value) =>
-                                value.replace(/\$\s?|(,*)/g, "")
-                            }
+                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                            parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
                         />
                     </Form.Item>
+
                     <Form.Item
                         name="durationMinutes"
                         label="Thời gian (phút)"
@@ -384,7 +293,7 @@ export default function ServiceFormModal({
                             }
                         ]}
                     >
-                        <Select>
+                        <Select size="large">
                             <Select.Option value={15}>15 phút</Select.Option>
                             <Select.Option value={30}>30 phút</Select.Option>
                             <Select.Option value={45}>45 phút</Select.Option>
@@ -394,25 +303,26 @@ export default function ServiceFormModal({
                             <Select.Option value={120}>120 phút</Select.Option>
                         </Select>
                     </Form.Item>
-
                 </div>
 
+                {/* 4. Mô tả */}
                 <Form.Item
                     name="description"
                     label="Mô tả"
                 >
                     <Input.TextArea
-                        rows={5}
+                        rows={4}
                         placeholder="Mô tả ngắn..."
                     />
                 </Form.Item>
 
+                {/* 5. AI Mô Tả */}
                 <div
                     style={{
                         border: "1px solid #f0f0f0",
                         borderRadius: 8,
                         padding: 12,
-                        marginTop: -8,
+                        marginTop: -4,
                         marginBottom: 20,
                         background: enableAiDescription ? "#fbfdff" : "#fafafa"
                     }}
@@ -467,34 +377,71 @@ export default function ServiceFormModal({
                     </Space>
                 </div>
 
-                <Form.Item
-                    name="depositRequired"
-                    label="Yêu cầu đặt cọc"
-                    valuePropName="checked"
-                >
-                    <Switch
-                        checkedChildren="Có"
-                        unCheckedChildren="Không"
-                        onChange={(checked) => {
+                {/* 6. Yêu cầu đặt cọc & Trạng thái */}
+                <Row gutter={16} style={{ marginBottom: depositRequired ? 12 : 16 }}>
+                    <Col span={12}>
+                        <div
+                            style={{
+                                padding: "12px 16px",
+                                backgroundColor: "#fafafa",
+                                borderRadius: 8,
+                                border: "1px solid #f0f0f0",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center"
+                            }}
+                        >
+                            <span style={{ fontWeight: 600, color: "#262626" }}>Yêu cầu đặt cọc</span>
+                            <Form.Item
+                                name="depositRequired"
+                                valuePropName="checked"
+                                noStyle
+                            >
+                                <Switch
+                                    checkedChildren="Có"
+                                    unCheckedChildren="Không"
+                                    onChange={(checked) => {
+                                        if (!checked) {
+                                            form.setFieldValue("depositPercentage", null);
+                                        }
+                                    }}
+                                />
+                            </Form.Item>
+                        </div>
+                    </Col>
 
-                            if (!checked) {
-
-                                form.setFieldValue(
-                                    "depositPercentage",
-                                    null
-                                );
-
-                            }
-
-                        }}
-                    />
-                </Form.Item>
+                    <Col span={12}>
+                        <div
+                            style={{
+                                padding: "12px 16px",
+                                backgroundColor: "#fafafa",
+                                borderRadius: 8,
+                                border: "1px solid #f0f0f0",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center"
+                            }}
+                        >
+                            <span style={{ fontWeight: 600, color: "#262626" }}>Trạng thái</span>
+                            <Form.Item
+                                name="isActive"
+                                valuePropName="checked"
+                                noStyle
+                            >
+                                <Switch
+                                    checkedChildren="Hoạt động"
+                                    unCheckedChildren="Tạm ngưng"
+                                />
+                            </Form.Item>
+                        </div>
+                    </Col>
+                </Row>
 
                 {depositRequired && (
-
                     <Form.Item
                         name="depositPercentage"
                         label="Tỷ lệ đặt cọc (%)"
+                        style={{ marginTop: 8 }}
                         rules={[
                             {
                                 required: true,
@@ -515,96 +462,7 @@ export default function ServiceFormModal({
                             addonAfter="%"
                         />
                     </Form.Item>
-
                 )}
-
-                <Form.Item
-                    name="isActive"
-                    label="Trạng thái"
-                    valuePropName="checked"
-                >
-                    <Switch
-                        checkedChildren="Hoạt động"
-                        unCheckedChildren="Tạm ngưng"
-                    />
-                </Form.Item>
-
-                <div style={{ marginBottom: 20 }}>
-
-                    <label
-                        style={{
-                            display: "block",
-                            marginBottom: 8
-                        }}
-                    >
-                        Album hình ảnh
-                    </label>
-
-                    <Upload
-                        customRequest={handleCustomUpload}
-                        fileList={photoList}
-                        onRemove={handleRemovePhoto}
-                        listType="picture-card"
-                        accept="image/*"
-                        maxCount={10}
-                    >
-                        {photoList.length < 10 ? (
-                            <div>
-                                <UploadOutlined />
-                                <div style={{ marginTop: 8 }}>Tải ảnh</div>
-                            </div>
-                        ) : null}
-                    </Upload>
-
-                    <List
-                        bordered
-                        size="small"
-                        dataSource={photoList.filter((item) => item.status === "done")}
-                        locale={{
-                            emptyText:
-                                "Chưa có hình ảnh."
-                        }}
-                        renderItem={(item) => (
-
-                            <List.Item
-                                actions={[
-                                    <Button
-                                        type="text"
-                                        danger
-                                        icon={<DeleteOutlined />}
-                                        onClick={() => handleRemovePhoto(item)}
-                                    />
-                                ]}
-                            >
-
-                                <Space>
-
-                                    <img
-                                        src={item.url}
-                                        alt=""
-                                        style={{
-                                            width: 40,
-                                            height: 40,
-                                            objectFit: "cover",
-                                            borderRadius: 4
-                                        }}
-                                    />
-
-                                    <span
-                                        style={{
-                                            maxWidth: 420,
-                                            overflow: "hidden",
-                                            whiteSpace: "nowrap",
-                                            textOverflow: "ellipsis"
-                                        }}
-                                    >
-                                        {item.url}
-                                    </span>
-                                </Space>
-                            </List.Item>
-                        )}
-                    />
-                </div>
             </Form>
         </Modal>
     );

@@ -105,14 +105,20 @@ html, body {
 }
 
 /* ── Dark Checkout Modal Centering & Styling Overrides ── */
-.ant-modal-wrap.dark-checkout-modal,
-div.ant-modal-wrap {
+.ant-modal-wrap.dark-checkout-modal {
   width: 100% !important;
   left: 0 !important;
   right: 0 !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
+}
+
+/* Enforce hidden state for closed modals so they never block pointer clicks */
+.ant-modal-wrap-hidden,
+div.ant-modal-wrap-hidden {
+  display: none !important;
+  pointer-events: none !important;
 }
 
 .ant-modal.dark-checkout-modal {

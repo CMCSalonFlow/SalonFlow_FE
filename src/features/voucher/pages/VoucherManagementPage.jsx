@@ -3,7 +3,6 @@ import {
   Button,
   Table,
   Tag,
-  Space,
   Popconfirm,
   Typography,
 } from "antd";
@@ -11,7 +10,6 @@ import { PlusOutlined, StopOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useVoucher } from "../hooks/useVoucher";
 import VoucherFormModal from "../components/VoucherFormModal";
-import VoucherBatchModal from "../components/VoucherBatchModal";
 
 const { Title } = Typography;
 
@@ -20,24 +18,15 @@ const VoucherManagementPage = () => {
     vouchers,
     loading,
     handleCreate,
-    handleCreateBatch,
     handleDeactivate,
   } = useVoucher();
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [batchOpen, setBatchOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const onSubmitCreate = async (values) => {
     setSubmitting(true);
     const ok = await handleCreate(values);
-    setSubmitting(false);
-    return ok;
-  };
-
-  const onSubmitBatch = async (values) => {
-    setSubmitting(true);
-    const ok = await handleCreateBatch(values);
     setSubmitting(false);
     return ok;
   };
@@ -67,6 +56,28 @@ const VoucherManagementPage = () => {
         r.discountType === "FIXED"
           ? `${Number(r.discountValue).toLocaleString("vi-VN")}đ`
           : `${r.discountValue}%`,
+    },
+    {
+      title: "Điều kiện áp dụng",
+      key: "minOrderAmount",
+      render: (_, r) => (
+        <div>
+          {r.minOrderAmount ? (
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#1677ff" }}>
+              Đơn từ: {Number(r.minOrderAmount).toLocaleString("vi-VN")}đ
+            </div>
+          ) : (
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              Không giới hạn
+            </Typography.Text>
+          )}
+          {r.discountType === "PERCENT" && r.maxDiscountAmount ? (
+            <div style={{ fontSize: 11, color: "#8c8c8c" }}>
+              Giảm tối đa: {Number(r.maxDiscountAmount).toLocaleString("vi-VN")}đ
+            </div>
+          ) : null}
+        </div>
+      ),
     },
     {
       title: "Đã dùng / Tối đa",
@@ -129,21 +140,13 @@ const VoucherManagementPage = () => {
         <Title level={4} style={{ margin: 0 }}>
           Quản lý Voucher
         </Title>
-        <Space>
-          <Button
-            icon={<PlusOutlined />}
-            onClick={() => setCreateOpen(true)}
-          >
-            Tạo voucher
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setBatchOpen(true)}
-          >
-            Tạo batch
-          </Button>
-        </Space>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setCreateOpen(true)}
+        >
+          Tạo voucher mới
+        </Button>
       </div>
 
       <Table
@@ -158,13 +161,6 @@ const VoucherManagementPage = () => {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onSubmit={onSubmitCreate}
-        loading={submitting}
-      />
-
-      <VoucherBatchModal
-        open={batchOpen}
-        onClose={() => setBatchOpen(false)}
-        onSubmit={onSubmitBatch}
         loading={submitting}
       />
     </div>

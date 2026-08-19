@@ -48,7 +48,6 @@ const StaffManagementPage = lazy(() => import("@/features/staff/pages/StaffManag
 const SchedulePage = lazy(() => import("@/features/schedule/pages/SchedulePage"));
 const ShiftTemplatePage = lazy(() => import("@/features/shift/pages/ShiftTemplatePage"));
 const OffDayManagementPage = lazy(() => import("@/features/offday/pages/OffDayManagementPage"));
-const CancellationPolicyPage = lazy(() => import("@/features/booking/pages/CancellationPolicyPage"));
 const OwnerBookingWorkflowPage = lazy(() => import("@/features/booking/pages/OwnerBookingWorkflowPage"));
 const SmartSchedulingConfigPage = lazy(() => import("@/features/ai/pages/SmartSchedulingConfigPage"));
 const NoShowDashboardPage = lazy(() => import("@/features/ai/pages/NoShowDashboardPage"));
@@ -242,10 +241,6 @@ const router = createBrowserRouter([
             {
                 path: "off-days",
                 element: withSuspense(OffDayManagementPage)
-            },
-            {
-                path: "cancellation-policy",
-                element: withSuspense(CancellationPolicyPage)
             },
             {
                 path: "reviews",

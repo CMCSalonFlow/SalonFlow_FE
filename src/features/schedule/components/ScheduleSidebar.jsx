@@ -146,25 +146,6 @@ export default function ScheduleSidebar({
               })}
             </div>
           </div>
-          <div style={{ height: 1, background: "var(--gc-gray-200)", margin: "0 12px 12px" }} />
-          {/* Status legend */}
-          <div className="sidebar-section">
-            <div className="sidebar-section-title">Trạng thái</div>
-            <div className="sidebar-legend">
-              <div className="legend-item">
-                <div className="legend-dot" style={{ background: "#34a853" }} />
-                Đã xác nhận
-              </div>
-              <div className="legend-item">
-                <div className="legend-dot" style={{ background: "#f29900" }} />
-                Chờ xử lý
-              </div>
-              <div className="legend-item">
-                <div className="legend-dot" style={{ background: "#c5221f" }} />
-                Đã hủy
-              </div>
-            </div>
-          </div>
         </>
       )}
     </div>

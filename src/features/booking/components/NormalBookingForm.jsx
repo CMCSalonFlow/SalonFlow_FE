@@ -1,5 +1,6 @@
-import { DatePicker, Divider, Spin, Card, Space, Avatar, Row, Col, Typography } from "antd";
-import { SmileOutlined, TeamOutlined, CalendarOutlined } from "@ant-design/icons";
+import { DatePicker, Divider, Spin, Card, Space, Avatar, Row, Col, Typography, Alert } from "antd";
+import { SmileOutlined, TeamOutlined, CalendarOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 const { Text } = Typography;
 
@@ -9,17 +10,41 @@ export default function NormalBookingForm({
     setSelectedStaff,
     loadingStaff,
     getQualifiedStaff,
-    selectedStaff
+    selectedStaff,
+    systemOffDays = []
 }) {
+    const isDateDisabled = (current) => {
+        if (!current) return false;
+        if (current.valueOf() < Date.now() - 24 * 60 * 60 * 1000) return true;
+        const dateStr = current.format("YYYY-MM-DD");
+        return systemOffDays.some(off => dateStr >= off.dateFrom && dateStr <= off.dateTo);
+    };
+
     return (
         <div>
+            {systemOffDays.length > 0 && (
+                <div style={{ marginBottom: 20, padding: '12px 16px', backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 12 }}>
+                    <Space size={8}>
+                        <InfoCircleOutlined style={{ color: '#fa8c16', fontSize: 16 }} />
+                        <Text strong style={{ color: '#d46b08' }}>Thông báo Lịch nghỉ lễ / Đóng cửa của Chi nhánh:</Text>
+                    </Space>
+                    <div style={{ marginTop: 6, paddingLeft: 24 }}>
+                        {systemOffDays.map(off => (
+                            <div key={off.id} style={{ fontSize: 13, color: '#8c6b00', marginTop: 2 }}>
+                                • <b>{off.title}</b> ({dayjs(off.dateFrom).format("DD/MM/YYYY")} ➔ {dayjs(off.dateTo).format("DD/MM/YYYY")}): <i>{off.reason || "Salon đóng cửa tạm thời"}</i>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div style={{ marginBottom: 24 }}>
                 <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Chọn Ngày hẹn</label>
                 <DatePicker
                     style={{ width: "100%" }}
                     size="large"
                     format="YYYY-MM-DD"
-                    disabledDate={current => current && current.valueOf() < Date.now() - 24*60*60*1000}
+                    disabledDate={isDateDisabled}
                     value={selectedDate}
                     onChange={(date) => {
                         setSelectedDate(date);

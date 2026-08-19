@@ -24,7 +24,7 @@ export default function OverviewKpiCard({
 
     return (
         <Card
-            bordered={false}
+            variant="borderless"
             style={{
                 borderRadius: 16,
                 boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
@@ -34,7 +34,7 @@ export default function OverviewKpiCard({
                 justifyContent: 'space-between',
                 transition: 'transform 0.2s, box-shadow 0.2s'
             }}
-            bodyStyle={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+            styles={{ body: { padding: 20, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
         >
             {/* Header: Icon + Title + Growth Tag */}
             <div>

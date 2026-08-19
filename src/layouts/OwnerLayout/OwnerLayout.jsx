@@ -6,17 +6,18 @@ import {
 } from "antd";
 
 import {
-    Outlet
+    Outlet,
+    useNavigate
 } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { useBranch } from "@/features/branch/hooks/useBranch";
-import { MenuFoldOutlined, MenuUnfoldOutlined, MenuOutlined } from "@ant-design/icons";
+import { MenuOutlined } from "@ant-design/icons";
 
 import OwnerHeader
-from "./OwnerHeader";
+    from "./OwnerHeader";
 
 import OwnerSidebar
-from "./OwnerSidebar";
+    from "./OwnerSidebar";
 
 const {
     Header,
@@ -25,6 +26,7 @@ const {
 } = Layout;
 
 export default function OwnerLayout() {
+    const navigate = useNavigate();
     const { getMyBranches } = useBranch();
     const screens = Grid.useBreakpoint();
     const [drawerVisible, setDrawerVisible] = useState(false);
@@ -120,6 +122,8 @@ export default function OwnerLayout() {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            position: "relative",
+                            padding: collapsed ? "0 4px" : "0 48px 0 16px",
                             fontSize: collapsed ? 16 : 20,
                             fontWeight: 600,
                             transition: "all 0.3s",
@@ -127,7 +131,32 @@ export default function OwnerLayout() {
                             overflow: "hidden"
                         }}
                     >
-                        {collapsed ? "SF" : "SalonFlow"}
+                        <span
+                            onClick={() => navigate("/owner")}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                            title="Về Dashboard"
+                        >
+                            {collapsed ? "SF" : "SalonFlow"}
+                        </span>
+                        <Button
+                            type="text"
+                            icon={<MenuOutlined style={{ fontSize: 18, color: "#fff" }} />}
+                            onClick={() => handleCollapse(!collapsed)}
+                            style={{
+                                position: "absolute",
+                                right: collapsed ? 4 : 12,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                color: "#fff",
+                                padding: 0,
+                                width: 32,
+                                height: 32,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                            title={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+                        />
                     </div>
 
                     <OwnerSidebar />
@@ -151,34 +180,6 @@ export default function OwnerLayout() {
                             onMouseLeave={(e) => { if (!isResizing) e.currentTarget.style.backgroundColor = "transparent" }}
                         />
                     )}
-
-                    {/* Floating Collapse Trigger */}
-                    <div
-                        onClick={() => handleCollapse(!collapsed)}
-                        style={{
-                            position: "absolute",
-                            top: 20,
-                            right: -12,
-                            width: 24,
-                            height: 24,
-                            borderRadius: "50%",
-                            backgroundColor: "#fff",
-                            border: "1px solid #d9d9d9",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                            zIndex: 101,
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                            transition: "all 0.3s",
-                        }}
-                    >
-                        {collapsed ? (
-                            <MenuUnfoldOutlined style={{ fontSize: 12, color: "#1890ff" }} />
-                        ) : (
-                            <MenuFoldOutlined style={{ fontSize: 12, color: "#1890ff" }} />
-                        )}
-                    </div>
                 </Sider>
             ) : (
                 <Drawer
@@ -195,12 +196,28 @@ export default function OwnerLayout() {
                             color: "#fff",
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
+                            justifyContent: "space-between",
+                            padding: "0 16px",
                             fontSize: 20,
                             fontWeight: 600
                         }}
                     >
-                        SalonFlow
+                        <span
+                            onClick={() => {
+                                navigate("/owner");
+                                setDrawerVisible(false);
+                            }}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                            title="Về Dashboard"
+                        >
+                            SalonFlow
+                        </span>
+                        <Button
+                            type="text"
+                            icon={<MenuOutlined style={{ fontSize: 18, color: "#fff" }} />}
+                            onClick={() => setDrawerVisible(false)}
+                            style={{ color: "#fff" }}
+                        />
                     </div>
                     <OwnerSidebar onMenuClick={() => setDrawerVisible(false)} />
                 </Drawer>

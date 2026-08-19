@@ -1,35 +1,35 @@
 import api from "@/core/api/axios";
+import { ENDPOINTS } from "@/core/api/endpoints";
 
 const offdayApi = {
-    createOffDay: async (staffId, data) => {
-        const response = await api.patch(
-            `/api/v1/staff/${staffId}/off-days`,
-            data
-        );
+    getSystemOffDays: async () => {
+        const response = await api.get(ENDPOINTS.SYSTEM_OFF_DAYS);
         return response.data;
     },
 
-    getOffDaysByStaff: async (staffId) => {
-        const response = await api.get(
-            `/api/v1/staff/${staffId}/off-days`
-        );
+    createSystemOffDay: async (data) => {
+        const response = await api.post(ENDPOINTS.SYSTEM_OFF_DAYS, data);
         return response.data;
     },
 
-    updateOffDay: async (offDayId, data) => {
-        const response = await api.put(
-            `/api/v1/staff/off-days/${offDayId}`,
-            data
-        );
+    deleteSystemOffDay: async (id) => {
+        const response = await api.delete(`${ENDPOINTS.SYSTEM_OFF_DAYS}/${id}`);
         return response.data;
     },
 
-    deleteOffDay: async (offDayId) => {
-        const response = await api.delete(
-            `/api/v1/staff/off-days/${offDayId}`
-        );
+    checkBranchClosed: async (branchId, date) => {
+        const response = await api.get(`${ENDPOINTS.SYSTEM_OFF_DAYS}/check-branch`, {
+            params: { branchId, date }
+        });
         return response.data;
     },
+
+    getOffDaysForBranchRange: async (branchId, startDate, endDate) => {
+        const response = await api.get(`${ENDPOINTS.SYSTEM_OFF_DAYS}/branch-range`, {
+            params: { branchId, startDate, endDate }
+        });
+        return response.data;
+    }
 };
 
 export default offdayApi;

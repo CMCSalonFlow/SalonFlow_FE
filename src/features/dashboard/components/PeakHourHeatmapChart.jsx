@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Space, Tag, Tooltip, Spin } from 'antd';
-import { HeatMapOutlined, ClockCircleOutlined, FireOutlined, TeamOutlined, InfoCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { HeatMapOutlined, ClockCircleOutlined, FireOutlined, TeamOutlined, CalendarOutlined, InfoCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { getPeakHoursAnalyticsApi } from '../api/customerAnalyticsApi';
 
 const { Text, Title } = Typography;
@@ -72,6 +73,24 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
 
     const maxCount = data?.maxBookingCount || 0;
 
+    const dateRangeText = data?.fromDate && data?.toDate
+        ? `${dayjs(data.fromDate).format('DD/MM/YYYY')} - ${dayjs(data.toDate).format('DD/MM/YYYY')}`
+        : 'Toàn bộ thời gian';
+
+    const getDayDateLabel = (dayOfWeek) => {
+        if (!data?.fromDate || !data?.toDate) return null;
+        const start = dayjs(data.fromDate);
+        const end = dayjs(data.toDate);
+
+        for (let d = end; d.isAfter(start) || d.isSame(start, 'day'); d = d.subtract(1, 'day')) {
+            const dow = d.day() === 0 ? 7 : d.day();
+            if (dow === dayOfWeek) {
+                return d.format('DD/MM');
+            }
+        }
+        return null;
+    };
+
     return (
         <Card
             variant="borderless"
@@ -93,7 +112,7 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
                             Biểu đồ Heatmap Khung Giờ Cao Điểm
                         </Title>
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                            Phân tích mật độ chi tiết cách 30 phút theo Ngày trong tuần × Khung giờ làm việc
+                            Phân tích mật độ chi tiết cách 30 phút theo Thứ trong tuần × Khung giờ ({dateRangeText})
                         </Text>
                     </div>
                 </Space>
@@ -138,8 +157,8 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
                                             left: 0,
                                             backgroundColor: '#ffffff',
                                             zIndex: 20,
-                                            width: 85,
-                                            minWidth: 85,
+                                            width: 125,
+                                            minWidth: 125,
                                             padding: '8px 6px',
                                             fontSize: 12,
                                             color: '#8c8c8c',
@@ -169,62 +188,70 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {DAY_LABELS.map(day => (
-                                    <tr key={day.dayOfWeek}>
-                                        <td
-                                            style={{
-                                                position: 'sticky',
-                                                left: 0,
-                                                backgroundColor: '#ffffff',
-                                                zIndex: 15,
-                                                fontWeight: 700,
-                                                fontSize: 12,
-                                                color: '#262626',
-                                                padding: '6px 8px',
-                                                boxShadow: '2px 0 5px rgba(0,0,0,0.05)'
-                                            }}
-                                        >
-                                            {day.label}
-                                        </td>
-                                        {TIME_SLOTS.map(slot => {
-                                            const key = `${day.dayOfWeek}-${slot.hour}-${slot.minute}`;
-                                            const cell = matrixMap[key] || {
-                                                dayName: day.label,
-                                                hourLabel: slot.label,
-                                                bookingCount: 0
-                                            };
-                                            const count = cell.bookingCount || 0;
-                                            const bgColor = getCellColor(count, maxCount);
-                                            const textColor = getCellTextColor(count, maxCount);
+                                {DAY_LABELS.map(day => {
+                                    const dateLabel = getDayDateLabel(day.dayOfWeek);
+                                    return (
+                                        <tr key={day.dayOfWeek}>
+                                            <td
+                                                style={{
+                                                    position: 'sticky',
+                                                    left: 0,
+                                                    backgroundColor: '#ffffff',
+                                                    zIndex: 15,
+                                                    fontWeight: 700,
+                                                    fontSize: 12,
+                                                    color: '#262626',
+                                                    padding: '6px 8px',
+                                                    boxShadow: '2px 0 5px rgba(0,0,0,0.05)',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                <span>{day.label}</span>
+                                                {dateLabel && (
+                                                    <span style={{ fontSize: 11, color: '#8c8c8c', marginLeft: 4, fontWeight: 500 }}>
+                                                        ({dateLabel})
+                                                    </span>
+                                                )}
+                                            </td>
+                                            {TIME_SLOTS.map(slot => {
+                                                const key = `${day.dayOfWeek}-${slot.hour}-${slot.minute}`;
+                                                const cell = matrixMap[key] || {
+                                                    dayName: day.label,
+                                                    hourLabel: slot.label,
+                                                    bookingCount: 0
+                                                };
+                                                const count = cell.bookingCount || 0;
+                                                const bgColor = getCellColor(count, maxCount);
+                                                const textColor = getCellTextColor(count, maxCount);
 
-                                            let endLabel = slot.minute === 0
-                                                ? `${String(slot.hour).padStart(2, '0')}:30`
-                                                : `${String(slot.hour + 1).padStart(2, '0')}:00`;
+                                                let endLabel = slot.minute === 0
+                                                    ? `${String(slot.hour).padStart(2, '0')}:30`
+                                                    : `${String(slot.hour + 1).padStart(2, '0')}:00`;
 
-                                            let recommendationText = 'Bố trí ca làm bình thường';
-                                            if (count > 0) {
-                                                if (maxCount > 0 && count / maxCount > 0.8) {
-                                                    recommendationText = '🔥 Cao điểm nhất! Cần tối đa 100% thợ trực ca';
-                                                } else if (maxCount > 0 && count / maxCount > 0.4) {
-                                                    recommendationText = '⚡ Giờ đông khách, khuyến nghị bố trí thêm thợ';
+                                                let recommendationText = 'Bố trí ca làm bình thường';
+                                                if (count > 0) {
+                                                    if (maxCount > 0 && count / maxCount > 0.8) {
+                                                        recommendationText = '🔥 Cao điểm nhất! Cần tối đa 100% thợ trực ca';
+                                                    } else if (maxCount > 0 && count / maxCount > 0.4) {
+                                                        recommendationText = '⚡ Giờ đông khách, khuyến nghị bố trí thêm thợ';
+                                                    }
+                                                } else {
+                                                    recommendationText = '☕ Giờ thấp điểm, có thể sắp xếp xoay ca nghỉ';
                                                 }
-                                            } else {
-                                                recommendationText = '☕ Giờ thấp điểm, có thể sắp xếp xoay ca nghỉ';
-                                            }
 
-                                            const tooltipContent = (
-                                                <div style={{ padding: 4 }}>
-                                                    <div style={{ fontWeight: 700, color: '#ffd666', fontSize: 13, marginBottom: 4 }}>
-                                                        📅 {day.label} | ⏰ Khung {slot.label} - {endLabel}
+                                                const tooltipContent = (
+                                                    <div style={{ padding: 4 }}>
+                                                        <div style={{ fontWeight: 700, color: '#ffd666', fontSize: 13, marginBottom: 4 }}>
+                                                            📅 {day.label} {dateLabel ? `(${dateLabel})` : ''} | ⏰ Khung {slot.label} - {endLabel}
+                                                        </div>
+                                                        <div style={{ fontSize: 12, marginBottom: 2 }}>
+                                                            Mật độ: <b>{count} lượt đặt dịch vụ</b>
+                                                        </div>
+                                                        <div style={{ fontSize: 11, color: '#e6f7ff', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 4, marginTop: 4 }}>
+                                                            💡 {recommendationText}
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontSize: 12, marginBottom: 2 }}>
-                                                        Mật độ: <b>{count} lượt đặt dịch vụ</b>
-                                                    </div>
-                                                    <div style={{ fontSize: 11, color: '#e6f7ff', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 4, marginTop: 4 }}>
-                                                        💡 {recommendationText}
-                                                    </div>
-                                                </div>
-                                            );
+                                                );
 
                                             return (
                                                 <td key={key} style={{ padding: 0, width: 48, minWidth: 48 }}>
@@ -258,8 +285,9 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
                                             );
                                         })}
                                     </tr>
-                                ))}
-                            </tbody>
+                                );
+                            })}
+                        </tbody>
                         </table>
                     </div>
 

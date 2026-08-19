@@ -46,12 +46,16 @@ import {
 } from "../api/bookingApi";
 import { processPosCashPaymentApi } from "@/features/payment/api/paymentApi";
 
+import offdayApi from "@/features/offday/api/offdayApi";
+
 const { Title, Text } = Typography;
 
 export default function WalkInBookingPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const thermalReceiptRef = useRef(null);
+
+    const [systemOffDays, setSystemOffDays] = useState([]);
 
     const [branches, setBranches] = useState([]);
     const [branchId, setBranchId] = useState(null);
@@ -102,12 +106,16 @@ export default function WalkInBookingPage() {
 
     const loadData = async (id) => {
         try {
-            const [staffData, serviceData] = await Promise.all([
+            const todayStr = dayjs().format("YYYY-MM-DD");
+            const nextRangeStr = dayjs().add(90, "day").format("YYYY-MM-DD");
+            const [staffData, serviceData, offDaysData] = await Promise.all([
                 getStaffByBranchApi(id),
-                getServicesByBranchApi(id)
+                getServicesByBranchApi(id),
+                offdayApi.getOffDaysForBranchRange(id, todayStr, nextRangeStr).catch(() => [])
             ]);
             setStaffs(staffData || []);
             setServices(serviceData || []);
+            setSystemOffDays(Array.isArray(offDaysData) ? offDaysData : []);
         } catch (e) {
             console.error(e);
             message.error("Không tải được dữ liệu nhân viên hoặc dịch vụ.");
@@ -487,6 +495,19 @@ export default function WalkInBookingPage() {
                                 style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
                             >
                                 <Row gutter={16}>
+                                    {systemOffDays.length > 0 && (
+                                        <Col span={24} style={{ marginBottom: 12 }}>
+                                            <div style={{ padding: '8px 12px', backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8 }}>
+                                                <Text strong style={{ color: '#d46b08', fontSize: 13 }}>📢 Thông báo Ngày nghỉ lễ / Đóng cửa:</Text>
+                                                {systemOffDays.map(off => (
+                                                    <div key={off.id} style={{ fontSize: 12, color: '#8c6b00', marginTop: 2 }}>
+                                                        • <b>{off.title}</b> ({dayjs(off.dateFrom).format("DD/MM/YYYY")} ➔ {dayjs(off.dateTo).format("DD/MM/YYYY")})
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </Col>
+                                    )}
+
                                     <Col xs={24} md={12}>
                                         <Form.Item
                                             label="Ngày thực hiện"
@@ -498,7 +519,12 @@ export default function WalkInBookingPage() {
                                                 style={{ width: "100%" }}
                                                 format="DD/MM/YYYY"
                                                 onChange={loadAvailability}
-                                                disabledDate={(current) => current && current < dayjs().startOf("day")}
+                                                disabledDate={(current) => {
+                                                    if (!current) return false;
+                                                    if (current < dayjs().startOf("day")) return true;
+                                                    const dateStr = current.format("YYYY-MM-DD");
+                                                    return systemOffDays.some(off => dateStr >= off.dateFrom && dateStr <= off.dateTo);
+                                                }}
                                             />
                                         </Form.Item>
                                     </Col>
