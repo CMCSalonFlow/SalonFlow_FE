@@ -126,12 +126,8 @@ export default function AppHeader() {
                 label: "Trang chủ"
             },
             {
-                key: "/nearby",
-                label: "Gần tôi 📍"
-            },
-            {
                 key: "/search",
-                label: "Tìm salon"
+                label: "Tìm salon 📍"
             },
             {
                 key: "/services",
@@ -156,12 +152,8 @@ export default function AppHeader() {
                 label: "Trang chủ"
             },
             {
-                key: "/nearby",
-                label: "Gần tôi 📍"
-            },
-            {
                 key: "/search",
-                label: "Tìm salon"
+                label: "Tìm salon 📍"
             },
             {
                 key: "/services",
