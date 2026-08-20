@@ -10,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
+import BrandLogo from "@/core/components/BrandLogo";
 
 const { Header, Content } = Layout;
 
@@ -23,30 +24,41 @@ export function ManagerLayout() {
     const navItems = [
         {
             key: "/manager/walk-in",
-            icon: <CreditCardOutlined />,
-            label: "Đặt Lịch & POS Tại Quầy (Walk-in)"
+            icon: <DesktopOutlined />,
+            label: "Tiếp Đón & Đặt Lịch Nhanh"
         },
         {
             key: "/manager/bookings",
             icon: <CheckCircleOutlined />,
-            label: "Check-in & Hoàn Thành"
+            label: "Điều Phối Lịch Salon"
         },
         {
             key: "/manager/checkout",
-            icon: <QrcodeOutlined />,
-            label: "Thanh Toán & QR Checkout"
+            icon: <CreditCardOutlined />,
+            label: "Thu Ngân & Thanh Toán POS"
         }
     ];
 
-    const currentKey = navItems.find(item => location.pathname.startsWith(item.key))?.key || "/manager/walk-in";
+    const currentKey = location.pathname;
 
 
     const userMenu = {
         items: [
             {
+                key: "user-info",
+                label: (
+                    <div style={{ padding: "4px 0" }}>
+                        <div style={{ fontWeight: "bold" }}>{fullName}</div>
+                        <div style={{ fontSize: "12px", color: "#8c8c8c" }}>Vai trò: Quản lý / Lễ tân</div>
+                    </div>
+                ),
+                disabled: true
+            },
+            { type: "divider" },
+            {
                 key: "logout",
                 icon: <LogoutOutlined />,
-                label: "Đăng xuất",
+                label: "Đăng Xuất",
                 onClick: logout
             }
         ]
@@ -59,30 +71,20 @@ export function ManagerLayout() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    background: "#001529",
+                    background: "#0f172a",
                     padding: "0 24px",
-                    height: 64,
-                    lineHeight: "64px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    height: 68,
+                    lineHeight: "68px",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
                     overflow: "hidden"
                 }}
             >
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                     <div
-                        style={{
-                            fontWeight: 800,
-                            color: "#fff",
-                            fontSize: 20,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            cursor: "pointer"
-                        }}
                         onClick={() => navigate("/manager/walk-in")}
-
+                        style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
                     >
-                        <ShopOutlined style={{ color: "#fa8c16", fontSize: 24 }} />
-                        <span>SalonFlow <Tag color="gold" style={{ fontSize: 11, marginLeft: 4 }}>RECEPTION & POS</Tag></span>
+                        <BrandLogo theme="dark" subtitle="RECEPTION & POS" size="small" />
                     </div>
                 </div>
 
