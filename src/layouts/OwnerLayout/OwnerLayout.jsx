@@ -19,6 +19,8 @@ import OwnerHeader
 import OwnerSidebar
     from "./OwnerSidebar";
 
+import BrandLogo from "@/core/components/BrandLogo";
+
 const {
     Header,
     Sider,
@@ -123,74 +125,26 @@ export default function OwnerLayout() {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            padding: collapsed ? "0 8px" : "0 16px 0 20px",
+                            padding: collapsed ? "0 8px" : "0 14px 0 18px",
                             borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
                             transition: "all 0.3s",
                             overflow: "hidden"
                         }}
                     >
-                        {!collapsed ? (
-                            <div
-                                onClick={() => navigate("/owner")}
-                                style={{
-                                    cursor: "pointer",
-                                    userSelect: "none",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 10
-                                }}
-                                title="Về Dashboard"
-                            >
-                                <div style={{
-                                    width: 34,
-                                    height: 34,
-                                    borderRadius: 10,
-                                    background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.4)",
-                                    fontSize: 18
-                                }}>
-                                    ✂️
-                                </div>
-                                <div>
-                                    <div style={{
-                                        fontSize: 17,
-                                        fontWeight: 800,
-                                        background: "linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%)",
-                                        WebkitBackgroundClip: "text",
-                                        WebkitTextFillColor: "transparent",
-                                        letterSpacing: "-0.3px",
-                                        lineHeight: 1.2
-                                    }}>
-                                        SalonFlow
-                                    </div>
-                                    <div style={{ fontSize: 10, color: "#818cf8", fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase" }}>
-                                        Owner Portal
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div
-                                onClick={() => navigate("/owner")}
-                                style={{
-                                    cursor: "pointer",
-                                    margin: "0 auto",
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: 10,
-                                    background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: 18
-                                }}
-                                title="SalonFlow"
-                            >
-                                ✂️
-                            </div>
-                        )}
+                        <div
+                            onClick={() => navigate("/owner")}
+                            style={{
+                                cursor: "pointer",
+                                userSelect: "none",
+                                display: "flex",
+                                alignItems: "center",
+                                overflow: "hidden",
+                                flex: 1
+                            }}
+                            title="SalonFlow - Owner Portal"
+                        >
+                            <BrandLogo collapsed={collapsed} subtitle="OWNER PORTAL" theme="dark" />
+                        </div>
 
                         <Button
                             type="text"
@@ -205,7 +159,8 @@ export default function OwnerLayout() {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                background: "rgba(255,255,255,0.06)"
+                                background: "rgba(255,255,255,0.06)",
+                                flexShrink: 0
                             }}
                             title={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
                         />
@@ -250,7 +205,7 @@ export default function OwnerLayout() {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            padding: "0 20px",
+                            padding: "0 18px",
                             borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
                         }}
                     >
@@ -259,24 +214,9 @@ export default function OwnerLayout() {
                                 navigate("/owner");
                                 setDrawerVisible(false);
                             }}
-                            style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
+                            style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
                         >
-                            <div style={{
-                                width: 34,
-                                height: 34,
-                                borderRadius: 10,
-                                background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 18
-                            }}>
-                                ✂️
-                            </div>
-                            <div>
-                                <div style={{ fontSize: 17, fontWeight: 800, color: "#fff" }}>SalonFlow</div>
-                                <div style={{ fontSize: 10, color: "#818cf8", fontWeight: 600 }}>Owner Portal</div>
-                            </div>
+                            <BrandLogo collapsed={false} subtitle="OWNER PORTAL" theme="dark" />
                         </div>
                         <Button
                             type="text"
