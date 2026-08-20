@@ -16,6 +16,8 @@ from "./AdminSidebar";
 import AdminHeader
 from "./AdminHeader";
 
+import BrandLogo from "@/core/components/BrandLogo";
+
 const {
     Sider,
     Header,
@@ -93,19 +95,18 @@ export default function AdminLayout() {
                 >
                     <div
                         style={{
-                            height: 64,
+                            height: 68,
                             color: "#fff",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            fontSize: collapsed ? 16 : 20,
-                            fontWeight: 600,
+                            padding: collapsed ? "0 8px" : "0 16px",
+                            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
                             transition: "all 0.3s",
-                            whiteSpace: "nowrap",
                             overflow: "hidden"
                         }}
                     >
-                        {collapsed ? "SF" : "SalonFlow"}
+                        <BrandLogo collapsed={collapsed} subtitle="ADMIN PORTAL" theme="dark" size="small" />
                     </div>
 
                     <AdminSidebar />
@@ -169,16 +170,16 @@ export default function AdminLayout() {
                 >
                     <div
                         style={{
-                            height: 64,
+                            height: 68,
                             color: "#fff",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            fontSize: 20,
-                            fontWeight: 600
+                            padding: "0 16px",
+                            borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
                         }}
                     >
-                        SalonFlow
+                        <BrandLogo collapsed={false} subtitle="ADMIN PORTAL" theme="dark" size="small" />
                     </div>
                     <AdminSidebar onMenuClick={() => setDrawerVisible(false)} />
                 </Drawer>
