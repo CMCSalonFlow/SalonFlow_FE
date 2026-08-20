@@ -1,5 +1,4 @@
 import { FcGoogle } from "react-icons/fc";
-import { FaFacebookF } from "react-icons/fa";
 
 const API_URL =
     "http://localhost:9090";
