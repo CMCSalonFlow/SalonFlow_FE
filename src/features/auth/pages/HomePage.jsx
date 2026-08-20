@@ -922,6 +922,9 @@ export default function HomePage() {
                 ) : (
                     /* Giao Diện Hội Viên Đầy Đủ Đẹp Như Bên Guest */
                     <div>
+                        {/* 🤖 WIDGET AI GỢI Ý DỊCH VỤ DÀNH RIÊNG CHO HỘI VIÊN */}
+                        <AiServiceRecommendationWidget userId={user?.id} limit={5} />
+
                         {/* ✂️ DANH MỤC DỊCH VỤ NỔI BẬT DÀNH CHO HỘI VIÊN */}
                         <div style={{ marginBottom: 48 }}>
                             <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
