@@ -91,6 +91,27 @@ export default function ManagerCheckoutModal({ open, onCancel, booking, onSucces
                 .dark-checkout-modal .ant-space-compact {
                     box-shadow: none !important;
                 }
+                .white-cash-input,
+                .white-cash-input .ant-input-number-input-wrap,
+                .white-cash-input input {
+                    background-color: #ffffff !important;
+                    background: #ffffff !important;
+                    color: #111827 !important;
+                    font-weight: 700 !important;
+                }
+                .white-cash-input .ant-input-number-handler-wrap {
+                    display: none !important;
+                }
+                .voucher-input,
+                .voucher-input input {
+                    color: #ffffff !important;
+                    background-color: #1f2937 !important;
+                }
+                .voucher-input::placeholder,
+                .voucher-input input::placeholder {
+                    color: #9ca3af !important;
+                    opacity: 1 !important;
+                }
             `}</style>
 
             <Modal

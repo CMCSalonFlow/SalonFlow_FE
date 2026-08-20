@@ -6,7 +6,9 @@ import {
     LogoutOutlined,
     UserOutlined,
     ShopOutlined,
-    CheckCircleOutlined
+    CheckCircleOutlined,
+    CalendarOutlined,
+    FileTextOutlined
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
@@ -24,25 +26,44 @@ export function ManagerLayout() {
         {
             key: "/manager/walk-in",
             icon: <CreditCardOutlined />,
-            label: "Đặt Lịch & POS Tại Quầy (Walk-in)"
+            label: "POS Tại Quầy"
         },
         {
             key: "/manager/bookings",
             icon: <CheckCircleOutlined />,
-            label: "Check-in & Hoàn Thành"
+            label: "Check-in & Phục Vụ"
         },
         {
-            key: "/manager/checkout",
-            icon: <QrcodeOutlined />,
-            label: "Thanh Toán & QR Checkout"
+            key: "/manager/off-days",
+            icon: <CalendarOutlined />,
+            label: "Duyệt Nghỉ Chi Nhánh"
+        },
+        {
+            key: "/manager/leave-requests",
+            icon: <FileTextOutlined />,
+            label: "Xin Nghỉ Phép"
         }
     ];
 
     const currentKey = navItems.find(item => location.pathname.startsWith(item.key))?.key || "/manager/walk-in";
 
-
     const userMenu = {
         items: [
+            {
+                key: "leave-request",
+                icon: <FileTextOutlined />,
+                label: "Nộp đơn xin nghỉ phép",
+                onClick: () => navigate("/manager/leave-requests")
+            },
+            {
+                key: "off-days",
+                icon: <CalendarOutlined />,
+                label: "Duyệt đơn nghỉ nhân viên",
+                onClick: () => navigate("/manager/off-days")
+            },
+            {
+                type: "divider"
+            },
             {
                 key: "logout",
                 icon: <LogoutOutlined />,
