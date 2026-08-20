@@ -481,7 +481,25 @@ export default function CategoryListUserPage() {
                                             }}
                                             onMouseEnter={(e) => e.target.style.transform = "scale(1.08)"}
                                             onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
+                                            onError={(e) => {
+                                                e.target.style.display = "none";
+                                                const fallback = e.target.parentNode.querySelector(".img-fallback");
+                                                if (fallback) fallback.style.display = "flex";
+                                            }}
                                         />
+                                        <div className="img-fallback" style={{
+                                            display: "none",
+                                            width: "100%", height: "100%",
+                                            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                                            alignItems: "center", justifyContent: "center",
+                                            flexDirection: "column", gap: 8,
+                                            position: "absolute", top: 0, left: 0,
+                                        }}>
+                                            <span style={{ fontSize: 40 }}>✂️</span>
+                                            <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, fontWeight: 600 }}>
+                                                {service.name}
+                                            </span>
+                                        </div>
                                         <Tag
                                             color={service.tagColor}
                                             style={{
