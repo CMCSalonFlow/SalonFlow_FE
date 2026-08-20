@@ -6,6 +6,38 @@ import { getRecommendationsApi } from "../api/recommendationApi";
 
 const { Title, Text, Paragraph } = Typography;
 
+const getServiceFallbackImage = (service) => {
+  const name = (service?.name || "").toLowerCase();
+  const category = (service?.categoryName || "").toLowerCase();
+
+  // 1. Cạo râu, chăm sóc da mặt
+  if (name.includes("cạo râu") || name.includes("da mặt") || category.includes("râu") || category.includes("da mặt")) {
+    return "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?q=80&w=800";
+  }
+  // 2. Gội đầu dưỡng sinh, massage
+  if (name.includes("gội") || name.includes("dưỡng sinh") || name.includes("massage") || category.includes("gội") || category.includes("massage")) {
+    return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800";
+  }
+  // 3. Uốn, nhuộm, phục hồi tóc
+  if (name.includes("uốn") || name.includes("nhuộm") || name.includes("phục hồi") || name.includes("tẩy") || category.includes("nhuộm") || category.includes("uốn")) {
+    return "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800";
+  }
+  // 4. Cắt tóc nữ, tạo kiểu layer/bob/VIP stylist
+  if (name.includes("nữ") || name.includes("layer") || name.includes("bob") || name.includes("sấy tạo kiểu") || name.includes("vip")) {
+    return "https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=800";
+  }
+  // 5. Cắt tóc nam / Barber Standard
+  if (name.includes("nam") || name.includes("barber") || name.includes("undercut") || category.includes("cắt")) {
+    return "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800";
+  }
+  // 6. Làm móng, nail art
+  if (name.includes("móng") || name.includes("nail") || category.includes("móng") || category.includes("nail")) {
+    return "https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=800";
+  }
+  // Default salon banner
+  return "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800";
+};
+
 export default function AiServiceRecommendationWidget({ userId, branchId, limit = 5, onSelectService }) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
@@ -142,31 +174,17 @@ export default function AiServiceRecommendationWidget({ userId, branchId, limit 
             >
               <div>
                 <div style={{ width: "100%", height: 110, borderRadius: 8, marginBottom: 8, overflow: "hidden", position: "relative" }}>
-                  {service.imageUrl ? (
-                    <img
-                      src={service.imageUrl}
-                      alt={service.name}
-                      style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }}
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                        e.target.nextSibling.style.display = "flex";
-                      }}
-                    />
-                  ) : null}
-                  <div style={{
-                    display: service.imageUrl ? "none" : "flex",
-                    width: "100%", height: 110,
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    alignItems: "center", justifyContent: "center",
-                    flexDirection: "column", gap: 4,
-                    position: service.imageUrl ? "absolute" : "relative",
-                    top: 0, left: 0,
-                  }}>
-                    <span style={{ fontSize: 28 }}>✂️</span>
-                    <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 10, fontWeight: 600, textAlign: "center", padding: "0 8px" }}>
-                      {service.categoryName || "Dịch vụ"}
-                    </span>
-                  </div>
+                  <img
+                    src={service.imageUrl || getServiceFallbackImage(service)}
+                    alt={service.name}
+                    style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }}
+                    onError={(e) => {
+                      const fallback = getServiceFallbackImage(service);
+                      if (e.target.src !== fallback) {
+                        e.target.src = fallback;
+                      }
+                    }}
+                  />
                 </div>
                 <Text strong style={{ fontSize: 14, display: "block", marginBottom: 4, lineHeight: "1.3" }} ellipsis={{ tooltip: service.name }}>
                   {service.name}
