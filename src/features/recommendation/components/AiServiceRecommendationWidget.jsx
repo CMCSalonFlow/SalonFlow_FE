@@ -141,13 +141,33 @@ export default function AiServiceRecommendationWidget({ userId, branchId, limit 
               bodyStyle={{ padding: 12, display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}
             >
               <div>
-                {service.imageUrl && (
-                  <img
-                    src={service.imageUrl}
-                    alt={service.name}
-                    style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 8, marginBottom: 8 }}
-                  />
-                )}
+                <div style={{ width: "100%", height: 110, borderRadius: 8, marginBottom: 8, overflow: "hidden", position: "relative" }}>
+                  {service.imageUrl ? (
+                    <img
+                      src={service.imageUrl}
+                      alt={service.name}
+                      style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }}
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.nextSibling.style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  <div style={{
+                    display: service.imageUrl ? "none" : "flex",
+                    width: "100%", height: 110,
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    alignItems: "center", justifyContent: "center",
+                    flexDirection: "column", gap: 4,
+                    position: service.imageUrl ? "absolute" : "relative",
+                    top: 0, left: 0,
+                  }}>
+                    <span style={{ fontSize: 28 }}>✂️</span>
+                    <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 10, fontWeight: 600, textAlign: "center", padding: "0 8px" }}>
+                      {service.categoryName || "Dịch vụ"}
+                    </span>
+                  </div>
+                </div>
                 <Text strong style={{ fontSize: 14, display: "block", marginBottom: 4, lineHeight: "1.3" }} ellipsis={{ tooltip: service.name }}>
                   {service.name}
                 </Text>
