@@ -228,3 +228,67 @@
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
   }
 }
+
+/* ─── Mobile Responsiveness (< 768px & < 576px) ─────────────────────────── */
+@media (max-width: 768px) {
+  .owner-hero-banner .ant-card-body {
+    padding: 20px 16px !important;
+  }
+
+  .owner-hero-banner h2 {
+    font-size: 20px !important;
+  }
+
+  .owner-branch-capsule {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .owner-branch-capsule .ant-select {
+    flex: 1 !important;
+    min-width: 140px !important;
+  }
+
+  .owner-custom-tabs .ant-tabs-nav-wrap {
+    overflow-x: auto !important;
+  }
+
+  .owner-custom-tabs .ant-tabs-tab {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .owner-hero-banner .ant-card-body {
+    padding: 16px 12px !important;
+  }
+
+  .owner-hero-banner h2 {
+    font-size: 18px !important;
+  }
+
+  .owner-kpi-card .ant-card-body {
+    padding: 16px 14px !important;
+  }
+
+  .owner-kpi-card .owner-kpi-icon-wrapper {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+  }
+
+  .owner-kpi-card .ant-card-body .ant-typography {
+    font-size: 12px !important;
+  }
+
+  .owner-stat-item {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+  }
+
+  .owner-glass-card .ant-card-body {
+    padding: 14px 12px !important;
+  }
+}
+

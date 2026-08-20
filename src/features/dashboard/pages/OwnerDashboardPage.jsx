@@ -562,18 +562,21 @@ export default function OwnerDashboardPage() {
                     </Col>
 
                     <Col xs={24} lg={11}>
-                        <div style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "flex-end",
-                            flexWrap: "wrap",
-                            gap: 10,
-                            background: "rgba(255, 255, 255, 0.12)",
-                            backdropFilter: "blur(10px)",
-                            padding: "8px 12px",
-                            borderRadius: 16,
-                            border: "1px solid rgba(255, 255, 255, 0.2)"
-                        }}>
+                        <div
+                            className="owner-branch-capsule"
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "flex-end",
+                                flexWrap: "wrap",
+                                gap: 10,
+                                background: "rgba(255, 255, 255, 0.12)",
+                                backdropFilter: "blur(10px)",
+                                padding: "8px 12px",
+                                borderRadius: 16,
+                                border: "1px solid rgba(255, 255, 255, 0.2)"
+                            }}
+                        >
                             <Space align="center" size={6}>
                                 <BranchesOutlined style={{ color: "#818cf8", fontSize: 16 }} />
                                 <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>Chi nhánh:</span>
