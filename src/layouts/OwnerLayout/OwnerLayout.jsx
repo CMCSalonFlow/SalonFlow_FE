@@ -110,50 +110,102 @@ export default function OwnerLayout() {
                     collapsed={collapsed}
                     trigger={null}
                     collapsedWidth={80}
+                    className="owner-sidebar-container"
                     style={{
                         position: "relative",
-                        transition: isResizing ? "none" : "width 0.2s, min-width 0.2s, max-width 0.2s",
+                        transition: isResizing ? "none" : "width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                 >
                     <div
                         style={{
-                            height: 64,
+                            height: 68,
                             color: "#fff",
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
-                            position: "relative",
-                            padding: collapsed ? "0 4px" : "0 48px 0 16px",
-                            fontSize: collapsed ? 16 : 20,
-                            fontWeight: 600,
+                            justifyContent: "space-between",
+                            padding: collapsed ? "0 8px" : "0 16px 0 20px",
+                            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
                             transition: "all 0.3s",
-                            whiteSpace: "nowrap",
                             overflow: "hidden"
                         }}
                     >
-                        <span
-                            onClick={() => navigate("/owner")}
-                            style={{ cursor: "pointer", userSelect: "none" }}
-                            title="Về Dashboard"
-                        >
-                            {collapsed ? "SF" : "SalonFlow"}
-                        </span>
+                        {!collapsed ? (
+                            <div
+                                onClick={() => navigate("/owner")}
+                                style={{
+                                    cursor: "pointer",
+                                    userSelect: "none",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 10
+                                }}
+                                title="Về Dashboard"
+                            >
+                                <div style={{
+                                    width: 34,
+                                    height: 34,
+                                    borderRadius: 10,
+                                    background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.4)",
+                                    fontSize: 18
+                                }}>
+                                    ✂️
+                                </div>
+                                <div>
+                                    <div style={{
+                                        fontSize: 17,
+                                        fontWeight: 800,
+                                        background: "linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%)",
+                                        WebkitBackgroundClip: "text",
+                                        WebkitTextFillColor: "transparent",
+                                        letterSpacing: "-0.3px",
+                                        lineHeight: 1.2
+                                    }}>
+                                        SalonFlow
+                                    </div>
+                                    <div style={{ fontSize: 10, color: "#818cf8", fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase" }}>
+                                        Owner Portal
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div
+                                onClick={() => navigate("/owner")}
+                                style={{
+                                    cursor: "pointer",
+                                    margin: "0 auto",
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: 10,
+                                    background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 18
+                                }}
+                                title="SalonFlow"
+                            >
+                                ✂️
+                            </div>
+                        )}
+
                         <Button
                             type="text"
-                            icon={<MenuOutlined style={{ fontSize: 18, color: "#fff" }} />}
+                            icon={<MenuOutlined style={{ fontSize: 16, color: "rgba(255,255,255,0.7)" }} />}
                             onClick={() => handleCollapse(!collapsed)}
                             style={{
-                                position: "absolute",
-                                right: collapsed ? 4 : 12,
-                                top: "50%",
-                                transform: "translateY(-50%)",
                                 color: "#fff",
                                 padding: 0,
-                                width: 32,
-                                height: 32,
+                                width: 28,
+                                height: 28,
+                                borderRadius: 8,
                                 display: "flex",
                                 alignItems: "center",
-                                justifyContent: "center"
+                                justifyContent: "center",
+                                background: "rgba(255,255,255,0.06)"
                             }}
                             title={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
                         />
@@ -173,10 +225,10 @@ export default function OwnerLayout() {
                                 height: "100%",
                                 cursor: "col-resize",
                                 zIndex: 100,
-                                backgroundColor: isResizing ? "#1890ff" : "transparent",
+                                backgroundColor: isResizing ? "#6366f1" : "transparent",
                                 transition: "background-color 0.2s",
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1890ff" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#6366f1" }}
                             onMouseLeave={(e) => { if (!isResizing) e.currentTarget.style.backgroundColor = "transparent" }}
                         />
                     )}
@@ -187,34 +239,48 @@ export default function OwnerLayout() {
                     closable={false}
                     onClose={() => setDrawerVisible(false)}
                     open={drawerVisible}
-                    styles={{ body: { padding: 0, backgroundColor: "#001529" } }}
-                    width={250}
+                    styles={{ body: { padding: 0, backgroundColor: "#0f172a" } }}
+                    width={260}
+                    className="owner-sidebar-container"
                 >
                     <div
                         style={{
-                            height: 64,
+                            height: 68,
                             color: "#fff",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            padding: "0 16px",
-                            fontSize: 20,
-                            fontWeight: 600
+                            padding: "0 20px",
+                            borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
                         }}
                     >
-                        <span
+                        <div
                             onClick={() => {
                                 navigate("/owner");
                                 setDrawerVisible(false);
                             }}
-                            style={{ cursor: "pointer", userSelect: "none" }}
-                            title="Về Dashboard"
+                            style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
                         >
-                            SalonFlow
-                        </span>
+                            <div style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 10,
+                                background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 18
+                            }}>
+                                ✂️
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 17, fontWeight: 800, color: "#fff" }}>SalonFlow</div>
+                                <div style={{ fontSize: 10, color: "#818cf8", fontWeight: 600 }}>Owner Portal</div>
+                            </div>
+                        </div>
                         <Button
                             type="text"
-                            icon={<MenuOutlined style={{ fontSize: 18, color: "#fff" }} />}
+                            icon={<MenuOutlined style={{ fontSize: 16, color: "#fff" }} />}
                             onClick={() => setDrawerVisible(false)}
                             style={{ color: "#fff" }}
                         />
@@ -225,11 +291,12 @@ export default function OwnerLayout() {
 
             <Layout>
                 <Header
+                    className="owner-header-glass"
                     style={{
                         padding: 0,
-                        background: "#fff",
-                        zIndex: 1,
-                        boxShadow: "0 1px 4px rgba(0, 21, 41, 0.08)"
+                        zIndex: 10,
+                        position: "sticky",
+                        top: 0
                     }}
                 >
                     <OwnerHeader showMobileToggle={!screens.lg} onToggleMobileMenu={() => setDrawerVisible(true)} />
@@ -237,8 +304,9 @@ export default function OwnerLayout() {
 
                 <Content
                     style={{
-                        padding: screens.lg ? 24 : 12,
-                        background: "#f5f5f5"
+                        padding: screens.lg ? "24px 28px" : "16px 12px",
+                        background: "#f8fafc",
+                        minHeight: "calc(100vh - 68px)"
                     }}
                 >
                     <Outlet />

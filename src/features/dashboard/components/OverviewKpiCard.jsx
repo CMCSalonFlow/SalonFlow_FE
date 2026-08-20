@@ -25,39 +25,32 @@ export default function OverviewKpiCard({
     return (
         <Card
             variant="borderless"
+            className="owner-kpi-card"
             style={{
-                borderRadius: 16,
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                transition: 'transform 0.2s, box-shadow 0.2s'
             }}
-            styles={{ body: { padding: 20, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
+            styles={{ body: { padding: '22px 20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
         >
             {/* Header: Icon + Title + Growth Tag */}
             <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         {Icon && (
                             <div
+                                className="owner-kpi-icon-wrapper"
                                 style={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 12,
                                     backgroundColor: iconBg,
                                     color: iconColor,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: 20
+                                    boxShadow: `0 4px 12px ${iconColor}25`
                                 }}
                             >
                                 <Icon />
                             </div>
                         )}
-                        <Text type="secondary" style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        <Text style={{ fontSize: 13, fontWeight: 700, color: '#475569', letterSpacing: 0.3 }}>
                             {title}
                         </Text>
                     </div>
@@ -66,7 +59,7 @@ export default function OverviewKpiCard({
                         <Tag
                             color={isPositive ? 'success' : isNegative ? 'error' : 'default'}
                             icon={isPositive ? <ArrowUpOutlined /> : isNegative ? <ArrowDownOutlined /> : <MinusOutlined />}
-                            style={{ borderRadius: 12, fontWeight: 600, padding: '2px 8px', margin: 0 }}
+                            style={{ borderRadius: 20, fontWeight: 700, padding: '3px 10px', margin: 0, fontSize: 11 }}
                         >
                             {growthRate > 0 ? `+${growthRate}%` : `${growthRate}%`}
                         </Tag>
@@ -74,12 +67,12 @@ export default function OverviewKpiCard({
                 </div>
 
                 {/* Main Value */}
-                <div style={{ marginTop: 4 }}>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#262626', lineHeight: 1.2 }}>
+                <div style={{ marginTop: 6 }}>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', lineHeight: 1.2, letterSpacing: '-0.5px' }}>
                         {value}
                     </div>
                     {subText && (
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                        <Text style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginTop: 5 }}>
                             {subText}
                         </Text>
                     )}
@@ -87,17 +80,17 @@ export default function OverviewKpiCard({
             </div>
 
             {/* Bottom Sparkline */}
-            <div style={{ marginTop: 16, paddingTop: 8, borderTop: '1px solid #f0f0f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
+            <div style={{ marginTop: 18, paddingTop: 12, borderTop: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#94a3b8', fontWeight: 500, marginBottom: 6 }}>
                     <span>7 ngày qua</span>
-                    <span>Xu hướng</span>
+                    <span style={{ color: color, fontWeight: 600 }}>Biểu đồ</span>
                 </div>
                 <SparklineChart
                     data={trendData}
                     dataKey={dataKey}
                     color={color}
                     gradientId={gradientId}
-                    height={45}
+                    height={48}
                     formatter={formatter}
                 />
             </div>
