@@ -58,21 +58,21 @@ function KpiCard({ title, value, sub, icon, color, growth }) {
         boxShadow: `0 4px 20px ${color}20`,
         height: '100%'
       }}
-      bodyStyle={{ padding: '20px 22px' }}
+      bodyStyle={{ padding: '16px 18px' }}
     >
       <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <Text style={{ color: '#64748b', fontSize: 13, fontWeight: 500, letterSpacing: 0.3 }}>{title}</Text>
-          <div style={{ fontSize: 26, fontWeight: 800, color: '#1e293b', lineHeight: 1.2, margin: '6px 0 4px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ color: '#64748b', fontSize: 12, fontWeight: 500, letterSpacing: 0.3 }}>{title}</Text>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', lineHeight: 1.2, margin: '4px 0 3px', wordBreak: 'break-all' }}>
             {value}
           </div>
-          <Text style={{ color: '#94a3b8', fontSize: 12 }}>{sub}</Text>
+          <Text style={{ color: '#94a3b8', fontSize: 11 }}>{sub}</Text>
           {growth !== undefined && growth !== null && (
             <div style={{ marginTop: 6 }}>
               <Tag
                 color={isUp ? 'success' : isDown ? 'error' : 'default'}
                 icon={isUp ? <ArrowUpOutlined /> : isDown ? <ArrowDownOutlined /> : null}
-                style={{ fontWeight: 600, fontSize: 12, borderRadius: 6 }}
+                style={{ fontWeight: 600, fontSize: 11, borderRadius: 6 }}
               >
                 {isUp ? '+' : ''}{growth?.toFixed(1)}% so với cùng kỳ
               </Tag>
@@ -80,10 +80,10 @@ function KpiCard({ title, value, sub, icon, color, growth }) {
           )}
         </div>
         <div style={{
-          width: 52, height: 52, borderRadius: 14,
+          width: 46, height: 46, borderRadius: 12,
           background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontSize: 22, flexShrink: 0,
+          color: '#fff', fontSize: 20, flexShrink: 0,
           boxShadow: `0 4px 12px ${color}50`
         }}>
           {icon}
@@ -117,13 +117,13 @@ const CustomTooltip = ({ active, payload, label }) => {
 // ─── Revenue Chart ─────────────────────────────────────────────────────────────
 function RevenueChart({ data }) {
   if (!data?.length) return (
-    <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Empty description="Chưa có dữ liệu biểu đồ" />
     </div>
   );
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height={240}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%"  stopColor={COLORS.primary} stopOpacity={0.3} />
@@ -135,15 +135,15 @@ function RevenueChart({ data }) {
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-        <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
         <YAxis
           tickFormatter={fmtMoneyShort}
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
-          axisLine={false} tickLine={false}
+          tick={{ fontSize: 10, fill: '#94a3b8' }}
+          axisLine={false} tickLine={false} width={50}
         />
         <ReTooltip content={<CustomTooltip />} />
         <Legend
-          wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+          wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
           formatter={(value) => <span style={{ color: '#475569' }}>{value}</span>}
         />
         <Area
@@ -167,11 +167,11 @@ function RevenueChart({ data }) {
 function BookingBarChart({ data }) {
   if (!data?.length) return null;
   return (
-    <ResponsiveContainer width="100%" height={180}>
-      <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height={160}>
+      <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-        <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={30} />
         <ReTooltip content={<CustomTooltip />} />
         <Bar dataKey="bookingCount" name="Số đơn" radius={[6, 6, 0, 0]}>
           {data.map((entry, i) => (
@@ -218,7 +218,7 @@ export default function ReportsPage() {
   useEffect(() => {
     getMyBranchesApi()
       .then((res) => setBranches(res || []))
-      .catch((err) => console.error('Loi lay chi nhanh:', err));
+      .catch((err) => console.error('Lỗi lấy chi nhánh:', err));
   }, []);
 
   const fetchReportData = useCallback(async () => {
@@ -234,8 +234,8 @@ export default function ReportsPage() {
       });
       setReportData(res);
     } catch (err) {
-      console.error('Loi bao cao:', err);
-      message.error('Khong the tai du lieu bao cao!');
+      console.error('Lỗi báo cáo:', err);
+      message.error('Không thể tải dữ liệu báo cáo!');
     } finally {
       setLoading(false);
     }
@@ -246,54 +246,46 @@ export default function ReportsPage() {
   const handleExportExcel = async () => {
     try {
       const effectiveRange = dateRange?.[0] ? dateRange : [dayjs().subtract(30, 'day'), dayjs()];
-      message.loading({ content: 'Dang tao file Excel...', key: 'excel' });
+      message.loading({ content: 'Đang tạo file Excel...', key: 'excel' });
       await exportReportToExcel({
         reportType, fromDate: effectiveRange[0].format('DD/MM/YYYY'),
         toDate: effectiveRange[1].format('DD/MM/YYYY'),
         data: reportData, salonName: 'SalonFlow',
       });
-      message.success({ content: 'Xuat file Excel thanh cong!', key: 'excel' });
-    } catch { message.error({ content: 'Loi xuat Excel!', key: 'excel' }); }
+      message.success({ content: 'Xuất file Excel thành công!', key: 'excel' });
+    } catch { message.error({ content: 'Lỗi xuất Excel!', key: 'excel' }); }
   };
 
   const handleExportPdf = async () => {
     try {
-      message.loading({ content: 'Dang tao PDF...', key: 'pdf' });
+      message.loading({ content: 'Đang tạo PDF...', key: 'pdf' });
       await exportReportToPdf('printable-report-area', `BaoCao_${reportType}_${dayjs().format('YYYY-MM-DD')}.pdf`);
-      message.success({ content: 'Xuat PDF thanh cong!', key: 'pdf' });
-    } catch { message.error({ content: 'Loi xuat PDF!', key: 'pdf' }); }
+      message.success({ content: 'Xuất PDF thành công!', key: 'pdf' });
+    } catch { message.error({ content: 'Lỗi xuất PDF!', key: 'pdf' }); }
   };
 
   const handleTriggerEmail = async () => {
     setEmailLoading(true);
     try {
       const res = await triggerWeeklyEmailApi();
-      message.success(res.message || 'Da kich hoat gui Email Bao Cao Tuan!');
-    } catch { message.error('Khong the gui email bao cao!'); }
+      message.success(res.message || 'Đã kích hoạt gửi Email Báo Cáo Tuần!');
+    } catch { message.error('Không thể gửi email báo cáo!'); }
     finally { setEmailLoading(false); }
   };
 
   // ── Computed data ──────────────────────────────────────────────────────────
-  // Backend trả về: { reportType, details: RevenueAnalyticsResponse (hoặc StaffPerformanceResponse) }
-  // - Doanh thu / Dich vu: details = RevenueAnalyticsResponse { totalRevenue, timeline, peakPeriod, serviceBreakdown, ... }
-  // - Nhan vien:           details = StaffPerformanceResponse  { staffPerformanceList, top3Performers, ... }
   const details        = reportData?.details || {};
-
   const timeline       = details?.timeline || [];
   const serviceList    = details?.serviceBreakdown || [];
   const staffList      = details?.staffPerformanceList || [];
   const top3           = details?.top3Performers || [];
   const peakPeriod     = details?.peakPeriod || null;
-
-  // totalRevenue và yoyRate nằm trong details (RevenueAnalyticsResponse)
   const totalRevenue   = details?.totalRevenue;
   const yoyRate        = details?.overallYoYGrowthRate;
-
   const totalBookings  = timeline.reduce((s, d) => s + (d.bookingCount || 0), 0);
   const avgPerBooking  = totalBookings > 0 ? (Number(totalRevenue) / totalBookings) : 0;
   const peakLabel      = peakPeriod?.label ||
     (timeline.reduce((p, c) => (Number(c.currentRevenue) > Number(p?.currentRevenue || 0) ? c : p), null)?.label);
-
   const effectiveFrom  = (dateRange?.[0] ?? dayjs().subtract(30, 'day')).format('DD/MM/YYYY');
   const effectiveTo    = (dateRange?.[1] ?? dayjs()).format('DD/MM/YYYY');
 
@@ -304,18 +296,18 @@ export default function ReportsPage() {
       render: (_, __, i) => <Text style={{ color: '#94a3b8', fontWeight: 600 }}>{i + 1}</Text>
     },
     {
-      title: 'Thoi gian', dataIndex: 'label', key: 'label',
+      title: 'Thời gian', dataIndex: 'label', key: 'label',
       render: (t, r) => (
         <Space>
           {r.isPeakPeriod && <FireOutlined style={{ color: COLORS.warning }} />}
           <Text strong>{t}</Text>
-          {r.isPeakPeriod && <Tag color="orange" style={{ fontSize: 10 }}>Dinh</Tag>}
+          {r.isPeakPeriod && <Tag color="orange" style={{ fontSize: 10 }}>Đỉnh</Tag>}
         </Space>
       )
     },
     {
-      title: 'So don', dataIndex: 'bookingCount', key: 'bookingCount', align: 'center',
-      render: (v) => <Tag color="blue" style={{ fontWeight: 600 }}>{(v || 0).toLocaleString()} don</Tag>
+      title: 'Số đơn', dataIndex: 'bookingCount', key: 'bookingCount', align: 'center',
+      render: (v) => <Tag color="blue" style={{ fontWeight: 600 }}>{(v || 0).toLocaleString()} đơn</Tag>
     },
     {
       title: 'Doanh thu', dataIndex: 'currentRevenue', key: 'currentRevenue', align: 'right',
@@ -323,7 +315,7 @@ export default function ReportsPage() {
       render: (v) => <Text strong style={{ color: COLORS.primary, fontSize: 14 }}>{fmtMoney(v)}</Text>
     },
     {
-      title: 'Tang truong YoY', dataIndex: 'yoyGrowthRate', key: 'yoyGrowthRate', align: 'center',
+      title: 'Tăng trưởng YoY', dataIndex: 'yoyGrowthRate', key: 'yoyGrowthRate', align: 'center',
       render: (v) => {
         if (v === null || v === undefined) return <Text type="secondary">-</Text>;
         return (
@@ -338,7 +330,7 @@ export default function ReportsPage() {
       }
     },
     {
-      title: 'Ty trong', key: 'share', align: 'center',
+      title: 'Tỷ trọng', key: 'share', align: 'center',
       render: (_, r) => {
         const total = timeline.reduce((s, d) => s + Number(d.currentRevenue || 0), 0);
         const pct   = total > 0 ? (Number(r.currentRevenue || 0) / total * 100) : 0;
@@ -355,7 +347,7 @@ export default function ReportsPage() {
   // ── Staff table columns ────────────────────────────────────────────────────
   const staffColumns = [
     {
-      title: 'Hang', dataIndex: 'overallRank', key: 'rank', width: 60, align: 'center',
+      title: 'Hạng', dataIndex: 'overallRank', key: 'rank', width: 60, align: 'center',
       render: (r) => {
         const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
         return medals[r] ? (
@@ -364,7 +356,7 @@ export default function ReportsPage() {
       }
     },
     {
-      title: 'Nhan vien', dataIndex: 'staffName', key: 'staffName',
+      title: 'Nhân viên', dataIndex: 'staffName', key: 'staffName',
       render: (name, r) => (
         <Space>
           <Avatar src={r.avatarUrl} style={{ background: COLORS.primary }} size={36}>
@@ -378,8 +370,8 @@ export default function ReportsPage() {
       )
     },
     {
-      title: 'Don hoan thanh', dataIndex: 'completedBookings', key: 'completedBookings', align: 'center',
-      render: (v) => <Tag color="green" style={{ fontWeight: 600 }}>{v || 0} don</Tag>
+      title: 'Đơn hoàn thành', dataIndex: 'completedBookings', key: 'completedBookings', align: 'center',
+      render: (v) => <Tag color="green" style={{ fontWeight: 600 }}>{v || 0} đơn</Tag>
     },
     {
       title: 'Doanh thu', dataIndex: 'totalRevenue', key: 'totalRevenue', align: 'right',
@@ -387,7 +379,7 @@ export default function ReportsPage() {
       render: (v) => <Text strong style={{ color: COLORS.primary }}>{fmtMoney(v)}</Text>
     },
     {
-      title: 'Danh gia', dataIndex: 'avgRating', key: 'avgRating', align: 'center',
+      title: 'Đánh giá', dataIndex: 'avgRating', key: 'avgRating', align: 'center',
       render: (v) => v ? (
         <Tag color="gold" icon={<StarOutlined />} style={{ fontWeight: 700 }}>
           {Number(v).toFixed(1)} / 5.0
@@ -395,7 +387,7 @@ export default function ReportsPage() {
       ) : <Text type="secondary">-</Text>
     },
     {
-      title: 'Lap day slot', dataIndex: 'slotOccupancyRate', key: 'slotOccupancyRate',
+      title: 'Lấp đầy slot', dataIndex: 'slotOccupancyRate', key: 'slotOccupancyRate',
       render: (v) => (
         <div style={{ minWidth: 90 }}>
           <Progress
@@ -413,7 +405,7 @@ export default function ReportsPage() {
   const serviceColumns = [
     { title: '#', width: 50, render: (_, __, i) => <Text style={{ color: '#94a3b8', fontWeight: 600 }}>{i + 1}</Text> },
     {
-      title: 'Dich vu', dataIndex: 'serviceName', key: 'serviceName',
+      title: 'Dịch vụ', dataIndex: 'serviceName', key: 'serviceName',
       render: (name, r) => (
         <div>
           <Text strong>{name || r.categoryName}</Text>
@@ -422,8 +414,8 @@ export default function ReportsPage() {
       )
     },
     {
-      title: 'Luot su dung', dataIndex: 'itemCount', key: 'itemCount', align: 'center',
-      render: (v) => <Tag color="blue" style={{ fontWeight: 600 }}>{(v || 0).toLocaleString()} luot</Tag>
+      title: 'Lượt sử dụng', dataIndex: 'itemCount', key: 'itemCount', align: 'center',
+      render: (v) => <Tag color="blue" style={{ fontWeight: 600 }}>{(v || 0).toLocaleString()} lượt</Tag>
     },
     {
       title: 'Doanh thu', dataIndex: 'revenue', key: 'revenue', align: 'right',
@@ -431,7 +423,7 @@ export default function ReportsPage() {
       render: (v) => <Text strong style={{ color: COLORS.primary }}>{fmtMoney(v)}</Text>
     },
     {
-      title: 'Ty trong', dataIndex: 'percentage', key: 'percentage',
+      title: 'Tỷ trọng', dataIndex: 'percentage', key: 'percentage',
       render: (v) => (
         <div style={{ minWidth: 100 }}>
           <Progress percent={Math.round(v || 0)} size="small" strokeColor={COLORS.success} showInfo={false} trailColor="#f1f5f9" />
@@ -448,26 +440,26 @@ export default function ReportsPage() {
     <FeatureLockOverlay
       allowed={features?.analyticsAdvanced}
       requiredPlan="PRO"
-      description="Nang cap goi PRO de mo khoa xuat bao cao Excel/PDF va phan tich nang cao."
+      description="Nâng cấp gói PRO để mở khoá xuất báo cáo Excel/PDF và phân tích nâng cao."
     >
-      <div style={{ padding: '24px 28px', background: '#f8faff', minHeight: '100vh' }}>
+      <div style={{ padding: '16px', background: '#f8faff', minHeight: '100vh' }}>
 
         {/* HEADER */}
-        <div style={{ marginBottom: 20 }}>
-          <Space align="center" size={14}>
+        <div style={{ marginBottom: 16 }}>
+          <Space align="center" size={12}>
             <div style={{
-              width: 46, height: 46, borderRadius: 13,
+              width: 42, height: 42, borderRadius: 12,
               background: `linear-gradient(135deg, ${COLORS.primary} 0%, #818cf8 100%)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: `0 4px 14px ${COLORS.primary}40`
+              boxShadow: `0 4px 14px ${COLORS.primary}40`, flexShrink: 0
             }}>
-              <BarChartOutlined style={{ color: '#fff', fontSize: 22 }} />
+              <BarChartOutlined style={{ color: '#fff', fontSize: 20 }} />
             </div>
             <div>
-              <Title level={4} style={{ margin: 0, fontWeight: 800, color: '#1e293b' }}>
-                Bao Cao & Thong Ke
+              <Title level={4} style={{ margin: 0, fontWeight: 800, color: '#1e293b', fontSize: 18 }}>
+                Báo Cáo &amp; Thống Kê
               </Title>
-              <Text style={{ color: '#94a3b8', fontSize: 13 }}>
+              <Text style={{ color: '#94a3b8', fontSize: 12 }}>
                 {effectiveFrom} — {effectiveTo}
               </Text>
             </div>
@@ -476,59 +468,70 @@ export default function ReportsPage() {
 
         {/* TOOLBAR */}
         <Card
-          style={{ borderRadius: 16, border: '1px solid #e8edf5', marginBottom: 22, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
-          bodyStyle={{ padding: '14px 20px' }}
+          style={{ borderRadius: 16, border: '1px solid #e8edf5', marginBottom: 18, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
+          bodyStyle={{ padding: '12px 16px' }}
         >
-          <Row gutter={[12, 12]} align="middle" justify="space-between">
-            <Col>
-              <Space wrap size={10}>
-                <Segmented
-                  options={[
-                    { label: 'Doanh thu', value: 'doanh_thu', icon: <DollarOutlined /> },
-                    { label: 'Nhan vien', value: 'nhan_vien', icon: <TeamOutlined /> },
-                    { label: 'Dich vu',   value: 'dich_vu',   icon: <AppstoreOutlined /> },
-                  ]}
-                  value={reportType}
-                  onChange={setReportType}
-                  size="middle"
-                />
-                <RangePicker
-                  value={dateRange}
-                  onChange={(v) => setDateRange(v || [dayjs().subtract(30, 'day'), dayjs()])}
-                  size="middle" style={{ borderRadius: 8 }}
-                />
-                <Select
-                  placeholder="Tat ca chi nhanh" value={selectedBranchId}
-                  onChange={setSelectedBranchId} allowClear
-                  style={{ width: 170 }} size="middle"
-                >
-                  {branches.map((b) => <Option key={b.id} value={b.id}>{b.name}</Option>)}
-                </Select>
-                <Button icon={<ReloadOutlined />} onClick={fetchReportData} size="middle" style={{ borderRadius: 8 }}>
-                  Tai lai
-                </Button>
-              </Space>
+          <Row gutter={[10, 10]}>
+            {/* Dòng 1: Loại báo cáo */}
+            <Col xs={24}>
+              <Segmented
+                options={[
+                  { label: 'Doanh thu', value: 'doanh_thu', icon: <DollarOutlined /> },
+                  { label: 'Nhân viên', value: 'nhan_vien', icon: <TeamOutlined /> },
+                  { label: 'Dịch vụ',   value: 'dich_vu',   icon: <AppstoreOutlined /> },
+                ]}
+                value={reportType}
+                onChange={setReportType}
+                size="middle"
+                style={{ width: '100%' }}
+              />
             </Col>
-            <Col>
-              <Space size={8}>
+
+            {/* Dòng 2: Bộ lọc ngày & chi nhánh */}
+            <Col xs={24} sm={14} md={12}>
+              <RangePicker
+                value={dateRange}
+                onChange={(v) => setDateRange(v || [dayjs().subtract(30, 'day'), dayjs()])}
+                size="middle"
+                style={{ borderRadius: 8, width: '100%' }}
+              />
+            </Col>
+            <Col xs={24} sm={10} md={8}>
+              <Select
+                placeholder="Tất cả chi nhánh" value={selectedBranchId}
+                onChange={setSelectedBranchId} allowClear
+                style={{ width: '100%' }} size="middle"
+              >
+                {branches.map((b) => <Option key={b.id} value={b.id}>{b.name}</Option>)}
+              </Select>
+            </Col>
+            <Col xs={24} md={4}>
+              <Button icon={<ReloadOutlined />} onClick={fetchReportData} size="middle" style={{ borderRadius: 8, width: '100%' }}>
+                Tải lại
+              </Button>
+            </Col>
+
+            {/* Dòng 3: Nút xuất */}
+            <Col xs={24}>
+              <Space wrap size={8}>
                 <Button
                   icon={<FileExcelOutlined />} onClick={handleExportExcel}
                   style={{ background: '#059669', borderColor: '#059669', color: '#fff', borderRadius: 8, fontWeight: 600 }}
                 >
-                  Excel
+                  Xuất Excel
                 </Button>
                 <Button
                   icon={<FilePdfOutlined />} onClick={handleExportPdf}
                   style={{ background: '#dc2626', borderColor: '#dc2626', color: '#fff', borderRadius: 8, fontWeight: 600 }}
                 >
-                  PDF
+                  Xuất PDF
                 </Button>
-                <Tooltip title="Kich hoat gui email bao cao tuan vao Thu 2, 8:00 SA">
+                <Tooltip title="Kích hoạt gửi email báo cáo tuần vào Thứ 2, 8:00 SA">
                   <Button
                     icon={<MailOutlined />} loading={emailLoading} onClick={handleTriggerEmail}
                     style={{ borderColor: COLORS.primary, color: COLORS.primary, borderRadius: 8, fontWeight: 600 }}
                   >
-                    Email tuan
+                    Email tuần
                   </Button>
                 </Tooltip>
               </Space>
@@ -538,47 +541,47 @@ export default function ReportsPage() {
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <Spin size="large" tip="Dang phan tich du lieu..." />
+            <Spin size="large" tip="Đang phân tích dữ liệu..." />
           </div>
         ) : (
           <div id="printable-report-area">
 
-            {/* KPI CARDS (Doanh thu) */}
+            {/* KPI CARDS - Doanh thu */}
             {reportType === 'doanh_thu' && (
-              <Row gutter={[16, 16]} style={{ marginBottom: 22 }}>
-                <Col xs={24} sm={12} lg={6}>
+              <Row gutter={[12, 12]} style={{ marginBottom: 18 }}>
+                <Col xs={12} sm={12} lg={6}>
                   <KpiCard
-                    title="Tong doanh thu"
+                    title="Tổng doanh thu"
                     value={fmtMoney(totalRevenue)}
-                    sub={`${timeline.length} ky thong ke`}
+                    sub={`${timeline.length} kỳ thống kê`}
                     icon={<DollarOutlined />}
                     color={COLORS.primary}
                     growth={yoyRate}
                   />
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={12} sm={12} lg={6}>
                   <KpiCard
-                    title="Tong so don"
+                    title="Tổng số đơn"
                     value={(totalBookings || 0).toLocaleString()}
-                    sub="Don hang hoan thanh"
+                    sub="Đơn hàng hoàn thành"
                     icon={<ShoppingOutlined />}
                     color={COLORS.success}
                   />
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={12} sm={12} lg={6}>
                   <KpiCard
-                    title="Trung binh / don"
+                    title="Trung bình / đơn"
                     value={fmtMoney(avgPerBooking)}
-                    sub="Gia tri trung binh moi don"
+                    sub="Giá trị trung bình mỗi đơn"
                     icon={<ThunderboltOutlined />}
                     color={COLORS.warning}
                   />
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={12} sm={12} lg={6}>
                   <KpiCard
-                    title="Moc doanh thu cao nhat"
+                    title="Mốc doanh thu cao nhất"
                     value={peakLabel || '-'}
-                    sub={peakPeriod?.revenue ? fmtMoney(peakPeriod.revenue) : 'Dinh diem'}
+                    sub={peakPeriod?.revenue ? fmtMoney(peakPeriod.revenue) : 'Đỉnh điểm'}
                     icon={<TrophyOutlined />}
                     color={COLORS.pink}
                   />
@@ -588,13 +591,13 @@ export default function ReportsPage() {
 
             {/* STAFF KPI */}
             {reportType === 'nhan_vien' && top3.length > 0 && (
-              <Row gutter={[16, 16]} style={{ marginBottom: 22 }}>
+              <Row gutter={[12, 12]} style={{ marginBottom: 18 }}>
                 {top3.map((s, i) => (
                   <Col xs={24} sm={8} key={s.staffId}>
                     <KpiCard
-                      title={['Nhan vien xuat sac', 'A quan', 'Hang ba'][i]}
+                      title={['Nhân viên xuất sắc', 'Á quân', 'Hạng ba'][i]}
                       value={s.staffName}
-                      sub={`${fmtMoney(s.totalRevenue)} · ${s.completedBookings} don`}
+                      sub={`${fmtMoney(s.totalRevenue)} · ${s.completedBookings} đơn`}
                       icon={<TrophyOutlined />}
                       color={[COLORS.warning, '#94a3b8', '#b45309'][i]}
                     />
@@ -605,21 +608,21 @@ export default function ReportsPage() {
 
             {/* CHARTS - Doanh thu */}
             {reportType === 'doanh_thu' && timeline.length > 0 && (
-              <Row gutter={[16, 16]} style={{ marginBottom: 22 }}>
+              <Row gutter={[12, 12]} style={{ marginBottom: 18 }}>
                 <Col xs={24} lg={15}>
                   <Card
-                    title={<Space><span style={{ color: COLORS.primary }}>📈</span><Text strong>Xu huong doanh thu theo thoi gian</Text></Space>}
+                    title={<Space><span style={{ color: COLORS.primary }}>📈</span><Text strong>Xu hướng doanh thu theo thời gian</Text></Space>}
                     style={{ borderRadius: 16, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
-                    bodyStyle={{ padding: '16px 20px' }}
+                    bodyStyle={{ padding: '12px' }}
                   >
                     <RevenueChart data={timeline} />
                   </Card>
                 </Col>
                 <Col xs={24} lg={9}>
                   <Card
-                    title={<Space><span>📊</span><Text strong>So don theo ky</Text></Space>}
+                    title={<Space><span>📊</span><Text strong>Số đơn theo kỳ</Text></Space>}
                     style={{ borderRadius: 16, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
-                    bodyStyle={{ padding: '16px 20px' }}
+                    bodyStyle={{ padding: '12px' }}
                   >
                     <BookingBarChart data={timeline} />
                     {peakPeriod && (
@@ -630,9 +633,9 @@ export default function ReportsPage() {
                         <Space>
                           <FireOutlined style={{ color: COLORS.warning }} />
                           <Text style={{ fontSize: 12 }}>
-                            <strong>Dinh:</strong> {peakPeriod.label} -{' '}
+                            <strong>Đỉnh:</strong> {peakPeriod.label} -{' '}
                             <strong style={{ color: COLORS.primary }}>{fmtMoney(peakPeriod.revenue)}</strong>
-                            {' '}({peakPeriod.bookingCount} don)
+                            {' '}({peakPeriod.bookingCount} đơn)
                           </Text>
                         </Space>
                       </div>
@@ -642,12 +645,12 @@ export default function ReportsPage() {
               </Row>
             )}
 
-            {/* CHARTS - Dich vu */}
+            {/* CHARTS - Dịch vụ */}
             {reportType === 'dich_vu' && serviceList.length > 0 && (
-              <Row gutter={[16, 16]} style={{ marginBottom: 22 }}>
+              <Row gutter={[12, 12]} style={{ marginBottom: 18 }}>
                 <Col xs={24} lg={10}>
                   <Card
-                    title={<Text strong>Phan bo doanh thu theo dich vu</Text>}
+                    title={<Text strong>Phân bổ doanh thu theo dịch vụ</Text>}
                     style={{ borderRadius: 16, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
                     bodyStyle={{ padding: '12px 16px' }}
                   >
@@ -656,7 +659,7 @@ export default function ReportsPage() {
                 </Col>
                 <Col xs={24} lg={14}>
                   <Card
-                    title={<Text strong>Top dich vu theo doanh thu</Text>}
+                    title={<Text strong>Top dịch vụ theo doanh thu</Text>}
                     style={{ borderRadius: 16, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
                     bodyStyle={{ padding: '12px 16px' }}
                   >
@@ -684,14 +687,14 @@ export default function ReportsPage() {
             {/* DATA TABLE */}
             <Card
               title={
-                <Space>
+                <Space wrap>
                   <span>📋</span>
                   <Text strong>
-                    {reportType === 'nhan_vien' ? 'Chi tiet hieu suat nhan vien' :
-                     reportType === 'dich_vu'   ? 'Chi tiet doanh thu dich vu'   :
-                                                  'Bang so lieu doanh thu'}
+                    {reportType === 'nhan_vien' ? 'Chi tiết hiệu suất nhân viên' :
+                     reportType === 'dich_vu'   ? 'Chi tiết doanh thu dịch vụ'   :
+                                                   'Bảng số liệu doanh thu'}
                   </Text>
-                  <Tag color="blue">{getDataSource().length} dong</Tag>
+                  <Tag color="blue">{getDataSource().length} dòng</Tag>
                 </Space>
               }
               extra={
@@ -707,10 +710,11 @@ export default function ReportsPage() {
                 dataSource={getDataSource()}
                 columns={getColumns()}
                 rowKey={(r, i) => r.staffId || r.serviceId || r.label || i}
-                pagination={{ pageSize: 15, showSizeChanger: true, showTotal: (t) => `Tong ${t} dong` }}
+                pagination={{ pageSize: 15, showSizeChanger: true, showTotal: (t) => `Tổng ${t} dòng` }}
                 scroll={{ x: 'max-content' }}
                 rowClassName={(r) => r.isPeakPeriod ? 'peak-row' : ''}
                 style={{ borderRadius: '0 0 16px 16px', overflow: 'hidden' }}
+                size="middle"
               />
             </Card>
           </div>
@@ -719,6 +723,13 @@ export default function ReportsPage() {
         <style>{`
           .peak-row td { background: #fffbeb !important; }
           .peak-row:hover td { background: #fef3c7 !important; }
+          @media (max-width: 576px) {
+            .ant-card-head { padding: 0 12px; }
+            .ant-card-body { padding: 12px !important; }
+            .ant-table { font-size: 12px; }
+            .ant-tag { font-size: 10px; padding: 0 4px; }
+            .ant-segmented-item-label { font-size: 12px; padding: 0 6px; }
+          }
         `}</style>
       </div>
     </FeatureLockOverlay>

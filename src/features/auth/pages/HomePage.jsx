@@ -27,7 +27,6 @@ import {
     ShoppingOutlined,
     ArrowRightOutlined,
     LogoutOutlined,
-    ScissorOutlined,
     CheckCircleOutlined,
     LoginOutlined,
     UserAddOutlined,
@@ -273,26 +272,18 @@ export default function HomePage() {
             <div style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 20px" }}>
                 {/* HERO BANNER VÃNG LAI */}
                 <Card
-                    style={{
-                        borderRadius: 28,
-                        border: "none",
-                        overflow: "hidden",
-                        background: "linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(22, 119, 255, 0.78) 50%, rgba(114, 46, 209, 0.82) 100%), url('https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1600') center/cover no-repeat",
-                        color: "#fff",
-                        boxShadow: "0 20px 50px rgba(22, 119, 255, 0.3)",
-                        marginBottom: 44,
-                        padding: "36px 28px"
-                    }}
+                    className="home-hero-card"
+                    bodyStyle={{ padding: "36px 32px" }}
                 >
                     <Row align="middle" gutter={[36, 36]}>
                         <Col xs={24} lg={14}>
                             <Tag color="cyan" style={{ borderRadius: 20, padding: "6px 16px", fontSize: 13, fontWeight: 700, marginBottom: 16, border: "none" }}>
                                 ✨ HỆ THỐNG ĐẶT LỊCH SALON LÀM ĐẸP CAO CẤP
                             </Tag>
-                            <Title level={1} style={{ color: "#fff", margin: 0, fontSize: 40, fontWeight: 800, lineHeight: 1.2, letterSpacing: "-0.5px" }}>
+                            <Title level={1} style={{ color: "#fff", margin: 0, fontSize: 38, fontWeight: 800, lineHeight: 1.2, letterSpacing: "-0.5px" }}>
                                 SalonFlow - Nâng Tầm Trải Nghiệm Làm Đẹp
                             </Title>
-                            <Paragraph style={{ color: "rgba(255, 255, 255, 0.92)", fontSize: 17, marginTop: 16, marginBottom: 32, lineHeight: 1.7 }}>
+                            <Paragraph style={{ color: "rgba(255, 255, 255, 0.92)", fontSize: 16, marginTop: 16, marginBottom: 32, lineHeight: 1.7 }}>
                                 Đặt lịch cắt tóc, tạo kiểu, uốn nhuộm Hàn Quốc, gội đầu dưỡng sinh & nail art trong **30 giây** mà **không cần đăng ký tài khoản**. Đảm bảo giữ chỗ 100%!
                             </Paragraph>
 
@@ -300,17 +291,17 @@ export default function HomePage() {
                                 <Button
                                     type="primary"
                                     size="large"
-                                    icon={<ScissorOutlined />}
+                                    icon={<CalendarOutlined />}
                                     onClick={() => navigate("/guest-booking")}
                                     style={{
-                                        height: 54,
+                                        height: 52,
                                         padding: "0 32px",
-                                        borderRadius: 27,
+                                        borderRadius: 26,
                                         fontSize: 16,
                                         fontWeight: 700,
-                                        backgroundColor: "#ff4d4f",
-                                        borderColor: "#ff4d4f",
-                                        boxShadow: "0 8px 24px rgba(255, 77, 79, 0.45)"
+                                        backgroundColor: "#4f46e5",
+                                        borderColor: "#4f46e5",
+                                        boxShadow: "0 8px 24px rgba(79, 70, 229, 0.45)"
                                     }}
                                 >
                                     Đặt lịch vãng lai ngay
@@ -360,15 +351,8 @@ export default function HomePage() {
 
                         <Col xs={24} lg={10}>
                             <Card
-                                style={{
-                                    background: "rgba(255, 255, 255, 0.16)",
-                                    backdropFilter: "blur(16px)",
-                                    borderRadius: 24,
-                                    border: "1px solid rgba(255, 255, 255, 0.3)",
-                                    padding: "24px 20px",
-                                    boxShadow: "0 15px 35px rgba(0, 0, 0, 0.2)",
-                                    textAlign: "center"
-                                }}
+                                className="home-glass-card"
+                                bodyStyle={{ padding: "26px 22px", textAlign: "center" }}
                             >
                                 <Avatar
                                     size={64}
@@ -429,12 +413,12 @@ export default function HomePage() {
                 {/* 🤖 WIDGET AI GỢI Ý DỊCH VỤ DÀNH RIÊNG CHO BẠN */}
                 <AiServiceRecommendationWidget userId={user?.id} limit={5} />
 
-                {/* ✂️ DANH MỤC DỊCH VỤ NỔI BẬT */}
+                {/* ✨ DANH MỤC DỊCH VỤ NỔI BẬT */}
                 <div style={{ marginBottom: 48 }}>
                     <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
                         <Col>
                             <Title level={2} style={{ margin: 0, fontWeight: 700 }}>
-                                ✂️ Dịch Vụ Nổi Bật Tại SalonFlow
+                                ✨ Dịch Vụ Nổi Bật Tại SalonFlow
                             </Title>
                             <Text type="secondary" style={{ fontSize: 15 }}>
                                 Đa dạng dịch vụ chăm sóc sắc đẹp cao cấp thực hiện bởi đội ngũ Stylist giàu kinh nghiệm.
@@ -487,15 +471,16 @@ export default function HomePage() {
                                         </Paragraph>
                                     </div>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <Text strong style={{ color: "#ff4d4f", fontSize: 16, fontWeight: 700 }}>
+                                        <Text strong style={{ color: "#4f46e5", fontSize: 16, fontWeight: 700 }}>
                                             {item.price}
                                         </Text>
                                         <Button
                                             type="primary"
                                             size="small"
                                             shape="round"
-                                            icon={<ScissorOutlined />}
+                                            icon={<CalendarOutlined />}
                                             onClick={() => navigate("/guest-booking")}
+                                            style={{ background: "#4f46e5", borderColor: "#4f46e5" }}
                                         >
                                             Đặt ngay
                                         </Button>
@@ -630,7 +615,7 @@ export default function HomePage() {
                                             <EnvironmentOutlined style={{ marginRight: 6, color: "#ff4d4f" }} />
                                             {branch.address || "Chi nhánh chính thức SalonFlow"}
                                         </Paragraph>
-                                        <Button type="primary" ghost block shape="round" icon={<ScissorOutlined />}>
+                                        <Button type="primary" ghost block shape="round" icon={<CalendarOutlined />}>
                                             Đặt lịch tại chi nhánh này
                                         </Button>
                                     </Card>
@@ -734,7 +719,7 @@ export default function HomePage() {
                             <Button
                                 type="primary"
                                 size="large"
-                                icon={<ScissorOutlined />}
+                                icon={<CalendarOutlined />}
                                 onClick={() => navigate(isStaffOrOwner ? "/owner" : "/booking")}
                                 style={{
                                     height: 50,
@@ -922,6 +907,9 @@ export default function HomePage() {
                 ) : (
                     /* Giao Diện Hội Viên Đầy Đủ Đẹp Như Bên Guest */
                     <div>
+                        {/* 🤖 WIDGET AI GỢI Ý DỊCH VỤ DÀNH RIÊNG CHO HỘI VIÊN */}
+                        <AiServiceRecommendationWidget userId={user?.id} limit={5} />
+
                         {/* ✂️ DANH MỤC DỊCH VỤ NỔI BẬT DÀNH CHO HỘI VIÊN */}
                         <div style={{ marginBottom: 48 }}>
                             <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
@@ -987,7 +975,7 @@ export default function HomePage() {
                                                     type="primary"
                                                     size="small"
                                                     shape="round"
-                                                    icon={<ScissorOutlined />}
+                                                    icon={<CalendarOutlined />}
                                                     onClick={() => navigate("/booking")}
                                                 >
                                                     Đặt ngay
@@ -1080,7 +1068,7 @@ export default function HomePage() {
                                                     <EnvironmentOutlined style={{ marginRight: 6, color: "#ff4d4f" }} />
                                                     {branch.address || "Chi nhánh chính thức SalonFlow"}
                                                 </Paragraph>
-                                                <Button type="primary" ghost block shape="round" icon={<ScissorOutlined />}>
+                                                <Button type="primary" ghost block shape="round" icon={<CalendarOutlined />}>
                                                     Đặt lịch tại chi nhánh này
                                                 </Button>
                                             </Card>
