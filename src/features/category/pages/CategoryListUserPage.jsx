@@ -17,7 +17,7 @@ import {
     Spin
 } from "antd";
 import {
-    ScissorOutlined,
+    CalendarOutlined,
     ClockCircleOutlined,
     SearchOutlined,
     CheckCircleOutlined,
@@ -338,7 +338,7 @@ export default function CategoryListUserPage() {
 
     const categoryTabs = [
         { key: "ALL", label: "✨ Tất Cả Dịch Vụ" },
-        { key: "CẮT & TẠO KIỂU", label: "✂️ Cắt & Tạo Kiểu" },
+        { key: "CẮT & TẠO KIỂU", label: "💇‍♂️ Cắt & Tạo Kiểu" },
         { key: "UỐN & NHUỘM", label: "🎨 Uốn & Nhuộm Hàn Quốc" },
         { key: "GỘI DƯỠNG SINH & SPA", label: "💆‍♀️ Gội Dưỡng Sinh & Spa" },
         { key: "NAIL & MI", label: "💅 Nail Art & Mi" },
@@ -375,7 +375,7 @@ export default function CategoryListUserPage() {
                             <Button
                                 type="primary"
                                 size="large"
-                                icon={<ScissorOutlined />}
+                                icon={<CalendarOutlined />}
                                 onClick={() => navigate("/guest-booking")}
                                 style={{
                                     height: 50,
@@ -603,7 +603,7 @@ export default function CategoryListUserPage() {
                                         block
                                         shape="round"
                                         size="large"
-                                        icon={<ScissorOutlined />}
+                                        icon={<CalendarOutlined />}
                                         onClick={() => navigate("/guest-booking")}
                                         style={{
                                             fontWeight: 700,
@@ -686,7 +686,7 @@ export default function CategoryListUserPage() {
                         <Button
                             key="book"
                             type="primary"
-                            icon={<ScissorOutlined />}
+                            icon={<CalendarOutlined />}
                             onClick={() => {
                                 setDetailModalService(null);
                                 navigate("/guest-booking");

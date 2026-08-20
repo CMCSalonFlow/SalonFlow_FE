@@ -30,6 +30,7 @@ import { logout } from "@/core/utils/auth";
 const { Text } = Typography;
 import { useFirebaseMessaging } from "@/features/notification/hooks/useFirebaseMessaging";
 import { useNotificationWebSocket } from "@/features/notification/hooks/useNotificationWebSocket";
+import BrandLogo from "@/core/components/BrandLogo";
 
 const { Header } = Layout;
 
@@ -253,15 +254,10 @@ export default function AppHeader() {
             }}
         >
             <div
-                style={{
-                    color: "#1677ff",
-                    fontWeight: 700,
-                    fontSize: 20,
-                    cursor: "pointer"
-                }}
                 onClick={() => navigate(isLogin ? "/home" : "/")}
+                style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
             >
-                SalonFlow
+                <BrandLogo theme="light" subtitle="" size="small" />
             </div>
 
             {screens.md ? (

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { LeftOutlined, ScissorOutlined } from "@ant-design/icons";
+import { LeftOutlined } from "@ant-design/icons";
+import BrandLogo from "@/core/components/BrandLogo";
 import "@/styles/auth.css";
 
 export default function AuthForm({
@@ -40,15 +41,12 @@ export default function AuthForm({
                         onClick={() => window.location.href = "/"}
                     >
                         <LeftOutlined style={{ fontSize: 12 }} />
-                        <span>Quay về trang chủ (Khách vãng lai)</span>
+                        <span>Quay về trang chủ</span>
                     </button>
                 </div>
 
-                <div className="auth-brand-header">
-                    <div className="auth-logo-icon">
-                        <ScissorOutlined />
-                    </div>
-                    <h1 className="auth-brand-name">SalonFlow</h1>
+                <div className="auth-brand-header" style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                    <BrandLogo theme="light" subtitle="BEAUTY & SALON" size="medium" />
                 </div>
 
                 <h2 className="auth-title">{title}</h2>

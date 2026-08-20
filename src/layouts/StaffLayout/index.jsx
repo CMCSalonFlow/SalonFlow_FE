@@ -3,11 +3,11 @@ import {
     CalendarOutlined,
     UnorderedListOutlined,
     LogoutOutlined,
-    UserOutlined,
-    ScissorOutlined
+    UserOutlined
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
+import BrandLogo from "@/core/components/BrandLogo";
 
 const { Header, Content } = Layout;
 
@@ -31,7 +31,7 @@ export function StaffLayout() {
         }
     ];
 
-    const currentKey = navItems.find(item => location.pathname.startsWith(item.key))?.key || "/staff/schedule";
+    const currentKey = location.pathname;
 
     const userMenu = {
         items: [
@@ -51,29 +51,20 @@ export function StaffLayout() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    background: "#001529",
+                    background: "#0f172a",
                     padding: "0 24px",
-                    height: 64,
-                    lineHeight: "64px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    height: 68,
+                    lineHeight: "68px",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
                     overflow: "hidden"
                 }}
             >
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                     <div
-                        style={{
-                            fontWeight: 800,
-                            color: "#fff",
-                            fontSize: 20,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            cursor: "pointer"
-                        }}
                         onClick={() => navigate("/staff/schedule")}
+                        style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
                     >
-                        <ScissorOutlined style={{ color: "#1890ff", fontSize: 24 }} />
-                        <span>SalonFlow <Tag color="blue" style={{ fontSize: 11, marginLeft: 4 }}>WORKSTATION THỢ</Tag></span>
+                        <BrandLogo theme="dark" subtitle="WORKSTATION THỢ" size="small" />
                     </div>
                 </div>
 
