@@ -4,7 +4,8 @@ import {
     UnorderedListOutlined,
     LogoutOutlined,
     UserOutlined,
-    ScissorOutlined
+    ScissorOutlined,
+    FileTextOutlined
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
@@ -28,6 +29,11 @@ export function StaffLayout() {
             key: "/staff/appointments",
             icon: <UnorderedListOutlined />,
             label: "Danh Sách Khách Sắp Tới"
+        },
+        {
+            key: "/staff/leave-requests",
+            icon: <FileTextOutlined />,
+            label: "Xin Nghỉ Phép Cá Nhân"
         }
     ];
 

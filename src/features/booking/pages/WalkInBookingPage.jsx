@@ -707,9 +707,6 @@ export default function WalkInBookingPage() {
                 open={!!successData}
                 onCancel={() => setSuccessData(null)}
                 footer={[
-                    <Button key="checkout" icon={<QrcodeOutlined />} style={{ color: "#fa8c16", borderColor: "#fa8c16" }} onClick={() => navigate(`/manager/checkout/${successData?.bookingId}`)}>
-                        Trang Checkout (VietQR)
-                    </Button>,
                     <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={handlePrintThermalReceipt} style={{ background: "#1890ff" }}>
                         In Hóa Đơn (K80)
                     </Button>,

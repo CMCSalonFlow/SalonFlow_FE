@@ -48,6 +48,7 @@ const StaffManagementPage = lazy(() => import("@/features/staff/pages/StaffManag
 const SchedulePage = lazy(() => import("@/features/schedule/pages/SchedulePage"));
 const ShiftTemplatePage = lazy(() => import("@/features/shift/pages/ShiftTemplatePage"));
 const OffDayManagementPage = lazy(() => import("@/features/offday/pages/OffDayManagementPage"));
+const StaffLeaveRequestPage = lazy(() => import("@/features/offday/pages/StaffLeaveRequestPage"));
 const OwnerBookingWorkflowPage = lazy(() => import("@/features/booking/pages/OwnerBookingWorkflowPage"));
 const SmartSchedulingConfigPage = lazy(() => import("@/features/ai/pages/SmartSchedulingConfigPage"));
 const NoShowDashboardPage = lazy(() => import("@/features/ai/pages/NoShowDashboardPage"));
@@ -65,7 +66,6 @@ const BookingPage = lazy(() => import("@/features/booking/pages/BookingPage"));
 const GuestBookingPage = lazy(() => import("@/features/booking/pages/GuestBookingPage"));
 const AppointmentsPage = lazy(() => import("@/features/booking/pages/AppointmentsPage"));
 const PaymentCallbackPage = lazy(() => import("@/features/payment/pages/PaymentCallbackPage"));
-const ManagerCheckoutPage = lazy(() => import("@/features/payment/pages/ManagerCheckoutPage"));
 const ProfilePage = lazy(() => import("@/features/user/pages/ProfilePage"));
 const CustomerNotificationsPage = lazy(() => import("@/features/notification/pages/CustomerNotificationsPage"));
 const HairStyleAiPage = lazy(() => import("@/features/hair-ai/pages/HairStyleAiPage"));
@@ -308,6 +308,10 @@ const router = createBrowserRouter([
             {
                 path: "appointments",
                 element: withSuspense(StaffAppointmentsPage)
+            },
+            {
+                path: "leave-requests",
+                element: withSuspense(StaffLeaveRequestPage)
             }
         ]
     },
@@ -335,18 +339,18 @@ const router = createBrowserRouter([
                 path: "walk-in",
                 element: withSuspense(WalkInBookingPage)
             },
+            {
+                path: "off-days",
+                element: withSuspense(OffDayManagementPage)
+            },
+            {
+                path: "leave-requests",
+                element: withSuspense(StaffLeaveRequestPage)
+            },
 
             {
                 path: "bookings",
                 element: withSuspense(OwnerBookingWorkflowPage)
-            },
-            {
-                path: "checkout",
-                element: withSuspense(ManagerCheckoutPage)
-            },
-            {
-                path: "checkout/:bookingId",
-                element: withSuspense(ManagerCheckoutPage)
             }
         ]
     },
