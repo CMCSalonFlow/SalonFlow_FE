@@ -545,9 +545,6 @@ export default function GuestBookingPage() {
                                                 onChange={setSelectedDate}
                                                 placeholder="Chọn ngày bạn muốn hẹn lịch..."
                                             />
-                                        </div>                            onChange={setSelectedDate}
-                                                placeholder="Chọn ngày bạn muốn hẹn lịch..."
-                                            />
                                         </div>
 
                                         <Divider style={{ margin: "24px 0" }} />
