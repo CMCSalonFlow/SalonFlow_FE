@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Typography, Space, Tag, Tooltip, Spin } from 'antd';
+import { Card, Typography, Space, Tag, Tooltip, Spin, DatePicker, ConfigProvider } from 'antd';
 import { HeatMapOutlined, ClockCircleOutlined, FireOutlined, TeamOutlined, CalendarOutlined, InfoCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import viVN from 'antd/locale/vi_VN';
 import { getPeakHoursAnalyticsApi } from '../api/customerAnalyticsApi';
+
+dayjs.locale('vi');
 
 const { Text, Title } = Typography;
 
@@ -27,11 +31,22 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [hoveredCell, setHoveredCell] = useState(null);
+    const [selectedWeek, setSelectedWeek] = useState(dayjs());
 
     const loadData = async () => {
         try {
             setLoading(true);
-            const res = await getPeakHoursAnalyticsApi(branchId);
+            let fromStr = null;
+            let toStr = null;
+
+            if (selectedWeek) {
+                const start = selectedWeek.day(1); // Thứ 2
+                const end = selectedWeek.day(7);   // Chủ Nhật
+                fromStr = start.format('YYYY-MM-DD');
+                toStr = end.format('YYYY-MM-DD');
+            }
+
+            const res = await getPeakHoursAnalyticsApi(branchId, fromStr, toStr);
             if (res) {
                 setData(res);
             }
@@ -44,7 +59,7 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
 
     useEffect(() => {
         loadData();
-    }, [branchId]);
+    }, [branchId, selectedWeek]);
 
     const getCellColor = (count, maxCount) => {
         if (!count || count === 0) return '#f9f0ff';
@@ -103,7 +118,7 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
         >
             {/* Header */}
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, gap: 12 }}>
-                <Space size={10} align="center">
+                <Space size={12} align="center" wrap>
                     <div style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#f9f0ff', color: '#722ed1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
                         <HeatMapOutlined />
                     </div>
@@ -115,6 +130,31 @@ export default function PeakHourHeatmapChart({ branchId = null }) {
                             Phân tích mật độ chi tiết cách 30 phút theo Thứ trong tuần × Khung giờ ({dateRangeText})
                         </Text>
                     </div>
+
+                    <Space size={8} align="center" style={{ marginLeft: 8 }}>
+                        <style>{`
+                            .hide-week-col .ant-picker-content th:first-child,
+                            .hide-week-col .ant-picker-content td.ant-picker-cell-week,
+                            .hide-week-col .ant-picker-content td.ant-picker-week-panel-row-cell-week {
+                                display: none !important;
+                            }
+                        `}</style>
+                        <CalendarOutlined style={{ color: '#722ed1' }} />
+                        <Text strong style={{ fontSize: 13, color: '#475569' }}>Chọn tuần xem:</Text>
+                        <ConfigProvider locale={viVN}>
+                            <DatePicker
+                                picker="week"
+                                value={selectedWeek}
+                                onChange={(date) => date && setSelectedWeek(date)}
+                                allowClear={false}
+                                size="small"
+                                placeholder="Chọn tuần phân tích"
+                                popupClassName="hide-week-col"
+                                format={(val) => val ? `${val.day(1).format('DD/MM')} - ${val.day(7).format('DD/MM/YYYY')}` : ''}
+                                style={{ borderRadius: 8, width: 215, fontWeight: 600 }}
+                            />
+                        </ConfigProvider>
+                    </Space>
                 </Space>
 
                 {/* Insights Summary Tags */}

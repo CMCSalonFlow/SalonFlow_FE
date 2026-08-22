@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
     Alert,
     Button,
@@ -54,10 +55,21 @@ const getOverviewValue = (value) => (value === null || value === undefined ? 0 :
 
 export default function OwnerDashboardPage() {
     const { features } = useSubscription();
+    const { tab } = useParams();
+    const navigate = useNavigate();
+
+    const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const fullName = localStorage.getItem("fullName") || auth?.fullName || user?.fullName || auth?.username || user?.username || "Chủ Salon";
+
     const [branches, setBranches] = useState([]);
     const [salonId, setSalonId] = useState(null);
     const [selectedBranchId, setSelectedBranchId] = useState(() => localStorage.getItem("currentBranchId") || "");
-    const [activeTab, setActiveTab] = useState("overview");
+    const activeTab = tab || "overview";
+
+    const handleTabChange = (key) => {
+        navigate(`/owner/dashboard/${key}`);
+    };
 
     const [overviewData, setOverviewData] = useState(null);
     const [revenueData, setRevenueData] = useState(null);
@@ -517,7 +529,7 @@ export default function OwnerDashboardPage() {
                 </Space>
             ),
             children: (
-                <ReviewAnalyticsTab salonId={salonId} branches={branches} />
+                <ReviewAnalyticsTab salonId={salonId} branches={branches} selectedBranchId={selectedBranchId} />
             )
         }
     ];
@@ -547,34 +559,29 @@ export default function OwnerDashboardPage() {
             >
                 <Row justify="space-between" align="middle" gutter={[20, 20]}>
                     <Col xs={24} lg={13}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                            <span className="owner-live-dot" />
-                            <span style={{ fontSize: 12, fontWeight: 700, color: "#818cf8", letterSpacing: 0.8, textTransform: "uppercase" }}>
-                                Trung Tâm Vận Hành Trực Tuyến
-                            </span>
-                        </div>
+
                         <Title level={2} style={{ color: "#ffffff", margin: "0 0 6px 0", fontWeight: 800, letterSpacing: "-0.5px" }}>
-                            👋 Xin chào, Tổng Quan Hoạt Động Salon
+                            👋 Xin chào, {fullName}!
                         </Title>
                         <Text style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: 14 }}>
-                            Theo dõi doanh thu tức thì, hiệu suất phục vụ & chỉ số tăng trưởng kinh doanh đa chi nhánh.
+                            Chào mừng bạn trở lại bảng điều khiển SalonFlow. Theo dõi tổng quan hiệu suất phục vụ, doanh thu và tăng trưởng kinh doanh các chi nhánh.
                         </Text>
                     </Col>
 
-                    <Col xs={24} lg={11}>
+                    <Col xs={24} lg={11} style={{ display: "flex", justifyContent: "flex-end" }}>
                         <div
                             className="owner-branch-capsule"
                             style={{
-                                display: "flex",
+                                display: "inline-flex",
                                 alignItems: "center",
-                                justifyContent: "flex-end",
-                                flexWrap: "wrap",
                                 gap: 10,
                                 background: "rgba(255, 255, 255, 0.12)",
                                 backdropFilter: "blur(10px)",
-                                padding: "8px 12px",
+                                padding: "6px 14px",
                                 borderRadius: 16,
-                                border: "1px solid rgba(255, 255, 255, 0.2)"
+                                border: "1px solid rgba(255, 255, 255, 0.2)",
+                                width: "fit-content",
+                                marginLeft: "auto"
                             }}
                         >
                             <Space align="center" size={6}>
@@ -637,7 +644,7 @@ export default function OwnerDashboardPage() {
             >
                 <Tabs
                     activeKey={activeTab}
-                    onChange={setActiveTab}
+                    onChange={handleTabChange}
                     items={tabItems}
                     size="large"
                 />

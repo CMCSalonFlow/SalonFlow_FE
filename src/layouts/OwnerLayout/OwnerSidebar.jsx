@@ -132,7 +132,7 @@ export default function OwnerSidebar({ onMenuClick }) {
     const selectedKey =
         items.find(item =>
             item.key === "/owner"
-                ? location.pathname === "/owner"
+                ? (location.pathname === "/owner" || location.pathname.startsWith("/owner/dashboard"))
                 : location.pathname.startsWith(item.key)
         )?.key;
 

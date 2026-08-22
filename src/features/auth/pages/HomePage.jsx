@@ -39,7 +39,9 @@ import {
     EnvironmentOutlined,
     CheckOutlined,
     CrownOutlined,
-    FireOutlined
+    FireOutlined,
+    UnorderedListOutlined,
+    FileTextOutlined
 } from "@ant-design/icons";
 import { useAuth } from "../hooks/useAuth";
 import api from "@/core/api/axios";
@@ -90,8 +92,8 @@ export default function HomePage() {
             setLoadingStats(true);
         }
 
-        const isStaff = auth?.roles?.some((role) =>
-            [ROLES.SUPER_ADMIN, ROLES.SALON_OWNER, ROLES.STAFF].includes(role.toUpperCase())
+        const isInternalUser = auth?.roles?.some((role) =>
+            [ROLES.SUPER_ADMIN, ROLES.SALON_OWNER, ROLES.MANAGER, ROLES.BRANCH_MANAGER, ROLES.STAFF].includes(role.toUpperCase())
         );
 
         // ĐỒNG THỜI khởi tạo tất cả các yêu cầu API (Parallel Requests - loại bỏ Waterfall delay)
@@ -143,7 +145,7 @@ export default function HomePage() {
                 upcoming = myBookings.filter((b) => b.status === "PENDING" || b.status === "CONFIRMED").length;
                 total = myBookings.length;
 
-                if (isStaff) {
+                if (isInternalUser) {
                     totalRevenue = allBookings
                         .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")
                         .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
@@ -175,9 +177,14 @@ export default function HomePage() {
         navigate("/");
     };
 
-    const isStaffOrOwner = user?.roles?.some(role =>
-        [ROLES.SUPER_ADMIN, ROLES.SALON_OWNER, ROLES.STAFF].includes(role.toUpperCase())
-    );
+    const userRoles = (user?.roles || []).map(role => String(role).toUpperCase());
+    const isOwnerOrAdmin = userRoles.some(r => [ROLES.SUPER_ADMIN, ROLES.SALON_OWNER].includes(r));
+    const isManager = userRoles.some(r => [ROLES.MANAGER, ROLES.BRANCH_MANAGER].includes(r));
+    const isStaffRole = userRoles.includes(ROLES.STAFF);
+    const isInternalUser = isOwnerOrAdmin || isManager || isStaffRole;
+
+    const mainActionRoute = isOwnerOrAdmin ? "/owner" : isManager ? "/manager/walk-in" : isStaffRole ? "/staff/schedule" : "/booking";
+    const mainActionText = isOwnerOrAdmin ? "Vào trang quản trị" : isManager ? "Vào trang Lễ Tân / POS" : isStaffRole ? "Xem lịch làm việc" : "Đặt lịch hẹn ngay";
 
     // Dữ liệu danh mục dịch vụ mẫu hình ảnh cao cấp
     const featuredCategories = [
@@ -677,7 +684,7 @@ export default function HomePage() {
                     borderRadius: 28,
                     border: "none",
                     overflow: "hidden",
-                    background: isStaffOrOwner
+                    background: isInternalUser
                         ? "linear-gradient(135deg, rgba(57, 16, 133, 0.9) 0%, rgba(114, 46, 209, 0.85) 100%), url('https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1600') center/cover no-repeat"
                         : "linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(22, 119, 255, 0.8) 50%, rgba(114, 46, 209, 0.82) 100%), url('https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1600') center/cover no-repeat",
                     color: "#fff",
@@ -720,7 +727,7 @@ export default function HomePage() {
                                 type="primary"
                                 size="large"
                                 icon={<CalendarOutlined />}
-                                onClick={() => navigate(isStaffOrOwner ? "/owner" : "/booking")}
+                                onClick={() => navigate(mainActionRoute)}
                                 style={{
                                     height: 50,
                                     padding: "0 28px",
@@ -732,7 +739,7 @@ export default function HomePage() {
                                     boxShadow: "0 8px 20px rgba(255, 77, 79, 0.4)"
                                 }}
                             >
-                                {isStaffOrOwner ? "Vào trang quản trị" : "Đặt lịch hẹn ngay"}
+                                {mainActionText}
                             </Button>
                             <Button
                                 ghost
@@ -815,8 +822,8 @@ export default function HomePage() {
             </Card>
 
             <Spin spinning={loadingStats}>
-                {isStaffOrOwner ? (
-                    /* Dashboard Quản Trị Dành Cho Owner/Staff */
+                {isOwnerOrAdmin ? (
+                    /* Dashboard Quản Trị Dành Cho Owner / Super Admin */
                     <div>
                         <Title level={3} style={{ marginBottom: 24 }}>
                             📊 Bảng điều khiển hoạt động kinh doanh
@@ -900,6 +907,160 @@ export default function HomePage() {
                                     <ShoppingOutlined style={{ fontSize: 40, color: "#1890ff", marginBottom: 12 }} />
                                     <Title level={5} style={{ margin: 0 }}>Quản lý dịch vụ</Title>
                                     <Text type="secondary">Thêm mới dịch vụ, cài đặt giá và combo</Text>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </div>
+                ) : isManager ? (
+                    /* Dashboard & Phím Tắt Dành Cho Lễ Tân / Quản Lý (Manager) */
+                    <div>
+                        <Title level={3} style={{ marginBottom: 24 }}>
+                            📊 Bảng điều khiển Lễ Tân & Quản Lý Salon
+                        </Title>
+                        <Row gutter={[20, 20]} style={{ marginBottom: 32 }}>
+                            <Col xs={24} sm={12} lg={8}>
+                                <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
+                                    <Statistic
+                                        title="Tổng số lượt đặt lịch"
+                                        value={stats.totalBookings}
+                                        valueStyle={{ color: "#722ed1", fontWeight: 700 }}
+                                        prefix={<CalendarOutlined style={{ marginRight: 8, color: "#722ed1" }} />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} lg={8}>
+                                <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
+                                    <Statistic
+                                        title="Lịch hẹn mới hôm nay"
+                                        value={stats.upcomingBookingsCount}
+                                        valueStyle={{ color: "#1890ff", fontWeight: 700 }}
+                                        prefix={<ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} lg={8}>
+                                <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
+                                    <Statistic
+                                        title="Nhân sự chi nhánh"
+                                        value={stats.staffCount}
+                                        valueStyle={{ color: "#fa8c16", fontWeight: 700 }}
+                                        prefix={<TeamOutlined style={{ marginRight: 8, color: "#fa8c16" }} />}
+                                        suffix="thợ"
+                                    />
+                                </Card>
+                            </Col>
+                        </Row>
+
+                        <Title level={4} style={{ marginBottom: 16 }}>⚡ Phím tắt Thao tác nhanh (Lễ Tân / Manager)</Title>
+                        <Row gutter={[20, 20]}>
+                            <Col xs={24} sm={12} md={6}>
+                                <Card
+                                    hoverable
+                                    onClick={() => navigate("/manager/walk-in")}
+                                    style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
+                                >
+                                    <ShopOutlined style={{ fontSize: 40, color: "#722ed1", marginBottom: 12 }} />
+                                    <Title level={5} style={{ margin: 0 }}>Quản lý Khách Vãng Lai / POS</Title>
+                                    <Text type="secondary">Check-in khách lẻ, tạo đơn thu ngân</Text>
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} md={6}>
+                                <Card
+                                    hoverable
+                                    onClick={() => navigate("/manager/bookings")}
+                                    style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
+                                >
+                                    <CalendarOutlined style={{ fontSize: 40, color: "#1890ff", marginBottom: 12 }} />
+                                    <Title level={5} style={{ margin: 0 }}>Quản Lý Lịch Hẹn</Title>
+                                    <Text type="secondary">Điều phối lịch & kiểm tra trạng thái</Text>
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} md={6}>
+                                <Card
+                                    hoverable
+                                    onClick={() => navigate("/manager/leave-requests")}
+                                    style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
+                                >
+                                    <FileTextOutlined style={{ fontSize: 40, color: "#fa8c16", marginBottom: 12 }} />
+                                    <Title level={5} style={{ margin: 0 }}>Duyệt Đơn Nghỉ Phép</Title>
+                                    <Text type="secondary">Phê duyệt đơn xin nghỉ từ nhân viên</Text>
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} md={6}>
+                                <Card
+                                    hoverable
+                                    onClick={() => navigate("/manager/off-days")}
+                                    style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
+                                >
+                                    <SettingOutlined style={{ fontSize: 40, color: "#52c41a", marginBottom: 12 }} />
+                                    <Title level={5} style={{ margin: 0 }}>Ngày Nghỉ Salon</Title>
+                                    <Text type="secondary">Cấu hình đóng cửa chi nhánh & ngày lễ</Text>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </div>
+                ) : isStaffRole ? (
+                    /* Dashboard & Phím Tắt Dành Cho Nhân Viên / Thợ (Staff) */
+                    <div>
+                        <Title level={3} style={{ marginBottom: 24 }}>
+                            📊 Bảng điều khiển Nhân Viên
+                        </Title>
+                        <Row gutter={[20, 20]} style={{ marginBottom: 32 }}>
+                            <Col xs={24} sm={12} lg={12}>
+                                <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
+                                    <Statistic
+                                        title="Lịch hẹn sắp tới của bạn"
+                                        value={stats.upcomingBookingsCount}
+                                        valueStyle={{ color: "#1890ff", fontWeight: 700 }}
+                                        prefix={<ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} lg={12}>
+                                <Card bordered={false} style={{ borderRadius: 20, boxShadow: "0 6px 24px rgba(0,0,0,0.03)" }}>
+                                    <Statistic
+                                        title="Tổng số lượt làm đẹp đã phục vụ"
+                                        value={stats.totalBookings}
+                                        valueStyle={{ color: "#722ed1", fontWeight: 700 }}
+                                        prefix={<CalendarOutlined style={{ marginRight: 8, color: "#722ed1" }} />}
+                                    />
+                                </Card>
+                            </Col>
+                        </Row>
+
+                        <Title level={4} style={{ marginBottom: 16 }}>⚡ Phím tắt Thao tác nhanh (Nhân viên)</Title>
+                        <Row gutter={[20, 20]}>
+                            <Col xs={24} sm={12} md={8}>
+                                <Card
+                                    hoverable
+                                    onClick={() => navigate("/staff/schedule")}
+                                    style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
+                                >
+                                    <CalendarOutlined style={{ fontSize: 40, color: "#1890ff", marginBottom: 12 }} />
+                                    <Title level={5} style={{ margin: 0 }}>Lịch Làm Việc Cá Nhân</Title>
+                                    <Text type="secondary">Xem lịch trực và ca làm việc</Text>
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Card
+                                    hoverable
+                                    onClick={() => navigate("/staff/appointments")}
+                                    style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
+                                >
+                                    <UnorderedListOutlined style={{ fontSize: 40, color: "#722ed1", marginBottom: 12 }} />
+                                    <Title level={5} style={{ margin: 0 }}>Danh Sách Khách Sắp Tới</Title>
+                                    <Text type="secondary">Theo dõi khách hàng đã hẹn với bạn</Text>
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Card
+                                    hoverable
+                                    onClick={() => navigate("/staff/leave-requests")}
+                                    style={{ borderRadius: 20, textAlign: "center", padding: "16px 0" }}
+                                >
+                                    <FileTextOutlined style={{ fontSize: 40, color: "#fa8c16", marginBottom: 12 }} />
+                                    <Title level={5} style={{ margin: 0 }}>Xin Nghỉ Phép Cá Nhân</Title>
+                                    <Text type="secondary">Tạo đơn xin nghỉ phép gửi Quản lý</Text>
                                 </Card>
                             </Col>
                         </Row>

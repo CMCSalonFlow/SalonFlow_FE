@@ -215,6 +215,10 @@ const router = createBrowserRouter([
                 element: withSuspense(OwnerDashboardPage)
             },
             {
+                path: "dashboard/:tab?",
+                element: withSuspense(OwnerDashboardPage)
+            },
+            {
                 path: "branches",
                 element: withSuspense(BranchListPage)
             },

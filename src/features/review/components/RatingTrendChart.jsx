@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Card, Typography, Space } from 'antd';
+import { Card, Typography, Space, Radio, Row, Col } from 'antd';
 import { LineChartOutlined } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
 
-export default function RatingTrendChart({ points = [] }) {
+export default function RatingTrendChart({ points = [], periodMonths = 6, onPeriodChange }) {
     const [hoveredIdx, setHoveredIdx] = useState(null);
 
     if (!points || points.length === 0) {
@@ -50,15 +50,32 @@ export default function RatingTrendChart({ points = [] }) {
             style={{ borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
             bodyStyle={{ padding: '20px 24px' }}
         >
-            <Space align="center" size={8} style={{ marginBottom: 4 }}>
-                <LineChartOutlined style={{ color: '#1890ff', fontSize: 20 }} />
-                <Title level={4} style={{ margin: 0, fontWeight: 800 }}>
-                    Xu hướng Rating trung bình theo tháng
-                </Title>
-            </Space>
-            <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 16 }}>
-                Rê chuột vào điểm trên biểu đồ để xem chi tiết từng tháng
-            </Text>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+                <Col>
+                    <Space align="center" size={8}>
+                        <LineChartOutlined style={{ color: '#1890ff', fontSize: 20 }} />
+                        <Title level={4} style={{ margin: 0, fontWeight: 800 }}>
+                            Xu hướng Rating trung bình theo tháng
+                        </Title>
+                    </Space>
+                    <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 2 }}>
+                        Rê chuột vào điểm trên biểu đồ để xem chi tiết từng tháng
+                    </Text>
+                </Col>
+                <Col>
+                    <Radio.Group
+                        value={periodMonths}
+                        onChange={(e) => onPeriodChange && onPeriodChange(e.target.value)}
+                        optionType="button"
+                        buttonStyle="solid"
+                        size="small"
+                    >
+                        <Radio.Button value={3}>3 tháng</Radio.Button>
+                        <Radio.Button value={6}>6 tháng</Radio.Button>
+                        <Radio.Button value={12}>1 năm</Radio.Button>
+                    </Radio.Group>
+                </Col>
+            </Row>
 
             <div style={{ position: 'relative', width: '100%', height: `${chartHeight}px` }}>
                 <svg
