@@ -99,15 +99,21 @@ const SystemMonitoringPage = () => {
                     </Text>
                 </div>
                 <Space wrap>
-                    <Button 
-                        type="default"
-                        icon={<ExternalLink size={16} />}
-                        href="http://localhost:3000"
-                        target="_blank"
-                        style={{ borderColor: "#f97316", color: "#f97316", fontWeight: "600" }}
-                    >
-                        Mở Grafana Dashboard (Port 3000)
-                    </Button>
+                    {import.meta.env.VITE_MONITORING_ENABLED === "true" && (
+                        <Button
+                            type="default"
+                            icon={<ExternalLink size={16} />}
+                            href={import.meta.env.VITE_GRAFANA_URL}
+                            target="_blank"
+                            style={{
+                                borderColor: "#f97316",
+                                color: "#f97316",
+                                fontWeight: "600"
+                            }}
+                        >
+                            Mở Grafana Dashboard
+                        </Button>
+                    )}
                     <Button 
                         type="primary"
                         icon={<Bell size={16} />}
