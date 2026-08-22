@@ -50,7 +50,7 @@ const ShiftTemplatePage = lazy(() => import("@/features/shift/pages/ShiftTemplat
 const OffDayManagementPage = lazy(() => import("@/features/offday/pages/OffDayManagementPage"));
 const StaffLeaveRequestPage = lazy(() => import("@/features/offday/pages/StaffLeaveRequestPage"));
 const OwnerBookingWorkflowPage = lazy(() => import("@/features/booking/pages/OwnerBookingWorkflowPage"));
-const SmartSchedulingConfigPage = lazy(() => import("@/features/ai/pages/SmartSchedulingConfigPage"));
+
 const NoShowDashboardPage = lazy(() => import("@/features/ai/pages/NoShowDashboardPage"));
 const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
 const ReviewAdminPage = lazy(() => import("@/features/review/pages/ReviewAdminPage"));
@@ -258,10 +258,7 @@ const router = createBrowserRouter([
                 path: "vouchers",
                 element: withSuspense(VoucherManagementPage)
             },
-            {
-                path: "ai-smart-schedule",
-                element: withSuspense(SmartSchedulingConfigPage)
-            },
+
 
             {
                 path: "ai-no-show",

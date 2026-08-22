@@ -714,6 +714,12 @@ export default function BookingPage() {
                                                 getQualifiedStaff={getQualifiedStaff}
                                                 selectedStaff={selectedStaff}
                                                 systemOffDays={systemOffDays}
+                                                selectedBranchId={selectedBranchId}
+                                                selectedServices={selectedServices}
+                                                selectedBundle={selectedBundle}
+                                                bookingType={bookingType}
+                                                selectedTime={selectedTime}
+                                                setSelectedTime={setSelectedTime}
                                             />
                                         ) : (
                                             <RecurringBookingForm

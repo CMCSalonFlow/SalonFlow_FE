@@ -98,16 +98,6 @@ export default function OwnerSidebar({ onMenuClick }) {
             label: "Đánh Giá"
         },
         {
-            key: "/owner/ai-smart-schedule",
-            icon: <RobotOutlined />,
-            label: (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                    <span>AI Lịch Thông Minh</span>
-                    {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
-                </div>
-            )
-        },
-        {
             key: "/owner/ai-no-show",
             icon: <AlertOutlined />,
             label: (
