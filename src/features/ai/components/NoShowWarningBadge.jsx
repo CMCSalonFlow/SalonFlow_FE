@@ -34,7 +34,6 @@ const NoShowWarningBadge = ({
         if (isHigh) {
             return {
                 color: 'error',
-                icon: <AlertOutlined className="animate-pulse" />,
                 text: `Cảnh báo No-Show: ${probabilityPercentage}%`,
                 bg: 'bg-red-50 text-red-700 border-red-200'
             };
@@ -42,14 +41,12 @@ const NoShowWarningBadge = ({
         if (isMedium) {
             return {
                 color: 'warning',
-                icon: <WarningOutlined />,
                 text: `Nguy cơ vừa: ${probabilityPercentage}%`,
                 bg: 'bg-amber-50 text-amber-700 border-amber-200'
             };
         }
         return {
             color: 'success',
-            icon: <SafetyCertificateOutlined />,
             text: `Uy tín cao: ${probabilityPercentage}%`,
             bg: 'bg-emerald-50 text-emerald-700 border-emerald-200'
         };
@@ -79,7 +76,6 @@ const NoShowWarningBadge = ({
                     onClick={() => setDetailVisible(true)}
                     className="cursor-pointer px-2 py-1 rounded-md font-medium inline-flex items-center gap-1.5 transition-all hover:scale-105"
                 >
-                    {config.icon}
                     <span>{config.text}</span>
                 </Tag>
             </Tooltip>
@@ -87,7 +83,6 @@ const NoShowWarningBadge = ({
             <Modal
                 title={
                     <div className="flex items-center gap-2 text-base font-semibold">
-                        <AlertOutlined className={isHigh ? 'text-red-500' : 'text-amber-500'} />
                         <span>Chi Tiết Phân Tích AI Dự Đoán No-Show</span>
                     </div>
                 }
