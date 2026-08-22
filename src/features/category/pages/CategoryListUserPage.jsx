@@ -44,7 +44,7 @@ export default function CategoryListUserPage() {
         const fetchCategories = async () => {
             try {
                 setLoadingApi(true);
-                const response = await fetch("http://localhost:9090/api/v1/categories/public");
+                const response = await fetch(`${API_BASE_URL}/api/v1/categories/public`);
                 if (response.ok) {
                     const data = await response.json();
                     setCategoriesFromApi(data);
