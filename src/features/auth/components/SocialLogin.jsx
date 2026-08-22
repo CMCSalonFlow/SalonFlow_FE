@@ -1,6 +1,7 @@
 import { FcGoogle } from "react-icons/fc";
-import.meta.env.VITE_API_URL
-const API_URL = API_BASE_URL
+import { API_BASE_URL } from "@/core/api/endpoints";
+
+const API_URL = API_BASE_URL;
 export default function SocialLogin() {
 
     return (
