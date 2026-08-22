@@ -14,6 +14,12 @@ export default defineConfig({
       injectRegister: "auto",
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,woff2,ico}"],
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/oauth2\//,
+          /^\/login\/oauth2\//,
+        ],
+
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.includes("/bookings"),
