@@ -80,12 +80,7 @@ export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
                         }}
                     />
                 )}
-                {screens.md && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span className="owner-live-dot" />
-                        <span style={{ fontSize: 13, color: "#64748b", fontWeight: 500 }}>Hệ thống trực tuyến</span>
-                    </div>
-                )}
+
             </div>
 
             <div
