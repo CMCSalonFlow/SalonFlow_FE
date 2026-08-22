@@ -14,7 +14,7 @@ export default function SocialLogin() {
                 className="social-btn google-btn"
                 onClick={() =>
                     window.location.href =
-                        `${API_URL}/api/v1/auth/oauth2/google`
+                        "/oauth2/authorization/google"
                 }
             >
                 <FcGoogle className="social-icon" />
