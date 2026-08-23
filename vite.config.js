@@ -21,6 +21,14 @@ export default defineConfig({
         ],
 
         runtimeCaching: [
+          // ================================
+          // MinIO images: NEVER cache in SW
+          // ================================
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.startsWith("/salon-images/"),
+            handler: "NetworkOnly",
+          },
           {
             urlPattern: ({ url }) => url.pathname.includes("/bookings"),
             handler: "StaleWhileRevalidate",
