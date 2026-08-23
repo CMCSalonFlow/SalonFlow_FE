@@ -73,7 +73,7 @@ export default defineConfig({
             urlPattern: ({ url }) => /\.(?:png|jpg|jpeg|svg|gif|webp)$/.test(url.pathname) || url.pathname.includes("/media/"),
             handler: "CacheFirst",
             options: {
-              cacheName: "salonflow-images-v1",
+              cacheName: "salonflow-images-v2",
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
