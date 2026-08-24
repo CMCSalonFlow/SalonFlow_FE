@@ -13,7 +13,8 @@ import {
     Modal,
     Input,
     List,
-    Alert
+    Alert,
+    Grid
 } from "antd";
 import {
     CalendarOutlined,
@@ -335,22 +336,7 @@ export default function AppointmentsPage() {
     });
     };
 
-    const handleOpenStatusScreen = (variant, booking) => {
-        const bookingId = booking?.id;
-        const branchId = booking?.branchId || booking?.branch?.id;
-        const search = new URLSearchParams();
-        if (bookingId) search.set("bookingId", bookingId);
-        if (branchId) search.set("branchId", branchId);
 
-        navigate(`/booking/status/${variant}?${search.toString()}`, {
-            state: {
-                booking: {
-                    ...booking,
-                    status: variant === "cancelled" ? "CANCELLED" : (booking?.status || "CONFIRMED")
-                }
-            }
-        });
-    };
 
     const columns = [
         {
@@ -402,24 +388,6 @@ export default function AppointmentsPage() {
                         {record.endTime.substring(0, 5)}
                     </Text>
                 </>
-            )
-        },
-        {
-            title: "Tổng giá trị",
-            dataIndex: "totalPrice",
-            render: (value) => (
-                <Text strong style={{ color: "#faad14" }}>
-                    {formatCurrency(value)} đ
-                </Text>
-            )
-        },
-        {
-            title: "Tiền cọc",
-            dataIndex: "depositAmount",
-            render: (value) => (
-                <Text strong style={{ color: "#f5222d" }}>
-                    {formatCurrency(value)} đ
-                </Text>
             )
         },
         {
@@ -562,22 +530,6 @@ export default function AppointmentsPage() {
                     setSelectedBooking(null);
                 }}
                 footer={[
-                    selectedBooking && ["PENDING", "CONFIRMED"].includes(selectedBooking.status) && (
-                        <Button
-                            key="reminder"
-                            onClick={() => handleOpenStatusScreen("reminder", selectedBooking)}
-                        >
-                            Xem màn hình nhắc 24h
-                        </Button>
-                    ),
-                    selectedBooking?.status === "CANCELLED" && (
-                        <Button
-                            key="cancelled"
-                            onClick={() => handleOpenStatusScreen("cancelled", selectedBooking)}
-                        >
-                            Xem màn hình hủy
-                        </Button>
-                    ),
                     selectedBooking?.status === "PENDING" && (
                         <Button
                             key="pay"
@@ -588,7 +540,7 @@ export default function AppointmentsPage() {
                             Thanh toán tiền cọc qua VNPay
                         </Button>
                     ),
-                    (Boolean(selectedBooking?.invoiceUrl) || ["CONFIRMED", "COMPLETED"].includes(selectedBooking?.status)) && (
+                    selectedBooking?.status === "COMPLETED" && (
                         <Button
                             key="invoice"
                             type="primary"

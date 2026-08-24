@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ClockCircleOutlined, RobotOutlined, ThunderboltOutlined, CheckCircleOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { Spin, Button, Radio, Space, Input, Card, Tag, Tooltip, message, Grid } from "antd";
 import { recommendSmartSlotsApi } from "@/features/ai/api/smartSchedulingApi";
+import dayjs from "dayjs";
 
 const { TextArea } = Input;
 
@@ -23,6 +24,7 @@ export default function StepTimeSlots({
     setPaymentMethod,
     customerPhone,
     setCustomerPhone,
+    showCustomerInputs = true,
     // Props cho AI Smart Scheduling
     selectedBranchId,
     selectedDate,
@@ -209,11 +211,19 @@ export default function StepTimeSlots({
                         if (allSlots.length > 0) {
                             const minSlotWidth = screens.xs ? "72px" : "86px";
                             const slotGap = screens.xs ? 8 : 10;
+                            const isToday = selectedDate && (
+                                typeof selectedDate.isSame === "function"
+                                    ? selectedDate.isSame(dayjs(), "day")
+                                    : String(selectedDate) === dayjs().format("YYYY-MM-DD")
+                            );
+                            const nowTimeString = dayjs().format("HH:mm:ss");
+
                             return (
                                 <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${minSlotWidth}, 1fr))`, gap: slotGap, marginBottom: 24 }}>
                                     {allSlots.map(time => {
                                         const displayTime = time.substring(0, 5);
-                                        const isAvailable = availableTimes.includes(time);
+                                        const isPast = isToday && time < nowTimeString;
+                                        const isAvailable = availableTimes.includes(time) && !isPast;
                                         const isSelected = selectedTime === time;
                                         
                                         return (
@@ -227,22 +237,28 @@ export default function StepTimeSlots({
                                                     fontSize: screens.xs ? 13 : 14,
                                                     fontWeight: isSelected ? "600" : "500",
                                                     backgroundColor: isSelected 
-                                                        ? "#52c41a" // Selected
-                                                        : isAvailable 
-                                                            ? "#f6ffed" // Available green
-                                                            : "#fff1f0", // Busy red
+                                                        ? "#52c41a" // Selected green
+                                                        : isPast
+                                                            ? "#f5f5f5" // Past grey
+                                                            : isAvailable 
+                                                                ? "#f6ffed" // Available green
+                                                                : "#fff1f0", // Busy red
                                                     borderColor: isSelected 
                                                         ? "#52c41a" 
-                                                        : isAvailable 
-                                                            ? "#b7eb8f" 
-                                                            : "#ffa39e",
+                                                        : isPast
+                                                            ? "#d9d9d9" // Past grey border
+                                                            : isAvailable 
+                                                                ? "#b7eb8f" 
+                                                                : "#ffa39e",
                                                     color: isSelected 
                                                         ? "#fff" 
-                                                        : isAvailable 
-                                                            ? "#389e0d" 
-                                                            : "#cf1322",
+                                                        : isPast
+                                                            ? "#bfbfbf" // Past grey text
+                                                            : isAvailable 
+                                                                ? "#389e0d" 
+                                                                : "#cf1322",
                                                     transition: "all 0.3s",
-                                                    opacity: isAvailable ? 1 : 0.65,
+                                                    opacity: isAvailable ? 1 : 0.6,
                                                     cursor: isAvailable ? "pointer" : "not-allowed"
                                                 }}
                                                 onClick={() => isAvailable && setSelectedTime(time)}
@@ -262,29 +278,33 @@ export default function StepTimeSlots({
                         }
                     })()}
 
-                    <div style={{ marginBottom: 24 }}>
-                        <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                            Số điện thoại liên hệ <span style={{ color: "#ff4d4f" }}>*</span>
-                        </label>
-                        <Input
-                            placeholder="Nhập số điện thoại để nhận thông báo lịch hẹn..."
-                            value={customerPhone}
-                            onChange={(e) => setCustomerPhone(e.target.value)}
-                            style={{ borderRadius: 8 }}
-                            size="large"
-                        />
-                    </div>
+                    {showCustomerInputs && (
+                        <>
+                            <div style={{ marginBottom: 24 }}>
+                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                                    Số điện thoại liên hệ <span style={{ color: "#ff4d4f" }}>*</span>
+                                </label>
+                                <Input
+                                    placeholder="Nhập số điện thoại để nhận thông báo lịch hẹn..."
+                                    value={customerPhone}
+                                    onChange={(e) => setCustomerPhone(e.target.value)}
+                                    style={{ borderRadius: 8 }}
+                                    size="large"
+                                />
+                            </div>
 
-                    <div style={{ marginBottom: 24 }}>
-                        <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Ghi chú gửi cho Salon (Tùy chọn)</label>
-                        <TextArea
-                            rows={3}
-                            placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt của bạn..."
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            style={{ borderRadius: 8 }}
-                        />
-                    </div>
+                            <div style={{ marginBottom: 24 }}>
+                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Ghi chú gửi cho Salon (Tùy chọn)</label>
+                                <TextArea
+                                    rows={3}
+                                    placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt của bạn..."
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    style={{ borderRadius: 8 }}
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>

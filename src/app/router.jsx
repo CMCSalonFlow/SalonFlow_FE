@@ -71,7 +71,6 @@ const CustomerNotificationsPage = lazy(() => import("@/features/notification/pag
 const HairStyleAiPage = lazy(() => import("@/features/hair-ai/pages/HairStyleAiPage"));
 const SearchPage = lazy(() => import("@/features/search/pages/SearchPage"));
 const CategoryListUserPage = lazy(() => import("@/features/category/pages/CategoryListUserPage"));
-const BookingStatusPage = lazy(() => import("@/features/booking/pages/BookingStatusPage"));
 const WalkInBookingPage = lazy(() => import("@/features/booking/pages/WalkInBookingPage"));
 const StaffAppointmentsPage = lazy(() => import("@/features/booking/pages/StaffAppointmentsPage"));
 const PayAtCounterSuccessPage = lazy(() => import("@/features/booking/pages/PayAtCounterSuccessPage"));
@@ -392,14 +391,6 @@ const router = createBrowserRouter([
                 path: "guest-booking",
                 element: withSuspense(GuestBookingPage)
             },
-            {
-                path: "booking/status/:variant",
-                element: withSuspense(BookingStatusPage)
-            },
-            {
-                path: "booking/status",
-                element: withSuspense(BookingStatusPage)
-            },
         ]
     },
 
@@ -427,14 +418,6 @@ const router = createBrowserRouter([
             {
                 path: "/booking/pay-at-counter-success",
                 element: withSuspense(PayAtCounterSuccessPage)
-            },
-            {
-                path: "/booking/status/:variant",
-                element: withSuspense(BookingStatusPage)
-            },
-            {
-                path: "/booking/status",
-                element: withSuspense(BookingStatusPage)
             },
             {
                 path: "/recurring-success",

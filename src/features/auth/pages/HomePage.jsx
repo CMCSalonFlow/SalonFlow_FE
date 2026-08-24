@@ -707,7 +707,7 @@ export default function HomePage() {
                             />
                             <div>
                                 <Title level={2} style={{ color: "#fff", margin: 0, fontWeight: 800 }}>
-                                    Xin chào, {user?.fullName || user?.username || "Thành viên"}! 👋
+                                    Xin chào, {user?.fullName || localStorage.getItem("fullName") || user?.username || "Thành viên"}! 👋
                                 </Title>
                                 <Space style={{ marginTop: 6 }}>
                                     <Tag color="gold" style={{ borderRadius: 12, fontWeight: 700, padding: "2px 10px" }}>
