@@ -78,6 +78,8 @@ export default function StepServiceSelection({
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 10,
                     marginBottom: 20,
                     padding: "12px 16px",
                     background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",

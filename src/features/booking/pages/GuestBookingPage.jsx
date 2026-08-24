@@ -422,25 +422,26 @@ export default function GuestBookingPage() {
     const selectedBranchName = branches.find(b => b.id === selectedBranchId)?.name;
 
     return (
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 0" }}>
-            <Title level={2} style={{ textAlign: "center", marginBottom: 32 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: screens.xs ? "8px 4px" : "20px 0" }}>
+            <Title level={screens.xs ? 4 : 2} style={{ textAlign: "center", marginBottom: screens.xs ? 16 : 32 }}>
                 ✂️ Đặt lịch công khai
             </Title>
 
             <Steps
                 current={currentStep}
                 responsive
-                style={{ marginBottom: 40 }}
+                size={screens.xs ? "small" : "default"}
+                style={{ marginBottom: screens.xs ? 20 : 40 }}
                 items={[
-                    { title: "Chọn dịch vụ", icon: <AppstoreOutlined /> },
-                    { title: "Chọn nhân viên", icon: <TeamOutlined /> },
-                    { title: "Chọn giờ & hoàn tất", icon: <CalendarOutlined /> }
+                    { title: screens.xs ? "Dịch vụ" : "Chọn dịch vụ", icon: <AppstoreOutlined /> },
+                    { title: screens.xs ? "Ngày & Thợ" : "Chọn nhân viên", icon: <TeamOutlined /> },
+                    { title: screens.xs ? "Giờ & Xong" : "Chọn giờ & hoàn tất", icon: <CalendarOutlined /> }
                 ]}
             />
 
             <Row gutter={[24, 24]}>
                 <Col xs={24} lg={16}>
-                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", minHeight: 480 }}>
+                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", minHeight: 480 }} bodyStyle={{ padding: screens.xs ? "14px 12px" : "24px" }}>
                         {loading ? (
                             <div style={{ textAlign: "center", padding: "100px 0" }}>
                                 <Spin size="large" tip="Đang tải dữ liệu..." />
@@ -642,7 +643,6 @@ export default function GuestBookingPage() {
                                         )}
                                     </div>
                                 )}
-
                                 {currentStep === 2 && (
                                     <div>
                                         <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>
@@ -658,8 +658,9 @@ export default function GuestBookingPage() {
                                                 {(() => {
                                                     const allSlots = generateAllTimeSlots();
                                                     if (allSlots.length > 0) {
+                                                        const minSlotWidth = screens.xs ? "72px" : "90px";
                                                         return (
-                                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
+                                                            <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${minSlotWidth}, 1fr))`, gap: 12, marginBottom: 24 }}>
                                                                 {allSlots.map(time => {
                                                                     const displayTime = time.substring(0, 5);
                                                                     const isAvailable = availableTimes.includes(time);
@@ -668,10 +669,12 @@ export default function GuestBookingPage() {
                                                                     return (
                                                                         <Button
                                                                             key={time}
-                                                                            size="large"
+                                                                            size={screens.xs ? "middle" : "large"}
                                                                             disabled={!isAvailable}
                                                                             style={{
                                                                                 borderRadius: 8,
+                                                                                padding: screens.xs ? "0 4px" : "0 8px",
+                                                                                fontSize: screens.xs ? 13 : 14,
                                                                                 fontWeight: isSelected ? "600" : "500",
                                                                                 backgroundColor: isSelected
                                                                                     ? "#52c41a"

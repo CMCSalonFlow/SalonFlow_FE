@@ -1,4 +1,4 @@
-import { Typography, Divider, Space, Tag, Alert, Card } from "antd";
+import { Typography, Divider, Space, Tag, Alert, Card, Grid } from "antd";
 import { ShopOutlined, AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -26,13 +26,15 @@ export default function BookingSummary({
     paymentMethod,
     formatCurrency
 }) {
+    const screens = Grid.useBreakpoint();
+
     return (
         <Card
             style={{
                 borderRadius: 16,
                 boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
                 background: "linear-gradient(180deg, #fafafa 0%, #ffffff 100%)",
-                position: "sticky",
+                position: screens.lg ? "sticky" : "static",
                 top: 24
             }}
         >
