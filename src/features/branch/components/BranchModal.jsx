@@ -228,7 +228,11 @@ export default function BranchModal({
         if (open) {
             setActiveTab("general");
             if (editing) {
-                form.setFieldsValue(editing);
+                form.setFieldsValue({
+                    ...editing,
+                    isSmsEnabled: editing.isSmsEnabled ?? true,
+                    smsTemplate: editing.smsTemplate ?? ""
+                });
                 if (editing.hours && editing.hours.length > 0) {
                     const mappedHours = DAYS_OF_WEEK.map(day => {
                         const match = editing.hours.find(h => h.dayOfWeek === day.key);
