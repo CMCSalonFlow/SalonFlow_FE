@@ -63,3 +63,11 @@ export const getAvailabilitySlots = async (branchId, date) => {
     );
     return response.data;
 };
+
+export const getPublicAvailabilitySlots = async (branchId, date) => {
+    const response = await api.get(
+        `/api/v1/shifts/branch/${branchId}/availability`,
+        { params: { date }, skipAuth: true }
+    );
+    return response.data;
+};
