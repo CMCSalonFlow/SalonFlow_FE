@@ -3,7 +3,8 @@ import {
     Space,
     Table,
     Tag,
-    Popconfirm
+    Popconfirm,
+    Switch
 } from "antd";
 
 export default function BranchTable({
@@ -11,7 +12,8 @@ export default function BranchTable({
     loading,
     onEdit,
     onDelete,
-    onUsers
+    onUsers,
+    onToggleSms
 }) {
 
     const columns = [
@@ -48,6 +50,18 @@ export default function BranchTable({
                         Đóng cửa
                     </Tag>
                 )
+        },
+        {
+            title: "SMS Nhắc hẹn",
+            dataIndex: "isSmsEnabled",
+            render: (enabled, record) => (
+                <Switch
+                    checked={enabled !== false}
+                    onChange={(checked) => onToggleSms && onToggleSms(record, checked)}
+                    checkedChildren="Bật"
+                    unCheckedChildren="Tắt"
+                />
+            )
         },
         {
             title: "Thao tác",

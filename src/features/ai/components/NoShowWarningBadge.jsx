@@ -11,7 +11,7 @@ import { sendNoShowReminderApi } from '../api/noShowApi';
  * @param {string} props.explanation Chuỗi mô tả lý do AI dự đoán
  * @param {Object} props.features Các chỉ số đặc trưng (cancelRate, distanceKm, leadTimeHours, completedCount)
  * @param {number} props.bookingId ID của booking (dùng khi bấm gửi nhắc nhở)
- * @param {boolean} props.smsSent Đã gửi Zalo ZNS / SMS nhắc nhở chưa
+ * @param {boolean} props.smsSent Đã gửi Email / SMS nhắc nhở chưa
  */
 const NoShowWarningBadge = ({
     probabilityPercentage = 0,

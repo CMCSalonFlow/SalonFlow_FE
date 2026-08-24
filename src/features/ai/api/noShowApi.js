@@ -35,7 +35,7 @@ export const getNoShowLogsApi = async (branchId, params = {}) => {
 };
 
 /**
- * Tự động/thủ công gửi tin nhắn Zalo/SMS nhắc nhở khách
+ * Tự động/thủ công gửi Email/SMS nhắc nhở khách
  * @param {number} bookingId 
  */
 export const sendNoShowReminderApi = async (bookingId) => {

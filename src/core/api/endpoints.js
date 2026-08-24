@@ -58,11 +58,6 @@ export const ENDPOINTS = {
     ADMIN_REVIEW_SUMMARY: "/api/v1/admin/reviews/summary",
     OWNER_REVIEW_AI_TRIGGER: "/api/v1/owner/reviews/ai/trigger",
 
-    // Zalo OA & ZNS
-    ZALO_CONNECT_URL: "/api/v1/zalo/connect-url",
-    ZALO_CONNECT: "/api/v1/zalo/connect",
-    ZALO_TEST_ZNS: "/api/v1/zalo/test-zns",
-
     // Reviews
     BOOKING_REVIEWS: (id) => `/api/v1/bookings/${id}/reviews`,
     SALON_REVIEWS: (salonId) => `/api/v1/salons/${salonId}/reviews`,

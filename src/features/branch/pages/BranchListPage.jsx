@@ -171,6 +171,20 @@ export default function BranchListPage() {
         }
     };
 
+    const handleToggleSms = async (branch, isSmsEnabled) => {
+        try {
+            await updateBranch(branch.id, {
+                ...branch,
+                isSmsEnabled
+            });
+            message.success(`Đã ${isSmsEnabled ? "bật" : "tắt"} SMS cho chi nhánh ${branch.name}`);
+            loadBranches();
+        } catch (error) {
+            console.error("Toggle SMS error:", error);
+            message.error("Không thể thay đổi trạng thái SMS!");
+        }
+    };
+
     const handleUsers = (branch) => {
 
         setSelectedBranch(branch);
@@ -212,6 +226,8 @@ export default function BranchListPage() {
                 onDelete={handleDelete}
 
                 onUsers={handleUsers}
+
+                onToggleSms={handleToggleSms}
 
             />
 
