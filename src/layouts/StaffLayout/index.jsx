@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Layout, Button, Dropdown, Avatar, Space, Tag } from "antd";
 import {
     CalendarOutlined,
@@ -10,6 +11,7 @@ import {
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
 import BrandLogo from "@/core/components/BrandLogo";
+import { getUserByIdApi } from "@/features/user/api/userApi";
 
 const { Header, Content } = Layout;
 
@@ -17,8 +19,32 @@ export function StaffLayout() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const username = localStorage.getItem("username") || "Staff";
-    const fullName = localStorage.getItem("fullName") || username;
+    const [fullName, setFullName] = useState(() => {
+        const stored = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Staff";
+        if (stored && stored.includes("@")) {
+            const namePart = stored.split("@")[0];
+            return namePart.replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+        }
+        return stored;
+    });
+
+    useEffect(() => {
+        const syncUserProfile = async () => {
+            try {
+                const userId = localStorage.getItem("userId");
+                if (!userId) return;
+                const userData = await getUserByIdApi(userId);
+                const realName = userData?.fullName || userData?.name;
+                if (realName && !realName.includes("@")) {
+                    setFullName(realName);
+                    localStorage.getItem("fullName") !== realName && localStorage.setItem("fullName", realName);
+                }
+            } catch (err) {
+                console.warn("Could not sync user profile:", err);
+            }
+        };
+        syncUserProfile();
+    }, []);
 
     const navItems = [
         {

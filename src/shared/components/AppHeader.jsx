@@ -60,9 +60,10 @@ export default function AppHeader() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const fullName = localStorage.getItem("fullName");
-    const username = localStorage.getItem("username");
-    const displayName = fullName || username || "Tài khoản";
+    const rawName = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Tài khoản";
+    const displayName = rawName.includes("@")
+        ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
+        : rawName;
     const accessToken = localStorage.getItem("accessToken");
     const isLogin = !!accessToken;
 

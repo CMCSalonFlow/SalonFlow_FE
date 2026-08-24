@@ -27,10 +27,10 @@ export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
     const { subscription } = useSubscription();
     const plan = subscription?.plan || "FREE";
 
-    const username =
-        localStorage.getItem(
-            "username"
-        );
+    const rawName = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Owner";
+    const username = rawName.includes("@")
+        ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
+        : rawName;
 
     const items = [
         {

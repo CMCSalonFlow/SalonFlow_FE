@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Layout, Button, Dropdown, Avatar, Space, Tag } from "antd";
 import {
     DesktopOutlined,
@@ -14,14 +15,40 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
 import BrandLogo from "@/core/components/BrandLogo";
 
+import { getUserByIdApi } from "@/features/user/api/userApi";
+
 const { Header, Content } = Layout;
 
 export function ManagerLayout() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const username = localStorage.getItem("username") || "Manager";
-    const fullName = localStorage.getItem("fullName") || username;
+    const [fullName, setFullName] = useState(() => {
+        const stored = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Manager";
+        if (stored && stored.includes("@")) {
+            const namePart = stored.split("@")[0];
+            return namePart.replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+        }
+        return stored;
+    });
+
+    useEffect(() => {
+        const syncUserProfile = async () => {
+            try {
+                const userId = localStorage.getItem("userId");
+                if (!userId) return;
+                const userData = await getUserByIdApi(userId);
+                const realName = userData?.fullName || userData?.name;
+                if (realName && !realName.includes("@")) {
+                    setFullName(realName);
+                    localStorage.getItem("fullName") !== realName && localStorage.setItem("fullName", realName);
+                }
+            } catch (err) {
+                console.warn("Could not sync user profile:", err);
+            }
+        };
+        syncUserProfile();
+    }, []);
 
     const navItems = [
         {
@@ -50,21 +77,6 @@ export function ManagerLayout() {
 
     const userMenu = {
         items: [
-            {
-                key: "leave-request",
-                icon: <FileTextOutlined />,
-                label: "Nộp đơn xin nghỉ phép",
-                onClick: () => navigate("/manager/leave-requests")
-            },
-            {
-                key: "off-days",
-                icon: <CalendarOutlined />,
-                label: "Duyệt đơn nghỉ nhân viên",
-                onClick: () => navigate("/manager/off-days")
-            },
-            {
-                type: "divider"
-            },
             {
                 key: "user-info",
                 label: (
