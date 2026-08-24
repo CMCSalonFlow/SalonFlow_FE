@@ -141,18 +141,6 @@ export default function PayAtCounterSuccessPage() {
                         title={<Title level={2} style={{ marginBottom: 0 }}>Đặt lịch thành công!</Title>}
                         subTitle="Lịch hẹn của bạn đã được ghi nhận và xác nhận thành công."
                         extra={[
-                            <Button
-                                key="status"
-                                size="large"
-                                onClick={() => {
-                                    const search = new URLSearchParams();
-                                    if (bookingId) search.set("bookingId", bookingId);
-                                    if (branchId) search.set("branchId", branchId);
-                                    navigate(`/booking/status/confirmed?${search.toString()}`, { state: { booking } });
-                                }}
-                            >
-                                Xem màn hình xác nhận
-                            </Button>,
                             bookingContext.bookingMode === "public" ? (
                                 <Button key="booking" type="primary" size="large" onClick={() => navigate(bookingContext.returnPath)}>
                                     Đặt lịch mới

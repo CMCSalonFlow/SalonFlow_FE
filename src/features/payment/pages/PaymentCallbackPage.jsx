@@ -139,25 +139,10 @@ export default function PaymentCallbackPage() {
                                 key="status"
                                 type="primary"
                                 size="large"
-                                onClick={() => {
-                                    const search = new URLSearchParams();
-                                    if (result?.bookingId) search.set("bookingId", result.bookingId);
-                                    if (storedBooking?.branchId) search.set("branchId", storedBooking.branchId);
-
-                                    navigate(`/booking/status/confirmed?${search.toString()}`, {
-                                        state: {
-                                            booking: storedBooking || {
-                                                id: result.bookingId,
-                                                totalPrice: result.amount,
-                                                depositAmount: result.amount,
-                                                status: "CONFIRMED"
-                                            }
-                                        }
-                                    });
-                                }}
+                                onClick={() => navigate("/appointments")}
                                 style={{ borderRadius: 8, height: 45, fontWeight: "600" }}
                             >
-                                Xem chi tiết
+                                Xem lịch hẹn của tôi
                             </Button>,
                             (Boolean(result?.invoiceUrl) || result?.status === "SUCCESS") && (
                                 <Button

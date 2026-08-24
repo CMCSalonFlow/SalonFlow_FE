@@ -23,9 +23,10 @@ import {
     MenuOutlined
 } from "@ant-design/icons";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
+import api from "@/core/api/axios";
 
 const { Text } = Typography;
 import { useFirebaseMessaging } from "@/features/notification/hooks/useFirebaseMessaging";
@@ -60,12 +61,32 @@ export default function AppHeader() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const rawName = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Tài khoản";
-    const displayName = rawName.includes("@")
-        ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
-        : rawName;
     const accessToken = localStorage.getItem("accessToken");
     const isLogin = !!accessToken;
+
+    const [headerFullName, setHeaderFullName] = useState(localStorage.getItem("fullName") || "");
+
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        if (isLogin && userId) {
+            api.get(`/api/v1/users/${userId}`)
+                .then((res) => {
+                    if (res.data?.fullName) {
+                        localStorage.setItem("fullName", res.data.fullName);
+                        setHeaderFullName(res.data.fullName);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [isLogin]);
+
+    const storedFullName = headerFullName || localStorage.getItem("fullName");
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const rawName = (storedFullName && storedFullName.trim()) || storedUser?.fullName || localStorage.getItem("username") || "Tài khoản";
+
+    const displayName = (rawName.includes("@") && !storedFullName)
+        ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
+        : rawName;
 
     const handleForegroundMessage = useCallback((payload) => {
         const title = payload?.notification?.title || payload?.data?.title || "SalonFlow";
@@ -137,7 +158,7 @@ export default function AppHeader() {
             },
             {
                 key: "/search",
-                label: "Tìm salon 📍"
+                label: "Tìm salon"
             },
             {
                 key: "/services",
@@ -163,7 +184,7 @@ export default function AppHeader() {
             },
             {
                 key: "/search",
-                label: "Tìm salon 📍"
+                label: "Tìm salon"
             },
             {
                 key: "/services",

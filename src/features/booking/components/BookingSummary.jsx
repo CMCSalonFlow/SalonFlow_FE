@@ -124,7 +124,7 @@ export default function BookingSummary({
             <Divider style={{ margin: "20px 0" }} />
 
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <Text type="secondary">Tổng thời gian (mỗi buổi):</Text>
+                <Text type="secondary">Tổng thời gian:</Text>
                 <Text strong>
                     {isRecurringMode 
                         ? ((services.find(s => s.id === recurringServiceId)?.durationMinutes || 30) + " phút") 
@@ -133,21 +133,14 @@ export default function BookingSummary({
             </div>
 
             {!isRecurringMode ? (
-                <>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                        <Text type="secondary" style={{ fontSize: 16 }}>
-                            Tổng số tiền (Thanh toán tại quầy):
-                        </Text>
-                        <Text strong style={{ color: "#1890ff", fontSize: 22 }}>
-                            {payableAmount.toLocaleString()} đ
-                        </Text>
-                    </div>
-                    <div style={{ marginTop: 8 }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            💡 Đặt lịch trực tuyến hoàn toàn miễn phí. Khách hàng sẽ thanh toán giá trị dịch vụ trực tiếp tại quầy sau khi thực hiện xong tại Salon.
-                        </Text>
-                    </div>
-                </>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <Text type="secondary" style={{ fontSize: 16 }}>
+                        Tổng số tiền:
+                    </Text>
+                    <Text strong style={{ color: "#1890ff", fontSize: 22 }}>
+                        {payableAmount.toLocaleString()} đ
+                    </Text>
+                </div>
             ) : (
                 <div>
                     <Alert

@@ -69,12 +69,8 @@ export default function NormalBookingForm({
     };
 
     useEffect(() => {
-        if (selectedDate && selectedBranchId) {
-            handleFetchAiRecommendations();
-        } else {
-            setAiRecommendations([]);
-            setAiFetched(false);
-        }
+        setAiRecommendations([]);
+        setAiFetched(false);
     }, [selectedDate, selectedBranchId]);
 
     // Lọc danh sách thợ gợi ý độc nhất từ AI kết hợp với getQualifiedStaff()
@@ -218,7 +214,11 @@ export default function NormalBookingForm({
                             <div style={{ textAlign: "center", padding: "24px 0" }}>
                                 <Spin tip="AI đang phân tích thợ rảnh và tay nghề phù hợp nhất..." />
                             </div>
-                        ) : aiFetched && getAiStaffRecommendations().length > 0 ? (
+                        ) : !aiFetched ? (
+                            <div style={{ textAlign: "center", padding: "16px 12px", color: "#595959", fontSize: 13, background: "#ffffff", borderRadius: 12, border: "1px dashed #adc6ff" }}>
+                                ⚡ Bấm nút <b>"Gợi ý bằng AI"</b> ở góc phải trên để AI phân tích thợ rảnh và phù hợp nhất cho bạn.
+                            </div>
+                        ) : getAiStaffRecommendations().length > 0 ? (
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14 }}>
                                 {getAiStaffRecommendations().map((item, index) => {
                                     const badge = RANK_BADGES[index] || RANK_BADGES[2];

@@ -121,16 +121,6 @@ export default function BrandLogo({
             >
               Salon<span style={{ color: "#6366f1", WebkitTextFillColor: "#6366f1" }}>Flow</span>
             </span>
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #ec4899 0%, #818cf8 100%)",
-                display: "inline-block",
-                boxShadow: "0 0 8px rgba(99, 102, 241, 0.8)"
-              }}
-            />
           </div>
 
           {subtitle && (

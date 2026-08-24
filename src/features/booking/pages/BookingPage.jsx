@@ -337,8 +337,8 @@ export default function BookingPage() {
 
             if (!hasSkill) return false;
 
-            if (selectedDate && !isRecurringMode) {
-                return workingStaffIds.includes(staff.userId);
+            if (selectedDate && !isRecurringMode && workingStaffIds.length > 0) {
+                return workingStaffIds.includes(staff.userId) || workingStaffIds.includes(staff.id);
             }
 
             return true;
