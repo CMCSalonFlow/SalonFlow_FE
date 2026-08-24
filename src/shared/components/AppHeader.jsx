@@ -250,7 +250,7 @@ export default function AppHeader() {
                 alignItems: "center",
                 background: "#fff",
                 borderBottom: "1px solid #eee",
-                padding: "0 16px",
+                padding: screens.xs ? "0 10px" : "0 16px",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
             }}
         >

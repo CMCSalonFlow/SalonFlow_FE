@@ -461,18 +461,22 @@ export default function AppointmentsPage() {
         }
     ];
 
-    return (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "12px" }}>
+    const screens = Grid.useBreakpoint();
 
+    return (
+        <div style={{ padding: screens.xs ? "12px 4px" : "24px", maxWidth: 1200, margin: "0 auto" }}>
             <div
                 style={{
                     display: "flex",
                     justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 12,
                     marginBottom: 20
                 }}
             >
                 <div>
-                    <Title level={2}>
+                    <Title level={screens.xs ? 3 : 2} style={{ marginBottom: 4 }}>
                         <CalendarOutlined /> Lịch hẹn của tôi
                     </Title>
 
@@ -485,12 +489,13 @@ export default function AppointmentsPage() {
                     type="primary"
                     icon={<PlusOutlined />}
                     onClick={() => navigate("/booking")}
+                    size={screens.xs ? "middle" : "large"}
                 >
                     Đặt lịch mới
                 </Button>
             </div>
 
-            <Card>
+            <Card bodyStyle={{ padding: screens.xs ? "12px 8px" : "24px" }}>
 
                 {loading ? (
                     <div style={{ textAlign: "center", padding: 80 }}>
@@ -501,6 +506,7 @@ export default function AppointmentsPage() {
                         rowKey="id"
                         columns={columns}
                         dataSource={myBookings}
+                        scroll={{ x: "max-content" }}
                         pagination={{
                             pageSize: 8
                         }}

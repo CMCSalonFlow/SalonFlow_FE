@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ClockCircleOutlined, RobotOutlined, ThunderboltOutlined, CheckCircleOutlined, InfoCircleOutlined } from "@ant-design/icons";
-import { Spin, Button, Radio, Space, Input, Card, Tag, Tooltip, message } from "antd";
+import { Spin, Button, Radio, Space, Input, Card, Tag, Tooltip, message, Grid } from "antd";
 import { recommendSmartSlotsApi } from "@/features/ai/api/smartSchedulingApi";
 
 const { TextArea } = Input;
@@ -31,6 +31,7 @@ export default function StepTimeSlots({
     bookingType = "service",
     selectedStaff = null
 }) {
+    const screens = Grid.useBreakpoint();
     const [aiLoading, setAiLoading] = useState(false);
     const [aiRecommendations, setAiRecommendations] = useState([]);
     const [aiFetched, setAiFetched] = useState(false);
@@ -206,8 +207,10 @@ export default function StepTimeSlots({
                     {(() => {
                         const allSlots = generateAllTimeSlots();
                         if (allSlots.length > 0) {
+                            const minSlotWidth = screens.xs ? "72px" : "86px";
+                            const slotGap = screens.xs ? 8 : 10;
                             return (
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${minSlotWidth}, 1fr))`, gap: slotGap, marginBottom: 24 }}>
                                     {allSlots.map(time => {
                                         const displayTime = time.substring(0, 5);
                                         const isAvailable = availableTimes.includes(time);
@@ -216,10 +219,12 @@ export default function StepTimeSlots({
                                         return (
                                             <Button
                                                 key={time}
-                                                size="large"
+                                                size={screens.xs ? "middle" : "large"}
                                                 disabled={!isAvailable}
                                                 style={{
                                                     borderRadius: 8,
+                                                    padding: screens.xs ? "0 4px" : "0 8px",
+                                                    fontSize: screens.xs ? 13 : 14,
                                                     fontWeight: isSelected ? "600" : "500",
                                                     backgroundColor: isSelected 
                                                         ? "#52c41a" // Selected

@@ -602,26 +602,27 @@ export default function BookingPage() {
     const selectedBranchName = branches.find(b => b.id === selectedBranchId)?.name;
 
     return (
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 0" }}>
-            <Title level={2} style={{ textAlign: "center", marginBottom: 32 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: screens.xs ? "8px 4px" : "20px 0" }}>
+            <Title level={screens.xs ? 4 : 2} style={{ textAlign: "center", marginBottom: screens.xs ? 16 : 32 }}>
                 ✂️ Đặt lịch dịch vụ làm đẹp
             </Title>
 
             <Steps
                 current={currentStep}
                 responsive
-                style={{ marginBottom: 40 }}
+                size={screens.xs ? "small" : "default"}
+                style={{ marginBottom: screens.xs ? 20 : 40 }}
                 items={[
-                    { title: "Chọn dịch vụ", icon: <AppstoreOutlined /> },
-                    { title: "Chọn ngày & nhân viên", icon: <TeamOutlined /> },
-                    { title: "Chọn giờ & hoàn tất", icon: <ClockCircleOutlined /> }
+                    { title: screens.xs ? "Dịch vụ" : "Chọn dịch vụ", icon: <AppstoreOutlined /> },
+                    { title: screens.xs ? "Ngày & Thợ" : "Chọn ngày & nhân viên", icon: <TeamOutlined /> },
+                    { title: screens.xs ? "Giờ & Xong" : "Chọn giờ & hoàn tất", icon: <ClockCircleOutlined /> }
                 ]}
             />
 
             <Row gutter={[24, 24]}>
                 {/* Cột trái: Form cấu hình theo từng bước */}
                 <Col xs={24} lg={16}>
-                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }} bodyStyle={{ padding: screens.xs ? "14px 12px" : "24px" }}>
                         {/* CHỌN SALON & CHI NHÁNH (Chỉ hiển thị ở Bước 1) */}
                         {currentStep === 0 && (
                             <>
