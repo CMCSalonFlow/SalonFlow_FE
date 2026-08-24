@@ -7,6 +7,7 @@ import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getPublicServicesByBranchApi, getPublicBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getPublicStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getPublicAvailabilityApi, createPublicBookingApi } from "../api/bookingApi";
+import { getPublicAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
 import AiBookingChatbot from "@/features/chatbot/components/AiBookingChatbot";
@@ -42,6 +43,10 @@ export default function GuestBookingPage() {
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
     const [notes, setNotes] = useState("");
+
+    const [workingStaffIds, setWorkingStaffIds] = useState([]);
+    const [loadingStaff, setLoadingStaff] = useState(false);
+
     const [guestName, setGuestName] = useState("");
     const [guestPhone, setGuestPhone] = useState("");
     const [guestEmail, setGuestEmail] = useState("");
@@ -188,6 +193,34 @@ export default function GuestBookingPage() {
         loadBranchData();
     }, [selectedBranchId]);
 
+    // Lấy lịch làm việc của nhân viên khi đổi ngày
+    useEffect(() => {
+        const timerId = window.setTimeout(() => {
+            if (!selectedBranchId || !selectedDate) {
+                setWorkingStaffIds([]);
+                return;
+            }
+
+            const fetchWorkingStaff = async () => {
+                try {
+                    setLoadingStaff(true);
+                    const dateStr = selectedDate.format("YYYY-MM-DD");
+                    const slots = await getPublicAvailabilitySlots(selectedBranchId, dateStr);
+                    const userIds = [...new Set(slots.map(s => s.userId))];
+                    setWorkingStaffIds(userIds);
+                } catch (error) {
+                    console.error("Lỗi khi tải lịch làm việc của nhân viên:", error);
+                } finally {
+                    setLoadingStaff(false);
+                }
+            };
+
+            fetchWorkingStaff();
+        }, 0);
+
+        return () => window.clearTimeout(timerId);
+    }, [selectedBranchId, selectedDate]);
+
     useEffect(() => {
         if (!selectedBranchId || !selectedDate || !selectedStaff) return;
         if (bookingType === "service" && selectedServices.length === 0) return;
@@ -232,7 +265,23 @@ export default function GuestBookingPage() {
         return slots;
     };
 
-    const getQualifiedStaff = () => staffList;
+    // Lọc danh sách nhân viên có kỹ năng thực hiện dịch vụ và có làm việc trong ngày đã chọn
+    const getQualifiedStaff = () => {
+        return staffList.filter(staff => {
+            const allowedIds = (staff.services || []).map(s => s.id);
+            const hasSkill = bookingType === "bundle"
+                ? Boolean(selectedBundle) && (selectedBundle.items || []).every(item => allowedIds.includes(item.serviceId))
+                : selectedServices.length > 0 && selectedServices.every(s => allowedIds.includes(s.id));
+
+            if (!hasSkill) return false;
+
+            if (selectedDate) {
+                return workingStaffIds.includes(staff.userId);
+            }
+
+            return true;
+        });
+    };
 
     const getBookingSummary = () => {
         if (bookingType === "bundle") {
@@ -550,8 +599,13 @@ export default function GuestBookingPage() {
                                         <Divider style={{ margin: "24px 0" }} />
 
                                         <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>Chọn Nhân viên thực hiện</label>
-                                        <Row gutter={[16, 16]}>
-                                            {getQualifiedStaff().map(staff => {
+                                        {loadingStaff ? (
+                                            <div style={{ textAlign: "center", padding: "20px 0" }}>
+                                                <Spin tip="Đang tải danh sách nhân viên..." />
+                                            </div>
+                                        ) : (
+                                            <Row gutter={[16, 16]}>
+                                                {getQualifiedStaff().map(staff => {
                                                 const isSelected = selectedStaff?.id === staff.id;
                                                 return (
                                                     <Col xs={24} sm={12} key={staff.id}>
@@ -577,12 +631,13 @@ export default function GuestBookingPage() {
                                                         </Card>
                                                     </Col>
                                                 );
-                                            })}
-                                        </Row>
+                                                })}
+                                            </Row>
+                                        )}
 
-                                        {getQualifiedStaff().length === 0 && (
+                                        {!loadingStaff && getQualifiedStaff().length === 0 && (
                                             <div style={{ marginTop: 12 }}>
-                                                <Text type="secondary">Chi nhánh này chưa có nhân viên phù hợp cho dịch vụ đã chọn.</Text>
+                                                <Text type="secondary">Chi nhánh này chưa có nhân viên phù hợp cho dịch vụ đã chọn vào ngày này.</Text>
                                             </div>
                                         )}
                                     </div>
