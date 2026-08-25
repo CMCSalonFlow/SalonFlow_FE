@@ -618,7 +618,6 @@ export default function GuestBookingPage() {
 
                 <Col xs={24} lg={8}>
                     <BookingSummary
-                        isRecurringMode={false}
                         currentStep={currentStep}
                         branches={branches}
                         selectedBranchId={selectedBranchId}

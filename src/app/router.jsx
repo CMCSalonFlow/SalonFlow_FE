@@ -74,7 +74,6 @@ const CategoryListUserPage = lazy(() => import("@/features/category/pages/Catego
 const WalkInBookingPage = lazy(() => import("@/features/booking/pages/WalkInBookingPage"));
 const StaffAppointmentsPage = lazy(() => import("@/features/booking/pages/StaffAppointmentsPage"));
 const PayAtCounterSuccessPage = lazy(() => import("@/features/booking/pages/PayAtCounterSuccessPage"));
-const RecurringSuccessPage = lazy(() => import("@/features/booking/pages/RecurringSuccessPage"));
 const HelpCenterPage = lazy(() => import("@/features/support/pages/HelpCenterPage"));
 const NearbySalonsPage = lazy(() => import("@/features/geolocation/pages/NearbySalonsPage"));
 const SystemMonitoringPage = lazy(() => import("@/features/monitoring/pages/SystemMonitoringPage"));
@@ -422,10 +421,6 @@ const router = createBrowserRouter([
             {
                 path: "/booking",
                 element: withSuspense(BookingPage)
-            },
-            {
-                path: "/recurring-success",
-                element: withSuspense(RecurringSuccessPage)
             },
             {
                 path: "/appointments",
