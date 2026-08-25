@@ -525,10 +525,9 @@ export default function AppointmentsPage() {
                     </Space>
                 }
                 open={isDetailModalOpen}
-                onCancel={() => {
-                    setIsDetailModalOpen(false);
-                    setSelectedBooking(null);
-                }}
+                destroyOnClose
+                afterClose={() => setSelectedBooking(null)}
+                onCancel={() => setIsDetailModalOpen(false)}
                 footer={[
                     selectedBooking?.status === "PENDING" && (
                         <Button
@@ -657,10 +656,8 @@ export default function AppointmentsPage() {
             {/* Modal Đánh giá dịch vụ */}
             <ReviewModal
                 isOpen={isReviewModalOpen}
-                onClose={() => {
-                    setIsReviewModalOpen(false);
-                    setReviewBookingTarget(null);
-                }}
+                onClose={() => setIsReviewModalOpen(false)}
+                afterClose={() => setReviewBookingTarget(null)}
                 booking={reviewBookingTarget}
                 onSuccess={(reviewedId) => {
                     const targetId = reviewedId || reviewBookingTarget?.id;

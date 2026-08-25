@@ -141,9 +141,9 @@ export default function SalonListPage() {
             <SalonDetailDrawer
                 open={drawerOpen}
                 salonId={selectedSalonId}
-                onClose={() => {
-                    setDrawerOpen(false);
-                    setSelectedSalonId(null);
+                onClose={() => setDrawerOpen(false)}
+                afterOpenChange={(isOpen) => {
+                    if (!isOpen) setSelectedSalonId(null);
                 }}
             />
         </div>

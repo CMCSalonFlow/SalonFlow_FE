@@ -585,9 +585,9 @@ export default function ReviewAdminPage() {
             <ReviewDetailDrawer
                 open={drawerOpen}
                 reviewId={selectedReviewId}
-                onClose={() => {
-                    setDrawerOpen(false);
-                    setSelectedReviewId(null);
+                onClose={() => setDrawerOpen(false)}
+                afterOpenChange={(isOpen) => {
+                    if (!isOpen) setSelectedReviewId(null);
                 }}
             />
 
