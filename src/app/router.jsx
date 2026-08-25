@@ -391,6 +391,14 @@ const router = createBrowserRouter([
                 path: "guest-booking",
                 element: withSuspense(GuestBookingPage)
             },
+            {
+                path: "booking/pay-at-counter-success",
+                element: withSuspense(PayAtCounterSuccessPage)
+            },
+            {
+                path: "payment/callback",
+                element: withSuspense(PaymentCallbackPage)
+            },
         ]
     },
 
@@ -416,20 +424,12 @@ const router = createBrowserRouter([
                 element: withSuspense(BookingPage)
             },
             {
-                path: "/booking/pay-at-counter-success",
-                element: withSuspense(PayAtCounterSuccessPage)
-            },
-            {
                 path: "/recurring-success",
                 element: withSuspense(RecurringSuccessPage)
             },
             {
                 path: "/appointments",
                 element: withSuspense(AppointmentsPage)
-            },
-            {
-                path: "/payment/callback",
-                element: withSuspense(PaymentCallbackPage)
             },
             {
                 path: "/profile",

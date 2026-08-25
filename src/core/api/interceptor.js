@@ -24,6 +24,8 @@ const isPublicRoute = (pathname) => {
         pathname === "/services" ||
         pathname === "/guest-booking" ||
         pathname === "/public-booking" ||
+        pathname === "/booking/pay-at-counter-success" ||
+        pathname === "/payment/callback" ||
         pathname === "/search" ||
         pathname === "/categories" ||
         pathname === "/login" ||
