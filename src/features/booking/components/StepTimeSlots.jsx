@@ -51,10 +51,12 @@ export default function StepTimeSlots({
                 ? selectedDate.format("YYYY-MM-DD") 
                 : String(selectedDate);
 
+            const userId = localStorage.getItem("userId");
             const payload = {
                 branchId: selectedBranchId,
                 date: dateStr,
-                preferredStaffId: selectedStaff?.id || null
+                preferredStaffId: selectedStaff?.id || null,
+                customerId: userId ? Number(userId) : null
             };
 
             if (bookingType === "service" && selectedServices.length > 0) {
@@ -64,7 +66,7 @@ export default function StepTimeSlots({
             }
 
             const res = await recommendSmartSlotsApi(payload);
-            const recs = res?.recommendations || [];
+            const recs = Array.isArray(res) ? res : (res?.recommendations || []);
             setAiRecommendations(recs);
             setAiFetched(true);
 
