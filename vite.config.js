@@ -187,9 +187,6 @@ export default defineConfig({
             if (id.includes("elasticsearch") || id.includes("elastic")) {
               return "vendor-elastic";
             }
-            if (id.includes("@sentry")) {
-              return "vendor-sentry";
-            }
             if (id.includes("lodash") || id.includes("underscore")) {
               return "vendor-lodash";
             }

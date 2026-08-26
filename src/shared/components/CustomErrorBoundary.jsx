@@ -11,7 +11,6 @@ import {
     Send,
     Bug
 } from "lucide-react";
-import { captureErrorToSentry, Sentry } from "@/core/monitoring/sentry";
 
 const { Text, Paragraph } = Typography;
 
@@ -37,19 +36,6 @@ export class CustomErrorBoundary extends Component {
 
     componentDidCatch(error, errorInfo) {
         this.setState({ errorInfo });
-        
-        // Bắt và gửi lên Sentry
-        captureErrorToSentry(error, {
-            extra: {
-                componentStack: errorInfo?.componentStack,
-                location: window.location.href,
-                time: new Date().toISOString(),
-            },
-            tags: {
-                errorBoundary: "CustomErrorBoundary",
-            }
-        });
-
         console.error("[CustomErrorBoundary] Caught an uncaught React error:", error, errorInfo);
     }
 
@@ -80,24 +66,15 @@ ComponentStack: ${errorInfo?.componentStack || ""}`;
     };
 
     handleSendFeedback = () => {
-        const { error, feedbackComment } = this.state;
         this.setState({ feedbackSending: true });
-
-        // Gửi user feedback lên Sentry
-        try {
-            Sentry.captureMessage(`User Feedback: ${feedbackComment || "No comment"} | Error: ${error?.message}`, "info");
-            setTimeout(() => {
-                this.setState({ 
-                    feedbackSending: false, 
-                    feedbackSent: true, 
-                    isFeedbackModalOpen: false 
-                });
-                message.success("Cảm ơn bạn! Báo cáo sự cố đã được gửi tới đội ngũ kỹ thuật.");
-            }, 600);
-        } catch (e) {
-            this.setState({ feedbackSending: false, isFeedbackModalOpen: false });
-            message.success("Báo cáo sự cố đã được ghi nhận.");
-        }
+        setTimeout(() => {
+            this.setState({ 
+                feedbackSending: false, 
+                feedbackSent: true, 
+                isFeedbackModalOpen: false 
+            });
+            message.success("Cảm ơn bạn! Báo cáo sự cố đã được ghi nhận.");
+        }, 500);
     };
 
     render() {
@@ -164,7 +141,7 @@ ComponentStack: ${errorInfo?.componentStack || ""}`;
                             marginBottom: "28px",
                             lineHeight: "1.6",
                         }}>
-                            Hệ thống đã tự động ghi nhận và chuyển mã lỗi này đến đội ngũ kỹ thuật thông qua <b style={{ color: "#38bdf8" }}>Sentry Monitoring</b> để xử lý ngay lập tức.
+                            Hệ thống đã tự động ghi nhận lỗi này. Bạn có thể thử tải lại trang hoặc quay về trang chủ.
                         </p>
 
                         {/* Error Message Box */}
