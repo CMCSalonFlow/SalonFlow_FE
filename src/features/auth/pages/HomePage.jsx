@@ -73,6 +73,29 @@ export default function HomePage() {
     const isLogin = !!token;
 
     useEffect(() => {
+        if (isLogin) {
+            const rolesStr = localStorage.getItem("roles");
+            if (rolesStr) {
+                const roles = JSON.parse(rolesStr).map(r => String(r).toUpperCase());
+                if (roles.includes(ROLES.SUPER_ADMIN) || roles.includes(ROLES.ADMIN)) {
+                    navigate("/admin", { replace: true });
+                    return;
+                }
+                if (roles.includes(ROLES.SALON_OWNER)) {
+                    navigate("/owner", { replace: true });
+                    return;
+                }
+                if (roles.includes(ROLES.MANAGER) || roles.includes(ROLES.BRANCH_MANAGER)) {
+                    navigate("/manager/walk-in", { replace: true });
+                    return;
+                }
+                if (roles.includes(ROLES.STAFF)) {
+                    navigate("/staff/schedule", { replace: true });
+                    return;
+                }
+            }
+        }
+
         if (!isLogin) {
             // Tải danh sách chi nhánh công khai nếu chưa đăng nhập
             api.get("/api/v1/branches")
