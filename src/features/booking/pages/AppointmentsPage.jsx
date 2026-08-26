@@ -34,7 +34,6 @@ import {
     getBookingsByBranchApi,
     cancelBookingApi
 } from "../api/bookingApi";
-import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { getInvoiceUrl } from "@/features/media/api/mediaApi";
 
 const { Title, Text } = Typography;
@@ -205,7 +204,7 @@ export default function AppointmentsPage() {
     const getStatusDescription = (booking) => {
         switch (booking?.status) {
             case "PENDING":
-                return "Lịch hẹn đã được khóa giữ chỗ thành công trên hệ thống. Trạng thái 'Đang chờ' này có nghĩa là hệ thống đang chờ bạn hoàn tất thanh toán tiền cọc VNPay (nếu đặt trực tuyến) hoặc đang chờ cửa hàng xác nhận và duyệt lịch hẹn của bạn (nếu chọn thanh toán tại quầy).";
+                return "Lịch hẹn đã được khóa giữ chỗ thành công trên hệ thống. Trạng thái 'Đang chờ' này có nghĩa là hệ thống đang chờ cửa hàng xác nhận và duyệt lịch hẹn của bạn.";
             case "CONFIRMED":
                 return "Lịch hẹn của bạn đã được xác nhận thành công và sẵn sàng để phục vụ. Vui lòng đến đúng giờ hẹn đã chọn.";
             case "COMPLETED":
@@ -237,37 +236,6 @@ export default function AppointmentsPage() {
     };
     
 
-    const handlePayNow = async (booking) => {
-        try {
-            message.loading({ content: "Đang chuyển hướng sang cổng thanh toán VNPay...", key: "payment_redirect" });
-            
-            const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-            const returnUrl = window.location.origin + "/payment/callback";
-            const amount = Number(booking.depositAmount || booking.payableAmount || 0);
-
-            if (!amount || amount <= 0) {
-                message.warning("Không tìm thấy tiền cọc để thanh toán.");
-                return;
-            }
-            
-            const paymentPayload = {
-                bookingId: booking.id,
-                paymentMethod: "VNPAY",
-                amount,
-                idempotencyKey: idempotencyKey,
-                returnUrl: returnUrl
-            };
-            
-            const paymentRes = await createPaymentUrlApi(paymentPayload);
-            if (paymentRes.paymentUrl) {
-                window.location.href = paymentRes.paymentUrl;
-            } else {
-                throw new Error("Không thể tạo liên kết thanh toán VNPay.");
-            }
-        } catch (error) {
-            message.error({ content: error.message || "Lỗi khi tạo liên kết thanh toán.", key: "payment_redirect" });
-        }
-    };
 
     const handleCancelBooking = (bookingId) => {
 
@@ -529,16 +497,7 @@ export default function AppointmentsPage() {
                 afterClose={() => setSelectedBooking(null)}
                 onCancel={() => setIsDetailModalOpen(false)}
                 footer={[
-                    selectedBooking?.status === "PENDING" && (
-                        <Button
-                            key="pay"
-                            type="primary"
-                            style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
-                            onClick={() => handlePayNow(selectedBooking)}
-                        >
-                            Thanh toán tiền cọc qua VNPay
-                        </Button>
-                    ),
+
                     selectedBooking?.status === "COMPLETED" && (
                         <Button
                             key="invoice"

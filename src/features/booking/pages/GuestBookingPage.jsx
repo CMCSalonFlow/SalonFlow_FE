@@ -29,7 +29,7 @@ export default function GuestBookingPage() {
 
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState("VNPAY");
+    const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
 
     const [salons, setSalons] = useState([]);
     const [selectedSalonId, setSelectedSalonId] = useState(null);

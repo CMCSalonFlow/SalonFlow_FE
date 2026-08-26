@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { message } from "antd";
-import { getActiveSubscriptionApi, createStripeCheckoutApi, createCustomerPortalApi } from "../api/subscriptionApi";
+import { getActiveSubscriptionApi, createStripeCheckoutApi, createCustomerPortalApi, cancelMySubscriptionApi } from "../api/subscriptionApi";
 import SubscriptionLimitModal from "../components/SubscriptionLimitModal";
 import { hasRole } from "@/core/utils/auth";
 import ROLES from "@/core/constants/roles";
@@ -105,6 +105,22 @@ export const SubscriptionProvider = ({ children }) => {
             });
         }
     };
+    const cancelSubscription = async () => {
+        try {
+            message.loading({ content: "Đang hủy gói dịch vụ...", key: "cancel_sub" });
+            const data = await cancelMySubscriptionApi();
+            setActiveSubscription(data);
+            message.success({ content: "Đã hủy gói dịch vụ thành công! Tài khoản đã về gói FREE.", key: "cancel_sub" });
+            return true;
+        } catch (error) {
+            console.error("Hủy gói dịch vụ lỗi:", error);
+            message.error({ 
+                content: error.response?.data?.message || "Hủy gói dịch vụ thất bại!", 
+                key: "cancel_sub" 
+            });
+            return false;
+        }
+    };
 
     const features = activeSubscription?.features || DEFAULT_FEATURES;
     const isPro = activeSubscription?.plan === "PRO";
@@ -121,7 +137,8 @@ export const SubscriptionProvider = ({ children }) => {
                 refetchSubscription,
                 openLimitModal,
                 checkout,
-                openPortal
+                openPortal,
+                cancelSubscription
             }}
         >
             {children}

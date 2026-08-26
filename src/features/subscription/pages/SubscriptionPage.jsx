@@ -1,27 +1,74 @@
 import React, { useEffect, useState } from "react";
-import { Card, Row, Col, Typography, Button, Space, Table, Tag, Segmented, Spin, Badge, Divider, Modal } from "antd";
-import { 
-    CrownOutlined, 
-    CheckCircleOutlined, 
-    HistoryOutlined, 
-    TransactionOutlined, 
-    CreditCardOutlined, 
-    FileTextOutlined, 
+import { Card, Row, Col, Typography, Button, Space, Table, Tag, Segmented, Spin, Badge, Divider, Modal, Alert, message } from "antd";
+import {
+    CrownOutlined,
+    CheckCircleOutlined,
+    HistoryOutlined,
+    TransactionOutlined,
+    CreditCardOutlined,
+    FileTextOutlined,
     RocketOutlined,
     LockOutlined,
     PhoneOutlined
 } from "@ant-design/icons";
 import { useSubscription } from "../hooks/useSubscription";
-import { getSubscriptionHistoryApi } from "../api/subscriptionApi";
+import {
+    getSubscriptionHistoryApi,
+    getActiveSubscriptionApi,
+    createVietQrSubscriptionCheckoutApi,
+    confirmSubscriptionBankTransferApi
+} from "../api/subscriptionApi";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function SubscriptionPage() {
-    const { subscription, loading: subLoading, checkout, openPortal } = useSubscription();
+    const { subscription, loading: subLoading, checkout, openPortal, cancelSubscription, refetchSubscription } = useSubscription();
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [billingCycle, setBillingCycle] = useState("MONTHLY"); // MONTHLY or YEARLY
     const [contactModalOpen, setContactModalOpen] = useState(false);
+    const [manageModalOpen, setManageModalOpen] = useState(false);
+    const [vietQrModalOpen, setVietQrModalOpen] = useState(false);
+    const [vietQrData, setVietQrData] = useState(null);
+    const [confirmingBank, setConfirmingBank] = useState(false);
+
+    const handleOpenVietQrModal = async (plan = "PRO", cycle = billingCycle) => {
+        try {
+            message.loading({ content: "Đang tạo mã VietQR...", key: "vietqr_create" });
+            const successUrl = `${window.location.origin}/owner/subscription/success`;
+            const cancelUrl = `${window.location.origin}/owner/subscription/cancel`;
+            const res = await createVietQrSubscriptionCheckoutApi({
+                plan,
+                billingCycle: cycle,
+                successUrl,
+                cancelUrl
+            });
+            message.destroy("vietqr_create");
+            if (res?.id) {
+                const amount = res.price || (cycle === "YEARLY" ? 4788000 : 499000);
+                const bankCode = "MBBank";
+                const accountNo = "0001247370390";
+                const accountName = "NGUYEN TRUNG DUC";
+                const transferContent = `SF SUB${res.id}`;
+                const encodedAccountName = encodeURIComponent(accountName);
+                const encodedMemo = encodeURIComponent(transferContent);
+                const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodedMemo}&accountName=${encodedAccountName}`;
+
+                setVietQrData({
+                    subId: res.id,
+                    amount: amount,
+                    content: transferContent,
+                    accountNo: accountNo,
+                    accountName: accountName,
+                    qrUrl: qrUrl
+                });
+                setVietQrModalOpen(true);
+            }
+        } catch (err) {
+            message.destroy("vietqr_create");
+            message.error(err.response?.data?.message || "Tạo mã VietQR thất bại");
+        }
+    };
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -37,7 +84,28 @@ export default function SubscriptionPage() {
         };
 
         fetchHistory();
-    }, [subscription]);
+    }, [subscription?.id, subscription?.status]);
+
+    // Tự động kiểm tra (auto polling 3s/lần) khi mở Modal VietQR
+    useEffect(() => {
+        if (!vietQrModalOpen || !vietQrData?.subId) return;
+
+        const interval = setInterval(async () => {
+            try {
+                const currentSub = await getActiveSubscriptionApi();
+                if (currentSub && currentSub.id === vietQrData.subId && currentSub.status === "ACTIVE") {
+                    clearInterval(interval);
+                    message.success("Thanh toán chuyển khoản thành công! Gói dịch vụ đã được kích hoạt tự động.");
+                    setVietQrModalOpen(false);
+                    refetchSubscription();
+                }
+            } catch (err) {
+                console.error("Lỗi tự động kiểm tra thanh toán:", err);
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [vietQrModalOpen, vietQrData?.subId, refetchSubscription]);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);
@@ -148,15 +216,15 @@ export default function SubscriptionPage() {
             </div>
 
             {/* Current Active Plan Card */}
-            <Card 
-                style={{ 
-                    borderRadius: 20, 
+            <Card
+                style={{
+                    borderRadius: 20,
                     marginBottom: 32,
-                    background: currentPlan === "ENTERPRISE" 
-                        ? "linear-gradient(135deg, #141414, #262626)" 
-                        : currentPlan === "PRO" 
-                        ? "linear-gradient(135deg, #096dd9, #1d39c4)" 
-                        : "linear-gradient(135deg, #595959, #8c8c8c)",
+                    background: currentPlan === "ENTERPRISE"
+                        ? "linear-gradient(135deg, #141414, #262626)"
+                        : currentPlan === "PRO"
+                            ? "linear-gradient(135deg, #096dd9, #1d39c4)"
+                            : "linear-gradient(135deg, #595959, #8c8c8c)",
                     color: "#fff",
                     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
                     border: "none"
@@ -172,7 +240,7 @@ export default function SubscriptionPage() {
                                 </Text>
                             </Space>
                             <Title level={1} style={{ margin: 0, color: "#fff", display: "flex", alignItems: "center", gap: 12 }}>
-                                Gói {currentPlan} 
+                                Gói {currentPlan}
                                 <Tag color={currentPlan === "ENTERPRISE" ? "gold" : currentPlan === "PRO" ? "blue" : "default"}>
                                     {getStatusText(currentStatus)}
                                 </Tag>
@@ -192,13 +260,13 @@ export default function SubscriptionPage() {
                     </Col>
                     <Col xs={24} md={8} style={{ textAlign: "right" }}>
                         <Space direction="vertical" size={12} style={{ width: "100%" }}>
-                            {currentPlan !== "FREE" && subscription?.stripeSubscriptionId && (
-                                <Button 
-                                    type="primary" 
+                            {currentPlan !== "FREE" && (
+                                <Button
+                                    type="primary"
                                     size="large"
                                     icon={<CreditCardOutlined />}
-                                    onClick={openPortal}
-                                    style={{ 
+                                    onClick={() => setManageModalOpen(true)}
+                                    style={{
                                         borderRadius: 8,
                                         background: "rgba(255, 255, 255, 0.2)",
                                         borderColor: "rgba(255, 255, 255, 0.3)",
@@ -222,7 +290,7 @@ export default function SubscriptionPage() {
             <div style={{ textAlign: "center", marginBottom: 32 }}>
                 <Title level={3}>Bảng Giá Dịch Vụ Nâng Cấp</Title>
                 <Paragraph type="secondary">Lựa chọn gói dịch vụ phù hợp nhất để bứt phá hiệu quả kinh doanh cho Salon của bạn.</Paragraph>
-                
+
                 <Segmented
                     size="large"
                     options={[
@@ -239,12 +307,12 @@ export default function SubscriptionPage() {
             <Row gutter={[24, 24]} style={{ marginBottom: 48 }}>
                 {/* FREE Plan Card */}
                 <Col xs={24} md={8}>
-                    <Card 
+                    <Card
                         hoverable
-                        style={{ 
-                            borderRadius: 16, 
-                            height: "100%", 
-                            display: "flex", 
+                        style={{
+                            borderRadius: 16,
+                            height: "100%",
+                            display: "flex",
                             flexDirection: "column",
                             border: currentPlan === "FREE" ? "2px solid #8c8c8c" : "1px solid #f0f0f0",
                             boxShadow: "0 4px 15px rgba(0,0,0,0.02)"
@@ -265,9 +333,9 @@ export default function SubscriptionPage() {
                                 <div><LockOutlined style={{ color: "#bfbfbf", marginRight: 8 }} /> <Text type="secondary">Tính năng thông minh AI</Text></div>
                             </Space>
                         </div>
-                        <Button 
-                            disabled 
-                            size="large" 
+                        <Button
+                            disabled
+                            size="large"
                             style={{ width: "100%", borderRadius: 8 }}
                         >
                             {currentPlan === "FREE" ? "Đang sử dụng" : "Mặc định"}
@@ -277,12 +345,12 @@ export default function SubscriptionPage() {
 
                 {/* PRO Plan Card */}
                 <Col xs={24} md={8}>
-                    <Card 
+                    <Card
                         hoverable
-                        style={{ 
-                            borderRadius: 16, 
-                            height: "100%", 
-                            display: "flex", 
+                        style={{
+                            borderRadius: 16,
+                            height: "100%",
+                            display: "flex",
                             flexDirection: "column",
                             border: currentPlan === "PRO" ? "2px solid #1890ff" : "1px solid #f0f0f0",
                             boxShadow: "0 8px 25px rgba(24, 144, 255, 0.08)",
@@ -328,13 +396,13 @@ export default function SubscriptionPage() {
                             </Space>
                         </div>
                         {currentPlan === "FREE" ? (
-                            <Button 
-                                type="primary" 
-                                size="large" 
-                                icon={<CreditCardOutlined />}
-                                onClick={() => checkout("PRO", billingCycle)}
-                                style={{ 
-                                    width: "100%", 
+                            <Button
+                                type="primary"
+                                size="large"
+                                icon={<TransactionOutlined />}
+                                onClick={() => handleOpenVietQrModal("PRO", billingCycle)}
+                                style={{
+                                    width: "100%",
                                     borderRadius: 8,
                                     background: "linear-gradient(135deg, #1890ff, #096dd9)",
                                     border: "none",
@@ -344,19 +412,19 @@ export default function SubscriptionPage() {
                                 Nâng Cấp Lên PRO
                             </Button>
                         ) : currentPlan === "PRO" ? (
-                            <Button 
-                                type="primary" 
-                                ghost 
-                                size="large" 
-                                onClick={openPortal}
+                            <Button
+                                type="primary"
+                                ghost
+                                size="large"
+                                onClick={() => setManageModalOpen(true)}
                                 style={{ width: "100%", borderRadius: 8 }}
                             >
-                                Quản lý thanh toán
+                                Quản lý thanh toán & Hủy gói
                             </Button>
                         ) : (
-                            <Button 
-                                disabled 
-                                size="large" 
+                            <Button
+                                disabled
+                                size="large"
                                 style={{ width: "100%", borderRadius: 8 }}
                             >
                                 Đã mở khóa ở gói cao hơn
@@ -367,12 +435,12 @@ export default function SubscriptionPage() {
 
                 {/* ENTERPRISE Plan Card */}
                 <Col xs={24} md={8}>
-                    <Card 
+                    <Card
                         hoverable
-                        style={{ 
-                            borderRadius: 16, 
-                            height: "100%", 
-                            display: "flex", 
+                        style={{
+                            borderRadius: 16,
+                            height: "100%",
+                            display: "flex",
                             flexDirection: "column",
                             border: currentPlan === "ENTERPRISE" ? "2px solid #faad14" : "1px solid #f0f0f0",
                             boxShadow: "0 8px 25px rgba(250, 173, 20, 0.08)"
@@ -397,13 +465,13 @@ export default function SubscriptionPage() {
                             </Space>
                         </div>
                         {currentPlan !== "ENTERPRISE" ? (
-                            <Button 
-                                type="primary" 
-                                size="large" 
+                            <Button
+                                type="primary"
+                                size="large"
                                 icon={<PhoneOutlined />}
                                 onClick={() => setContactModalOpen(true)}
-                                style={{ 
-                                    width: "100%", 
+                                style={{
+                                    width: "100%",
                                     borderRadius: 8,
                                     background: "linear-gradient(135deg, #faad14, #d48806)",
                                     border: "none",
@@ -413,9 +481,9 @@ export default function SubscriptionPage() {
                                 Liên Hệ Kích Hoạt
                             </Button>
                         ) : (
-                            <Button 
-                                disabled 
-                                size="large" 
+                            <Button
+                                disabled
+                                size="large"
                                 style={{ width: "100%", borderRadius: 8 }}
                             >
                                 Đang sử dụng
@@ -426,7 +494,7 @@ export default function SubscriptionPage() {
             </Row>
 
             {/* History Table Card */}
-            <Card 
+            <Card
                 title={
                     <Space>
                         <TransactionOutlined style={{ color: "#4f46e5" }} />
@@ -446,6 +514,142 @@ export default function SubscriptionPage() {
                     }}
                 />
             </Card>
+
+            {/* Manage Subscription & Direct Cancellation Modal */}
+            <Modal
+                title={
+                    <Space>
+                        <CreditCardOutlined style={{ color: "#1890ff" }} />
+                        <span>Quản Lý Hóa Đơn & Hủy Gói Dịch Vụ</span>
+                    </Space>
+                }
+                open={manageModalOpen}
+                onCancel={() => setManageModalOpen(false)}
+                footer={null}
+                centered
+            >
+                <div style={{ padding: "12px 0" }}>
+                    <Alert
+                        message={`Gói dịch vụ hiện tại: ${currentPlan}`}
+                        description={`Hiệu lực: từ ${new Date(subscription?.startDate).toLocaleDateString("vi-VN")} đến ${new Date(subscription?.endDate).toLocaleDateString("vi-VN")}`}
+                        type="info"
+                        showIcon
+                        style={{ marginBottom: 20 }}
+                    />
+
+                    <Paragraph>
+                        Bạn có thể hủy gói dịch vụ trực tiếp ngay trên ứng dụng để quay về gói FREE (Miễn phí).
+                    </Paragraph>
+
+                    <Button
+                        type="primary"
+                        danger
+                        block
+                        size="large"
+                        onClick={async () => {
+                            Modal.confirm({
+                                title: "Xác nhận hủy gói dịch vụ?",
+                                content: "Khi hủy gói, salon của bạn sẽ ngay lập tức trở về gói FREE mặc định.",
+                                okText: "Hủy Gói Ngay",
+                                okType: "danger",
+                                cancelText: "Quay Lại",
+                                onOk: async () => {
+                                    const ok = await cancelSubscription();
+                                    if (ok) {
+                                        setManageModalOpen(false);
+                                        refetchSubscription();
+                                    }
+                                }
+                            });
+                        }}
+                    >
+                        ❌ Hủy Gói Dịch Vụ Ngay (Trở về gói FREE)
+                    </Button>
+                </div>
+            </Modal>
+
+            {/* VietQR Payment Modal */}
+            <Modal
+                title="Thanh Toán Chuyển Khoản VietQR"
+                open={vietQrModalOpen}
+                onCancel={() => setVietQrModalOpen(false)}
+                footer={[
+                    <Button key="close" onClick={() => setVietQrModalOpen(false)}>
+                        Đóng
+                    </Button>,
+                    <Button
+                        key="confirm"
+                        type="primary"
+                        loading={confirmingBank}
+                        style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+                        onClick={async () => {
+                            if (!vietQrData?.subId) return;
+                            setConfirmingBank(true);
+                            try {
+                                await confirmSubscriptionBankTransferApi(vietQrData.subId);
+                                message.success("Kích hoạt gói dịch vụ thành công!");
+                                setVietQrModalOpen(false);
+                                refetchSubscription();
+                            } catch (err) {
+                                message.error(err.response?.data?.message || "Kích hoạt thất bại. Vui lòng thử lại!");
+                            } finally {
+                                setConfirmingBank(false);
+                            }
+                        }}
+                    >
+                        Tôi Đã Chuyển Khoản Thành Công
+                    </Button>
+                ]}
+                centered
+                width={480}
+            >
+                {vietQrData && (
+                    <div style={{ textAlign: "center", padding: "12px 0" }}>
+                        <div style={{
+                            background: "#ffffff",
+                            padding: 12,
+                            borderRadius: 16,
+                            display: "inline-block",
+                            boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+                            border: "1px solid #f0f0f0"
+                        }}>
+                            <img
+                                src={vietQrData.qrUrl}
+                                alt="VietQR Payment Code"
+                                style={{ width: "100%", maxWidth: 260, height: "auto", display: "block" }}
+                            />
+                            <div style={{ marginTop: 8, display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}>
+                                <Tag color="blue" style={{ fontSize: 10, margin: 0, fontWeight: 600 }}>napas 247</Tag>
+                                <Tag color="orange" style={{ fontSize: 10, margin: 0, fontWeight: 600 }}>VietQR</Tag>
+                            </div>
+                        </div>
+                        <Text style={{ color: "#8c8c8c", fontSize: 12, display: "block", marginTop: 8 }}>
+                            Sử dụng App Ngân hàng hoặc Ví điện tử để quét mã
+                        </Text>
+
+                        <div style={{ marginTop: 16, textAlign: "left", background: "#f8fafc", padding: 16, borderRadius: 12, border: "1px solid #e2e8f0" }}>
+                            <Row gutter={[8, 10]}>
+                                <Col span={10}><Text type="secondary">Ngân hàng:</Text></Col>
+                                <Col span={14}><Text strong>MB Bank (Ngân Hàng Quân Đội)</Text></Col>
+                                <Col span={10}><Text type="secondary">Số tài khoản:</Text></Col>
+                                <Col span={14}><Text strong copyable={{ text: vietQrData.accountNo }} style={{ color: "#1890ff", fontSize: 15 }}>{vietQrData.accountNo}</Text></Col>
+                                <Col span={10}><Text type="secondary">Chủ tài khoản:</Text></Col>
+                                <Col span={14}><Text strong>{vietQrData.accountName}</Text></Col>
+                                <Col span={10}><Text type="secondary">Số tiền thanh toán:</Text></Col>
+                                <Col span={14}><Text strong style={{ color: "#52c41a", fontSize: 18 }}>{formatPrice(vietQrData.amount)}</Text></Col>
+                                <Col span={10}><Text type="secondary">Nội dung chuyển khoản:</Text></Col>
+                                <Col span={14}><Text strong style={{ color: "#d46b08", fontSize: 16 }} copyable={{ text: vietQrData.content }}>{vietQrData.content}</Text></Col>
+                            </Row>
+                        </div>
+                        <Alert
+                            message="Hệ thống sẽ tự động kích hoạt gói cước ngay khi nhận được thanh toán từ Ngân hàng (SePay Webhook). Bạn cũng có thể bấm 'Tôi Đã Chuyển Khoản Thành Công' bên dưới."
+                            type="info"
+                            showIcon
+                            style={{ marginTop: 16, textAlign: "left", fontSize: 13 }}
+                        />
+                    </div>
+                )}
+            </Modal>
 
             {/* Contact Enterprise Modal */}
             <Modal

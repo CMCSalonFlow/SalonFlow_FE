@@ -30,13 +30,33 @@ export const createStripeCheckoutApi = async (payload) => {
     return res.data;
 };
 
-/**
- * Tạo phiên quản lý hóa đơn/hủy gói (Stripe Customer Portal)
- * @param {string} returnUrl URL quay lại sau khi thoát Portal
- */
 export const createCustomerPortalApi = async (returnUrl) => {
     const url = `${ENDPOINTS.SUBSCRIPTION_PORTAL}?returnUrl=${encodeURIComponent(returnUrl)}`;
     const res = await api.post(url);
+    return res.data;
+};
+
+/**
+ * Hủy gói dịch vụ hiện tại (Dành cho Salon Owner)
+ */
+export const cancelMySubscriptionApi = async () => {
+    const res = await api.post("/api/v1/subscriptions/cancel");
+    return res.data;
+};
+
+/**
+ * Tạo yêu cầu thanh toán chuyển khoản VietQR cho Gói dịch vụ
+ */
+export const createVietQrSubscriptionCheckoutApi = async (payload) => {
+    const res = await api.post("/api/v1/subscriptions/vietqr-checkout", payload);
+    return res.data;
+};
+
+/**
+ * Xác nhận đã chuyển khoản ngân hàng gói dịch vụ
+ */
+export const confirmSubscriptionBankTransferApi = async (id) => {
+    const res = await api.post(`/api/v1/subscriptions/${id}/confirm-bank-transfer`);
     return res.data;
 };
 

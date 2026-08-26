@@ -65,7 +65,6 @@ const AdminSubscriptionPage = lazy(() => import("@/features/subscription/pages/A
 const BookingPage = lazy(() => import("@/features/booking/pages/BookingPage"));
 const GuestBookingPage = lazy(() => import("@/features/booking/pages/GuestBookingPage"));
 const AppointmentsPage = lazy(() => import("@/features/booking/pages/AppointmentsPage"));
-const PaymentCallbackPage = lazy(() => import("@/features/payment/pages/PaymentCallbackPage"));
 const ProfilePage = lazy(() => import("@/features/user/pages/ProfilePage"));
 const CustomerNotificationsPage = lazy(() => import("@/features/notification/pages/CustomerNotificationsPage"));
 const HairStyleAiPage = lazy(() => import("@/features/hair-ai/pages/HairStyleAiPage"));
@@ -384,10 +383,6 @@ const router = createBrowserRouter([
             {
                 path: "booking/pay-at-counter-success",
                 element: withSuspense(PayAtCounterSuccessPage)
-            },
-            {
-                path: "payment/callback",
-                element: withSuspense(PaymentCallbackPage)
             },
         ]
     },
