@@ -1,11 +1,246 @@
+@import './owner-portal.css';
+@import './home-page.css';
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-body {
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
   min-width: 320px;
   min-height: 100vh;
   font-family: Arial, Helvetica, sans-serif;
+  background-color: #f8fafc;
+}
+
+/* Ant Design Table Mobile Responsiveness */
+@media (max-width: 992px) {
+  .ant-table {
+    width: 100% !important;
+  }
+  .ant-table-container {
+    overflow-x: auto !important;
+  }
+  .ant-table-content {
+    overflow-x: auto !important;
+  }
+  /* Force minimum width on table structure to allow clean horizontal scrolling */
+  .ant-table-content table,
+  .ant-table-container table,
+  .ant-table table {
+    min-width: 750px !important;
+    table-layout: auto !important;
+  }
+  /* Prevent cell content wrapping & overlapping text */
+  .ant-table-cell {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}
+
+/* Ant Design Card Padding Adjustment */
+@media (max-width: 576px) {
+  .ant-card-body {
+    padding: 12px !important;
+  }
+  .ant-card-head {
+    padding: 0 12px !important;
+    min-height: 40px !important;
+  }
+  .ant-card-head-title {
+    font-size: 14px !important;
+  }
+}
+
+/* Ant Design Space Wrapping on mobile and tablets */
+@media (max-width: 768px) {
+  .ant-space {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .ant-space-item {
+    margin-bottom: 4px !important;
+  }
+}
+
+/* Ant Design Form Responsiveness */
+@media (max-width: 576px) {
+  .ant-form-item {
+    flex-direction: column !important;
+    margin-bottom: 12px !important;
+  }
+  .ant-form-item-label {
+    text-align: left !important;
+    padding-bottom: 4px !important;
+  }
+  .ant-form-item-control {
+    width: 100% !important;
+  }
+  /* Force inputs and dropdowns to expand fully */
+  .ant-input-number,
+  .ant-picker,
+  .ant-select {
+    width: 100% !important;
+  }
+}
+
+/* General responsive utility scrollbar */
+.responsive-scroll-x {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Recharts responsive container adjustments on narrow viewports */
+.recharts-responsive-container {
+  width: 100% !important;
+  height: 300px !important;
+}
+
+@media (max-width: 576px) {
+  .recharts-responsive-container {
+    height: 220px !important;
+  }
+}
+
+/* ── Dark Checkout Modal Centering & Styling Overrides ── */
+.ant-modal-wrap.dark-checkout-modal {
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* Enforce hidden state for closed modals so they never block pointer clicks */
+.ant-modal-wrap-hidden,
+div.ant-modal-wrap-hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.ant-modal.dark-checkout-modal {
+  width: 92vw !important;
+  max-width: 1650px !important;
+  margin: 0 auto !important;
+}
+
+.dark-checkout-modal,
+.dark-checkout-modal * {
+  --ant-color-bg-elevated: #111827 !important;
+  --ant-color-bg-container: #111827 !important;
+}
+
+.dark-checkout-modal .ant-modal-content,
+.ant-modal.dark-checkout-modal .ant-modal-content,
+.ant-modal-wrap .dark-checkout-modal .ant-modal-content,
+.ant-modal-root .dark-checkout-modal .ant-modal-content,
+div.dark-checkout-modal .ant-modal-content,
+.dark-checkout-modal .ant-modal-body,
+.ant-modal.dark-checkout-modal .ant-modal-body {
+  background-color: #111827 !important;
+  background: #111827 !important;
+  padding: 0 !important;
+  border-radius: 16px !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85) !important;
+}
+
+.dark-checkout-modal .ant-modal-header {
+  background-color: #111827 !important;
+  border-bottom: none !important;
+}
+
+.dark-checkout-modal .ant-modal-close {
+  color: #9ca3af !important;
+  top: 16px !important;
+  right: 18px !important;
+  z-index: 100 !important;
+}
+
+.dark-checkout-modal .ant-modal-close:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Remove Ant Design light bottom shadow on buttons in dark mode */
+.dark-checkout-modal .ant-btn,
+.dark-checkout-modal .ant-btn-primary,
+.dark-checkout-modal .ant-btn-default {
+  box-shadow: none !important;
+}
+
+.dark-checkout-modal .ant-btn::after,
+.dark-checkout-modal .ant-btn-primary::after {
+  display: none !important;
+}
+
+.dark-checkout-modal .ant-input-group-wrapper,
+.dark-checkout-modal .ant-space-compact {
+  box-shadow: none !important;
+}
+
+/* ── Dark Cash Modal & InputNumber Styling Overrides ── */
+.dark-checkout-modal .ant-modal.dark-cash-modal .ant-modal-content,
+.ant-modal.dark-cash-modal .ant-modal-content,
+.dark-cash-modal .ant-modal-content {
+  background-color: #111827 !important;
+  border-radius: 16px !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85) !important;
+  padding: 28px !important;
+}
+
+.dark-checkout-modal .ant-modal.dark-cash-modal .ant-modal-header,
+.ant-modal.dark-cash-modal .ant-modal-header,
+.dark-cash-modal .ant-modal-header {
+  display: none !important;
+}
+
+.dark-checkout-modal .ant-modal.dark-cash-modal .ant-modal-body,
+.ant-modal.dark-cash-modal .ant-modal-body,
+.dark-cash-modal .ant-modal-body {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.dark-cash-modal .ant-input-number,
+.dark-cash-modal .ant-input-number-affix-wrapper,
+.dark-cash-modal .ant-input-number-group-wrapper,
+.dark-cash-modal .ant-input-affix-wrapper,
+.dark-cash-modal .ant-input {
+  background-color: #111827 !important;
+  border-color: #4b5563 !important;
+  border-radius: 8px !important;
+}
+
+.dark-cash-modal .ant-input-affix-wrapper:hover,
+.dark-cash-modal .ant-input-affix-wrapper-focused {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.dark-cash-modal .ant-input-number-input,
+.dark-cash-modal input.ant-input-number-input,
+.dark-cash-modal .ant-input-number input,
+.dark-cash-modal input,
+.dark-cash-modal .ant-input-number-handler-wrap {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background-color: #111827 !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+}
+
+.dark-cash-modal .ant-input-number-group-addon {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  padding: 0 12px !important;
 }

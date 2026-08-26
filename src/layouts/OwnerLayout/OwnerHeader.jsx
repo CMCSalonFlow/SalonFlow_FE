@@ -2,29 +2,43 @@ import {
     Avatar,
     Button,
     Dropdown,
-    Space
+    Space,
+    Tag,
+    Tooltip,
+    Grid
 } from "antd";
 
 import {
     UserOutlined,
-    LogoutOutlined
+    LogoutOutlined,
+    CrownOutlined,
+    MenuOutlined
 } from "@ant-design/icons";
-
-import BranchSelector
-from "@/features/branch/components/BranchSelector";
 
 import {
     logout
 } from "@/core/utils/auth";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
+import { useNavigate } from "react-router-dom";
 
-export default function OwnerHeader() {
+export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
+    const navigate = useNavigate();
+    const screens = Grid.useBreakpoint();
+    const { subscription } = useSubscription();
+    const plan = subscription?.plan || "FREE";
 
-    const username =
-        localStorage.getItem(
-            "username"
-        );
+    const rawName = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Owner";
+    const username = rawName.includes("@")
+        ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
+        : rawName;
 
     const items = [
+        {
+            key: "subscription",
+            label: "Gói Dịch Vụ",
+            icon: <CrownOutlined style={{ color: "#faad14" }} />,
+            onClick: () => navigate("/owner/subscription")
+        },
         {
             key: "logout",
             label: "Logout",
@@ -33,54 +47,109 @@ export default function OwnerHeader() {
         }
     ];
 
+    const getPlanColor = (p) => {
+        if (p === "ENTERPRISE") return "gold";
+        if (p === "PRO") return "blue";
+        return "default";
+    };
+
     return (
         <div
             style={{
-                height: 64,
-                background: "#fff",
+                height: 68,
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "0 24px",
-                borderBottom:
-                    "1px solid #f0f0f0"
+                padding: screens.md ? "0 28px" : "0 16px",
+                width: "100%"
             }}
         >
-            <h3
-                style={{
-                    margin: 0
-                }}
-            >
-                SalonFlow Owner
-            </h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                {showMobileToggle && (
+                    <Button
+                        type="text"
+                        icon={<MenuOutlined />}
+                        onClick={onToggleMobileMenu}
+                        style={{
+                            fontSize: 18,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 10,
+                            background: "#f1f5f9"
+                        }}
+                    />
+                )}
+
+            </div>
 
             <div
                 style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 16
+                    gap: screens.md ? 14 : 8
                 }}
             >
-                <BranchSelector />
+                <Tooltip title="Xem chi tiết gói đăng ký & quyền lợi">
+                    <Tag 
+                        color={getPlanColor(plan)} 
+                        onClick={() => navigate("/owner/subscription")}
+                        style={{ 
+                            fontWeight: 700, 
+                            padding: screens.md ? "5px 14px" : "3px 8px", 
+                            borderRadius: 20, 
+                            margin: 0,
+                            cursor: "pointer",
+                            boxShadow: plan !== "FREE" ? "0 4px 12px rgba(79, 70, 229, 0.15)" : "none",
+                            fontSize: screens.md ? "12px" : "11px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4
+                        }}
+                    >
+                        <CrownOutlined /> {plan} PLAN
+                    </Tag>
+                </Tooltip>
 
                 <Dropdown
                     menu={{
                         items
                     }}
+                    placement="bottomRight"
+                    arrow
                 >
-                    <Button
-                        type="text"
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            padding: "4px 12px 4px 6px",
+                            borderRadius: 24,
+                            background: "#f8fafc",
+                            border: "1px solid #e2e8f0",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease"
+                        }}
                     >
-                        <Space>
-                            <Avatar
-                                icon={
-                                    <UserOutlined />
-                                }
-                            />
+                        <Avatar
+                            style={{
+                                background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                                color: "#fff",
+                                fontWeight: 700
+                            }}
+                            size={32}
+                            icon={<UserOutlined />}
+                        >
+                            {username?.[0]?.toUpperCase()}
+                        </Avatar>
 
-                            {username}
-                        </Space>
-                    </Button>
+                        {screens.sm && (
+                            <div style={{ lineHeight: 1.2 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{username}</div>
+                                <div style={{ fontSize: 10, color: "#64748b", fontWeight: 500 }}>Chủ Salon</div>
+                            </div>
+                        )}
+                    </div>
                 </Dropdown>
             </div>
         </div>

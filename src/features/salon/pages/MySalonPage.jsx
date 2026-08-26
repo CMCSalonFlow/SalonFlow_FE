@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
     Card, Button, Form, Input, TimePicker, Switch,
     Steps, Row, Col, Typography, Divider, Space,
-    Upload, message, Spin, List, Image, Tag, Popconfirm, Drawer
+    Upload, message, Spin, List, Image, Tag, Popconfirm, Drawer, Alert, Tooltip, Carousel
 } from "antd";
 import {
     UploadOutlined,
@@ -15,7 +15,11 @@ import {
     GlobalOutlined,
     EditOutlined,
     DeleteOutlined,
-    PlusOutlined
+    PlusOutlined,
+    StarOutlined,
+    ReloadOutlined,
+    WarningOutlined,
+    CheckCircleOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -23,10 +27,12 @@ import {
     getMySalonApi,
     createSalonApi,
     updateSalonApi,
-    deleteSalonApi
+    deleteSalonApi,
+    appealSalonApi
 } from "../api/salonApi";
 
 import { uploadMediaApi } from "@/features/media/api/mediaApi";
+import SalonReviewList from "@/features/review/components/SalonReviewList";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -40,23 +46,6 @@ const DAYS_OF_WEEK = [
     { key: 0, name: "Chủ Nhật" }
 ];
 
-const defaultHours = () =>
-    DAYS_OF_WEEK.map(d => ({
-        dayOfWeek: d.key,
-        dayName: d.name,
-        isClosed: false,
-        openTime: dayjs("09:00:00", "HH:mm:ss"),
-        closeTime: dayjs("21:00:00", "HH:mm:ss")
-    }));
-
-const mapHoursToPayload = (hours) =>
-    hours.map(h => ({
-        dayOfWeek: h.dayOfWeek,
-        isClosed: h.isClosed,
-        openTime: h.isClosed ? null : h.openTime.format("HH:mm:ss"),
-        closeTime: h.isClosed ? null : h.closeTime.format("HH:mm:ss")
-    }));
-
 export default function MySalonPage() {
     const [loading, setLoading] = useState(false);
     const [salon, setSalon] = useState(null);
@@ -64,14 +53,12 @@ export default function MySalonPage() {
     // ── Onboarding ──────────────────────────────────────────
     const [currentStep, setCurrentStep] = useState(0);
     const [onboardingForm] = Form.useForm();
-    const [onboardingHours, setOnboardingHours] = useState(defaultHours());
     // Each item: { file: File, previewUrl: string }
     const [onboardingPhotos, setOnboardingPhotos] = useState([]);
 
     // ── Edit Drawer ──────────────────────────────────────────
     const [editDrawerVisible, setEditDrawerVisible] = useState(false);
     const [editForm] = Form.useForm();
-    const [editHours, setEditHours] = useState([]);
     // Existing photos from server: { id, url, isPrimary }
     // New photos pending upload: { file: File, previewUrl: string }
     const [editExistingPhotos, setEditExistingPhotos] = useState([]);
@@ -105,13 +92,7 @@ export default function MySalonPage() {
     // ════════════════════════════════════════════════════════
     // ONBOARDING HANDLERS
     // ════════════════════════════════════════════════════════
-    const handleOnboardingHoursChange = (dayKey, field, value) => {
-        setOnboardingHours(prev =>
-            prev.map(item =>
-                item.dayOfWeek === dayKey ? { ...item, [field]: value } : item
-            )
-        );
-    };
+
 
     const handleNextStep = async () => {
         if (currentStep === 0) {
@@ -163,7 +144,6 @@ export default function MySalonPage() {
 
             const payload = {
                 ...cleanedInfo,
-                hours: mapHoursToPayload(onboardingHours),
                 logoMediaId: null,
                 photoMediaIds: uploadedPhotos.map(p => p.id)
             };
@@ -174,7 +154,6 @@ export default function MySalonPage() {
             // Reset
             setCurrentStep(0);
             onboardingForm.resetFields();
-            setOnboardingHours(defaultHours());
             setOnboardingPhotos([]);
 
             loadSalon();
@@ -202,41 +181,17 @@ export default function MySalonPage() {
         editForm.setFieldsValue({
             name: salon.name,
             description: salon.description,
-            address: salon.address,
             phone: salon.phone,
             email: salon.email,
             website: salon.website
         });
 
-        const initializedHours = DAYS_OF_WEEK.map(day => {
-            const match = salon.hours?.find(h => h.dayOfWeek === day.key);
-            return {
-                dayOfWeek: day.key,
-                dayName: day.name,
-                isClosed: match ? match.isClosed : false,
-                openTime:
-                    match?.openTime
-                        ? dayjs(match.openTime, "HH:mm:ss")
-                        : dayjs("09:00:00", "HH:mm:ss"),
-                closeTime:
-                    match?.closeTime
-                        ? dayjs(match.closeTime, "HH:mm:ss")
-                        : dayjs("21:00:00", "HH:mm:ss")
-            };
-        });
-        setEditHours(initializedHours);
         setEditExistingPhotos(salon.photos || []);
         setEditNewPhotos([]);
         setEditDrawerVisible(true);
     };
 
-    const handleEditHoursChange = (dayKey, field, value) => {
-        setEditHours(prev =>
-            prev.map(item =>
-                item.dayOfWeek === dayKey ? { ...item, [field]: value } : item
-            )
-        );
-    };
+
 
     const handleAddEditPhoto = (file) => {
         setEditNewPhotos(prev => [
@@ -246,8 +201,24 @@ export default function MySalonPage() {
         return false;
     };
 
-    const handleRemoveExistingPhoto = (id) => {
-        setEditExistingPhotos(prev => prev.filter(p => p.id !== id));
+    const handleRemoveExistingPhoto = (targetId) => {
+        setEditExistingPhotos(prev => {
+            const filtered = prev.filter(p => (p.mediaId || p.id) !== targetId);
+            return filtered.map((p, idx) => ({ ...p, isPrimary: idx === 0 }));
+        });
+    };
+
+    const handleSetPrimaryExistingPhoto = (targetId) => {
+        setEditExistingPhotos(prev => {
+            const index = prev.findIndex(p => (p.mediaId || p.id) === targetId);
+            if (index < 0) return prev;
+            const target = prev[index];
+            const others = prev.filter(p => (p.mediaId || p.id) !== targetId);
+            return [target, ...others].map((p, idx) => ({
+                ...p,
+                isPrimary: idx === 0
+            }));
+        });
     };
 
     const handleRemoveNewPhoto = (index) => {
@@ -277,9 +248,8 @@ export default function MySalonPage() {
 
             const payload = {
                 ...cleanedInfo,
-                hours: mapHoursToPayload(editHours),
                 photoMediaIds: [
-                    ...editExistingPhotos.map(p => p.id),
+                    ...editExistingPhotos.map(p => p.mediaId || p.id),
                     ...uploadedPhotos.map(p => p.id)
                 ]
             };
@@ -316,13 +286,27 @@ export default function MySalonPage() {
         }
     };
 
+    const handleAppeal = async () => {
+        setLoading(true);
+        try {
+            await appealSalonApi();
+            message.success("Đã gửi lại đơn đăng ký (Appeal) thành công! Hồ sơ đang chờ Super Admin phê duyệt.");
+            loadSalon();
+        } catch (error) {
+            console.error(error);
+            message.error(error.response?.data?.message || "Gửi đơn Appeal thất bại!");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // ════════════════════════════════════════════════════════
     // RENDER: LOADING
     // ════════════════════════════════════════════════════════
     if (loading) {
         return (
             <div style={{ textAlign: "center", padding: "100px 0" }}>
-                <Spin size="large" tip="Đang tải dữ liệu..." />
+                <Spin size="large" description="Đang tải dữ liệu..." />
             </div>
         );
     }
@@ -345,7 +329,6 @@ export default function MySalonPage() {
                         current={currentStep}
                         items={[
                             { title: "Thông tin chung" },
-                            { title: "Lịch hoạt động" },
                             { title: "Bộ sưu tập ảnh" },
                             { title: "Hoàn tất" }
                         ]}
@@ -370,15 +353,7 @@ export default function MySalonPage() {
                                         <Input.TextArea placeholder="Giới thiệu đôi nét về salon của bạn..." rows={4} />
                                     </Form.Item>
                                 </Col>
-                                <Col span={24}>
-                                    <Form.Item
-                                        name="address"
-                                        label="Địa chỉ"
-                                        rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
-                                    >
-                                        <Input placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố" size="large" />
-                                    </Form.Item>
-                                </Col>
+
                                 <Col xs={24} md={8}>
                                     <Form.Item name="phone" label="Số điện thoại">
                                         <Input placeholder="0987654321" size="large" />
@@ -407,72 +382,8 @@ export default function MySalonPage() {
                         </Form>
                     )}
 
-                    {/* STEP 1: OPERATING HOURS */}
+                    {/* STEP 1: PHOTOS — upload thực sự qua MediaAPI */}
                     {currentStep === 1 && (
-                        <div>
-                            <Title level={4} style={{ marginBottom: 20 }}>
-                                <ClockCircleOutlined style={{ marginRight: 8 }} />
-                                Thiết lập lịch làm việc trong tuần
-                            </Title>
-                            <List
-                                bordered
-                                dataSource={onboardingHours}
-                                renderItem={item => (
-                                    <List.Item style={{ padding: "16px 24px" }}>
-                                        <Row style={{ width: "100%", alignItems: "center" }} gutter={16}>
-                                            <Col xs={24} sm={8}>
-                                                <Text strong>{item.dayName}</Text>
-                                            </Col>
-                                            <Col xs={12} sm={4}>
-                                                <Switch
-                                                    checked={item.isClosed}
-                                                    onChange={(checked) =>
-                                                        handleOnboardingHoursChange(item.dayOfWeek, "isClosed", checked)
-                                                    }
-                                                    checkedChildren="Nghỉ"
-                                                    unCheckedChildren="Mở"
-                                                />
-                                            </Col>
-                                            <Col xs={12} sm={12}>
-                                                {!item.isClosed ? (
-                                                    <Space>
-                                                        <TimePicker
-                                                            value={item.openTime}
-                                                            format="HH:mm"
-                                                            onChange={(time) =>
-                                                                handleOnboardingHoursChange(item.dayOfWeek, "openTime", time)
-                                                            }
-                                                            allowClear={false}
-                                                            placeholder="Giờ mở"
-                                                        />
-                                                        <Text>-</Text>
-                                                        <TimePicker
-                                                            value={item.closeTime}
-                                                            format="HH:mm"
-                                                            onChange={(time) =>
-                                                                handleOnboardingHoursChange(item.dayOfWeek, "closeTime", time)
-                                                            }
-                                                            allowClear={false}
-                                                            placeholder="Giờ đóng"
-                                                        />
-                                                    </Space>
-                                                ) : (
-                                                    <Text type="secondary">Cửa hàng đóng cửa ngày này</Text>
-                                                )}
-                                            </Col>
-                                        </Row>
-                                    </List.Item>
-                                )}
-                            />
-                            <Space style={{ display: "flex", justifyContent: "space-between", marginTop: 30 }}>
-                                <Button size="large" onClick={handlePrevStep}>Quay lại</Button>
-                                <Button type="primary" size="large" onClick={handleNextStep}>Tiếp tục</Button>
-                            </Space>
-                        </div>
-                    )}
-
-                    {/* STEP 2: PHOTOS — upload thực sự qua MediaAPI */}
-                    {currentStep === 2 && (
                         <div>
                             <Title level={4} style={{ marginBottom: 8 }}>
                                 <PictureOutlined style={{ marginRight: 8 }} />
@@ -536,8 +447,8 @@ export default function MySalonPage() {
                         </div>
                     )}
 
-                    {/* STEP 3: CONFIRM & SUBMIT */}
-                    {currentStep === 3 && (
+                    {/* STEP 2: CONFIRM & SUBMIT */}
+                    {currentStep === 2 && (
                         <div style={{ textAlign: "center", padding: "20px 0" }}>
                             <CheckOutlined style={{ fontSize: 60, color: "#52c41a", marginBottom: 20 }} />
                             <Title level={3}>Mọi thứ đã sẵn sàng!</Title>
@@ -551,14 +462,7 @@ export default function MySalonPage() {
                                         <Text type="secondary">Tên cửa hàng:</Text>{" "}
                                         <Text strong>{onboardingForm.getFieldValue("name")}</Text>
                                     </div>
-                                    <div>
-                                        <Text type="secondary">Địa chỉ:</Text>{" "}
-                                        <Text strong>{onboardingForm.getFieldValue("address")}</Text>
-                                    </div>
-                                    <div>
-                                        <Text type="secondary">Số ngày mở cửa:</Text>{" "}
-                                        <Text strong>{onboardingHours.filter(h => !h.isClosed).length} ngày</Text>
-                                    </div>
+
                                     <div>
                                         <Text type="secondary">Số lượng ảnh:</Text>{" "}
                                         <Text strong>{onboardingPhotos.length} ảnh</Text>
@@ -592,6 +496,53 @@ export default function MySalonPage() {
 
     return (
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+            {salon.status === "PENDING" && (
+                <Alert
+                    message="Hồ sơ Salon đang chờ Super Admin phê duyệt"
+                    description="Đơn đăng ký của bạn đang được ban quản trị hệ thống kiểm tra và xét duyệt. Trong thời gian này, bạn vẫn có thể cập nhật thông tin cửa hàng."
+                    type="warning"
+                    showIcon
+                    icon={<ClockCircleOutlined />}
+                    style={{ marginBottom: 20, borderRadius: 12 }}
+                />
+            )}
+
+            {salon.status === "REJECTED" && (
+                <Alert
+                    message="Đơn đăng ký Salon bị từ chối"
+                    description={
+                        <div>
+                            <p style={{ margin: "4px 0 8px 0" }}><b>Lý do:</b> {salon.rejectionReason || "Chưa đáp ứng tiêu chuẩn hệ thống."}</p>
+                            <p style={{ margin: 0, fontSize: 13 }}>
+                                Theo quy định, bạn có thể nộp lại đơn (Appeal) sau <b>7 ngày</b> kể từ khi bị từ chối.
+                            </p>
+                            <div style={{ marginTop: 12 }}>
+                                {salon.canAppeal ? (
+                                    <Popconfirm
+                                        title="Gửi lại đơn đăng ký (Appeal)?"
+                                        description="Hồ sơ sẽ được chuyển về lại trạng thái Chờ duyệt để Super Admin xem xét."
+                                        onConfirm={handleAppeal}
+                                        okText="Gửi đơn"
+                                        cancelText="Hủy"
+                                    >
+                                        <Button type="primary" icon={<ReloadOutlined />}>
+                                            Gửi lại đơn đăng ký ngay
+                                        </Button>
+                                    </Popconfirm>
+                                ) : (
+                                    <Button disabled icon={<ClockCircleOutlined />}>
+                                        Gửi lại đơn (Còn {salon.daysUntilAppeal} ngày)
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    }
+                    type="error"
+                    showIcon
+                    style={{ marginBottom: 20, borderRadius: 12 }}
+                />
+            )}
+
             <Row gutter={[24, 24]}>
 
                 {/* SALON HERO CARD */}
@@ -606,22 +557,34 @@ export default function MySalonPage() {
                         }}
                         styles={{ body: { padding: 0 } }}
                     >
-                        <div style={{ position: "relative", height: 260, backgroundColor: "#001529" }}>
-                            {primaryPhoto && (
-                                <img
-                                    src={primaryPhoto}
-                                    alt={salon.name}
-                                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.65 }}
-                                />
+                        <div style={{ position: "relative", height: 260, backgroundColor: "#001529", overflow: "hidden" }}>
+                            {salon.photos && salon.photos.length > 0 ? (
+                                <Carousel autoplay autoplaySpeed={3500} effect="fade">
+                                    {salon.photos.map((photo, idx) => (
+                                        <div key={photo.id || photo.mediaId || idx}>
+                                            <div style={{ height: 260, width: "100%", position: "relative" }}>
+                                                <img
+                                                    src={photo.url}
+                                                    alt={`${salon.name} slide ${idx}`}
+                                                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.65 }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </Carousel>
+                            ) : (
+                                <div style={{ height: 260, backgroundColor: "#001529" }} />
                             )}
-                            <div style={{ position: "absolute", bottom: 24, left: 24, right: 24, color: "#fff" }}>
-                                <Space align="baseline">
-                                    <Title level={1} style={{ color: "#fff", margin: 0, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
+                            <div style={{ position: "absolute", bottom: 24, left: 24, right: 24, color: "#fff", zIndex: 10, pointerEvents: "none" }}>
+                                <Space align="baseline" style={{ pointerEvents: "auto" }}>
+                                    <Title level={1} style={{ color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.7)" }}>
                                         {salon.name}
                                     </Title>
-                                    <Tag color="success" style={{ marginLeft: 8 }}>Đang hoạt động</Tag>
+                                    {salon.status === "APPROVED" && <Tag color="success" style={{ marginLeft: 8 }}>ĐÃ DUYỆT / ĐANG HOẠT ĐỘNG</Tag>}
+                                    {salon.status === "PENDING" && <Tag color="warning" style={{ marginLeft: 8 }}>CHỜ SUPER ADMIN DUYỆT</Tag>}
+                                    {salon.status === "REJECTED" && <Tag color="error" style={{ marginLeft: 8 }}>BỊ TỪ CHỐI</Tag>}
                                 </Space>
-                                <Paragraph style={{ color: "rgba(255,255,255,0.85)", fontSize: 16, margin: "8px 0 0 0", maxWidth: 650 }}>
+                                <Paragraph style={{ color: "rgba(255,255,255,0.95)", fontSize: 16, margin: "8px 0 0 0", maxWidth: 650, textShadow: "0 1px 4px rgba(0,0,0,0.7)", pointerEvents: "auto" }}>
                                     {salon.description || "Chưa có mô tả nào cho salon này."}
                                 </Paragraph>
                             </div>
@@ -629,16 +592,7 @@ export default function MySalonPage() {
 
                         <div style={{ padding: 24 }}>
                             <Row gutter={[24, 16]}>
-                                <Col xs={24} sm={12} md={6}>
-                                    <Space>
-                                        <EnvironmentOutlined style={{ color: "#1890ff" }} />
-                                        <div>
-                                            <div style={{ color: "#8c8c8c", fontSize: 12 }}>Địa chỉ</div>
-                                            <Text strong>{salon.address}</Text>
-                                        </div>
-                                    </Space>
-                                </Col>
-                                <Col xs={24} sm={12} md={6}>
+                                <Col xs={24} sm={8} md={8}>
                                     <Space>
                                         <PhoneOutlined style={{ color: "#1890ff" }} />
                                         <div>
@@ -647,16 +601,16 @@ export default function MySalonPage() {
                                         </div>
                                     </Space>
                                 </Col>
-                                <Col xs={24} sm={12} md={6}>
+                                <Col xs={24} sm={8} md={8}>
                                     <Space>
                                         <MailOutlined style={{ color: "#1890ff" }} />
                                         <div>
                                             <div style={{ color: "#8c8c8c", fontSize: 12 }}>Email</div>
-                                            <Text strong>{salon.email || "Chưa cập nhật"}</Text>
+                                            <Text strong style={{ wordBreak: "break-all" }}>{salon.email || "Chưa cập nhật"}</Text>
                                         </div>
                                     </Space>
                                 </Col>
-                                <Col xs={24} sm={12} md={6}>
+                                <Col xs={24} sm={8} md={8}>
                                     <Space>
                                         <GlobalOutlined style={{ color: "#1890ff" }} />
                                         <div>
@@ -705,30 +659,15 @@ export default function MySalonPage() {
                         title={<span><ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Lịch Làm Việc</span>}
                         style={{ borderRadius: 16, height: "100%", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}
                     >
-                        <List
-                            dataSource={DAYS_OF_WEEK}
-                            renderItem={day => {
-                                const workHour = salon.hours?.find(h => h.dayOfWeek === day.key);
-                                return (
-                                    <List.Item style={{ padding: "12px 16px" }}>
-                                        <Row style={{ width: "100%" }} justify="space-between" align="middle">
-                                            <Col><Text strong>{day.name}</Text></Col>
-                                            <Col>
-                                                {workHour && !workHour.isClosed ? (
-                                                    <Space>
-                                                        <Tag color="blue">{workHour.openTime?.substring(0, 5)}</Tag>
-                                                        <Text>-</Text>
-                                                        <Tag color="blue">{workHour.closeTime?.substring(0, 5)}</Tag>
-                                                    </Space>
-                                                ) : (
-                                                    <Tag color="red">Đóng cửa</Tag>
-                                                )}
-                                            </Col>
-                                        </Row>
-                                    </List.Item>
-                                );
-                            }}
-                        />
+                        <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                            <ClockCircleOutlined style={{ fontSize: 42, color: "#8c8c8c", marginBottom: 16 }} />
+                            <Paragraph>
+                                Giờ hoạt động hiện được cấu hình riêng biệt cho từng chi nhánh.
+                            </Paragraph>
+                            <Button type="primary" href="/owner/branches">
+                                Quản lý chi nhánh
+                            </Button>
+                        </div>
                     </Card>
                 </Col>
 
@@ -766,6 +705,16 @@ export default function MySalonPage() {
                         </Row>
                     </Card>
                 </Col>
+
+                {/* REVIEWS & RATINGS */}
+                <Col span={24}>
+                    <Card
+                        title={<span><StarOutlined style={{ marginRight: 8, color: "#fa8c16" }} /> Đánh Giá & Nhận Xét Từ Khách Hàng</span>}
+                        style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}
+                    >
+                        <SalonReviewList salonId={salon.id} />
+                    </Card>
+                </Col>
             </Row>
 
             {/* ══════════════════════════════════════════════════════
@@ -800,11 +749,7 @@ export default function MySalonPage() {
                                 <Input.TextArea rows={3} />
                             </Form.Item>
                         </Col>
-                        <Col span={24}>
-                            <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}>
-                                <Input />
-                            </Form.Item>
-                        </Col>
+
                         <Col xs={24} md={8}>
                             <Form.Item name="phone" label="Điện thoại">
                                 <Input />
@@ -824,55 +769,7 @@ export default function MySalonPage() {
 
                     <Divider />
 
-                    {/* ── Lịch làm việc ── */}
-                    <Title level={5} style={{ marginBottom: 15 }}>Lịch làm việc</Title>
-                    <List
-                        size="small"
-                        bordered
-                        dataSource={editHours}
-                        renderItem={item => (
-                            <List.Item style={{ padding: "10px 15px" }}>
-                                <Row style={{ width: "100%", alignItems: "center" }} gutter={16}>
-                                    <Col xs={24} sm={8}>
-                                        <Text strong>{item.dayName}</Text>
-                                    </Col>
-                                    <Col xs={12} sm={4}>
-                                        <Switch
-                                            checked={item.isClosed}
-                                            onChange={(checked) => handleEditHoursChange(item.dayOfWeek, "isClosed", checked)}
-                                            checkedChildren="Nghỉ"
-                                            unCheckedChildren="Mở"
-                                        />
-                                    </Col>
-                                    <Col xs={12} sm={12}>
-                                        {!item.isClosed ? (
-                                            <Space size="small">
-                                                <TimePicker
-                                                    value={item.openTime}
-                                                    format="HH:mm"
-                                                    onChange={(time) => handleEditHoursChange(item.dayOfWeek, "openTime", time)}
-                                                    allowClear={false}
-                                                    size="small"
-                                                />
-                                                <Text>-</Text>
-                                                <TimePicker
-                                                    value={item.closeTime}
-                                                    format="HH:mm"
-                                                    onChange={(time) => handleEditHoursChange(item.dayOfWeek, "closeTime", time)}
-                                                    allowClear={false}
-                                                    size="small"
-                                                />
-                                            </Space>
-                                        ) : (
-                                            <Text type="secondary" style={{ fontSize: 12 }}>Đóng cửa</Text>
-                                        )}
-                                    </Col>
-                                </Row>
-                            </List.Item>
-                        )}
-                    />
 
-                    <Divider />
 
                     {/* ── Bộ sưu tập hình ảnh ── */}
                     <Title level={5} style={{ marginBottom: 8 }}>Bộ sưu tập hình ảnh</Title>
@@ -896,37 +793,60 @@ export default function MySalonPage() {
                         <>
                             <Text type="secondary" style={{ fontSize: 12 }}>Ảnh hiện có:</Text>
                             <Row gutter={[8, 8]} style={{ marginTop: 8, marginBottom: 16 }}>
-                                {editExistingPhotos.map((photo, index) => (
-                                    <Col key={photo.id} span={6}>
-                                        <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", height: 80 }}>
-                                            <img
-                                                src={photo.url}
-                                                alt={`existing-${index}`}
-                                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                            />
-                                            {photo.isPrimary && (
-                                                <Tag
-                                                    color="gold"
-                                                    style={{ position: "absolute", top: 4, left: 4, margin: 0, fontSize: 10, padding: "0 4px" }}
-                                                >
-                                                    Chính
-                                                </Tag>
-                                            )}
-                                            <Button
-                                                type="text"
-                                                danger
-                                                icon={<DeleteOutlined />}
-                                                size="small"
-                                                onClick={() => handleRemoveExistingPhoto(photo.id)}
-                                                style={{
-                                                    position: "absolute", top: 4, right: 4,
-                                                    background: "rgba(255,255,255,0.85)",
-                                                    borderRadius: 4, padding: "0 4px"
-                                                }}
-                                            />
-                                        </div>
-                                    </Col>
-                                ))}
+                                {editExistingPhotos.map((photo, index) => {
+                                    const photoId = photo.mediaId || photo.id;
+                                    return (
+                                        <Col key={photoId || index} span={6}>
+                                            <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", height: 80 }}>
+                                                <img
+                                                    src={photo.url}
+                                                    alt={`existing-${index}`}
+                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                                />
+                                                {photo.isPrimary ? (
+                                                    <Tag
+                                                        color="gold"
+                                                        style={{ position: "absolute", top: 4, left: 4, margin: 0, fontSize: 10, padding: "0 4px", zIndex: 10 }}
+                                                    >
+                                                        Chính
+                                                    </Tag>
+                                                ) : (
+                                                    <Tooltip title="Đặt làm ảnh chính">
+                                                        <Button
+                                                            type="text"
+                                                            icon={<StarOutlined style={{ color: "#faad14" }} />}
+                                                            size="small"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleSetPrimaryExistingPhoto(photoId);
+                                                            }}
+                                                            style={{
+                                                                position: "absolute", top: 4, left: 4,
+                                                                background: "rgba(255,255,255,0.9)",
+                                                                borderRadius: 4, padding: "0 4px", zIndex: 10
+                                                            }}
+                                                        />
+                                                    </Tooltip>
+                                                )}
+                                                <Button
+                                                    type="text"
+                                                    danger
+                                                    icon={<DeleteOutlined />}
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRemoveExistingPhoto(photoId);
+                                                    }}
+                                                    style={{
+                                                        position: "absolute", top: 4, right: 4,
+                                                        background: "rgba(255,255,255,0.9)",
+                                                        borderRadius: 4, padding: "0 4px", zIndex: 10
+                                                    }}
+                                                />
+                                            </div>
+                                        </Col>
+                                    );
+                                })}
                             </Row>
                         </>
                     )}

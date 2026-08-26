@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { saveAuthData } from "@/core/utils/auth";
 
 export default function OAuth2SuccessPage() {
 
@@ -23,6 +24,8 @@ export default function OAuth2SuccessPage() {
         userId,
         username:
             params.get("username"),
+        fullName:
+            params.get("fullName") || "",
         email:
             params.get("email"),
         accessToken:
@@ -34,15 +37,7 @@ export default function OAuth2SuccessPage() {
                 ?.split(",") || []
     };
 
-    console.log(
-        "Saving auth:",
-        authData
-    );
-
-    localStorage.setItem(
-        "auth",
-        JSON.stringify(authData)
-    );
+    saveAuthData(authData);
 
     navigate(
         "/home",

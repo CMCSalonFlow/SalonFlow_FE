@@ -1,23 +1,36 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { checkAuthSession, getToken, getRoles } from "../utils/auth";
 
 export default function ProtectedRoute({
     children,
     allowedRoles = [],
 }) {
 
-    const token =
-        localStorage.getItem("accessToken");
+    const location = useLocation();
 
-    const roles =
-        JSON.parse(
-            localStorage.getItem("roles") || "[]"
+    const isSessionValid = checkAuthSession();
+
+    if (!isSessionValid) {
+        return (
+            <Navigate
+                to="/login"
+                replace
+                state={{ from: `${location.pathname}${location.search}` }}
+            />
         );
+    }
+
+    const token = getToken();
+
+    const roles = getRoles();
+
 
     if (!token) {
         return (
             <Navigate
                 to="/login"
                 replace
+                state={{ from: `${location.pathname}${location.search}` }}
             />
         );
     }

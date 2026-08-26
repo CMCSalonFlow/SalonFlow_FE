@@ -1,143 +1,185 @@
-import { useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+
+import dayjs from "dayjs";
+import { message, Select, Typography, Space } from "antd";
+import { ShopOutlined, CalendarOutlined } from "@ant-design/icons";
+
+const { Text } = Typography;
 
 import "../schedule.css";
 
-import { useSchedule } from "../hooks/useSchedule";
+import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 
-import { useBookingUpdate } from "../hooks/useBookingUpdate";
+import { useScheduleData } from "../hooks/useScheduleData";
 
 import ScheduleSidebar from "../components/ScheduleSidebar";
-
 import ScheduleToolbar from "../components/ScheduleToolbar";
-
 import ScheduleCalendar from "../components/ScheduleCalendar";
-
 import BookingDetailModal from "../components/BookingDetailModal";
 
-import ConfirmMoveModal from "../components/ConfirmMoveModal";
-
 export default function SchedulePage() {
-
   const calendarRef = useRef(null);
+  const location = useLocation();
+  const isStaffPage = location.pathname.startsWith("/staff");
 
-  const { bookings, resources, loading, reload } = useSchedule();
-
-  const { updateTime } = useBookingUpdate();
-
-  // Calendar state
-
-  const [currentView, setCurrentView] = useState("timeGridWeek");
-
-  const [currentDate, setCurrentDate] = useState(new Date());
-
-  // Active resources (shown/hidden staff)
-
-  const [activeResources, setActiveResources] = useState(
-
-    () => resources.map((r) => r.id) // all active by default
-
+  const [branches, setBranches] = useState([]);
+  const [branchId, setBranchId] = useState(() =>
+    localStorage.getItem("currentBranchId")
   );
 
-  // Sync activeResources when resources load
+  const [currentView, setCurrentView] = useState("timeGridWeek");
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [visibleRange, setVisibleRange] = useState(null);
+  const visibleRangeKeyRef = useRef("");
 
-  const allResourceIds = resources.map((r) => r.id);
-
-  const effectiveActive = activeResources.length > 0
-
-    ? activeResources
-
-    : allResourceIds;
-
-  // Booking detail popup
+  const [activeResources, setActiveResources] = useState([]);
 
   const [popupOpen, setPopupOpen] = useState(false);
-
   const [selectedBooking, setSelectedBooking] = useState(null);
-
   const [anchorPos, setAnchorPos] = useState(null);
 
-  // Confirm move (drag-drop)
+  const { events, resources, systemOffDays, loading, reload } = useScheduleData(
+    branchId,
+    visibleRange
+  );
 
-  const [pendingMove, setPendingMove] = useState(null);
+  const currentUserId = String(localStorage.getItem("userId") || "");
+  const currentFullName =
+    localStorage.getItem("fullName") ||
+    JSON.parse(localStorage.getItem("user") || "{}")?.fullName ||
+    JSON.parse(localStorage.getItem("auth") || "{}")?.fullName ||
+    "";
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const staffResources = useMemo(() => {
+    if (!isStaffPage || resources.length === 0) return resources;
 
-  // ── Calendar API helpers ──────────────────────────────────
+    const matched = resources.filter(
+      (r) =>
+        String(r.id) === currentUserId ||
+        (currentFullName && r.title?.toLowerCase().includes(currentFullName.toLowerCase()))
+    );
+
+    return matched.length > 0 ? matched : resources;
+  }, [isStaffPage, resources, currentUserId, currentFullName]);
 
   const getApi = () => calendarRef.current?.getApi();
 
+  useEffect(() => {
+    let active = true;
+
+    const loadBranches = async () => {
+      try {
+        const data = await getMyBranchesApi();
+        if (!active) return;
+
+        setBranches(data || []);
+
+        const storedBranchId = localStorage.getItem("currentBranchId");
+        if (storedBranchId) {
+          setBranchId(storedBranchId);
+          return;
+        }
+
+        if (data?.length > 0) {
+          const firstBranchId = String(data[0].id);
+          localStorage.setItem("currentBranchId", firstBranchId);
+          setBranchId(firstBranchId);
+        }
+      } catch {
+        if (active) {
+          message.error("Không thể tải danh sách chi nhánh.");
+        }
+      }
+    };
+
+    loadBranches();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (resources.length === 0) {
+      setActiveResources([]);
+      return;
+    }
+
+    setActiveResources((prev) => {
+      const resourceIds = resources.map((r) => String(r.id));
+      if (prev.length === 0) {
+        return resourceIds;
+      }
+
+      const nextActive = prev.filter((id) => resourceIds.includes(String(id)));
+      return nextActive.length > 0 ? nextActive : resourceIds;
+    });
+  }, [resources]);
+
+  const branchName = useMemo(() => {
+    if (!branchId) return "";
+    return branches.find((branch) => String(branch.id) === String(branchId))?.name || "";
+  }, [branchId, branches]);
+
+  const effectiveActive = useMemo(() => {
+    if (isStaffPage) {
+      return staffResources.map((r) => String(r.id));
+    }
+    return activeResources.length > 0
+      ? activeResources
+      : resources.map((r) => String(r.id));
+  }, [isStaffPage, staffResources, activeResources, resources]);
+
   const handleToday = () => {
-
     getApi()?.today();
-
     setCurrentDate(new Date());
-
   };
 
   const handlePrev = () => {
-
     getApi()?.prev();
-
     setCurrentDate(getApi()?.getDate() || new Date());
-
   };
 
   const handleNext = () => {
-
     getApi()?.next();
-
     setCurrentDate(getApi()?.getDate() || new Date());
-
   };
 
   const handleViewChange = (view) => {
-
     setCurrentView(view);
-
     getApi()?.changeView(view);
-
   };
 
-  const handleDateChange = useCallback((date) => {
-
-    setCurrentDate(date);
-
-  }, []);
-
-  // ── Mini calendar date click ──────────────────────────────
-
-  const handleMiniDateClick = (date) => {
-
-    setCurrentDate(date);
-
-    getApi()?.gotoDate(date);
-
-    // Switch to day view when clicking a specific day
-
-    if (currentView === "timeGridWeek" || currentView === "dayGridMonth") {
-
-      handleViewChange("timeGridDay");
-
+  const handleDateChange = useCallback((start, end) => {
+    const nextKey = `${start.toISOString()}_${end.toISOString()}`;
+    if (visibleRangeKeyRef.current === nextKey) {
+      return;
     }
 
-  };
+    visibleRangeKeyRef.current = nextKey;
+    setCurrentDate(start);
+    setVisibleRange({ start, end });
+  }, []);
 
-  // ── Staff toggle ─────────────────────────────────────────
+  const handleMiniDateClick = (date) => {
+    setCurrentDate(date);
+    getApi()?.gotoDate(date);
+
+    if (currentView === "timeGridWeek" || currentView === "dayGridMonth") {
+      handleViewChange("timeGridDay");
+    }
+  };
 
   const handleToggleResource = (id) => {
-
     setActiveResources((prev) =>
-
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
-
+      prev.includes(String(id))
+        ? prev.filter((resourceId) => resourceId !== String(id))
+        : [...prev, String(id)]
     );
-
   };
 
-  // ── Event click → popup ──────────────────────────────────
-
   const handleEventClick = (info) => {
-
     info.jsEvent.stopPropagation();
 
     const rect = info.el.getBoundingClientRect();
@@ -145,223 +187,121 @@ export default function SchedulePage() {
     setAnchorPos({ x: rect.right, y: rect.top });
 
     setSelectedBooking({
-
       ...info.event.extendedProps,
-
-      title: info.event.extendedProps?.title || info.event.title,
-
+      title: info.event.extendedProps?.userName || info.event.title,
       start: info.event.start?.toISOString(),
-
       end: info.event.end?.toISOString(),
-
       id: info.event.id,
-
+      userName: info.event.extendedProps?.userName || info.event.title,
+      branchName: info.event.extendedProps?.branchName || branchName,
+      shiftDate: info.event.extendedProps?.shiftDate,
     });
 
     setPopupOpen(true);
-
   };
 
   const handleClosePopup = () => {
-
     setPopupOpen(false);
-
     setSelectedBooking(null);
-
   };
 
-  // ── Event drag-drop → confirm ────────────────────────────
-
-  const handleEventDrop = (info) => {
-
-    setPendingMove({
-
-      id: info.event.id,
-
-      start: info.event.start?.toISOString(),
-
-      end: info.event.end?.toISOString(),
-
-      resourceId:
-
-        info.event.getResources?.()[0]?.id ||
-
-        info.event.extendedProps?.resourceId,
-
-      revert: info.revert,
-
-    });
-
-    setConfirmOpen(true);
-
-  };
-
-  const handleConfirmMove = async () => {
-
-    if (!pendingMove) return;
-
-    setConfirmOpen(false);
-
-    await updateTime(
-
-      pendingMove.id,
-
-      pendingMove.start,
-
-      pendingMove.end,
-
-      pendingMove.resourceId
-
+  const filteredEvents = events.filter((event) => {
+    const resourceId = String(
+      event.resourceId || event.extendedProps?.resourceId || ""
     );
-
-    await reload();
-
-    setPendingMove(null);
-
-  };
-
-  const handleCancelMove = () => {
-
-    pendingMove?.revert?.();
-
-    setConfirmOpen(false);
-
-    setPendingMove(null);
-
-  };
-
-  // ── Filter events by active resources ────────────────────
-
-  const filteredEvents = bookings.filter((ev) => {
-
-    const resId = ev.resourceId || ev.extendedProps?.resourceId;
-
-    if (!resId) return true;
-
-    return effectiveActive.includes(resId);
-
+    if (!resourceId) return true;
+    return effectiveActive.includes(resourceId);
   });
 
-  // ── Loading state ─────────────────────────────────────────
-
-  if (loading && bookings.length === 0) {
-
+  if (loading && events.length === 0) {
     return (
-
       <div className="schedule-page-wrapper">
-
         <div className="schedule-page">
-
           <div className="schedule-loading" style={{ flex: 1 }}>
-
             <div className="loading-spinner" />
-
-            <span>Đang tải lịch hẹn...</span>
-
+            <span>Đang tải lịch làm việc...</span>
           </div>
-
         </div>
-
       </div>
-
     );
-
   }
 
   return (
-
-   <div className="schedule-page-wrapper">
-
-    <div className="schedule-page">
-
-      {/* Left Sidebar */}
-
-      <ScheduleSidebar
-
-        selectedDate={currentDate}
-
-        onDateClick={handleMiniDateClick}
-
-        resources={resources.length > 0 ? resources : []}
-
-        activeResources={effectiveActive}
-
-        onToggleResource={handleToggleResource}
-
-        onCreateNew={() => alert("Tính năng thêm lịch hẹn sẽ được phát triển!")}
-
-      />
-
-      {/* Right: Toolbar + Calendar */}
-
-      <div className="schedule-main">
-
-        <ScheduleToolbar
-
-          currentDate={currentDate}
-
-          currentView={currentView}
-
-          onToday={handleToday}
-
-          onPrev={handlePrev}
-
-          onNext={handleNext}
-
-          onViewChange={handleViewChange}
-
+    <div className="schedule-page-wrapper">
+      <div className="schedule-page">
+        <ScheduleSidebar
+          selectedDate={currentDate}
+          onDateClick={handleMiniDateClick}
+          resources={isStaffPage ? staffResources : resources}
+          activeResources={effectiveActive}
+          onToggleResource={handleToggleResource}
+          onCreateNew={reload}
+          isStaffView={isStaffPage}
         />
 
-        <ScheduleCalendar
+        <div className="schedule-main">
+          {systemOffDays && systemOffDays.length > 0 && (
+            <div style={{ padding: "8px 16px", backgroundColor: "#fffbe6", borderBottom: "1px solid #ffe58f", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <CalendarOutlined style={{ color: "#fa8c16", fontSize: 16 }} />
+              <Text strong style={{ color: "#d46b08", fontSize: 13 }}>
+                📢 Chi nhánh có lịch nghỉ lễ / đóng cửa trong khoảng thời gian này:
+              </Text>
+              {systemOffDays.map((off) => (
+                <span key={off.id} style={{ fontSize: 13, color: "#8c6b00", backgroundColor: "#fff1b8", padding: "2px 10px", borderRadius: 6, fontWeight: 600 }}>
+                  🎉 {off.title} ({dayjs(off.dateFrom).format("DD/MM/YYYY")}{off.dateFrom !== off.dateTo ? ` ➔ ${dayjs(off.dateTo).format("DD/MM/YYYY")}` : ""})
+                </span>
+              ))}
+            </div>
+          )}
 
-          ref={calendarRef}
+          <ScheduleToolbar
+            currentDate={currentDate}
+            currentView={currentView}
+            onToday={handleToday}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            onViewChange={handleViewChange}
+            branchSelect={
+              !isStaffPage && branches.length > 0 ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <ShopOutlined style={{ color: "#1890ff", fontSize: 16 }} />
+                  <Text strong style={{ fontSize: 13 }}>Chi nhánh:</Text>
+                  <Select
+                    style={{ width: 190 }}
+                    size="middle"
+                    value={branchId ? String(branchId) : undefined}
+                    onChange={(val) => {
+                      setBranchId(val);
+                      localStorage.setItem("currentBranchId", val);
+                    }}
+                    options={branches.map((b) => ({
+                      label: b.name,
+                      value: String(b.id),
+                    }))}
+                    placeholder="Chọn chi nhánh"
+                  />
+                </div>
+              ) : null
+            }
+          />
 
-          events={filteredEvents}
+          <ScheduleCalendar
+            ref={calendarRef}
+            events={filteredEvents}
+            currentView={currentView}
+            currentDate={currentDate}
+            onEventClick={handleEventClick}
+            onDateChange={handleDateChange}
+          />
+        </div>
 
-          currentView={currentView}
-
-          currentDate={currentDate}
-
-          onEventClick={handleEventClick}
-
-          onEventDrop={handleEventDrop}
-
-          onDateChange={handleDateChange}
-
+        <BookingDetailModal
+          open={popupOpen}
+          onClose={handleClosePopup}
+          booking={selectedBooking}
+          anchorPos={anchorPos}
         />
-
       </div>
-
-      {/* Booking Detail Popup */}
-
-      <BookingDetailModal
-
-        open={popupOpen}
-
-        onClose={handleClosePopup}
-
-        booking={selectedBooking}
-
-        anchorPos={anchorPos}
-
-      />
-
-      {/* Confirm move toast */}
-
-      <ConfirmMoveModal
-
-        open={confirmOpen}
-
-        onOk={handleConfirmMove}
-
-        onCancel={handleCancelMove}
-
-      />
-
     </div>
-
-    </div>
-
   );
-
 }

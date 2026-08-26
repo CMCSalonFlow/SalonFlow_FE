@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import AuthForm from "../components/AuthForm";
+import PasswordInput from "../components/PasswordInput";
 import { useAuth } from "../hooks/useAuth";
 
 export default function RegisterPage() {
@@ -97,8 +98,7 @@ export default function RegisterPage() {
                         onChange={handleChange}
                     />
 
-                    <input
-                        type="password"
+                    <PasswordInput
                         name="password"
                         placeholder="Mật khẩu (ít nhất 8 ký tự)"
                         minLength={8}

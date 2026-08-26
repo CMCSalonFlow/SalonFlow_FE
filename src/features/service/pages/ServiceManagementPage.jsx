@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Select, Tabs, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Divider, Spin } from "antd";
+import { Card, Select, Tabs, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin } from "antd";
 import { AppstoreOutlined, PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
@@ -14,10 +14,12 @@ import {
 } from "../api/serviceApi";
 import ServiceFormModal from "../components/ServiceFormModal";
 import BundleFormModal from "../components/BundleFormModal";
+import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function ServiceManagementPage() {
+    const { features } = useSubscription();
     const [loadingBranches, setLoadingBranches] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
     const [branches, setBranches] = useState([]);
@@ -43,7 +45,7 @@ export default function ServiceManagementPage() {
                 } else {
                     setLoadingBranches(false);
                 }
-            } catch (error) {
+            } catch {
                 message.error("Không thể tải danh sách chi nhánh.");
                 setLoadingBranches(false);
             }
@@ -61,7 +63,7 @@ export default function ServiceManagementPage() {
             ]);
             setServices(servicesData);
             setBundles(bundlesData);
-        } catch (error) {
+        } catch {
             message.error("Lỗi khi tải dữ liệu dịch vụ.");
         } finally {
             setLoadingData(false);
@@ -70,9 +72,39 @@ export default function ServiceManagementPage() {
     };
 
     useEffect(() => {
-        if (selectedBranchId) {
-            loadData(selectedBranchId);
-        }
+        if (!selectedBranchId) return;
+
+        let cancelled = false;
+
+        const run = async () => {
+            setLoadingData(true);
+            try {
+                const [servicesData, bundlesData] = await Promise.all([
+                    getServicesByBranchApi(selectedBranchId),
+                    getBundlesByBranchApi(selectedBranchId)
+                ]);
+
+                if (cancelled) return;
+
+                setServices(servicesData);
+                setBundles(bundlesData);
+            } catch {
+                if (!cancelled) {
+                    message.error("Lỗi khi tải dữ liệu dịch vụ.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingData(false);
+                    setLoadingBranches(false);
+                }
+            }
+        };
+
+        run();
+
+        return () => {
+            cancelled = true;
+        };
     }, [selectedBranchId]);
 
     // ── Standard Service Handlers ───────────────────────────────
@@ -339,6 +371,25 @@ export default function ServiceManagementPage() {
             </Row>
 
             <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
+                    <div>
+                        <Title level={4} style={{ marginBottom: 4 }}>Dịch vụ & Combo</Title>
+                        <Text type="secondary">Quản lý danh sách dịch vụ, combo và tạo mô tả bằng AI ngay trong form thêm/sửa.</Text>
+                    </div>
+                    <Space wrap>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => {
+                                setEditingService(null);
+                                setServiceModalVisible(true);
+                            }}
+                        >
+                            Thêm dịch vụ đơn
+                        </Button>
+                    </Space>
+                </div>
+
                 {loadingData ? (
                     <div style={{ textAlign: "center", padding: "50px 0" }}>
                         <Spin tip="Đang tải dữ liệu dịch vụ..." />
@@ -352,19 +403,6 @@ export default function ServiceManagementPage() {
                                 label: <span style={{ fontSize: 16 }}>Dịch vụ đơn lẻ</span>,
                                 children: (
                                     <div>
-                                        <div style={{ textAlign: "right", marginBottom: 16 }}>
-                                            <Button
-                                                type="primary"
-                                                icon={<PlusOutlined />}
-                                                size="large"
-                                                onClick={() => {
-                                                    setEditingService(null);
-                                                    setServiceModalVisible(true);
-                                                }}
-                                            >
-                                                Thêm dịch vụ đơn
-                                            </Button>
-                                        </div>
                                         <Table
                                             columns={serviceColumns}
                                             dataSource={services}
@@ -417,6 +455,7 @@ export default function ServiceManagementPage() {
                 }}
                 onSubmit={handleServiceSubmit}
                 initialValues={editingService}
+                enableAiDescription={features?.aiFeatures}
             />
 
             {/* Bundle Edit/Create Form Modal */}

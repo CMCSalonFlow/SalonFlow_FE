@@ -50,7 +50,6 @@ export default function SalonListPage() {
         const text = searchText.toLowerCase();
         return (
             salon.name?.toLowerCase().includes(text) ||
-            salon.address?.toLowerCase().includes(text) ||
             salon.phone?.toLowerCase().includes(text) ||
             salon.email?.toLowerCase().includes(text)
         );
@@ -80,11 +79,7 @@ export default function SalonListPage() {
             dataIndex: "email",
             render: (text) => text || <span style={{ color: "#bfbfbf", fontStyle: "italic" }}>Chưa cập nhật</span>
         },
-        {
-            title: "Địa chỉ",
-            dataIndex: "address",
-            ellipsis: true
-        },
+
         {
             title: "Website",
             dataIndex: "website",
@@ -146,9 +141,9 @@ export default function SalonListPage() {
             <SalonDetailDrawer
                 open={drawerOpen}
                 salonId={selectedSalonId}
-                onClose={() => {
-                    setDrawerOpen(false);
-                    setSelectedSalonId(null);
+                onClose={() => setDrawerOpen(false)}
+                afterOpenChange={(isOpen) => {
+                    if (!isOpen) setSelectedSalonId(null);
                 }}
             />
         </div>

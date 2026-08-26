@@ -7,8 +7,10 @@ import {
     UserOutlined,
     TeamOutlined,
     ApartmentOutlined,
+    MessageOutlined,
     ShopOutlined,
-    TagsOutlined
+    CustomerServiceOutlined,
+    CreditCardOutlined
 } from "@ant-design/icons";
 
 import {
@@ -16,7 +18,7 @@ import {
     useLocation
 } from "react-router-dom";
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ onMenuClick }) {
 
     const navigate =
         useNavigate();
@@ -27,19 +29,23 @@ export default function AdminSidebar() {
     const items = [
     {
         type: "group",
-        label: "SYSTEM",
-        children: [
-            {
-                key: "/admin",
-                icon: <DashboardOutlined />,
-                label: "Dashboard"
-            }
-        ]
-    },
-    {
-        type: "group",
         label: "MANAGEMENT",
         children: [
+            {
+                key: "/admin/salons",
+                icon: <ShopOutlined />,
+                label: "Duyệt Salon"
+            },
+            {
+                key: "/admin/subscriptions",
+                icon: <CreditCardOutlined />,
+                label: "Quản lý Gói đăng ký"
+            },
+            {
+                key: "/admin/tickets",
+                icon: <CustomerServiceOutlined />,
+                label: "Support Tickets (SLA)"
+            },
             {
                 key: "/admin/users",
                 icon: <UserOutlined />,
@@ -51,14 +57,9 @@ export default function AdminSidebar() {
                 label: "Roles"
             },
             {
-                key: "/admin/branches",
-                icon: <ApartmentOutlined />,
-                label: "Branches"
-            },
-            {
-                key: "/admin/categories",
-                icon: <TagsOutlined />,
-                label: "Categories"
+                key: "/admin/review-reports",
+                icon: <MessageOutlined />,
+                label: "Review Reports"
             }
         ]
     }
@@ -72,9 +73,10 @@ export default function AdminSidebar() {
                 location.pathname
             ]}
             items={items}
-            onClick={({ key }) =>
-                navigate(key)
-            }
+            onClick={({ key }) => {
+                navigate(key);
+                if (onMenuClick) onMenuClick();
+            }}
             style={{
                 height: "100%"
             }}

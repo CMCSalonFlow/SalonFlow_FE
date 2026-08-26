@@ -17,7 +17,7 @@ const STATUS_ICONS = {
   PENDING: "⏳",
   CANCELLED: "✕",
 };
-export default function BookingDetailModal({ open, onClose, booking, anchorPos }) {
+export default function BookingDetailModal({ open, onClose, booking, anchorPos, onCancelBooking }) {
   const popupRef = useRef(null);
   const [pos, setPos] = useState({ top: 100, left: 200 });
   useEffect(() => {
@@ -122,30 +122,48 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos }
                   ({duration()})
                 </span>
               </div>
-              <div className="popup-row-label">{formatDate(booking.start)}</div>
+              <div className="popup-row-label">
+                {formatDate(booking.start || booking.shiftDate)}
+              </div>
             </div>
           </div>
-          {/* Customer */}
+          {/* Staff */}
           <div className="popup-row">
             <span className="popup-row-icon">👤</span>
             <div className="popup-row-content">
-              <div className="popup-row-label">Khách hàng</div>
-              <div className="popup-row-value">{booking.customerName}</div>
-              {booking.phone && (
+              <div className="popup-row-label">Nhân viên</div>
+              <div className="popup-row-value">
+                {booking.userName || booking.title}
+              </div>
+              {booking.branchName && (
                 <div className="popup-row-label" style={{ marginTop: 2 }}>
-                  📞 {booking.phone}
+                  Chi nhánh: {booking.branchName}
                 </div>
               )}
             </div>
           </div>
-          {/* Status */}
+          {/* Customer */}
+          {(booking.customerName || booking.customerPhone) && (
+            <div className="popup-row">
+              <span className="popup-row-icon">📞</span>
+              <div className="popup-row-content">
+                <div className="popup-row-label">Khách hàng</div>
+                <div className="popup-row-value" style={{ fontWeight: "bold" }}>
+                  {booking.customerName || "Khách vãng lai"} {booking.customerPhone ? `(${booking.customerPhone})` : ""}
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Status & Deposit Info */}
           <div className="popup-row">
             <span className="popup-row-icon">📋</span>
             <div className="popup-row-content">
               <div className="popup-row-label">Trạng thái</div>
-              <span className={`booking-status-badge status-${status}`}>
-                {statusIcon} {statusLabel}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
+                <span className={`booking-status-badge status-${status}`}>
+                  {statusIcon} {statusLabel}
+                </span>
+              </div>
             </div>
           </div>
           {/* Note */}
@@ -161,13 +179,8 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos }
         </div>
         {/* Footer */}
         <div className="booking-popup-footer">
-          {booking.status !== "CANCELLED" && (
-            <button className="popup-btn popup-btn-danger">
-              Hủy lịch
-            </button>
-          )}
           <button className="popup-btn popup-btn-primary" onClick={onClose}>
-            Chỉnh sửa
+            Đóng
           </button>
         </div>
       </div>

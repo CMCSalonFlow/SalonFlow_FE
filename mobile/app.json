@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "SalonFlow Customer",
+    "slug": "salonflow-customer",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "platforms": ["ios", "android"],
+    "jsEngine": "hermes",
+    "scheme": "salonflow",
+    "plugins": ["expo-router"],
+    "extra": {
+      "eas": {
+        "projectId": "replace-with-your-project-id"
+      }
+    }
+  }
+}

@@ -5,7 +5,13 @@ import {
     RouterProvider,
 } from "react-router-dom";
 import "antd/dist/reset.css";
+import "./styles/index.css";
 import router from "./app/router";
+import { setupGlobalAuthListener } from "./core/utils/auth";
+import OfflineIndicator from "@/shared/components/OfflineIndicator";
+import CustomErrorBoundary from "./shared/components/CustomErrorBoundary";
+
+setupGlobalAuthListener();
 
 ReactDOM
     .createRoot(
@@ -14,10 +20,11 @@ ReactDOM
     .render(
 
         <React.StrictMode>
-
-            <RouterProvider
-                router={router}
-            />
-
+            <CustomErrorBoundary>
+                <OfflineIndicator />
+                <RouterProvider
+                    router={router}
+                />
+            </CustomErrorBoundary>
         </React.StrictMode>
     );
