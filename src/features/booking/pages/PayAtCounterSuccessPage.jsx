@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Card, Col, Divider, Result, Row, Space, Tag, Typography, message } from "antd";
 import { CalendarOutlined, ClockCircleOutlined, ShoppingOutlined, UserOutlined } from "@ant-design/icons";
-import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
+
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -62,48 +62,7 @@ export default function PayAtCounterSuccessPage() {
     const bookingId = booking?.id;
     const branchId = booking?.branchId || booking?.branch?.id;
 
-    const handlePayDeposit = async () => {
-        try {
-            if (!booking?.id) {
-                message.error("Không tìm thấy mã đặt lịch để tạo thanh toán.");
-                return;
-            }
 
-            const amount = payableAmount;
-            if (!amount || amount <= 0) {
-                message.warning("Không có số tiền cọc cần thanh toán.");
-                return;
-            }
-
-            message.loading({ content: "Đang tạo liên kết thanh toán cọc...", key: "deposit_payment" });
-
-            const idempotencyKey = "deposit_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-            const returnUrl = window.location.origin + "/payment/callback";
-
-            const paymentRes = await createPaymentUrlApi(
-                {
-                    bookingId: booking.id,
-                    paymentMethod: "VNPAY",
-                    amount,
-                    idempotencyKey,
-                    returnUrl
-                },
-                bookingContext.bookingMode === "public" ? { skipAuth: true } : {}
-            );
-
-            if (paymentRes.paymentUrl) {
-                window.location.href = paymentRes.paymentUrl;
-                return;
-            }
-
-            throw new Error("Không thể tạo liên kết thanh toán cọc.");
-        } catch (error) {
-            message.error({
-                content: error.response?.data?.message || error.message || "Không thể tạo thanh toán cọc.",
-                key: "deposit_payment"
-            });
-        }
-    };
 
     if (!booking) {
         return (
@@ -141,18 +100,6 @@ export default function PayAtCounterSuccessPage() {
                         title={<Title level={2} style={{ marginBottom: 0 }}>Đặt lịch thành công!</Title>}
                         subTitle="Lịch hẹn của bạn đã được ghi nhận và xác nhận thành công."
                         extra={[
-                            <Button
-                                key="status"
-                                size="large"
-                                onClick={() => {
-                                    const search = new URLSearchParams();
-                                    if (bookingId) search.set("bookingId", bookingId);
-                                    if (branchId) search.set("branchId", branchId);
-                                    navigate(`/booking/status/confirmed?${search.toString()}`, { state: { booking } });
-                                }}
-                            >
-                                Xem màn hình xác nhận
-                            </Button>,
                             bookingContext.bookingMode === "public" ? (
                                 <Button key="booking" type="primary" size="large" onClick={() => navigate(bookingContext.returnPath)}>
                                     Đặt lịch mới

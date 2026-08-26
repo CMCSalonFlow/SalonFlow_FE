@@ -59,13 +59,15 @@ export const useScheduleData = (branchId, visibleRange) => {
         const startKey = toDateKey(visibleRange.start);
         const endKey = toDateKey(visibleRange.end);
 
-        const [branchUsers, shifts, offDaysData] = await Promise.all([
+        const [branchUsers, shifts, offDaysData, staffLeavesData] = await Promise.all([
           getBranchUsersApi(branchId).catch(() => []),
           scheduleApi.getShiftsByBranchAndRange(branchId, startKey, endKey).catch(() => []),
           offdayApi.getOffDaysForBranchRange(branchId, startKey, endKey).catch(() => []),
+          offdayApi.getApprovedLeaves({ branchId, startDate: startKey, endDate: endKey }).catch(() => [])
         ]);
 
         const offDays = Array.isArray(offDaysData) ? offDaysData : [];
+        const staffLeaves = Array.isArray(staffLeavesData) ? staffLeavesData : [];
         if (active) {
           setSystemOffDays(offDays);
         }
@@ -120,10 +122,26 @@ export const useScheduleData = (branchId, visibleRange) => {
               (off) => shift.shiftDate >= off.dateFrom && shift.shiftDate <= off.dateTo
             );
 
-            const bgColor = holiday ? "#ff4d4f" : resource?.color || RESOURCE_COLORS[0];
-            const titleText = holiday
-              ? `🎉 NGHỈ LỄ: ${holiday.title} (${shift.userName || resource?.title})`
-              : (shift.userName || `User ${shift.userId}`);
+            // Check if shift falls on an approved staff leave request
+            const staffLeave = staffLeaves.find((leave) => {
+              const sameStaff =
+                (shift.staffId && String(leave.staffId) === String(shift.staffId)) ||
+                (shift.userId && leave.staffUserId && String(leave.staffUserId) === String(shift.userId)) ||
+                (leave.staffName && shift.userName && leave.staffName.trim().toLowerCase() === shift.userName.trim().toLowerCase());
+              const withinDate = shift.shiftDate >= leave.dateFrom && shift.shiftDate <= leave.dateTo;
+              return sameStaff && withinDate;
+            });
+
+            let bgColor = resource?.color || RESOURCE_COLORS[0];
+            let titleText = shift.userName || `User ${shift.userId}`;
+
+            if (holiday) {
+              bgColor = "#ff4d4f";
+              titleText = `NGHỈ LỄ: ${holiday.title} (${shift.userName || resource?.title})`;
+            } else if (staffLeave) {
+              bgColor = "#fa8c16";
+              titleText = `NGHỈ PHÉP: ${shift.userName || resource?.title}`;
+            }
 
             return {
               id: String(shift.id),
@@ -132,12 +150,13 @@ export const useScheduleData = (branchId, visibleRange) => {
               end,
               resourceId,
               backgroundColor: bgColor,
-              borderColor: holiday ? "#d9363e" : bgColor,
+              borderColor: holiday ? "#d9363e" : (staffLeave ? "#d46b08" : bgColor),
               textColor: "#fff",
               extendedProps: {
                 ...shift,
                 isHoliday: !!holiday,
-                holidayTitle: holiday?.title
+                isStaffLeave: !!staffLeave,
+                holidayTitle: holiday?.title || (staffLeave ? "Nghỉ phép cá nhân" : null)
               },
             };
           })

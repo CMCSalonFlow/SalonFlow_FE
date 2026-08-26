@@ -1,3 +1,6 @@
+@import './owner-portal.css';
+@import './home-page.css';
+
 * {
   margin: 0;
   padding: 0;

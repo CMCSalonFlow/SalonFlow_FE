@@ -7,8 +7,13 @@ import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getPublicServicesByBranchApi, getPublicBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getPublicStaffByBranchApi } from "@/features/staff/api/staffApi";
 import { getPublicAvailabilityApi, createPublicBookingApi } from "../api/bookingApi";
+import { getPublicAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
+import BookingSummary from "../components/BookingSummary";
+import StepServiceSelection from "../components/StepServiceSelection";
+import NormalBookingForm from "../components/NormalBookingForm";
+import StepTimeSlots from "../components/StepTimeSlots";
 import AiBookingChatbot from "@/features/chatbot/components/AiBookingChatbot";
 import offdayApi from "@/features/offday/api/offdayApi";
 import dayjs from "dayjs";
@@ -24,7 +29,7 @@ export default function GuestBookingPage() {
 
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState("VNPAY");
+    const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
 
     const [salons, setSalons] = useState([]);
     const [selectedSalonId, setSelectedSalonId] = useState(null);
@@ -42,6 +47,10 @@ export default function GuestBookingPage() {
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
     const [notes, setNotes] = useState("");
+
+    const [workingStaffIds, setWorkingStaffIds] = useState([]);
+    const [loadingStaff, setLoadingStaff] = useState(false);
+
     const [guestName, setGuestName] = useState("");
     const [guestPhone, setGuestPhone] = useState("");
     const [guestEmail, setGuestEmail] = useState("");
@@ -188,6 +197,34 @@ export default function GuestBookingPage() {
         loadBranchData();
     }, [selectedBranchId]);
 
+    // Lấy lịch làm việc của nhân viên khi đổi ngày
+    useEffect(() => {
+        const timerId = window.setTimeout(() => {
+            if (!selectedBranchId || !selectedDate) {
+                setWorkingStaffIds([]);
+                return;
+            }
+
+            const fetchWorkingStaff = async () => {
+                try {
+                    setLoadingStaff(true);
+                    const dateStr = selectedDate.format("YYYY-MM-DD");
+                    const slots = await getPublicAvailabilitySlots(selectedBranchId, dateStr);
+                    const userIds = [...new Set(slots.map(s => s.userId))];
+                    setWorkingStaffIds(userIds);
+                } catch (error) {
+                    console.error("Lỗi khi tải lịch làm việc của nhân viên:", error);
+                } finally {
+                    setLoadingStaff(false);
+                }
+            };
+
+            fetchWorkingStaff();
+        }, 0);
+
+        return () => window.clearTimeout(timerId);
+    }, [selectedBranchId, selectedDate]);
+
     useEffect(() => {
         if (!selectedBranchId || !selectedDate || !selectedStaff) return;
         if (bookingType === "service" && selectedServices.length === 0) return;
@@ -232,7 +269,23 @@ export default function GuestBookingPage() {
         return slots;
     };
 
-    const getQualifiedStaff = () => staffList;
+    // Lọc danh sách nhân viên có kỹ năng thực hiện dịch vụ và có làm việc trong ngày đã chọn
+    const getQualifiedStaff = () => {
+        return staffList.filter(staff => {
+            const allowedIds = (staff.services || []).map(s => s.id);
+            const hasSkill = bookingType === "bundle"
+                ? Boolean(selectedBundle) && (selectedBundle.items || []).every(item => allowedIds.includes(item.serviceId))
+                : selectedServices.length > 0 && selectedServices.every(s => allowedIds.includes(s.id));
+
+            if (!hasSkill) return false;
+
+            if (selectedDate && workingStaffIds.length > 0) {
+                return workingStaffIds.includes(staff.userId) || workingStaffIds.includes(staff.id);
+            }
+
+            return true;
+        });
+    };
 
     const getBookingSummary = () => {
         if (bookingType === "bundle") {
@@ -373,25 +426,26 @@ export default function GuestBookingPage() {
     const selectedBranchName = branches.find(b => b.id === selectedBranchId)?.name;
 
     return (
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 0" }}>
-            <Title level={2} style={{ textAlign: "center", marginBottom: 32 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: screens.xs ? "8px 4px" : "20px 0" }}>
+            <Title level={screens.xs ? 4 : 2} style={{ textAlign: "center", marginBottom: screens.xs ? 16 : 32 }}>
                 ✂️ Đặt lịch công khai
             </Title>
 
             <Steps
                 current={currentStep}
                 responsive
-                style={{ marginBottom: 40 }}
+                size={screens.xs ? "small" : "default"}
+                style={{ marginBottom: screens.xs ? 20 : 40 }}
                 items={[
-                    { title: "Chọn dịch vụ", icon: <AppstoreOutlined /> },
-                    { title: "Chọn nhân viên", icon: <TeamOutlined /> },
-                    { title: "Chọn giờ & hoàn tất", icon: <CalendarOutlined /> }
+                    { title: screens.xs ? "Dịch vụ" : "Chọn dịch vụ", icon: <AppstoreOutlined /> },
+                    { title: screens.xs ? "Ngày & Thợ" : "Chọn nhân viên", icon: <TeamOutlined /> },
+                    { title: screens.xs ? "Giờ & Xong" : "Chọn giờ & hoàn tất", icon: <CalendarOutlined /> }
                 ]}
             />
 
             <Row gutter={[24, 24]}>
                 <Col xs={24} lg={16}>
-                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", minHeight: 480 }}>
+                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", minHeight: 480 }} bodyStyle={{ padding: screens.xs ? "14px 12px" : "24px" }}>
                         {loading ? (
                             <div style={{ textAlign: "center", padding: "100px 0" }}>
                                 <Spin size="large" tip="Đang tải dữ liệu..." />
@@ -432,270 +486,107 @@ export default function GuestBookingPage() {
 
                                         <Divider style={{ margin: "24px 0" }} />
 
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                                            <label style={{ fontWeight: 600 }}>Bước 2: Chọn dịch vụ muốn đặt</label>
-                                            <Radio.Group value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
-                                                <Radio.Button value="service">Dịch vụ lẻ</Radio.Button>
-                                                <Radio.Button value="bundle">Gói Combo</Radio.Button>
-                                            </Radio.Group>
-                                        </div>
-
-                                        {bookingType === "service" ? (
-                                            <Row gutter={[16, 16]}>
-                                                {services.map(s => {
-                                                    const isSelected = selectedServices.some(item => item.id === s.id);
-                                                    return (
-                                                        <Col xs={24} sm={12} key={s.id}>
-                                                            <Card
-                                                                hoverable
-                                                                style={{
-                                                                    borderRadius: 12,
-                                                                    border: isSelected ? "2px solid #1890ff" : "1px solid #f0f0f0",
-                                                                    backgroundColor: isSelected ? "#e6f7ff" : "#fff"
-                                                                }}
-                                                                onClick={() => {
-                                                                    if (isSelected) {
-                                                                        setSelectedServices(selectedServices.filter(item => item.id !== s.id));
-                                                                    } else {
-                                                                        setSelectedServices([...selectedServices, s]);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Text strong style={{ fontSize: 16 }}>{s.name}</Text>
-                                                                <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                                    <Tag color="blue">{s.durationMinutes} phút</Tag>
-                                                                    <Text strong style={{ color: "#faad14" }}>{parseFloat(s.price).toLocaleString()} đ</Text>
-                                                                </div>
-                                                            </Card>
-                                                        </Col>
-                                                    );
-                                                })}
-                                                {services.length === 0 && <Col span={24} style={{ textAlign: "center", padding: 40 }}><Text type="secondary">Chi nhánh chưa có dịch vụ nào.</Text></Col>}
-                                            </Row>
-                                        ) : (
-                                            <Row gutter={[16, 16]}>
-                                                {bundles.map(b => {
-                                                    const isSelected = selectedBundle?.id === b.id;
-                                                    return (
-                                                        <Col xs={24} key={b.id}>
-                                                            <Card
-                                                                hoverable
-                                                                style={{
-                                                                    borderRadius: 12,
-                                                                    border: isSelected ? "2px solid #52c41a" : "1px solid #f0f0f0",
-                                                                    backgroundColor: isSelected ? "#f6ffed" : "#fff"
-                                                                }}
-                                                                onClick={() => setSelectedBundle(b)}
-                                                            >
-                                                                <Row justify="space-between" align="middle">
-                                                                    <Col xs={24} sm={16}>
-                                                                        <Text strong style={{ fontSize: 17 }}>{b.name}</Text>
-                                                                        <div style={{ marginTop: 8 }}>
-                                                                            {b.items?.map(item => (
-                                                                                <Tag color="cyan" key={item.serviceId}>{item.name}</Tag>
-                                                                            ))}
-                                                                        </div>
-                                                                    </Col>
-                                                                    <Col xs={24} sm={8} style={{ textAlign: screens.xs ? "left" : "right", marginTop: screens.xs ? 12 : 0 }}>
-                                                                        <Text delete style={{ color: "#bfbfbf", marginRight: 8 }}>{parseFloat(b.originalPrice).toLocaleString()} đ</Text>
-                                                                        <br />
-                                                                        <Text strong style={{ color: "#52c41a", fontSize: 18 }}>{parseFloat(b.price).toLocaleString()} đ</Text>
-                                                                        <br />
-                                                                        <Tag color="blue">{b.totalDurationMinutes} phút</Tag>
-                                                                    </Col>
-                                                                </Row>
-                                                            </Card>
-                                                        </Col>
-                                                    );
-                                                })}
-                                                {bundles.length === 0 && <Col span={24} style={{ textAlign: "center", padding: 40 }}><Text type="secondary">Chi nhánh chưa có gói combo ưu đãi nào.</Text></Col>}
-                                            </Row>
-                                        )}
+                                        {/* ── BƯỚC 1: CHỌN DỊCH VỤ / COMBO ────────────────── */}
+                                        <StepServiceSelection
+                                            bookingType={bookingType}
+                                            setBookingType={setBookingType}
+                                            services={services}
+                                            selectedServices={selectedServices}
+                                            setSelectedServices={setSelectedServices}
+                                            bundles={bundles}
+                                            selectedBundle={selectedBundle}
+                                            setSelectedBundle={setSelectedBundle}
+                                            screens={screens}
+                                            formatCurrency={formatCurrency}
+                                        />
                                     </div>
                                 )}
 
+                                {/* ── BƯỚC 2: CHỌN NHÂN VIÊN & NGÀY HẸN ── */}
                                 {currentStep === 1 && (
-                                    <div>
-                                        {systemOffDays.length > 0 && (
-                                            <div style={{ marginBottom: 20, padding: '12px 16px', backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 12 }}>
-                                                <Text strong style={{ color: '#d46b08' }}>📢 Thông báo Lịch nghỉ lễ / Đóng cửa của Chi nhánh:</Text>
-                                                <div style={{ marginTop: 4 }}>
-                                                    {systemOffDays.map(off => (
-                                                        <div key={off.id} style={{ fontSize: 13, color: '#8c6b00', marginTop: 2 }}>
-                                                            • <b>{off.title}</b> ({dayjs(off.dateFrom).format("DD/MM/YYYY")} ➔ {dayjs(off.dateTo).format("DD/MM/YYYY")}): Các ngày này đã được khóa đặt lịch.
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div style={{ marginBottom: 24 }}>
-                                            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Chọn Ngày hẹn</label>
-                                            <DatePicker
-                                                style={{ width: "100%" }}
-                                                size="large"
-                                                format="YYYY-MM-DD"
-                                                disabledDate={current => {
-                                                    if (!current) return false;
-                                                    if (current.valueOf() < Date.now() - 24 * 60 * 60 * 1000) return true;
-                                                    const dateStr = current.format("YYYY-MM-DD");
-                                                    return systemOffDays.some(off => dateStr >= off.dateFrom && dateStr <= off.dateTo);
-                                                }}
-                                                value={selectedDate}
-                                                onChange={setSelectedDate}
-                                                placeholder="Chọn ngày bạn muốn hẹn lịch..."
-                                            />
-                                        </div>
-
-                                        <Divider style={{ margin: "24px 0" }} />
-
-                                        <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>Chọn Nhân viên thực hiện</label>
-                                        <Row gutter={[16, 16]}>
-                                            {getQualifiedStaff().map(staff => {
-                                                const isSelected = selectedStaff?.id === staff.id;
-                                                return (
-                                                    <Col xs={24} sm={12} key={staff.id}>
-                                                        <Card
-                                                            hoverable
-                                                            style={{
-                                                                borderRadius: 12,
-                                                                border: isSelected ? "2px solid #1890ff" : "1px solid #f0f0f0",
-                                                                backgroundColor: isSelected ? "#e6f7ff" : "#fff"
-                                                            }}
-                                                            onClick={() => setSelectedStaff(staff)}
-                                                        >
-                                                            <Space size="middle">
-                                                                <Avatar size={48} src={staff.avatarUrl} icon={<TeamOutlined />} style={{ backgroundColor: "#1890ff" }} />
-                                                                <div>
-                                                                    <Text strong style={{ fontSize: 16 }}>{staff.name}</Text>
-                                                                    <br />
-                                                                    <Text type="secondary" style={{ fontSize: 12, display: "inline-block", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                                        {staff.specialties || (staff.bio || "Thợ làm tóc chuyên nghiệp")}
-                                                                    </Text>
-                                                                </div>
-                                                            </Space>
-                                                        </Card>
-                                                    </Col>
-                                                );
-                                            })}
-                                        </Row>
-
-                                        {getQualifiedStaff().length === 0 && (
-                                            <div style={{ marginTop: 12 }}>
-                                                <Text type="secondary">Chi nhánh này chưa có nhân viên phù hợp cho dịch vụ đã chọn.</Text>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <NormalBookingForm
+                                        selectedDate={selectedDate}
+                                        setSelectedDate={setSelectedDate}
+                                        setSelectedStaff={setSelectedStaff}
+                                        loadingStaff={loadingStaff}
+                                        getQualifiedStaff={getQualifiedStaff}
+                                        selectedStaff={selectedStaff}
+                                        systemOffDays={systemOffDays}
+                                        selectedBranchId={selectedBranchId}
+                                        selectedServices={selectedServices}
+                                        selectedBundle={selectedBundle}
+                                        bookingType={bookingType}
+                                        selectedTime={selectedTime}
+                                        setSelectedTime={setSelectedTime}
+                                    />
                                 )}
 
+                                {/* ── BƯỚC 3: CHỌN GIỜ & THÔNG TIN KHÁCH HÀNG ────── */}
                                 {currentStep === 2 && (
                                     <div>
-                                        <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>
-                                            <ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Chọn giờ hẹn khả dụng (Khung giờ trống)
-                                        </label>
-
-                                        {loadingSlots ? (
-                                            <div style={{ textAlign: "center", padding: "40px 0" }}>
-                                                <Spin tip="Đang quét giờ khả dụng..." />
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                {(() => {
-                                                    const allSlots = generateAllTimeSlots();
-                                                    if (allSlots.length > 0) {
-                                                        return (
-                                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
-                                                                {allSlots.map(time => {
-                                                                    const displayTime = time.substring(0, 5);
-                                                                    const isAvailable = availableTimes.includes(time);
-                                                                    const isSelected = selectedTime === time;
-
-                                                                    return (
-                                                                        <Button
-                                                                            key={time}
-                                                                            size="large"
-                                                                            disabled={!isAvailable}
-                                                                            style={{
-                                                                                borderRadius: 8,
-                                                                                fontWeight: isSelected ? "600" : "500",
-                                                                                backgroundColor: isSelected
-                                                                                    ? "#52c41a"
-                                                                                    : isAvailable
-                                                                                        ? "#f6ffed"
-                                                                                        : "#fff1f0",
-                                                                                borderColor: isSelected
-                                                                                    ? "#52c41a"
-                                                                                    : isAvailable
-                                                                                        ? "#b7eb8f"
-                                                                                        : "#ffa39e",
-                                                                                color: isSelected
-                                                                                    ? "#fff"
-                                                                                    : isAvailable
-                                                                                        ? "#389e0d"
-                                                                                        : "#cf1322",
-                                                                                transition: "all 0.3s",
-                                                                                opacity: isAvailable ? 1 : 0.65,
-                                                                                cursor: isAvailable ? "pointer" : "not-allowed"
-                                                                            }}
-                                                                            onClick={() => isAvailable && setSelectedTime(time)}
-                                                                        >
-                                                                            {displayTime}
-                                                                        </Button>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        );
-                                                    }
-
-                                                    return (
-                                                        <div style={{ padding: "30px 10px", background: "#fff2e8", borderRadius: 8, border: "1px solid #ffbb96", marginBottom: 24, textAlign: "center" }}>
-                                                            <Text type="warning" strong>Vui lòng hoàn thành chọn chi nhánh, dịch vụ, nhân viên và ngày hẹn ở các bước trước để quét giờ hoạt động.</Text>
-                                                        </div>
-                                                    );
-                                                })()}
-                                            </div>
-                                        )}
+                                        <StepTimeSlots
+                                            loadingSlots={loadingSlots}
+                                            generateAllTimeSlots={generateAllTimeSlots}
+                                            availableTimes={availableTimes}
+                                            selectedTime={selectedTime}
+                                            setSelectedTime={setSelectedTime}
+                                            showCustomerInputs={false}
+                                            selectedBranchId={selectedBranchId}
+                                            selectedDate={selectedDate}
+                                            selectedServices={selectedServices}
+                                            selectedBundle={selectedBundle}
+                                            bookingType={bookingType}
+                                            selectedStaff={selectedStaff}
+                                        />
 
                                         <Divider style={{ margin: "24px 0" }} />
 
-                                        <Row gutter={16}>
+                                        <Row gutter={[16, 16]}>
                                             <Col xs={24} md={12}>
-                                                <FormLayoutItem label="Họ và tên">
-                                                    <Input size="large" placeholder="Nhập họ tên của bạn" value={guestName} onChange={(e) => setGuestName(e.target.value)} />
+                                                <FormLayoutItem label="Họ và tên *">
+                                                    <Input
+                                                        size="large"
+                                                        placeholder="Nhập họ tên của bạn"
+                                                        value={guestName}
+                                                        onChange={(e) => setGuestName(e.target.value)}
+                                                        style={{ borderRadius: 8 }}
+                                                    />
                                                 </FormLayoutItem>
                                             </Col>
                                             <Col xs={24} md={12}>
-                                                <FormLayoutItem label="Số điện thoại">
-                                                    <Input size="large" placeholder="Nhập số điện thoại liên hệ" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} />
+                                                <FormLayoutItem label="Số điện thoại *">
+                                                    <Input
+                                                        size="large"
+                                                        placeholder="Nhập số điện thoại liên hệ"
+                                                        value={guestPhone}
+                                                        onChange={(e) => setGuestPhone(e.target.value)}
+                                                        style={{ borderRadius: 8 }}
+                                                    />
                                                 </FormLayoutItem>
                                             </Col>
                                             <Col xs={24}>
                                                 <FormLayoutItem label="Email (Không bắt buộc)">
-                                                    <Input size="large" placeholder="Nhập email để nhận thông báo" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} />
+                                                    <Input
+                                                        size="large"
+                                                        placeholder="Nhập email để nhận thông báo lịch hẹn"
+                                                        value={guestEmail}
+                                                        onChange={(e) => setGuestEmail(e.target.value)}
+                                                        style={{ borderRadius: 8 }}
+                                                    />
+                                                </FormLayoutItem>
+                                            </Col>
+                                            <Col xs={24}>
+                                                <FormLayoutItem label="Ghi chú gửi cho Salon (Tùy chọn)">
+                                                    <Input.TextArea
+                                                        rows={3}
+                                                        placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt của bạn..."
+                                                        value={notes}
+                                                        onChange={(e) => setNotes(e.target.value)}
+                                                        style={{ borderRadius: 8 }}
+                                                    />
                                                 </FormLayoutItem>
                                             </Col>
                                         </Row>
-
-                                        <Divider style={{ margin: "24px 0" }} />
-
-                                        <FormLayoutItem label="Ghi chú thêm (Không bắt buộc)">
-                                            <Input.TextArea rows={4} placeholder="Mô tả các yêu cầu đặc biệt của bạn để salon chuẩn bị tốt nhất..." value={notes} onChange={(e) => setNotes(e.target.value)} />
-                                        </FormLayoutItem>
-
-                                        <Divider style={{ margin: "24px 0" }} />
-
-                                        <FormLayoutItem label="Phương thức thanh toán">
-                                            <Radio.Group value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ width: "100%" }}>
-                                                <Space direction="vertical" style={{ width: "100%" }}>
-                                                    <Radio value="VNPAY" style={{ padding: "4px 0", fontSize: 15 }}>
-                                                        <Text strong>Thanh toán Online qua cổng VNPay</Text> (Thanh toán cọc online bằng thẻ nội địa/QR Code)
-                                                    </Radio>
-                                                </Space>
-                                            </Radio.Group>
-                                            <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 8 }}>
-                                                💡 Đặt lịch trực tuyến áp dụng thanh toán cọc online qua VNPay. Phần tiền còn lại sẽ được thanh toán trực tiếp tại salon khi làm dịch vụ.
-                                            </Text>
-                                        </FormLayoutItem>
                                     </div>
                                 )}
 
@@ -709,7 +600,13 @@ export default function GuestBookingPage() {
                                             Tiếp tục <RightOutlined />
                                         </Button>
                                     ) : (
-                                        <Button type="primary" size="large" onClick={handleConfirmBooking} disabled={!selectedTime} style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}>
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            onClick={handleConfirmBooking}
+                                            disabled={!selectedTime || !guestPhone.trim() || !guestName.trim()}
+                                            style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+                                        >
                                             Xác nhận đặt lịch
                                         </Button>
                                     )}
@@ -720,92 +617,23 @@ export default function GuestBookingPage() {
                 </Col>
 
                 <Col xs={24} lg={8}>
-                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", background: "linear-gradient(180deg, #fafafa 0%, #ffffff 100%)", position: "sticky", top: 24 }}>
-                        <Title level={4} style={{ marginTop: 0 }}>Tóm tắt lịch hẹn</Title>
-                        <Divider style={{ margin: "16px 0" }} />
-
-                        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-                            <div>
-                                <Text type="secondary"><ShopOutlined /> Chi nhánh:</Text>
-                                <br />
-                                <Text strong>{branches.find(b => b.id === selectedBranchId)?.name || "-"}</Text>
-                            </div>
-
-                            <div>
-                                <Text type="secondary"><AppstoreOutlined /> Dịch vụ đặt:</Text>
-                                <br />
-                                {bookingType === "service" ? (
-                                    selectedServices.length > 0 ? (
-                                        <div style={{ marginTop: 4 }}>
-                                            {selectedServices.map(s => (
-                                                <div key={s.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                                                    <Text>- {s.name}</Text>
-                                                    <Text type="secondary">{parseFloat(s.price).toLocaleString()} đ</Text>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <Text type="secondary" italic>Chưa chọn dịch vụ nào</Text>
-                                    )
-                                ) : (
-                                    selectedBundle ? (
-                                        <div style={{ marginTop: 4 }}>
-                                            <Text strong color="green">{selectedBundle.name}</Text>
-                                            <div style={{ fontSize: 12, color: "#8c8c8c" }}>Gói combo gồm nhiều dịch vụ kết hợp</div>
-                                        </div>
-                                    ) : (
-                                        <Text type="secondary" italic>Chưa chọn combo nào</Text>
-                                    )
-                                )}
-                            </div>
-
-                            <div>
-                                <Text type="secondary"><TeamOutlined /> Nhân viên phục vụ:</Text>
-                                <br />
-                                <Text strong>{selectedStaff ? selectedStaff.name : "-"}</Text>
-                            </div>
-
-                            <div>
-                                <Text type="secondary"><CalendarOutlined /> Ngày hẹn:</Text>
-                                <br />
-                                <Text strong>{selectedDate ? selectedDate.format("YYYY-MM-DD") : "-"}</Text>
-                            </div>
-
-                            {selectedTime && (
-                                <div>
-                                    <Text type="secondary"><ClockCircleOutlined /> Giờ hẹn:</Text>
-                                    <br />
-                                    <Tag color="gold" style={{ fontSize: 14, padding: "2px 8px" }}>
-                                        {selectedTime.substring(0, 5)}
-                                    </Tag>
-                                </div>
-                            )}
-
-                            <div>
-                                <Text type="secondary">Khách đặt:</Text>
-                                <br />
-                                <Text strong>{guestName || "-"}</Text>
-                            </div>
-                        </Space>
-
-                        <Divider style={{ margin: "20px 0" }} />
-
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                            <Text type="secondary">Tổng thời gian:</Text>
-                            <Text strong>{totalDuration} phút</Text>
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                            <Text type="secondary" style={{ fontSize: 16 }}>Tổng số tiền (Thanh toán tại quầy):</Text>
-                            <Text strong style={{ color: "#1890ff", fontSize: 22 }}>{payableAmount.toLocaleString()} đ</Text>
-                        </div>
-
-                        <div style={{ marginTop: 8 }}>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                                💡 Đặt lịch trực tuyến hoàn toàn miễn phí. Khách hàng sẽ thanh toán giá trị dịch vụ trực tiếp tại quầy sau khi thực hiện xong tại Salon.
-                            </Text>
-                        </div>
-                    </Card>
+                    <BookingSummary
+                        currentStep={currentStep}
+                        branches={branches}
+                        selectedBranchId={selectedBranchId}
+                        bookingType={bookingType}
+                        selectedServices={selectedServices}
+                        selectedBundle={selectedBundle}
+                        selectedStaff={selectedStaff}
+                        selectedDate={selectedDate}
+                        selectedTime={selectedTime}
+                        services={services}
+                        totalDuration={totalDuration}
+                        payableAmount={payableAmount}
+                        depositAmount={depositAmount}
+                        paymentMethod={paymentMethod}
+                        formatCurrency={formatCurrency}
+                    />
                 </Col>
             </Row>
 

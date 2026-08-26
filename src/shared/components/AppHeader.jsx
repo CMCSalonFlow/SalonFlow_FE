@@ -23,13 +23,15 @@ import {
     MenuOutlined
 } from "@ant-design/icons";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "@/core/utils/auth";
+import api from "@/core/api/axios";
 
 const { Text } = Typography;
 import { useFirebaseMessaging } from "@/features/notification/hooks/useFirebaseMessaging";
 import { useNotificationWebSocket } from "@/features/notification/hooks/useNotificationWebSocket";
+import BrandLogo from "@/core/components/BrandLogo";
 
 const { Header } = Layout;
 
@@ -59,11 +61,32 @@ export default function AppHeader() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const fullName = localStorage.getItem("fullName");
-    const username = localStorage.getItem("username");
-    const displayName = fullName || username || "Tài khoản";
     const accessToken = localStorage.getItem("accessToken");
     const isLogin = !!accessToken;
+
+    const [headerFullName, setHeaderFullName] = useState(localStorage.getItem("fullName") || "");
+
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        if (isLogin && userId) {
+            api.get(`/api/v1/users/${userId}`)
+                .then((res) => {
+                    if (res.data?.fullName) {
+                        localStorage.setItem("fullName", res.data.fullName);
+                        setHeaderFullName(res.data.fullName);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [isLogin]);
+
+    const storedFullName = headerFullName || localStorage.getItem("fullName");
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const rawName = (storedFullName && storedFullName.trim()) || storedUser?.fullName || localStorage.getItem("username") || "Tài khoản";
+
+    const displayName = (rawName.includes("@") && !storedFullName)
+        ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
+        : rawName;
 
     const handleForegroundMessage = useCallback((payload) => {
         const title = payload?.notification?.title || payload?.data?.title || "SalonFlow";
@@ -135,7 +158,7 @@ export default function AppHeader() {
             },
             {
                 key: "/search",
-                label: "Tìm salon 📍"
+                label: "Tìm salon"
             },
             {
                 key: "/services",
@@ -161,7 +184,7 @@ export default function AppHeader() {
             },
             {
                 key: "/search",
-                label: "Tìm salon 📍"
+                label: "Tìm salon"
             },
             {
                 key: "/services",
@@ -248,20 +271,15 @@ export default function AppHeader() {
                 alignItems: "center",
                 background: "#fff",
                 borderBottom: "1px solid #eee",
-                padding: "0 16px",
+                padding: screens.xs ? "0 10px" : "0 16px",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
             }}
         >
             <div
-                style={{
-                    color: "#1677ff",
-                    fontWeight: 700,
-                    fontSize: 20,
-                    cursor: "pointer"
-                }}
                 onClick={() => navigate(isLogin ? "/home" : "/")}
+                style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
             >
-                SalonFlow
+                <BrandLogo theme="light" subtitle="" size="small" />
             </div>
 
             {screens.md ? (

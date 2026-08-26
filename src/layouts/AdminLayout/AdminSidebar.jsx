@@ -29,17 +29,6 @@ export default function AdminSidebar({ onMenuClick }) {
     const items = [
     {
         type: "group",
-        label: "SYSTEM",
-        children: [
-            {
-                key: "/admin",
-                icon: <DashboardOutlined />,
-                label: "Dashboard"
-            }
-        ]
-    },
-    {
-        type: "group",
         label: "MANAGEMENT",
         children: [
             {
@@ -66,11 +55,6 @@ export default function AdminSidebar({ onMenuClick }) {
                 key: "/admin/roles",
                 icon: <TeamOutlined />,
                 label: "Roles"
-            },
-            {
-                key: "/admin/branches",
-                icon: <ApartmentOutlined />,
-                label: "Branches"
             },
             {
                 key: "/admin/review-reports",

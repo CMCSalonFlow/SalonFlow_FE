@@ -7,7 +7,7 @@ import { uploadMediaApi } from "@/features/media/api/mediaApi";
 const { Text, Title } = Typography;
 const { TextArea } = Input;
 
-const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
+const ReviewModal = ({ isOpen, onClose, afterClose, booking, onSuccess }) => {
     const [rating, setRating] = useState(5);
     const [title, setTitle] = useState("");
     const [comment, setComment] = useState("");
@@ -25,8 +25,6 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
             setErrorMsg("");
         }
     }, [isOpen]);
-
-    if (!booking) return null;
 
     const handleCustomUpload = async ({ file, onSuccess: uploadSuccess, onError: uploadError }) => {
         if (fileList.length >= 5) {
@@ -103,6 +101,7 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
                 photos
             };
 
+            if (!booking?.id) return;
             await createBookingReviewApi(booking.id, payload);
             message.success("Cảm ơn bạn đã gửi đánh giá dịch vụ!");
             if (onSuccess) onSuccess(booking.id);
@@ -117,18 +116,21 @@ const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
     };
 
     const ratingTexts = ["", "Không hài lòng", "Tạm được", "Bình thường", "Hài lòng", "Tuyệt vời!"];
-    const staffName = booking.assignedStaffName || booking.preferredStaffName || "Hệ thống tự động phân bổ";
+    const staffName = booking?.assignedStaffName || booking?.preferredStaffName || "Hệ thống tự động phân bổ";
 
     return (
         <Modal
             open={isOpen}
             onCancel={onClose}
+            afterClose={afterClose}
             title={
                 <div>
                     <Title level={4} style={{ margin: 0 }}>Đánh giá dịch vụ</Title>
-                    <Text type="secondary" style={{ fontSize: 13 }}>
-                        Mã lịch hẹn: #{booking.id} • {booking.branchName || "Chi nhánh Salon"}
-                    </Text>
+                    {booking && (
+                        <Text type="secondary" style={{ fontSize: 13 }}>
+                            Mã lịch hẹn: #{booking.id} • {booking.branchName || "Chi nhánh Salon"}
+                        </Text>
+                    )}
                 </div>
             }
             footer={[

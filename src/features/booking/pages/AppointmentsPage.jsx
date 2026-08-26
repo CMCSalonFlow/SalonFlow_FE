@@ -13,7 +13,8 @@ import {
     Modal,
     Input,
     List,
-    Alert
+    Alert,
+    Grid
 } from "antd";
 import {
     CalendarOutlined,
@@ -33,7 +34,6 @@ import {
     getBookingsByBranchApi,
     cancelBookingApi
 } from "../api/bookingApi";
-import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { getInvoiceUrl } from "@/features/media/api/mediaApi";
 
 const { Title, Text } = Typography;
@@ -204,7 +204,7 @@ export default function AppointmentsPage() {
     const getStatusDescription = (booking) => {
         switch (booking?.status) {
             case "PENDING":
-                return "Lịch hẹn đã được khóa giữ chỗ thành công trên hệ thống. Trạng thái 'Đang chờ' này có nghĩa là hệ thống đang chờ bạn hoàn tất thanh toán tiền cọc VNPay (nếu đặt trực tuyến) hoặc đang chờ cửa hàng xác nhận và duyệt lịch hẹn của bạn (nếu chọn thanh toán tại quầy).";
+                return "Lịch hẹn đã được khóa giữ chỗ thành công trên hệ thống. Trạng thái 'Đang chờ' này có nghĩa là hệ thống đang chờ cửa hàng xác nhận và duyệt lịch hẹn của bạn.";
             case "CONFIRMED":
                 return "Lịch hẹn của bạn đã được xác nhận thành công và sẵn sàng để phục vụ. Vui lòng đến đúng giờ hẹn đã chọn.";
             case "COMPLETED":
@@ -236,37 +236,6 @@ export default function AppointmentsPage() {
     };
     
 
-    const handlePayNow = async (booking) => {
-        try {
-            message.loading({ content: "Đang chuyển hướng sang cổng thanh toán VNPay...", key: "payment_redirect" });
-            
-            const idempotencyKey = "vnpay_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-            const returnUrl = window.location.origin + "/payment/callback";
-            const amount = Number(booking.depositAmount || booking.payableAmount || 0);
-
-            if (!amount || amount <= 0) {
-                message.warning("Không tìm thấy tiền cọc để thanh toán.");
-                return;
-            }
-            
-            const paymentPayload = {
-                bookingId: booking.id,
-                paymentMethod: "VNPAY",
-                amount,
-                idempotencyKey: idempotencyKey,
-                returnUrl: returnUrl
-            };
-            
-            const paymentRes = await createPaymentUrlApi(paymentPayload);
-            if (paymentRes.paymentUrl) {
-                window.location.href = paymentRes.paymentUrl;
-            } else {
-                throw new Error("Không thể tạo liên kết thanh toán VNPay.");
-            }
-        } catch (error) {
-            message.error({ content: error.message || "Lỗi khi tạo liên kết thanh toán.", key: "payment_redirect" });
-        }
-    };
 
     const handleCancelBooking = (bookingId) => {
 
@@ -335,22 +304,7 @@ export default function AppointmentsPage() {
     });
     };
 
-    const handleOpenStatusScreen = (variant, booking) => {
-        const bookingId = booking?.id;
-        const branchId = booking?.branchId || booking?.branch?.id;
-        const search = new URLSearchParams();
-        if (bookingId) search.set("bookingId", bookingId);
-        if (branchId) search.set("branchId", branchId);
 
-        navigate(`/booking/status/${variant}?${search.toString()}`, {
-            state: {
-                booking: {
-                    ...booking,
-                    status: variant === "cancelled" ? "CANCELLED" : (booking?.status || "CONFIRMED")
-                }
-            }
-        });
-    };
 
     const columns = [
         {
@@ -405,24 +359,6 @@ export default function AppointmentsPage() {
             )
         },
         {
-            title: "Tổng giá trị",
-            dataIndex: "totalPrice",
-            render: (value) => (
-                <Text strong style={{ color: "#faad14" }}>
-                    {formatCurrency(value)} đ
-                </Text>
-            )
-        },
-        {
-            title: "Tiền cọc",
-            dataIndex: "depositAmount",
-            render: (value) => (
-                <Text strong style={{ color: "#f5222d" }}>
-                    {formatCurrency(value)} đ
-                </Text>
-            )
-        },
-        {
             title: "Trạng thái",
             dataIndex: "status",
             render: getStatusTag
@@ -461,18 +397,22 @@ export default function AppointmentsPage() {
         }
     ];
 
-    return (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "12px" }}>
+    const screens = Grid.useBreakpoint();
 
+    return (
+        <div style={{ padding: screens.xs ? "12px 4px" : "24px", maxWidth: 1200, margin: "0 auto" }}>
             <div
                 style={{
                     display: "flex",
                     justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 12,
                     marginBottom: 20
                 }}
             >
                 <div>
-                    <Title level={2}>
+                    <Title level={screens.xs ? 3 : 2} style={{ marginBottom: 4 }}>
                         <CalendarOutlined /> Lịch hẹn của tôi
                     </Title>
 
@@ -485,12 +425,13 @@ export default function AppointmentsPage() {
                     type="primary"
                     icon={<PlusOutlined />}
                     onClick={() => navigate("/booking")}
+                    size={screens.xs ? "middle" : "large"}
                 >
                     Đặt lịch mới
                 </Button>
             </div>
 
-            <Card>
+            <Card bodyStyle={{ padding: screens.xs ? "12px 8px" : "24px" }}>
 
                 {loading ? (
                     <div style={{ textAlign: "center", padding: 80 }}>
@@ -501,6 +442,7 @@ export default function AppointmentsPage() {
                         rowKey="id"
                         columns={columns}
                         dataSource={myBookings}
+                        scroll={{ x: "max-content" }}
                         pagination={{
                             pageSize: 8
                         }}
@@ -551,38 +493,12 @@ export default function AppointmentsPage() {
                     </Space>
                 }
                 open={isDetailModalOpen}
-                onCancel={() => {
-                    setIsDetailModalOpen(false);
-                    setSelectedBooking(null);
-                }}
+                destroyOnClose
+                afterClose={() => setSelectedBooking(null)}
+                onCancel={() => setIsDetailModalOpen(false)}
                 footer={[
-                    selectedBooking && ["PENDING", "CONFIRMED"].includes(selectedBooking.status) && (
-                        <Button
-                            key="reminder"
-                            onClick={() => handleOpenStatusScreen("reminder", selectedBooking)}
-                        >
-                            Xem màn hình nhắc 24h
-                        </Button>
-                    ),
-                    selectedBooking?.status === "CANCELLED" && (
-                        <Button
-                            key="cancelled"
-                            onClick={() => handleOpenStatusScreen("cancelled", selectedBooking)}
-                        >
-                            Xem màn hình hủy
-                        </Button>
-                    ),
-                    selectedBooking?.status === "PENDING" && (
-                        <Button
-                            key="pay"
-                            type="primary"
-                            style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
-                            onClick={() => handlePayNow(selectedBooking)}
-                        >
-                            Thanh toán tiền cọc qua VNPay
-                        </Button>
-                    ),
-                    (Boolean(selectedBooking?.invoiceUrl) || ["CONFIRMED", "COMPLETED"].includes(selectedBooking?.status)) && (
+
+                    selectedBooking?.status === "COMPLETED" && (
                         <Button
                             key="invoice"
                             type="primary"
@@ -699,10 +615,8 @@ export default function AppointmentsPage() {
             {/* Modal Đánh giá dịch vụ */}
             <ReviewModal
                 isOpen={isReviewModalOpen}
-                onClose={() => {
-                    setIsReviewModalOpen(false);
-                    setReviewBookingTarget(null);
-                }}
+                onClose={() => setIsReviewModalOpen(false)}
+                afterClose={() => setReviewBookingTarget(null)}
                 booking={reviewBookingTarget}
                 onSuccess={(reviewedId) => {
                     const targetId = reviewedId || reviewBookingTarget?.id;
