@@ -36,7 +36,7 @@ export default function BookingPage() {
 
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState("VNPAY");
+    const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
     const [systemOffDays, setSystemOffDays] = useState([]);
 
     // Dữ liệu nguồn
