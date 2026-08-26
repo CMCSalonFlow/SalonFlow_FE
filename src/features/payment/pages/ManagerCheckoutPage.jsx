@@ -78,7 +78,8 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
     const [voucherLoading, setVoucherLoading] = useState(false);
     const [voucherError, setVoucherError] = useState("");
 
-    // Cash Payment Drawer / Modal
+    // Cash / Transfer payment method option selection
+    const [paymentMethod, setPaymentMethod] = useState("CASH");
     const [cashModalOpen, setCashModalOpen] = useState(false);
     const [cashReceived, setCashReceived] = useState(null);
 
@@ -229,12 +230,21 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
     // Voucher Discount Calculation
     const discountAmount = useMemo(() => {
         if (!appliedVoucher) return 0;
-        if (appliedVoucher.discountType === "PERCENTAGE" || appliedVoucher.percentage) {
+
+        // 1. Check if backend returned calculatedDiscount directly
+        if (appliedVoucher.calculatedDiscount !== undefined && appliedVoucher.calculatedDiscount !== null && Number(appliedVoucher.calculatedDiscount) > 0) {
+            return Number(appliedVoucher.calculatedDiscount);
+        }
+
+        // 2. Check discountType: support both PERCENT (from backend) and PERCENTAGE
+        const type = String(appliedVoucher.discountType || "").toUpperCase();
+        if (type === "PERCENT" || type === "PERCENTAGE" || appliedVoucher.percentage) {
             const pct = Number(appliedVoucher.discountValue || appliedVoucher.percentage || 0);
             const calculated = (subtotal * pct) / 100;
-            const maxDisc = Number(appliedVoucher.maxDiscountAmount || Infinity);
+            const maxDisc = appliedVoucher.maxDiscountAmount ? Number(appliedVoucher.maxDiscountAmount) : Infinity;
             return Math.min(calculated, maxDisc);
         }
+
         return Number(appliedVoucher.discountValue || appliedVoucher.amount || 0);
     }, [appliedVoucher, subtotal]);
 
@@ -269,26 +279,31 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
             setVoucherError("");
             const res = await validateVoucher(code, subtotal);
             const voucherData = res?.data || res;
-            if (voucherData) {
+
+            if (voucherData && voucherData.valid !== false) {
                 setAppliedVoucher(voucherData);
                 message.success(`Đã áp dụng mã giảm giá [${code}] thành công!`);
             } else {
-                setVoucherError("Mã giảm giá không hợp lệ hoặc đã hết hạn!");
+                const errMsg = voucherData?.message || "Mã giảm giá không hợp lệ hoặc không đủ điều kiện!";
+                setVoucherError(errMsg);
+                message.error(errMsg);
+                setAppliedVoucher(null);
             }
         } catch (err) {
             // Fallback for custom demo codes
             if (code === "SF10" || code === "WELCOME10") {
-                setAppliedVoucher({ code, discountType: "PERCENTAGE", percentage: 10, discountValue: 10 });
+                setAppliedVoucher({ code, discountType: "PERCENTAGE", percentage: 10, discountValue: 10, valid: true });
                 message.success(`Đã áp dụng mã giảm giá [${code}] (-10%)!`);
                 setVoucherError("");
             } else if (code === "SF50K" || code === "VIP50") {
-                setAppliedVoucher({ code, discountType: "FIXED", discountValue: 50000, amount: 50000 });
+                setAppliedVoucher({ code, discountType: "FIXED", discountValue: 50000, amount: 50000, valid: true });
                 message.success(`Đã áp dụng mã giảm giá [${code}] (-50.000đ)!`);
                 setVoucherError("");
             } else {
                 const msg = err?.response?.data?.message || err?.message || "Mã giảm giá không tồn tại hoặc không đủ điều kiện!";
                 setVoucherError(msg);
                 message.error(msg);
+                setAppliedVoucher(null);
             }
         } finally {
             setVoucherLoading(false);
@@ -370,6 +385,29 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
 
     return (
         <div style={{ maxWidth: isModalMode ? "100%" : 1280, margin: "0 auto", padding: isModalMode ? "0" : "12px 16px" }}>
+            <style>{`
+                .white-cash-input,
+                .white-cash-input .ant-input-number-input-wrap,
+                .white-cash-input input {
+                    background-color: #ffffff !important;
+                    background: #ffffff !important;
+                    color: #111827 !important;
+                    font-weight: 700 !important;
+                }
+                .white-cash-input .ant-input-number-handler-wrap {
+                    display: none !important;
+                }
+                .voucher-input,
+                .voucher-input input {
+                    color: #ffffff !important;
+                    background-color: #1f2937 !important;
+                }
+                .voucher-input::placeholder,
+                .voucher-input input::placeholder {
+                    color: #9ca3af !important;
+                    opacity: 1 !important;
+                }
+            `}</style>
             {/* Top Bar / Navigation if full page */}
             {!isModalMode && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -451,21 +489,6 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
                             </Tag>
                         )}
                     </Space>
-
-                    <Button
-                        type="default"
-                        icon={<PrinterOutlined />}
-                        onClick={handlePrintReceipt}
-                        style={{
-                            background: "#1f2937",
-                            color: "#e5e7eb",
-                            borderColor: "#4b5563",
-                            borderRadius: 8,
-                            fontWeight: 500
-                        }}
-                    >
-                        CHÍNH SÁCH / IN VÉ
-                    </Button>
                 </div>
 
                 <Row gutter={[24, 24]}>
@@ -568,10 +591,10 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
                                             <TagOutlined style={{ color: "#10b981", fontSize: 16 }} />
                                             <div>
                                                 <Text strong style={{ color: "#10b981", fontSize: 14 }}>
-                                                    Mã: {appliedVoucher.code}
+                                                    Mã: {appliedVoucher.code || voucherCodeInput}
                                                 </Text>
                                                 <Text style={{ color: "#a7f3d0", fontSize: 12, display: "block" }}>
-                                                    Giảm: -{formatCurrency(discountAmount)}
+                                                    Giảm: {(String(appliedVoucher.discountType).toUpperCase() === "PERCENT" || String(appliedVoucher.discountType).toUpperCase() === "PERCENTAGE") ? `-${appliedVoucher.discountValue}% (-${formatCurrency(discountAmount)})` : `-${formatCurrency(discountAmount)}`}
                                                 </Text>
                                             </div>
                                         </Space>
@@ -589,13 +612,14 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
                                 ) : (
                                     <Space.Compact style={{ width: "100%" }}>
                                         <Input
+                                            className="voucher-input"
                                             placeholder="NHẬP MÃ VOUCHER"
                                             value={voucherCodeInput}
                                             onChange={(e) => setVoucherCodeInput(e.target.value.toUpperCase())}
                                             onPressEnter={handleApplyVoucher}
                                             style={{
-                                                background: "#111827",
-                                                borderColor: voucherError ? "#ef4444" : "#374151",
+                                                background: "#1f2937",
+                                                borderColor: voucherError ? "#ef4444" : "#4b5563",
                                                 color: "#ffffff",
                                                 height: 44,
                                                 borderRadius: "8px 0 0 8px",
@@ -790,199 +814,324 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
                                 </div>
                             ) : (
                                 <div>
-                                    <Text strong style={{ color: "#ffffff", fontSize: 13, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 16 }}>
-                                        THÔNG TIN CHUYỂN KHOẢN & VIETQR
+                                    {/* 2-Option Payment Method Selector Header */}
+                                    <Text strong style={{ color: "#9ca3af", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 12 }}>
+                                        CHỌN PHƯƠNG THỨC THANH TOÁN
                                     </Text>
 
-                                    {/* QR Code Container matching user screenshot layout */}
-                                    <Row gutter={[16, 16]} align="middle">
-                                        <Col xs={24} sm={12} style={{ textAlign: "center" }}>
-                                            <div style={{
-                                                background: "#ffffff",
-                                                padding: 12,
+                                    <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPaymentMethod("CASH");
+                                                if (!cashReceived) setCashReceived(finalTotal);
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: "14px 16px",
                                                 borderRadius: 12,
-                                                display: "inline-block",
-                                                boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+                                                border: paymentMethod === "CASH" ? "2px solid #10b981" : "1px solid #374151",
+                                                background: paymentMethod === "CASH" ? "rgba(16, 185, 129, 0.15)" : "#111827",
+                                                color: paymentMethod === "CASH" ? "#10b981" : "#9ca3af",
+                                                fontWeight: 700,
+                                                fontSize: 14,
+                                                cursor: "pointer",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                gap: 8,
+                                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                                outline: "none"
+                                            }}
+                                        >
+                                            <DollarOutlined style={{ fontSize: 18 }} />
+                                            <span>Tiền Mặt</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod("BANK_TRANSFER")}
+                                            style={{
+                                                flex: 1,
+                                                padding: "14px 16px",
+                                                borderRadius: 12,
+                                                border: paymentMethod === "BANK_TRANSFER" ? "2px solid #fa8c16" : "1px solid #374151",
+                                                background: paymentMethod === "BANK_TRANSFER" ? "rgba(250, 140, 22, 0.15)" : "#111827",
+                                                color: paymentMethod === "BANK_TRANSFER" ? "#fa8c16" : "#9ca3af",
+                                                fontWeight: 700,
+                                                fontSize: 14,
+                                                cursor: "pointer",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                gap: 8,
+                                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                                outline: "none"
+                                            }}
+                                        >
+                                            <CheckCircleOutlined style={{ fontSize: 18 }} />
+                                            <span>Chuyển Khoản (VietQR)</span>
+                                        </button>
+                                    </div>
+
+                                    {/* OPTION 1: CASH PAYMENT VIEW */}
+                                    {paymentMethod === "CASH" ? (
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                            <div style={{
+                                                background: "#111827",
+                                                border: "1px solid #374151",
+                                                padding: 20,
+                                                borderRadius: 12
                                             }}>
-                                                <img
-                                                    src={vietQrUrl}
-                                                    alt="VietQR Payment Code"
-                                                    style={{ width: "100%", maxWidth: 230, height: "auto", display: "block" }}
-                                                />
-                                                <div style={{ marginTop: 6, display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}>
-                                                    <Tag color="blue" style={{ fontSize: 10, margin: 0 }}>napas 247</Tag>
-                                                    <Tag color="orange" style={{ fontSize: 10, margin: 0 }}>VietQR</Tag>
+                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                                                    <Text style={{ color: "#9ca3af", fontSize: 13 }}>Tổng tiền cần thanh toán:</Text>
+                                                    <Text strong style={{ color: "#ffffff", fontSize: 20 }}>{formatCurrency(finalTotal)}</Text>
+                                                </div>
+
+                                                <div style={{ marginBottom: 16 }}>
+                                                    <Text style={{ color: "#9ca3af", fontSize: 12, display: "block", marginBottom: 6 }}>
+                                                        Số tiền khách đưa (VND):
+                                                    </Text>
+                                                    <InputNumber
+                                                        className="white-cash-input"
+                                                        controls={false}
+                                                        style={{
+                                                            width: "100%",
+                                                            height: 48,
+                                                            fontSize: 20,
+                                                            fontWeight: 700,
+                                                            background: "#ffffff",
+                                                            borderRadius: 8
+                                                        }}
+                                                        value={cashReceived || finalTotal}
+                                                        onChange={(val) => setCashReceived(val)}
+                                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                                        parser={value => value.replace(/\./g, '')}
+                                                        min={0}
+                                                    />
+                                                </div>
+
+                                                {/* Nút đệm nhanh: Chỉ 1 nút Đủ tiền */}
+                                                <div style={{ marginBottom: 16 }}>
+                                                    <Button
+                                                        onClick={() => setCashReceived(finalTotal)}
+                                                        style={{
+                                                            background: "#10b981",
+                                                            color: "#ffffff",
+                                                            borderColor: "#10b981",
+                                                            fontWeight: 700,
+                                                            borderRadius: 6,
+                                                            height: 36,
+                                                            padding: "0 16px"
+                                                        }}
+                                                    >
+                                                        Đủ tiền ({formatCurrency(finalTotal)})
+                                                    </Button>
+                                                </div>
+
+                                                <div style={{
+                                                    background: "rgba(16, 185, 129, 0.1)",
+                                                    border: "1px solid #10b981",
+                                                    padding: "14px 16px",
+                                                    borderRadius: 8,
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center"
+                                                }}>
+                                                    <Text strong style={{ color: "#10b981", fontSize: 14 }}>TIỀN THỪA TRẢ KHÁCH:</Text>
+                                                    <Text strong style={{ color: "#10b981", fontSize: 24, fontWeight: 800 }}>
+                                                        {formatCurrency(Math.max(0, (cashReceived || finalTotal) - finalTotal))}
+                                                    </Text>
                                                 </div>
                                             </div>
-                                            <Text style={{ color: "#9ca3af", fontSize: 11, display: "block", marginTop: 8 }}>
-                                                Sử dụng App Ngân hàng hoặc Ví điện tử để quét mã
-                                            </Text>
-                                        </Col>
 
-                                        <Col xs={24} sm={12}>
-                                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                                                <div>
-                                                    <Text style={{ color: "#9ca3af", fontSize: 11, textTransform: "uppercase", display: "block" }}>
-                                                        NGÂN HÀNG
-                                                    </Text>
-                                                    <Select
-                                                        value={bankAccount.bankCode}
-                                                        onChange={(code) => setBankAccount(prev => ({ ...prev, bankCode: code }))}
-                                                        style={{ width: "100%", marginTop: 4 }}
-                                                        bordered={false}
-                                                        dropdownStyle={{ background: "#1f2937", border: "1px solid #374151" }}
-                                                    >
-                                                        {POPULAR_BANKS.map(b => (
-                                                            <Select.Option key={b.code} value={b.code}>
-                                                                <span style={{ color: "#ffffff", fontWeight: 700 }}>{b.code}</span>
-                                                                <span style={{ color: "#9ca3af", fontSize: 11 }}> - {b.name}</span>
-                                                            </Select.Option>
-                                                        ))}
-                                                    </Select>
-                                                </div>
-
-                                                <div>
-                                                    <Text style={{ color: "#9ca3af", fontSize: 11, textTransform: "uppercase", display: "block" }}>
-                                                        SỐ TÀI KHOẢN
-                                                    </Text>
-                                                    <Space align="center" style={{ marginTop: 2 }}>
-                                                        <Text strong style={{ color: "#ef4444", fontSize: 18, letterSpacing: 1 }}>
-                                                            {bankAccount.accountNo}
-                                                        </Text>
-                                                        <Button
-                                                            type="text"
-                                                            size="small"
-                                                            icon={<CopyOutlined />}
-                                                            onClick={() => copyToClipboard(bankAccount.accountNo, "Số tài khoản")}
-                                                            style={{ color: "#9ca3af" }}
+                                            <Button
+                                                block
+                                                type="primary"
+                                                icon={<DollarOutlined />}
+                                                loading={completing}
+                                                onClick={() => handleConfirmPayment("CASH")}
+                                                style={{
+                                                    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                                    borderColor: "#10b981",
+                                                    height: 48,
+                                                    fontSize: 16,
+                                                    fontWeight: 700,
+                                                    borderRadius: 10,
+                                                    boxShadow: "none",
+                                                    marginTop: 8
+                                                }}
+                                            >
+                                                XÁC NHẬN THU TIỀN MẶT
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        /* OPTION 2: BANK TRANSFER VIETQR VIEW */
+                                        <div>
+                                            {/* QR Code Container matching user screenshot layout */}
+                                            <Row gutter={[16, 16]} align="middle">
+                                                <Col xs={24} sm={12} style={{ textAlign: "center" }}>
+                                                    <div style={{
+                                                        background: "#ffffff",
+                                                        padding: 12,
+                                                        borderRadius: 12,
+                                                        display: "inline-block",
+                                                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+                                                    }}>
+                                                        <img
+                                                            src={vietQrUrl}
+                                                            alt="VietQR Payment Code"
+                                                            style={{ width: "100%", maxWidth: 230, height: "auto", display: "block" }}
                                                         />
+                                                        <div style={{ marginTop: 6, display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}>
+                                                            <Tag color="blue" style={{ fontSize: 10, margin: 0 }}>napas 247</Tag>
+                                                            <Tag color="orange" style={{ fontSize: 10, margin: 0 }}>VietQR</Tag>
+                                                        </div>
+                                                    </div>
+                                                    <Text style={{ color: "#9ca3af", fontSize: 11, display: "block", marginTop: 8 }}>
+                                                        Sử dụng App Ngân hàng hoặc Ví điện tử để quét mã
+                                                    </Text>
+                                                </Col>
+
+                                                <Col xs={24} sm={12}>
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                                        <div>
+                                                            <Text style={{ color: "#9ca3af", fontSize: 11, textTransform: "uppercase", display: "block" }}>
+                                                                NGÂN HÀNG
+                                                            </Text>
+                                                            <Select
+                                                                value={bankAccount.bankCode}
+                                                                onChange={(code) => setBankAccount(prev => ({ ...prev, bankCode: code }))}
+                                                                style={{ width: "100%", marginTop: 4 }}
+                                                                bordered={false}
+                                                                dropdownStyle={{ background: "#1f2937", border: "1px solid #374151" }}
+                                                            >
+                                                                {POPULAR_BANKS.map(b => (
+                                                                    <Select.Option key={b.code} value={b.code}>
+                                                                        <span style={{ color: "#ffffff", fontWeight: 700 }}>{b.code}</span>
+                                                                        <span style={{ color: "#9ca3af", fontSize: 11 }}> - {b.name}</span>
+                                                                    </Select.Option>
+                                                                ))}
+                                                            </Select>
+                                                        </div>
+
+                                                        <div>
+                                                            <Text style={{ color: "#9ca3af", fontSize: 11, textTransform: "uppercase", display: "block" }}>
+                                                                SỐ TÀI KHOẢN
+                                                            </Text>
+                                                            <Space align="center" style={{ marginTop: 2 }}>
+                                                                <Text strong style={{ color: "#ef4444", fontSize: 18, letterSpacing: 1 }}>
+                                                                    {bankAccount.accountNo}
+                                                                </Text>
+                                                                <Button
+                                                                    type="text"
+                                                                    size="small"
+                                                                    icon={<CopyOutlined />}
+                                                                    onClick={() => copyToClipboard(bankAccount.accountNo, "Số tài khoản")}
+                                                                    style={{ color: "#9ca3af" }}
+                                                                />
+                                                            </Space>
+                                                        </div>
+
+                                                        <div>
+                                                            <Text style={{ color: "#9ca3af", fontSize: 11, textTransform: "uppercase", display: "block" }}>
+                                                                CHỦ TÀI KHOẢN
+                                                            </Text>
+                                                            <Text strong style={{ color: "#ffffff", fontSize: 14 }}>
+                                                                {bankAccount.accountName}
+                                                            </Text>
+                                                        </div>
+
+                                                        <div>
+                                                            <Text style={{ color: "#9ca3af", fontSize: 11, textTransform: "uppercase", display: "block" }}>
+                                                                SỐ TIỀN
+                                                            </Text>
+                                                            <Text strong style={{ color: "#f97316", fontSize: 20 }}>
+                                                                {formatCurrency(finalTotal)}
+                                                            </Text>
+                                                        </div>
+                                                    </div>
+                                                </Col>
+                                            </Row>
+
+                                            {/* Highlighted Transfer Memo Box matching user screenshot */}
+                                            <div style={{ marginTop: 16 }}>
+                                                <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                                                    • NỘI DUNG CHUYỂN KHOẢN (BẮT BUỘC)
+                                                </Text>
+                                                <div style={{
+                                                    background: "rgba(185, 28, 28, 0.2)",
+                                                    border: "1px solid #b91c1c",
+                                                    borderRadius: 8,
+                                                    padding: "10px 14px",
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center"
+                                                }}>
+                                                    <Text strong style={{ color: "#ffffff", fontSize: 18, letterSpacing: 2 }}>
+                                                        {transferMemo}
+                                                    </Text>
+                                                    <Button
+                                                        type="text"
+                                                        icon={<CopyOutlined />}
+                                                        onClick={() => copyToClipboard(transferMemo, "Nội dung chuyển khoản")}
+                                                        style={{ color: "#ffffff" }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Status Footer & Countdown Timer */}
+                                            <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid #374151" }}>
+                                                <div style={{
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center",
+                                                    marginBottom: 12
+                                                }}>
+                                                    <Space size={8} align="center">
+                                                        <div style={{
+                                                            width: 10,
+                                                            height: 10,
+                                                            borderRadius: "50%",
+                                                            background: "#10b981",
+                                                            boxShadow: "0 0 8px #10b981"
+                                                        }} />
+                                                        <Text strong style={{ color: "#10b981", fontSize: 12, letterSpacing: 0.5 }}>
+                                                            ĐANG CHỜ THANH TOÁN...
+                                                        </Text>
+                                                    </Space>
+
+                                                    <Space size={6} align="center">
+                                                        <ClockCircleOutlined style={{ color: "#9ca3af" }} />
+                                                        <Text style={{ color: "#ffffff", fontWeight: 700, fontFamily: "monospace", fontSize: 14 }}>
+                                                            {formatTimer(timeLeft)}
+                                                        </Text>
                                                     </Space>
                                                 </div>
 
-                                                <div>
-                                                    <Text style={{ color: "#9ca3af", fontSize: 11, textTransform: "uppercase", display: "block" }}>
-                                                        CHỦ TÀI KHOẢN
-                                                    </Text>
-                                                    <Text strong style={{ color: "#ffffff", fontSize: 14 }}>
-                                                        {bankAccount.accountName}
-                                                    </Text>
-                                                </div>
-
-                                                <div>
-                                                    <Text style={{ color: "#9ca3af", fontSize: 11, textTransform: "uppercase", display: "block" }}>
-                                                        SỐ TIỀN
-                                                    </Text>
-                                                    <Text strong style={{ color: "#f97316", fontSize: 20 }}>
-                                                        {formatCurrency(finalTotal)}
-                                                    </Text>
-                                                </div>
+                                                <Button
+                                                    block
+                                                    type="primary"
+                                                    icon={<CheckCircleOutlined />}
+                                                    loading={completing}
+                                                    onClick={() => handleConfirmPayment("BANK_TRANSFER")}
+                                                    style={{
+                                                        background: "linear-gradient(135deg, #fa8c16 0%, #d46b08 100%)",
+                                                        borderColor: "#fa8c16",
+                                                        height: 46,
+                                                        fontWeight: 700,
+                                                        fontSize: 15,
+                                                        borderRadius: 10,
+                                                        boxShadow: "none"
+                                                    }}
+                                                >
+                                                    XÁC NHẬN ĐÃ NHẬN CHUYỂN KHOẢN
+                                                </Button>
                                             </div>
-                                        </Col>
-                                    </Row>
-
-                                    {/* Highlighted Transfer Memo Box matching user screenshot */}
-                                    <div style={{ marginTop: 20 }}>
-                                        <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
-                                            • NỘI DUNG CHUYỂN KHOẢN (BẮT BUỘC)
-                                        </Text>
-                                        <div style={{
-                                            background: "rgba(185, 28, 28, 0.2)",
-                                            border: "1px solid #b91c1c",
-                                            borderRadius: 8,
-                                            padding: "10px 14px",
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center"
-                                        }}>
-                                            <Text strong style={{ color: "#ffffff", fontSize: 18, letterSpacing: 2 }}>
-                                                {transferMemo}
-                                            </Text>
-                                            <Button
-                                                type="text"
-                                                icon={<CopyOutlined />}
-                                                onClick={() => copyToClipboard(transferMemo, "Nội dung chuyển khoản")}
-                                                style={{ color: "#ffffff" }}
-                                            />
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
-
-                            {/* Status Footer & Countdown Timer matching user screenshot */}
-                            <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #374151" }}>
-                                <div style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    marginBottom: 16
-                                }}>
-                                    <Space size={8} align="center">
-                                        <div style={{
-                                            width: 10,
-                                            height: 10,
-                                            borderRadius: "50%",
-                                            background: "#10b981",
-                                            boxShadow: "0 0 8px #10b981"
-                                        }} />
-                                        <Text strong style={{ color: "#10b981", fontSize: 12, letterSpacing: 0.5 }}>
-                                            ĐANG CHỜ THANH TOÁN...
-                                        </Text>
-                                    </Space>
-
-                                    <Space size={6} align="center">
-                                        <ClockCircleOutlined style={{ color: "#9ca3af" }} />
-                                        <Text style={{ color: "#ffffff", fontWeight: 700, fontFamily: "monospace", fontSize: 14 }}>
-                                            {formatTimer(timeLeft)}
-                                        </Text>
-                                    </Space>
-                                </div>
-
-                                {/* Action Buttons Bar */}
-                                <Row gutter={[12, 12]}>
-                                    <Col span={12}>
-                                        <Button
-                                            block
-                                            type="default"
-                                            icon={<DollarOutlined />}
-                                            onClick={() => {
-                                                setCashReceived(finalTotal);
-                                                setCashModalOpen(true);
-                                            }}
-                                            style={{
-                                                background: "#374151",
-                                                borderColor: "#4b5563",
-                                                color: "#ffffff",
-                                                height: 42,
-                                                fontWeight: 600,
-                                                borderRadius: 8,
-                                                boxShadow: "none"
-                                            }}
-                                        >
-                                            Tiền Mặt
-                                        </Button>
-                                    </Col>
-
-                                    <Col span={12}>
-                                        <Button
-                                            block
-                                            type="primary"
-                                            icon={<CheckCircleOutlined />}
-                                            loading={completing}
-                                            onClick={() => handleConfirmPayment("BANK_TRANSFER")}
-                                            style={{
-                                                background: "linear-gradient(135deg, #fa8c16 0%, #d46b08 100%)",
-                                                borderColor: "#fa8c16",
-                                                height: 42,
-                                                fontWeight: 700,
-                                                borderRadius: 8,
-                                                boxShadow: "none"
-                                            }}
-                                        >
-                                            Xác Nhận Chuyển Khoản
-                                        </Button>
-                                    </Col>
-                                </Row>
-                            </div>
                         </Card>
                     </Col>
                 </Row>

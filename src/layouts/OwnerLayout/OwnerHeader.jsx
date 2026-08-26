@@ -27,10 +27,10 @@ export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
     const { subscription } = useSubscription();
     const plan = subscription?.plan || "FREE";
 
-    const username =
-        localStorage.getItem(
-            "username"
-        );
+    const rawName = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Owner";
+    const username = rawName.includes("@")
+        ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
+        : rawName;
 
     const items = [
         {
@@ -56,48 +56,58 @@ export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
     return (
         <div
             style={{
-                height: 64,
-                background: "#fff",
+                height: 68,
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: screens.md ? "0 24px" : "0 12px",
+                padding: screens.md ? "0 28px" : "0 16px",
                 width: "100%"
             }}
         >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 {showMobileToggle && (
                     <Button
                         type="text"
                         icon={<MenuOutlined />}
                         onClick={onToggleMobileMenu}
-                        style={{ fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                        style={{
+                            fontSize: 18,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 10,
+                            background: "#f1f5f9"
+                        }}
                     />
                 )}
+
             </div>
 
             <div
                 style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: screens.md ? 16 : 8
+                    gap: screens.md ? 14 : 8
                 }}
             >
-                <Tooltip title="Xem chi tiết gói đăng ký">
+                <Tooltip title="Xem chi tiết gói đăng ký & quyền lợi">
                     <Tag 
                         color={getPlanColor(plan)} 
                         onClick={() => navigate("/owner/subscription")}
                         style={{ 
-                            fontWeight: "bold", 
-                            padding: screens.md ? "4px 12px" : "2px 8px", 
-                            borderRadius: 12, 
+                            fontWeight: 700, 
+                            padding: screens.md ? "5px 14px" : "3px 8px", 
+                            borderRadius: 20, 
                             margin: 0,
                             cursor: "pointer",
-                            boxShadow: plan !== "FREE" ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
-                            fontSize: screens.md ? "13px" : "11px"
+                            boxShadow: plan !== "FREE" ? "0 4px 12px rgba(79, 70, 229, 0.15)" : "none",
+                            fontSize: screens.md ? "12px" : "11px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4
                         }}
                     >
-                        {plan} MEMBER
+                        <CrownOutlined /> {plan} PLAN
                     </Tag>
                 </Tooltip>
 
@@ -105,21 +115,41 @@ export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
                     menu={{
                         items
                     }}
+                    placement="bottomRight"
+                    arrow
                 >
-                    <Button
-                        type="text"
-                        style={{ padding: screens.md ? "4px 15px" : "4px 0" }}
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            padding: "4px 12px 4px 6px",
+                            borderRadius: 24,
+                            background: "#f8fafc",
+                            border: "1px solid #e2e8f0",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease"
+                        }}
                     >
-                        <Space size={screens.md ? 8 : 4}>
-                            <Avatar
-                                icon={
-                                    <UserOutlined />
-                                }
-                            />
+                        <Avatar
+                            style={{
+                                background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                                color: "#fff",
+                                fontWeight: 700
+                            }}
+                            size={32}
+                            icon={<UserOutlined />}
+                        >
+                            {username?.[0]?.toUpperCase()}
+                        </Avatar>
 
-                            {screens.sm && username}
-                        </Space>
-                    </Button>
+                        {screens.sm && (
+                            <div style={{ lineHeight: 1.2 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{username}</div>
+                                <div style={{ fontSize: 10, color: "#64748b", fontWeight: 500 }}>Chủ Salon</div>
+                            </div>
+                        )}
+                    </div>
                 </Dropdown>
             </div>
         </div>

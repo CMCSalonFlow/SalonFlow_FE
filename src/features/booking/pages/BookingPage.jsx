@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, message, Spin, Grid, Segmented } from "antd";
-import { AppstoreOutlined, TeamOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined, RetweetOutlined } from "@ant-design/icons";
+import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, message, Spin, Grid } from "antd";
+import { AppstoreOutlined, TeamOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
 import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
-import { getAvailabilityApi, createBookingApi, previewRecurringBookingApi, confirmRecurringBookingApi } from "../api/bookingApi";
+import { getAvailabilityApi, createBookingApi } from "../api/bookingApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { getAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
@@ -18,7 +18,6 @@ import BookingSummary from "../components/BookingSummary";
 import StepServiceSelection from "../components/StepServiceSelection";
 import StepTimeSlots from "../components/StepTimeSlots";
 import NormalBookingForm from "../components/NormalBookingForm";
-import RecurringBookingForm from "../components/RecurringBookingForm";
 import AiBookingChatbot from "@/features/chatbot/components/AiBookingChatbot";
 
 import offdayApi from "@/features/offday/api/offdayApi";
@@ -37,7 +36,7 @@ export default function BookingPage() {
 
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState("VNPAY");
+    const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
     const [systemOffDays, setSystemOffDays] = useState([]);
 
     // Dữ liệu nguồn
@@ -67,16 +66,6 @@ export default function BookingPage() {
     const [refreshCounter, setRefreshCounter] = useState(0);
     const [workingStaffIds, setWorkingStaffIds] = useState([]);
     const [loadingStaff, setLoadingStaff] = useState(false);
-
-    // Trạng thái Đặt lịch định kỳ (Recurring Booking)
-    const [isRecurringMode, setIsRecurringMode] = useState(false);
-    const [recurringPattern, setRecurringPattern] = useState("WEEKLY");
-    const [recurringStartDate, setRecurringStartDate] = useState(null);
-    const [recurringEndDate, setRecurringEndDate] = useState(null);
-    const [recurringTime, setRecurringTime] = useState(null);
-    const [recurringPreviewList, setRecurringPreviewList] = useState([]);
-    const [loadingPreview, setLoadingPreview] = useState(false);
-    const [recurringServiceId, setRecurringServiceId] = useState(null);
     const [customerPhone, setCustomerPhone] = useState("");
 
     useEffect(() => {
@@ -337,8 +326,8 @@ export default function BookingPage() {
 
             if (!hasSkill) return false;
 
-            if (selectedDate && !isRecurringMode) {
-                return workingStaffIds.includes(staff.userId);
+            if (selectedDate && workingStaffIds.length > 0) {
+                return workingStaffIds.includes(staff.userId) || workingStaffIds.includes(staff.id);
             }
 
             return true;
@@ -464,137 +453,6 @@ export default function BookingPage() {
         }
     };
 
-    // Xem trước lịch định kỳ
-    const handleRecurringPreview = async () => {
-        if (!selectedBranchId) {
-            message.warning("Vui lòng chọn chi nhánh!");
-            return;
-        }
-        if (!recurringServiceId) {
-            message.warning("Vui lòng chọn dịch vụ!");
-            return;
-        }
-        if (!selectedStaff) {
-            message.warning("Vui lòng chọn một nhân viên cụ thể cho lịch định kỳ!");
-            return;
-        }
-        if (!recurringStartDate || !recurringEndDate) {
-            message.warning("Vui lòng chọn đầy đủ ngày bắt đầu và kết thúc!");
-            return;
-        }
-        if (!recurringTime) {
-            message.warning("Vui lòng chọn giờ hẹn!");
-            return;
-        }
-
-        const activeService = services.find(s => s.id === recurringServiceId);
-        const duration = activeService ? activeService.durationMinutes : 30;
-        const startTimeStr = recurringTime;
-        const endTimeStr = dayjs(`2020-01-01T${startTimeStr}`).add(duration, "minute").format("HH:mm");
-
-        try {
-            setLoadingPreview(true);
-            setRecurringPreviewList([]);
-
-            const payload = {
-                branchId: selectedBranchId,
-                staffId: selectedStaff.id,
-                serviceId: recurringServiceId,
-                pattern: recurringPattern,
-                startDate: recurringStartDate.format("YYYY-MM-DD"),
-                endDate: recurringEndDate.format("YYYY-MM-DD"),
-                startTime: startTimeStr,
-                endTime: endTimeStr,
-                note: notes
-            };
-
-            const data = await previewRecurringBookingApi(payload);
-            
-            const mappedOccurrences = (data.occurrences || []).map(item => ({
-                ...item,
-                action: item.hasConflict ? "SKIP" : "INCLUDE",
-                overrideStartTime: null,
-                overrideEndTime: null,
-                showOverridePicker: false
-            }));
-
-            setRecurringPreviewList(mappedOccurrences);
-            message.success(`Đã tạo xem trước chuỗi lịch hẹn (${data.totalOccurrences} ngày). Có ${data.conflictCount} ngày bị trùng lịch.`);
-        } catch (error) {
-            message.error(error.response?.data?.message || error.message || "Lỗi khi quét lịch xem trước.");
-        } finally {
-            setLoadingPreview(false);
-        }
-    };
-
-    // Xác nhận lưu toàn bộ chuỗi lịch định kỳ
-    const handleConfirmRecurringBooking = async () => {
-        if (!customerPhone || !customerPhone.trim()) {
-            message.warning("Vui lòng nhập số điện thoại liên hệ!");
-            return;
-        }
-        if (recurringPreviewList.length === 0) {
-            message.warning("Vui lòng click Xem trước lịch hẹn trước!");
-            return;
-        }
-
-        const activeService = services.find(s => s.id === recurringServiceId);
-        const duration = activeService ? activeService.durationMinutes : 30;
-        const startTimeStr = recurringTime;
-        const endTimeStr = dayjs(`2020-01-01T${startTimeStr}`).add(duration, "minute").format("HH:mm");
-
-        try {
-            setLoading(true);
-
-            const payload = {
-                pattern: {
-                    branchId: selectedBranchId,
-                    staffId: selectedStaff.id,
-                    serviceId: recurringServiceId,
-                    pattern: recurringPattern,
-                    startDate: recurringStartDate.format("YYYY-MM-DD"),
-                    endDate: recurringEndDate.format("YYYY-MM-DD"),
-                    startTime: startTimeStr + ":00",
-                    endTime: endTimeStr + ":00",
-                    note: notes,
-                    customerPhone
-                },
-                occurrences: recurringPreviewList.map(item => {
-                    const action = item.action || (item.hasConflict ? "SKIP" : "INCLUDE");
-                    return {
-                        date: item.date,
-                        action: action,
-                        overrideStartTime: action === "INCLUDE" && item.overrideStartTime ? item.overrideStartTime + ":00" : null,
-                        overrideEndTime: action === "INCLUDE" && item.overrideEndTime ? item.overrideEndTime + ":00" : null
-                    };
-                })
-            };
-
-            await confirmRecurringBookingApi(payload);
-            message.success("Đặt lịch định kỳ thành công!");
-            
-            const activeBranch = branches.find(b => b.id === selectedBranchId);
-            const activeService = services.find(s => s.id === recurringServiceId);
-            
-            navigate("/booking/recurring-success", {
-                state: {
-                    branchName: activeBranch ? `${activeBranch.name} (${activeBranch.address})` : "",
-                    serviceName: activeService ? activeService.name : "",
-                    staffName: selectedStaff ? selectedStaff.name : "",
-                    pattern: recurringPattern,
-                    startDate: recurringStartDate.format("YYYY-MM-DD"),
-                    endDate: recurringEndDate.format("YYYY-MM-DD"),
-                    time: recurringTime,
-                    note: notes,
-                    totalCreated: recurringPreviewList.filter(item => (item.action || (item.hasConflict ? "SKIP" : "INCLUDE")) === "INCLUDE").length
-                }
-            });
-        } catch (error) {
-            message.error(error.response?.data?.message || error.message || "Lỗi khi lưu chuỗi đặt lịch định kỳ.");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const { price: totalPrice, duration: totalDuration } = getBookingSummary();
     const depositAmount = getBookingDepositAmount();
@@ -602,26 +460,27 @@ export default function BookingPage() {
     const selectedBranchName = branches.find(b => b.id === selectedBranchId)?.name;
 
     return (
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 0" }}>
-            <Title level={2} style={{ textAlign: "center", marginBottom: 32 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: screens.xs ? "8px 4px" : "20px 0" }}>
+            <Title level={screens.xs ? 4 : 2} style={{ textAlign: "center", marginBottom: screens.xs ? 16 : 32 }}>
                 ✂️ Đặt lịch dịch vụ làm đẹp
             </Title>
 
             <Steps
                 current={currentStep}
                 responsive
-                style={{ marginBottom: 40 }}
+                size={screens.xs ? "small" : "default"}
+                style={{ marginBottom: screens.xs ? 20 : 40 }}
                 items={[
-                    { title: "Chọn dịch vụ", icon: <AppstoreOutlined /> },
-                    { title: "Chọn ngày & nhân viên", icon: <TeamOutlined /> },
-                    { title: "Chọn giờ & hoàn tất", icon: <ClockCircleOutlined /> }
+                    { title: screens.xs ? "Dịch vụ" : "Chọn dịch vụ", icon: <AppstoreOutlined /> },
+                    { title: screens.xs ? "Ngày & Thợ" : "Chọn ngày & nhân viên", icon: <TeamOutlined /> },
+                    { title: screens.xs ? "Giờ & Xong" : "Chọn giờ & hoàn tất", icon: <ClockCircleOutlined /> }
                 ]}
             />
 
             <Row gutter={[24, 24]}>
                 {/* Cột trái: Form cấu hình theo từng bước */}
                 <Col xs={24} lg={16}>
-                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+                    <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }} bodyStyle={{ padding: screens.xs ? "14px 12px" : "24px" }}>
                         {/* CHỌN SALON & CHI NHÁNH (Chỉ hiển thị ở Bước 1) */}
                         {currentStep === 0 && (
                             <>
@@ -686,59 +545,23 @@ export default function BookingPage() {
                                 )}
 
                                 {/* ── BƯỚC 2: CHỌN NHÂN VIÊN & NGÀY HẸN (ĐƠN / ĐỊNH KỲ) ── */}
+                                {/* ── BƯỚC 2: CHỌN NHÂN VIÊN & NGÀY HẸN ────────────────── */}
                                 {currentStep === 1 && (
-                                    <div>
-                                        <Segmented
-                                            options={[
-                                                { label: "Đặt lịch thường (Một lần)", value: "normal" },
-                                                { label: "Đặt lịch định kỳ 🔄", value: "recurring" }
-                                            ]}
-                                            value={isRecurringMode ? "recurring" : "normal"}
-                                            onChange={(value) => {
-                                                setIsRecurringMode(value === "recurring");
-                                                setSelectedStaff(null);
-                                                setSelectedDate(null);
-                                                setRecurringPreviewList([]);
-                                            }}
-                                            size="large"
-                                            block
-                                            style={{ marginBottom: 24 }}
-                                        />
-
-                                        {!isRecurringMode ? (
-                                            <NormalBookingForm
-                                                selectedDate={selectedDate}
-                                                setSelectedDate={setSelectedDate}
-                                                setSelectedStaff={setSelectedStaff}
-                                                loadingStaff={loadingStaff}
-                                                getQualifiedStaff={getQualifiedStaff}
-                                                selectedStaff={selectedStaff}
-                                                systemOffDays={systemOffDays}
-                                            />
-                                        ) : (
-                                            <RecurringBookingForm
-                                                services={services}
-                                                selectedServices={selectedServices}
-                                                selectedBundle={selectedBundle}
-                                                bookingType={bookingType}
-                                                recurringServiceId={recurringServiceId}
-                                                setRecurringServiceId={setRecurringServiceId}
-                                                recurringPattern={recurringPattern}
-                                                setRecurringPattern={setRecurringPattern}
-                                                recurringStartDate={recurringStartDate}
-                                                setRecurringStartDate={setRecurringStartDate}
-                                                recurringEndDate={recurringEndDate}
-                                                setRecurringEndDate={setRecurringEndDate}
-                                                recurringTime={recurringTime}
-                                                setRecurringTime={setRecurringTime}
-                                                getQualifiedStaff={getQualifiedStaff}
-                                                selectedStaff={selectedStaff}
-                                                setSelectedStaff={setSelectedStaff}
-                                                recurringPreviewList={recurringPreviewList}
-                                                setRecurringPreviewList={setRecurringPreviewList}
-                                            />
-                                        )}
-                                    </div>
+                                    <NormalBookingForm
+                                        selectedDate={selectedDate}
+                                        setSelectedDate={setSelectedDate}
+                                        setSelectedStaff={setSelectedStaff}
+                                        loadingStaff={loadingStaff}
+                                        getQualifiedStaff={getQualifiedStaff}
+                                        selectedStaff={selectedStaff}
+                                        systemOffDays={systemOffDays}
+                                        selectedBranchId={selectedBranchId}
+                                        selectedServices={selectedServices}
+                                        selectedBundle={selectedBundle}
+                                        bookingType={bookingType}
+                                        selectedTime={selectedTime}
+                                        setSelectedTime={setSelectedTime}
+                                    />
                                 )}
 
                                 {/* ── BƯỚC 3: CHỌN GIỜ & GHI CHÚ ──────────────────── */}
@@ -776,37 +599,7 @@ export default function BookingPage() {
                                         Quay lại
                                     </Button>
 
-                                    {isRecurringMode && currentStep === 1 ? (
-                                        recurringPreviewList.length === 0 ? (
-                                            <Button
-                                                type="primary"
-                                                size="large"
-                                                onClick={handleRecurringPreview}
-                                                loading={loadingPreview}
-                                                icon={<RetweetOutlined />}
-                                            >
-                                                Xem trước lịch định kỳ
-                                            </Button>
-                                        ) : (
-                                            <Space>
-                                                <Button
-                                                    size="large"
-                                                    onClick={() => setRecurringPreviewList([])}
-                                                >
-                                                    Thay đổi thiết lập
-                                                </Button>
-                                                <Button
-                                                    type="primary"
-                                                    size="large"
-                                                    onClick={handleConfirmRecurringBooking}
-                                                    style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
-                                                    loading={loading}
-                                                >
-                                                    Xác nhận đặt lịch định kỳ
-                                                </Button>
-                                            </Space>
-                                        )
-                                    ) : currentStep < 2 ? (
+                                    {currentStep < 2 ? (
                                         <Button
                                             type="primary"
                                             size="large"
@@ -834,7 +627,6 @@ export default function BookingPage() {
                 {/* Cột phải: Hóa đơn tóm tắt thông tin đặt lịch */}
                 <Col xs={24} lg={8}>
                     <BookingSummary
-                        isRecurringMode={isRecurringMode}
                         currentStep={currentStep}
                         branches={branches}
                         selectedBranchId={selectedBranchId}
@@ -844,17 +636,8 @@ export default function BookingPage() {
                         selectedStaff={selectedStaff}
                         selectedDate={selectedDate}
                         selectedTime={selectedTime}
-                        recurringStartDate={recurringStartDate}
-                        recurringEndDate={recurringEndDate}
-                        recurringPattern={recurringPattern}
-                        recurringTime={recurringTime}
-                        services={services}
-                        recurringServiceId={recurringServiceId}
                         totalDuration={totalDuration}
                         payableAmount={payableAmount}
-                        depositAmount={depositAmount}
-                        paymentMethod={paymentMethod}
-                        formatCurrency={formatCurrency}
                     />
                 </Col>
             </Row>
@@ -865,7 +648,6 @@ export default function BookingPage() {
                 bookingMode="customer"
                 onHumanHandoff={() => {
                     setCurrentStep(0);
-                    setIsRecurringMode(false);
                     message.info("Bạn có thể tiếp tục đặt lịch bằng biểu mẫu thường.");
                 }}
             />

@@ -1,5 +1,5 @@
-import { DatePicker, Divider, Spin, Card, Space, Avatar, Row, Col, Typography, Alert } from "antd";
-import { SmileOutlined, TeamOutlined, CalendarOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { DatePicker, Divider, Spin, Card, Space, Avatar, Row, Col, Typography } from "antd";
+import { SmileOutlined, CalendarOutlined, InfoCircleOutlined, UserOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -11,11 +11,29 @@ export default function NormalBookingForm({
     loadingStaff,
     getQualifiedStaff,
     selectedStaff,
-    systemOffDays = []
+    systemOffDays = [],
+    selectedBranchId = null,
+    selectedServices = [],
+    selectedBundle = null,
+    bookingType = "service",
+    selectedTime = null,
+    setSelectedTime = null
 }) {
     const isDateDisabled = (current) => {
         if (!current) return false;
-        if (current.valueOf() < Date.now() - 24 * 60 * 60 * 1000) return true;
+        // 1. Vô hiệu hóa tất cả các ngày trong quá khứ trước ngày hôm nay
+        if (current.isBefore(dayjs().startOf("day"))) return true;
+
+        // 2. Nếu là ngày hôm nay nhưng giờ hiện tại đã quá giờ hoạt động của chi nhánh (sau 19:30/20:00) -> vô hiệu hóa ngày hôm nay
+        if (current.isSame(dayjs(), "day")) {
+            const nowHour = dayjs().hour();
+            const nowMinute = dayjs().minute();
+            if (nowHour >= 20 || (nowHour === 19 && nowMinute > 30)) {
+                return true;
+            }
+        }
+
+        // 3. Vô hiệu hóa các ngày nghỉ lễ của chi nhánh
         const dateStr = current.format("YYYY-MM-DD");
         return systemOffDays.some(off => dateStr >= off.dateFrom && dateStr <= off.dateTo);
     };
@@ -67,7 +85,7 @@ export default function NormalBookingForm({
                     <CalendarOutlined style={{ fontSize: 32, color: "#bfbfbf", marginBottom: 12 }} />
                     <div>
                         <Text type="secondary" style={{ fontSize: 16, fontWeight: 500 }}>
-                            Vui lòng chọn ngày hẹn trước để hiển thị danh sách nhân viên khả dụng.
+                            Vui lòng chọn ngày hẹn trước để hiển thị danh sách nhân viên.
                         </Text>
                     </div>
                 </div>
@@ -116,12 +134,12 @@ export default function NormalBookingForm({
                                         onClick={() => setSelectedStaff(staff)}
                                     >
                                         <Space size="middle">
-                                            <Avatar size={48} src={staff.avatarUrl} icon={<TeamOutlined />} style={{ backgroundColor: "#1890ff" }} />
+                                            <Avatar size={48} src={staff.avatarUrl} icon={<UserOutlined />} style={{ backgroundColor: "#1890ff" }} />
                                             <div>
                                                 <Text strong style={{ fontSize: 16 }}>{staff.name}</Text>
                                                 <br />
-                                                <Text type="secondary" style={{ fontSize: 12, display: "inline-block", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                    {staff.specialties || "Thợ làm tóc chuyên nghiệp"}
+                                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                                    {staff.specialties || "Cắt Tóc & Tạo Kiểu"}
                                                 </Text>
                                             </div>
                                         </Space>
@@ -130,11 +148,6 @@ export default function NormalBookingForm({
                             );
                         })}
                     </Row>
-                    {getQualifiedStaff().length === 0 && (
-                        <div style={{ textAlign: "center", padding: "20px 0" }}>
-                            <Text type="secondary">Không có nhân viên nào hoạt động hoặc có ca làm việc vào ngày này.</Text>
-                        </div>
-                    )}
                 </div>
             )}
         </div>

@@ -3,7 +3,6 @@ import { Card, Result, Button, Typography, Space, Spin } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined, ArrowRightOutlined, RocketOutlined, RedoOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "../hooks/useSubscription";
-import { verifyPaymentApi } from "../../payment/api/paymentApi";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -18,32 +17,11 @@ export default function SubscriptionSuccessPage() {
     useEffect(() => {
         const verifyPayment = async () => {
             try {
-                const searchParams = new URLSearchParams(window.location.search);
-                const params = {};
-                for (const [key, value] of searchParams.entries()) {
-                    params[key] = value;
-                }
-
-                if (Object.keys(params).length === 0 || !params.vnp_TxnRef) {
-                    // Nếu không có tham số VNPay (truy cập thủ công), coi như đã nâng cấp
-                    setSuccess(true);
-                    setVerifying(false);
-                    refetchSubscription();
-                    return;
-                }
-
-                // Gọi API verify VNPay callback
-                const response = await verifyPaymentApi(params);
-                console.log("Subscription payment verify response:", response);
-
-                if (response && response.status === "SUCCESS") {
-                    setSuccess(true);
-                } else {
-                    setErrorMsg("Giao dịch thanh toán đăng ký gói dịch vụ không thành công hoặc bị hủy.");
-                }
+                setSuccess(true);
+                refetchSubscription();
             } catch (err) {
                 console.error("Xác minh thanh toán đăng ký gói thất bại:", err);
-                setErrorMsg(err.response?.data?.message || err.message || "Xác thực chữ ký giao dịch thanh toán thất bại.");
+                setErrorMsg(err.message || "Xác thực giao dịch thanh toán thất bại.");
             } finally {
                 setVerifying(false);
             }
@@ -150,7 +128,7 @@ export default function SubscriptionSuccessPage() {
                         }
                         subTitle={
                             <Paragraph style={{ color: "#595959", fontSize: 16, lineHeight: "1.6" }}>
-                                {errorMsg || "Giao dịch thanh toán đã bị hủy hoặc gặp lỗi trong quá trình xử lý từ cổng VNPay."}
+                                {errorMsg || "Giao dịch thanh toán đã bị hủy hoặc gặp lỗi trong quá trình xử lý."}
                             </Paragraph>
                         }
                         extra={[

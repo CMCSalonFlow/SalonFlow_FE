@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Row, Col, Card, Select, DatePicker, Button, Space, Spin, Alert, Typography, message } from 'antd';
-import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Row, Col, Spin, Alert } from 'antd';
 import dayjs from 'dayjs';
 
 import {
@@ -17,7 +16,6 @@ import TopReviewsPanel from './TopReviewsPanel';
 import BranchComparisonTable from './BranchComparisonTable';
 import WordCloudPanel from './WordCloudPanel';
 
-const { Text } = Typography;
 
 /**
  * ⚠️ GIẢ ĐỊNH CẦN XÁC NHẬN: component này cần salonId để gọi các API scope-theo-salon
@@ -26,10 +24,13 @@ const { Text } = Typography;
  * thật từ salonApi (ví dụ getMySalonApi()) rồi truyền xuống. Nếu salonId chưa có sẵn,
  * cần bổ sung logic lấy salon hiện tại trước khi dùng tab này.
  */
-export default function ReviewAnalyticsTab({ salonId, branches = [] }) {
-    const [branchId, setBranchId] = useState(undefined);
-    const [monthRange, setMonthRange] = useState([dayjs().subtract(5, 'month'), dayjs()]);
-    const [selectedMonth, setSelectedMonth] = useState(dayjs());
+export default function ReviewAnalyticsTab({ salonId, branches = [], selectedBranchId }) {
+    const [branchId, setBranchId] = useState(selectedBranchId || undefined);
+
+    useEffect(() => {
+        setBranchId(selectedBranchId || undefined);
+    }, [selectedBranchId]);
+    const [periodMonths, setPeriodMonths] = useState(6);
 
     const [trend, setTrend] = useState(null);
     const [topReviews, setTopReviews] = useState(null);
@@ -49,9 +50,9 @@ export default function ReviewAnalyticsTab({ salonId, branches = [] }) {
         setLoading(true);
         setError(null);
         try {
-            const fromMonth = monthRange?.[0]?.format('YYYY-MM');
-            const toMonth = monthRange?.[1]?.format('YYYY-MM');
-            const yearMonth = selectedMonth?.format('YYYY-MM');
+            const fromMonth = dayjs().subtract(periodMonths - 1, 'month').format('YYYY-MM');
+            const toMonth = dayjs().format('YYYY-MM');
+            const yearMonth = dayjs().format('YYYY-MM');
 
             const [trendRes, topRes, wordCloudRes] = await Promise.all([
                 getReviewTrendApi({ ...scopeParams, fromMonth, toMonth }),
@@ -77,7 +78,7 @@ export default function ReviewAnalyticsTab({ salonId, branches = [] }) {
             setLoading(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [salonId, branchId, monthRange, selectedMonth]);
+    }, [salonId, branchId, periodMonths]);
 
     useEffect(() => {
         loadAll();
@@ -129,49 +130,11 @@ export default function ReviewAnalyticsTab({ salonId, branches = [] }) {
                     type="warning"
                     showIcon
                     message="Chưa xác định được salon/chi nhánh"
-                    description="Vui lòng chọn 1 chi nhánh cụ thể ở bộ lọc bên dưới để xem phân tích đánh giá."
+                    description="Vui lòng chọn chi nhánh ở bộ lọc bên trên để xem phân tích đánh giá."
                 />
             )}
 
             {error && <Alert type="error" showIcon message="Lỗi tải dữ liệu" description={error} />}
-
-            <Card bordered={false} style={{ borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} bodyStyle={{ padding: '16px 20px' }}>
-                <Space wrap size="middle" style={{ width: '100%', justifyContent: 'space-between' }}>
-                    <Space wrap>
-                        <Select
-                            allowClear
-                            placeholder="Tất cả chi nhánh (theo salon)"
-                            style={{ width: 240 }}
-                            value={branchId}
-                            onChange={(v) => setBranchId(v || undefined)}
-                            options={branches.map((b) => ({ value: b.id, label: b.name }))}
-                        />
-                        <DatePicker.RangePicker
-                            picker="month"
-                            value={monthRange}
-                            onChange={(dates) => dates && setMonthRange(dates)}
-                            allowClear={false}
-                        />
-                        <DatePicker
-                            picker="month"
-                            value={selectedMonth}
-                            onChange={(date) => date && setSelectedMonth(date)}
-                            allowClear={false}
-                        />
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            (Tháng bên phải dùng cho Word Cloud)
-                        </Text>
-                    </Space>
-                    <Space>
-                        <Button icon={<ReloadOutlined spin={loading} />} onClick={loadAll} loading={loading}>
-                            Làm mới
-                        </Button>
-                        <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport} loading={exporting}>
-                            Export CSV
-                        </Button>
-                    </Space>
-                </Space>
-            </Card>
 
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '60px 0' }}>
@@ -181,7 +144,11 @@ export default function ReviewAnalyticsTab({ salonId, branches = [] }) {
                 <>
                     <Row gutter={[16, 16]}>
                         <Col xs={24} lg={16}>
-                            <RatingTrendChart points={trend?.points || []} />
+                            <RatingTrendChart
+                                points={trend?.points || []}
+                                periodMonths={periodMonths}
+                                onPeriodChange={setPeriodMonths}
+                            />
                         </Col>
                         <Col xs={24} lg={8}>
                             <StarDistributionChart distribution={aggregatedDistribution} />

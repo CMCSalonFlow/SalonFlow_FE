@@ -58,6 +58,9 @@ export default function ProfilePage() {
             const response = await api.put(`/api/v1/users/${userId}`, payload);
             message.success("Cập nhật thông tin thành công!");
             setUser(response.data);
+            if (response.data?.fullName) {
+                localStorage.setItem("fullName", response.data.fullName);
+            }
             setIsModalOpen(false);
         } catch (error) {
             const errorMsg = error?.response?.data?.message || "Không thể cập nhật số điện thoại.";

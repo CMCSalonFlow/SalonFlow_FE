@@ -18,7 +18,7 @@ import {
     Spin
 } from "antd";
 import {
-    ScissorOutlined,
+    CalendarOutlined,
     ClockCircleOutlined,
     SearchOutlined,
     CheckCircleOutlined,
@@ -339,7 +339,7 @@ export default function CategoryListUserPage() {
 
     const categoryTabs = [
         { key: "ALL", label: "✨ Tất Cả Dịch Vụ" },
-        { key: "CẮT & TẠO KIỂU", label: "✂️ Cắt & Tạo Kiểu" },
+        { key: "CẮT & TẠO KIỂU", label: "💇‍♂️ Cắt & Tạo Kiểu" },
         { key: "UỐN & NHUỘM", label: "🎨 Uốn & Nhuộm Hàn Quốc" },
         { key: "GỘI DƯỠNG SINH & SPA", label: "💆‍♀️ Gội Dưỡng Sinh & Spa" },
         { key: "NAIL & MI", label: "💅 Nail Art & Mi" },
@@ -376,7 +376,7 @@ export default function CategoryListUserPage() {
                             <Button
                                 type="primary"
                                 size="large"
-                                icon={<ScissorOutlined />}
+                                icon={<CalendarOutlined />}
                                 onClick={() => navigate("/guest-booking")}
                                 style={{
                                     height: 50,
@@ -482,7 +482,25 @@ export default function CategoryListUserPage() {
                                             }}
                                             onMouseEnter={(e) => e.target.style.transform = "scale(1.08)"}
                                             onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
+                                            onError={(e) => {
+                                                e.target.style.display = "none";
+                                                const fallback = e.target.parentNode.querySelector(".img-fallback");
+                                                if (fallback) fallback.style.display = "flex";
+                                            }}
                                         />
+                                        <div className="img-fallback" style={{
+                                            display: "none",
+                                            width: "100%", height: "100%",
+                                            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                                            alignItems: "center", justifyContent: "center",
+                                            flexDirection: "column", gap: 8,
+                                            position: "absolute", top: 0, left: 0,
+                                        }}>
+                                            <span style={{ fontSize: 40 }}>✂️</span>
+                                            <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, fontWeight: 600 }}>
+                                                {service.name}
+                                            </span>
+                                        </div>
                                         <Tag
                                             color={service.tagColor}
                                             style={{
@@ -586,7 +604,7 @@ export default function CategoryListUserPage() {
                                         block
                                         shape="round"
                                         size="large"
-                                        icon={<ScissorOutlined />}
+                                        icon={<CalendarOutlined />}
                                         onClick={() => navigate("/guest-booking")}
                                         style={{
                                             fontWeight: 700,
@@ -669,7 +687,7 @@ export default function CategoryListUserPage() {
                         <Button
                             key="book"
                             type="primary"
-                            icon={<ScissorOutlined />}
+                            icon={<CalendarOutlined />}
                             onClick={() => {
                                 setDetailModalService(null);
                                 navigate("/guest-booking");

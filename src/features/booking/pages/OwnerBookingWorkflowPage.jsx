@@ -499,6 +499,47 @@ export default function OwnerBookingWorkflowPage() {
             return;
         }
 
+        if (actionKey === "manual_checkin") {
+            Modal.confirm({
+                title: "Xác nhận Check-in thủ công",
+                icon: <CheckCircleOutlined style={{ color: "#fa8c16" }} />,
+                content: (
+                    <div>
+                        <p style={{ marginBottom: 8 }}>
+                            Xác nhận khách hàng <b>#{booking.id} ({booking.customerName || booking.customer?.name || "Khách lẻ"})</b> đã đến salon làm dịch vụ?
+                        </p>
+                        <Descriptions column={1} size="small" bordered style={{ marginTop: 8 }}>
+                            <Descriptions.Item label="Chi nhánh">
+                                {booking.branchName || selectedBranch?.name || "-"}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Thời gian">
+                                {formatDate(booking.bookingDate)} {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                            </Descriptions.Item>
+                        </Descriptions>
+                    </div>
+                ),
+                okText: "Check-in ngay",
+                cancelText: "Hủy",
+                okButtonProps: { type: "primary", style: { backgroundColor: "#13c2c2", borderColor: "#13c2c2" } },
+                onOk: async () => {
+                    const loadingKey = `${booking.id}-manual_checkin`;
+                    try {
+                        setActionLoadingKey(loadingKey);
+                        await checkInBookingApi(booking.id);
+                        message.success(`Đã Check-in thủ công thành công cho booking #${booking.id}!`);
+                        await loadBookings(branchId);
+                        if (detailOpen) setDetailOpen(false);
+                    } catch (error) {
+                        console.error(error);
+                        message.error(error?.response?.data?.message || "Check-in thủ công thất bại.");
+                    } finally {
+                        setActionLoadingKey("");
+                    }
+                }
+            });
+            return;
+        }
+
         if (actionKey === "complete") {
             setCheckoutBooking(booking);
             setCheckoutModalOpen(true);
@@ -668,7 +709,7 @@ export default function OwnerBookingWorkflowPage() {
                         <Button size="small" onClick={() => { setSelectedBooking(record); setDetailOpen(true); }}>
                             Chi tiết
                         </Button>
-                        {workflowAction ? (
+                        {workflowAction && (
                             <Button
                                 size="small"
                                 type="primary"
@@ -682,8 +723,20 @@ export default function OwnerBookingWorkflowPage() {
                             >
                                 {workflowAction.label}
                             </Button>
-                        ) : (
-                            record.status === "COMPLETED" && (
+                        )}
+                        {record.status === "CONFIRMED" && (
+                            <Button
+                                size="small"
+                                type="primary"
+                                icon={actionLoadingKey === `${record.id}-manual_checkin` ? <LoadingOutlined /> : <CheckCircleOutlined />}
+                                loading={actionLoadingKey === `${record.id}-manual_checkin`}
+                                style={{ backgroundColor: "#13c2c2", borderColor: "#13c2c2" }}
+                                onClick={() => runWorkflowAction(record, "manual_checkin")}
+                            >
+                                Check-in Thủ công
+                            </Button>
+                        )}
+                        {record.status === "COMPLETED" && (
                                 <Button
                                     size="small"
                                     type="default"
@@ -707,8 +760,7 @@ export default function OwnerBookingWorkflowPage() {
                                 >
                                     Xem hóa đơn
                                 </Button>
-                            )
-                        )}
+                            )}
                     </Space>
                 );
             }
@@ -867,17 +919,13 @@ export default function OwnerBookingWorkflowPage() {
                     </Space>
                 }
                 open={detailOpen}
-                onCancel={() => {
-                    setDetailOpen(false);
-                    setSelectedBooking(null);
-                }}
+                destroyOnClose
+                afterClose={() => setSelectedBooking(null)}
+                onCancel={() => setDetailOpen(false)}
                 footer={[
                     <Button
                         key="close"
-                        onClick={() => {
-                            setDetailOpen(false);
-                            setSelectedBooking(null);
-                        }}
+                        onClick={() => setDetailOpen(false)}
                     >
                         Đóng
                     </Button>,
@@ -887,6 +935,10 @@ export default function OwnerBookingWorkflowPage() {
                             type="primary"
                             loading={actionLoadingKey === `${selectedBooking.id}-${getWorkflowAction(selectedBooking.status)?.key}`}
                             icon={getWorkflowAction(selectedBooking.status)?.icon}
+                            style={{
+                                backgroundColor: getWorkflowAction(selectedBooking.status)?.color === "gold" ? "#fa8c16" : undefined,
+                                borderColor: getWorkflowAction(selectedBooking.status)?.color === "gold" ? "#fa8c16" : undefined
+                            }}
                             onClick={() => {
                                 const workflowAction = getWorkflowAction(selectedBooking.status);
                                 if (workflowAction) {
@@ -896,7 +948,19 @@ export default function OwnerBookingWorkflowPage() {
                         >
                             {getWorkflowAction(selectedBooking.status)?.label}
                         </Button>
-                    ) : null
+                    ) : null,
+                    selectedBooking?.status === "CONFIRMED" && (
+                        <Button
+                            key="manual_checkin"
+                            type="primary"
+                            loading={actionLoadingKey === `${selectedBooking.id}-manual_checkin`}
+                            icon={<CheckCircleOutlined />}
+                            style={{ backgroundColor: "#13c2c2", borderColor: "#13c2c2" }}
+                            onClick={() => runWorkflowAction(selectedBooking, "manual_checkin")}
+                        >
+                            Check-in Thủ công
+                        </Button>
+                    )
                 ]}
                 width={760}
             >

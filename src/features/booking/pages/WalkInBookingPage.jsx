@@ -33,18 +33,22 @@ import {
     CreditCardOutlined,
     FileTextOutlined,
     SafetyCertificateOutlined,
-    QrcodeOutlined
+    QrcodeOutlined,
+    ThunderboltOutlined,
+    CalendarOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
-import { getServicesByBranchApi } from "@/features/service/api/serviceApi";
+import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import {
     createWalkInBookingApi,
     getAvailabilityApi,
 } from "../api/bookingApi";
+import { getAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { processPosCashPaymentApi } from "@/features/payment/api/paymentApi";
+import StepServiceSelection from "../components/StepServiceSelection";
 
 import offdayApi from "@/features/offday/api/offdayApi";
 
@@ -61,13 +65,21 @@ export default function WalkInBookingPage() {
     const [branchId, setBranchId] = useState(null);
 
     const [staffs, setStaffs] = useState([]);
+    const [workingStaffIds, setWorkingStaffIds] = useState([]);
     const [services, setServices] = useState([]);
+    const [bundles, setBundles] = useState([]);
+    const [bookingType, setBookingType] = useState("service");
+    const [selectedBundle, setSelectedBundle] = useState(null);
 
     const [availableSlots, setAvailableSlots] = useState([]);
+    const [allSlots, setAllSlots] = useState([]);
+    const [availableTimeSet, setAvailableTimeSet] = useState(new Set());
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     // Dynamic Selected State for POS Summary Cart
+    const watchedCustomerName = Form.useWatch("customerName", form);
+    const watchedCustomerPhone = Form.useWatch("customerPhone", form);
     const [selectedServiceIds, setSelectedServiceIds] = useState([]);
     const [selectedStaffId, setSelectedStaffId] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
@@ -80,8 +92,31 @@ export default function WalkInBookingPage() {
     const [successData, setSuccessData] = useState(null);
 
     const staffUsername = localStorage.getItem("username") || "Staff";
-    const staffFullName = localStorage.getItem("fullName") || staffUsername;
     const staffUserId = localStorage.getItem("userId");
+
+    const currentUserStaffObj = useMemo(() => {
+        if (!staffUserId || staffs.length === 0) return null;
+        return staffs.find(s => String(s.userId) === String(staffUserId) || String(s.id) === String(staffUserId));
+    }, [staffs, staffUserId]);
+
+    const staffFullName = useMemo(() => {
+        if (currentUserStaffObj?.name && currentUserStaffObj.name.trim()) {
+            return currentUserStaffObj.name.trim();
+        }
+
+        const rawName =
+            localStorage.getItem("fullName") ||
+            JSON.parse(localStorage.getItem("user") || "{}")?.fullName ||
+            JSON.parse(localStorage.getItem("auth") || "{}")?.fullName ||
+            localStorage.getItem("username") ||
+            "Nhân viên POS";
+
+        if (rawName.includes("@")) {
+            const usernamePart = rawName.split("@")[0];
+            return usernamePart.replace(".", " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+        }
+        return rawName;
+    }, [currentUserStaffObj, staffs]);
 
     useEffect(() => {
         init();
@@ -96,6 +131,7 @@ export default function WalkInBookingPage() {
                 const first = branchData[0];
                 setBranchId(first.id);
                 form.setFieldValue("branchId", first.id);
+                form.setFieldValue("bookingDate", dayjs());
                 await loadData(first.id);
             }
         } catch (e) {
@@ -106,90 +142,278 @@ export default function WalkInBookingPage() {
 
     const loadData = async (id) => {
         try {
-            const todayStr = dayjs().format("YYYY-MM-DD");
+            const today = dayjs();
+            const todayStr = today.format("YYYY-MM-DD");
             const nextRangeStr = dayjs().add(90, "day").format("YYYY-MM-DD");
-            const [staffData, serviceData, offDaysData] = await Promise.all([
+            const [staffData, serviceData, bundlesData, offDaysData, slotsData] = await Promise.all([
                 getStaffByBranchApi(id),
                 getServicesByBranchApi(id),
-                offdayApi.getOffDaysForBranchRange(id, todayStr, nextRangeStr).catch(() => [])
+                getBundlesByBranchApi(id, true).catch(() => []),
+                offdayApi.getOffDaysForBranchRange(id, todayStr, nextRangeStr).catch(() => []),
+                getAvailabilitySlots(id, todayStr).catch(() => [])
             ]);
             setStaffs(staffData || []);
             setServices(serviceData || []);
+            setBundles(bundlesData || []);
             setSystemOffDays(Array.isArray(offDaysData) ? offDaysData : []);
+
+            const userIds = [...new Set((slotsData || []).map(s => s.userId || s.staffId))];
+            setWorkingStaffIds(userIds);
         } catch (e) {
             console.error(e);
             message.error("Không tải được dữ liệu nhân viên hoặc dịch vụ.");
         }
     };
 
+    const fetchWorkingStaff = async (bId, targetDate) => {
+        const dateObj = targetDate || dayjs();
+        if (!bId) {
+            setWorkingStaffIds([]);
+            return;
+        }
+        try {
+            const dateStr = dateObj.format("YYYY-MM-DD");
+            const slots = await getAvailabilitySlots(bId, dateStr);
+            const userIds = [...new Set((slots || []).map(s => s.userId || s.staffId))];
+            setWorkingStaffIds(userIds);
+        } catch (error) {
+            console.error("Lỗi khi tải lịch làm việc của nhân viên:", error);
+            setWorkingStaffIds([]);
+        }
+    };
+
     const handleBranchChange = async (id) => {
         setBranchId(id);
         setSelectedServiceIds([]);
+        setSelectedBundle(null);
         setSelectedStaffId(null);
         setSelectedSlot(null);
         setAvailableSlots([]);
 
         form.setFieldsValue({
             staffId: undefined,
-            serviceIds: [],
-            bookingDate: undefined,
+            serviceIds: undefined,
+            bookingDate: dayjs(),
             startTime: undefined,
         });
 
         await loadData(id);
     };
 
-    const loadAvailability = async () => {
+    const handleBookingTypeChange = (type) => {
+        setBookingType(type);
+        setSelectedBundle(null);
+        setSelectedServiceIds([]);
+        form.setFieldValue("serviceIds", undefined);
+        loadAvailability([], selectedStaffId);
+    };
+
+    const handleSetSelectedServices = (newServices) => {
+        const ids = newServices.map(s => s.id);
+        setSelectedServiceIds(ids);
+        form.setFieldValue("serviceIds", ids.length > 0 ? ids : undefined);
+        form.validateFields(["serviceIds"]);
+        loadAvailability(ids, selectedStaffId);
+    };
+
+    const handleSetSelectedBundle = (bundle) => {
+        if (!bundle || selectedBundle?.id === bundle.id) {
+            setSelectedBundle(null);
+            setSelectedServiceIds([]);
+            form.setFieldValue("serviceIds", undefined);
+            form.validateFields(["serviceIds"]);
+            loadAvailability([], selectedStaffId);
+        } else {
+            setSelectedBundle(bundle);
+            const bundleServiceIds = (bundle.items || []).map(i => i.serviceId || i.id);
+            setSelectedServiceIds(bundleServiceIds);
+            form.setFieldValue("serviceIds", bundleServiceIds.length > 0 ? bundleServiceIds : undefined);
+            form.validateFields(["serviceIds"]);
+            loadAvailability(bundleServiceIds, selectedStaffId);
+        }
+    };
+
+    const generateAllSlotsForDay = (openTimeStr = "08:00", closeTimeStr = "19:00") => {
+        const slots = [];
+        const open = openTimeStr.length === 5 ? `${openTimeStr}:00` : openTimeStr;
+        const close = closeTimeStr.length === 5 ? `${closeTimeStr}:00` : closeTimeStr;
+
+        let current = dayjs(`2020-01-01T${open}`);
+        const end = dayjs(`2020-01-01T${close}`);
+
+        while (current.isBefore(end)) {
+            const val = current.format("HH:mm:ss");
+            const lbl = current.format("HH:mm");
+            slots.push({ value: val, label: lbl });
+            current = current.add(15, "minute");
+        }
+        return slots;
+    };
+
+    const handleSelectSlot = (slotValue) => {
+        form.setFieldValue("startTime", slotValue);
+        setSelectedSlot(slotValue);
+        form.validateFields(["startTime"]);
+    };
+
+    const handleSelectEarliestSlot = () => {
+        if (availableSlots && availableSlots.length > 0) {
+            handleSelectSlot(availableSlots[0].value);
+            message.success(`Đã chọn khung giờ sớm nhất (${availableSlots[0].label})!`);
+        }
+    };
+
+    const loadAvailability = async (overrideServiceIds, overrideStaffId, overrideDate) => {
         const values = form.getFieldsValue();
-        const currentServiceIds = values.serviceIds || [];
+        const currentServiceIds = overrideServiceIds !== undefined ? overrideServiceIds : (values.serviceIds || []);
+        const currentStaffId = overrideStaffId !== undefined ? overrideStaffId : values.staffId;
+        const currentDate = overrideDate || values.bookingDate || dayjs();
+
+        if (!form.getFieldValue("bookingDate")) {
+            form.setFieldValue("bookingDate", currentDate);
+        }
 
         setSelectedServiceIds(currentServiceIds);
-        setSelectedStaffId(values.staffId);
+        setSelectedStaffId(currentStaffId);
 
         if (
             !branchId ||
-            !values.bookingDate ||
+            !currentDate ||
             currentServiceIds.length === 0
         ) {
             setAvailableSlots([]);
+            setAllSlots([]);
+            setAvailableTimeSet(new Set());
+            form.setFieldValue("startTime", undefined);
+            setSelectedSlot(null);
             return;
         }
 
         try {
             setLoadingSlots(true);
             const response = await getAvailabilityApi(branchId, {
-                date: values.bookingDate.format("YYYY-MM-DD"),
+                date: currentDate.format("YYYY-MM-DD"),
                 serviceIds: currentServiceIds,
-                staffId: values.staffId,
+                staffId: currentStaffId,
             });
 
-            const slots = response.availableStartTimes || [];
-            setAvailableSlots(
-                slots.map((time) => ({
-                    value: time,
-                    label: time.substring(0, 5),
-                }))
-            );
+            const rawTimes = response.availableStartTimes || [];
+            const openT = response.openTime || "08:00:00";
+            const closeT = response.closeTime || "19:00:00";
+
+            const timeSet = new Set(rawTimes.map(t => t.substring(0, 5)));
+            setAvailableTimeSet(timeSet);
+
+            const generatedSlots = generateAllSlotsForDay(openT, closeT);
+            setAllSlots(generatedSlots);
+
+            const now = dayjs();
+            const targetDateStr = currentDate.format("YYYY-MM-DD");
+            const isToday = targetDateStr === now.format("YYYY-MM-DD");
+
+            const validAvailable = generatedSlots.filter(s => {
+                const isAvail = timeSet.has(s.label);
+                if (!isAvail) return false;
+                if (isToday) {
+                    const slotDateTime = dayjs(`${targetDateStr}T${s.label}:00`);
+                    if (!slotDateTime.isValid() || !slotDateTime.isAfter(now.subtract(5, "minute"))) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            setAvailableSlots(validAvailable);
+
+            // Do NOT auto pick slot: reset startTime and selectedSlot on new availability fetch
+            const currentSlotInForm = form.getFieldValue("startTime");
+            const isStillValid = validAvailable.some(s => s.value === currentSlotInForm || s.label === currentSlotInForm);
+            if (!currentSlotInForm || !isStillValid) {
+                form.setFieldValue("startTime", undefined);
+                setSelectedSlot(null);
+            }
         } catch (e) {
             console.error(e);
             setAvailableSlots([]);
+            setAllSlots([]);
+            setAvailableTimeSet(new Set());
+            form.setFieldValue("startTime", undefined);
+            setSelectedSlot(null);
         } finally {
             setLoadingSlots(false);
         }
     };
 
-    // Selected Services Data Objects
+    // Selected Services Data Objects for Cart Summary
     const selectedServicesList = useMemo(() => {
+        if (bookingType === "bundle" && selectedBundle) {
+            return selectedBundle.items?.map(i => ({
+                id: i.serviceId || i.id,
+                name: i.name || i.serviceName,
+                price: i.price || 0,
+                durationMinutes: i.durationMinutes || i.duration || 0
+            })) || [];
+        }
         return services.filter(s => selectedServiceIds.includes(s.id));
-    }, [services, selectedServiceIds]);
+    }, [services, selectedServiceIds, bookingType, selectedBundle]);
+
+    // Trích xuất danh mục dịch vụ / chuyên môn của Stylist để hiển thị thay cho SĐT
+    const getStaffServiceTags = (staff) => {
+        if (staff.specialties && staff.specialties.trim()) {
+            return staff.specialties.trim();
+        }
+        const cats = [...new Set((staff.services || []).map(srv => srv.categoryName || srv.name).filter(Boolean))];
+        if (cats.length > 0) {
+            return cats.join(", ");
+        }
+        return "Tất cả dịch vụ";
+    };
+
+    // Lọc danh sách nhân viên có quyền thực hiện các dịch vụ đã chọn & có lịch làm việc trong ngày
+    const qualifiedStaffs = useMemo(() => {
+        const requiredServiceIds = selectedServicesList.map(s => s.id);
+
+        return staffs.filter(staff => {
+            // 1. Kiểm tra kỹ năng / quyền thực hiện tất cả dịch vụ đã chọn
+            if (requiredServiceIds.length > 0) {
+                const allowedIds = (staff.services || []).map(s => s.id);
+                const hasSkill = requiredServiceIds.every(id => allowedIds.includes(id));
+                if (!hasSkill) return false;
+            }
+
+            // 2. Kiểm tra lịch làm việc trong ngày đã chọn
+            const isWorking = workingStaffIds.includes(staff.userId) || workingStaffIds.includes(staff.id);
+            if (!isWorking) return false;
+
+            return true;
+        });
+    }, [staffs, selectedServicesList, workingStaffIds]);
+
+    // Tự động bỏ chọn nhân viên nếu không còn đủ điều kiện/lịch làm việc
+    useEffect(() => {
+        if (selectedStaffId) {
+            const isStillQualified = qualifiedStaffs.some(s => s.id === selectedStaffId || s.userId === selectedStaffId);
+            if (!isStillQualified) {
+                setSelectedStaffId(null);
+                form.setFieldValue("staffId", undefined);
+                loadAvailability(selectedServiceIds, undefined);
+            }
+        }
+    }, [qualifiedStaffs, selectedStaffId, selectedServiceIds, form]);
 
     const totalPrice = useMemo(() => {
+        if (bookingType === "bundle" && selectedBundle) {
+            return parseFloat(selectedBundle.price || 0);
+        }
         return selectedServicesList.reduce((sum, item) => sum + (item.price || 0), 0);
-    }, [selectedServicesList]);
+    }, [selectedServicesList, bookingType, selectedBundle]);
 
     const totalDuration = useMemo(() => {
+        if (bookingType === "bundle" && selectedBundle) {
+            return selectedBundle.totalDurationMinutes || selectedServicesList.reduce((sum, item) => sum + (item.durationMinutes || item.duration || 0), 0);
+        }
         return selectedServicesList.reduce((sum, item) => sum + (item.durationMinutes || item.duration || 0), 0);
-    }, [selectedServicesList]);
+    }, [selectedServicesList, bookingType, selectedBundle]);
 
     // Change Return calculation
     const changeAmount = useMemo(() => {
@@ -209,69 +433,40 @@ export default function WalkInBookingPage() {
         try {
             setSubmitting(true);
 
-            // 1. Tạo đơn Đặt lịch Walk-in
+            const finalStaffId = (values.staffId === "ANY" || !values.staffId) ? null : values.staffId;
+
+            // 1. Tạo đơn Đặt lịch Walk-in tại quầy
             const payload = {
                 customerName: values.customerName,
                 customerPhone: values.customerPhone,
-                preferredStaffId: values.staffId,
-                staffId: values.staffId,
+                preferredStaffId: finalStaffId,
+                staffId: finalStaffId,
                 bookingDate: values.bookingDate.format("YYYY-MM-DD"),
                 startTime: values.startTime,
                 serviceIds: values.serviceIds,
                 notes: values.note || values.notes || "",
             };
 
-            const createdBooking = await createWalkInBookingApi(branchId, payload);
-            const bookingId = createdBooking?.id;
+            await createWalkInBookingApi(branchId, payload);
 
-            let paymentRecord = null;
-
-            // 2. Nếu thanh toán tiền mặt (POS CASH MODE) -> Gọi endpoint riêng không qua payment gateway
-            if (paymentMethod === "CASH" || paymentMethod === "PAY_AT_COUNTER") {
-                paymentRecord = await processPosCashPaymentApi({
-                    bookingId: bookingId,
-                    amount: totalPrice,
-                    notes: `Staff ${staffFullName} (ID: ${staffUserId}) thu tiền mặt tại quầy POS`
-                });
-            }
-
-            // 3. Chuẩn bị thông tin In Hóa Đơn Nhiệt K80
-            const receipt = {
-                bookingId: bookingId,
-                paymentId: paymentRecord?.paymentId || "POS-CASH",
-                customerName: values.customerName,
-                customerPhone: values.customerPhone,
-                branchName: selectedBranchObj?.name || "SalonFlow Branch",
-                branchAddress: selectedBranchObj?.address || "",
-                staffOperatorName: staffFullName,
-                staffOperatorId: staffUserId,
-                assignedStaffName: selectedStaffObj?.name || "Bất kỳ nhân viên",
-                date: values.bookingDate.format("DD/MM/YYYY"),
-                time: values.startTime ? values.startTime.substring(0, 5) : "",
-                services: selectedServicesList,
-                totalPrice: totalPrice,
-                totalDuration: totalDuration,
-                cashReceived: cashReceived || totalPrice,
-                changeAmount: changeAmount,
-                paymentMethod: "TIỀN MẶT TẠI CỬA HÀNG (POS CASH)",
-                confirmedByStaffId: staffUserId,
-                createdAtFormatted: dayjs().format("DD/MM/YYYY HH:mm:ss")
-            };
-
-            setSuccessData(receipt);
-            message.success("Đã xác nhận thu tiền mặt và tạo đơn POS thành công!");
+            message.success("Đã tạo lịch hẹn thành công! Đã chuyển sang màn Check-in & Phục vụ.");
 
             // Reset form cho đơn tiếp theo
             form.resetFields();
             form.setFieldValue("branchId", branchId);
             setSelectedServiceIds([]);
+            setSelectedBundle(null);
+            setBookingType("service");
             setSelectedStaffId(null);
             setSelectedSlot(null);
             setCashReceived(null);
             setAvailableSlots([]);
+
+            // Chuyển sang màn hình Check-in & Phục vụ
+            navigate("/manager/bookings");
         } catch (e) {
             console.error(e);
-            message.error(e?.response?.data?.message ?? "Đã xảy ra lỗi khi xử lý đơn POS.");
+            message.error(e?.response?.data?.message ?? "Đã xảy ra lỗi khi tạo đặt lịch tại quầy.");
         } finally {
             setSubmitting(false);
         }
@@ -343,18 +538,13 @@ export default function WalkInBookingPage() {
                             />
                             <div>
                                 <Title level={3} style={{ color: "#fff", margin: 0 }}>
-                                    Trạm POS Thu Tiền Mặt & Xếp Lịch Tại Quầy
+                                    Đặt Lịch & Thu Tiền Tại Quầy (POS)
                                 </Title>
-                                <Text style={{ color: "#8c8c8c", fontSize: 13 }}>
-                                    Thu tiền mặt trực tiếp do Nhân viên {staffFullName} (ID: {staffUserId || "N/A"}) xác nhận
+                                <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                                    Nhân viên thực hiện: {staffFullName}
                                 </Text>
                             </div>
                         </Space>
-                    </Col>
-                    <Col>
-                        <Tag color="green" style={{ fontSize: 13, padding: "4px 12px", borderRadius: 20 }}>
-                            ● POS CASH MODE READY
-                        </Tag>
                     </Col>
                 </Row>
             </Card>
@@ -363,41 +553,23 @@ export default function WalkInBookingPage() {
                 form={form}
                 layout="vertical"
                 onFinish={onFinish}
-                initialValues={{ paymentMethod: "CASH" }}
+                initialValues={{ paymentMethod: "CASH", bookingDate: dayjs() }}
             >
                 <Row gutter={24}>
                     {/* LEFT PANEL: Selection Forms */}
                     <Col xs={24} lg={15}>
                         <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                            {/* Card 1: Khách vãng lai & Chi nhánh */}
+                            {/* Card 1: Thông tin khách */}
                             <Card
                                 title={
                                     <Space>
                                         <UserOutlined style={{ color: "#1890ff" }} />
-                                        <span>1. Thông Tin Khách Vãng Lai & Chi Nhánh</span>
+                                        <span>1. Thông Tin Khách</span>
                                     </Space>
                                 }
                                 style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
                             >
                                 <Row gutter={16}>
-                                    <Col xs={24} md={12}>
-                                        <Form.Item
-                                            label="Chi nhánh làm việc"
-                                            name="branchId"
-                                            rules={[{ required: true, message: "Vui lòng chọn chi nhánh" }]}
-                                        >
-                                            <Select
-                                                size="large"
-                                                placeholder="Chọn chi nhánh"
-                                                onChange={handleBranchChange}
-                                                options={branches.map((b) => ({
-                                                    value: b.id,
-                                                    label: b.name
-                                                }))}
-                                            />
-                                        </Form.Item>
-                                    </Col>
-
                                     <Col xs={24} md={12}>
                                         <Form.Item
                                             label="Tên khách hàng vãng lai"
@@ -431,8 +603,8 @@ export default function WalkInBookingPage() {
                                         </Form.Item>
                                     </Col>
 
-                                    <Col xs={24} md={12}>
-                                        <Form.Item label="Ghi chú đơn hàng" name="note">
+                                    <Col xs={24}>
+                                        <Form.Item label="Ghi chú đơn hàng" name="note" style={{ marginBottom: 0 }}>
                                             <Input
                                                 size="large"
                                                 prefix={<FileTextOutlined style={{ color: "#bfbfbf" }} />}
@@ -454,46 +626,76 @@ export default function WalkInBookingPage() {
                                 style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
                             >
                                 <Form.Item
-                                    label="Dịch vụ làm đẹp (Chọn 1 hoặc nhiều)"
                                     name="serviceIds"
                                     rules={[{ required: true, message: "Hãy chọn ít nhất 1 dịch vụ" }]}
+                                    style={{ marginBottom: 24 }}
                                 >
-                                    <Select
-                                        size="large"
-                                        mode="multiple"
-                                        placeholder="Chọn các dịch vụ thực hiện..."
-                                        onChange={loadAvailability}
-                                        options={services.map((s) => ({
-                                            value: s.id,
-                                            label: `${s.name} - ${(s.price || 0).toLocaleString("vi-VN")} VND (${s.durationMinutes || s.duration || 30} phút)`
-                                        }))}
+                                    <StepServiceSelection
+                                        bookingType={bookingType}
+                                        setBookingType={handleBookingTypeChange}
+                                        services={services}
+                                        selectedServices={selectedServicesList}
+                                        setSelectedServices={handleSetSelectedServices}
+                                        bundles={bundles}
+                                        selectedBundle={selectedBundle}
+                                        setSelectedBundle={handleSetSelectedBundle}
                                     />
                                 </Form.Item>
 
-                                <Form.Item label="Stylist đảm nhận (Tùy chọn)" name="staffId">
+                                <Form.Item label="Stylist đảm nhận (Tùy chọn)" name="staffId" style={{ marginTop: 16 }}>
                                     <Select
                                         size="large"
                                         allowClear
                                         placeholder="Tự động phân bổ Stylist trống"
-                                        onChange={loadAvailability}
-                                        options={staffs.map((s) => ({
-                                            value: s.id,
-                                            label: `Stylist: ${s.name}`
-                                        }))}
+                                        onChange={(val) => {
+                                            const actualId = (val === "ANY" || !val) ? null : val;
+                                            loadAvailability(undefined, actualId);
+                                        }}
+                                        options={[
+                                            {
+                                                value: "ANY",
+                                                label: "Bất kỳ nhân viên nào (Tự động phân bổ)"
+                                            },
+                                            ...qualifiedStaffs.map((s) => {
+                                                const serviceTags = getStaffServiceTags(s);
+                                                return {
+                                                    value: s.id,
+                                                    label: `Stylist: ${s.name} ${serviceTags ? `(${serviceTags})` : ""}`
+                                                };
+                                            })
+                                        ]}
+                                        notFoundContent={
+                                            <Text type="secondary">
+                                                {selectedServicesList.length === 0
+                                                    ? "Chưa chọn dịch vụ"
+                                                    : "Không có Stylist đáp ứng dịch vụ & lịch làm việc"}
+                                            </Text>
+                                        }
                                     />
                                 </Form.Item>
                             </Card>
 
-                            {/* Card 3: Ngày & Giờ */}
+                            {/* Card 3: Khung Giờ Khả Dụng */}
                             <Card
                                 title={
                                     <Space>
                                         <ClockCircleOutlined style={{ color: "#fa8c16" }} />
-                                        <span>3. Ngày & Khung Giờ Khả Dụng</span>
+                                        <span>3. Khung Giờ Khả Dụng (Hôm Nay)</span>
                                     </Space>
                                 }
                                 style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
                             >
+                                <Form.Item name="bookingDate" noStyle initialValue={dayjs()}>
+                                    <Input type="hidden" />
+                                </Form.Item>
+                                <Form.Item
+                                    name="startTime"
+                                    noStyle
+                                    rules={[{ required: true, message: "Vui lòng chọn khung giờ thực hiện" }]}
+                                >
+                                    <Input type="hidden" />
+                                </Form.Item>
+
                                 <Row gutter={16}>
                                     {systemOffDays.length > 0 && (
                                         <Col span={24} style={{ marginBottom: 12 }}>
@@ -508,83 +710,160 @@ export default function WalkInBookingPage() {
                                         </Col>
                                     )}
 
-                                    <Col xs={24} md={12}>
-                                        <Form.Item
-                                            label="Ngày thực hiện"
-                                            name="bookingDate"
-                                            rules={[{ required: true, message: "Chọn ngày" }]}
-                                        >
-                                            <DatePicker
-                                                size="large"
-                                                style={{ width: "100%" }}
-                                                format="DD/MM/YYYY"
-                                                onChange={loadAvailability}
-                                                disabledDate={(current) => {
-                                                    if (!current) return false;
-                                                    if (current < dayjs().startOf("day")) return true;
-                                                    const dateStr = current.format("YYYY-MM-DD");
-                                                    return systemOffDays.some(off => dateStr >= off.dateFrom && dateStr <= off.dateTo);
-                                                }}
-                                            />
-                                        </Form.Item>
+                                    {/* Status Notice Banner & ASAP Quick Action Button */}
+                                    <Col span={24} style={{ marginBottom: 12 }}>
+                                        {selectedServicesList.length === 0 ? (
+                                            <div style={{ padding: "12px 16px", background: "#f5f5f5", borderRadius: 8, border: "1px solid #d9d9d9" }}>
+                                                <Text type="secondary">👉 Vui lòng chọn ít nhất 1 dịch vụ ở Bước 2 để hiển thị khung giờ khả dụng.</Text>
+                                            </div>
+                                        ) : loadingSlots ? (
+                                            <div style={{ padding: "12px 16px", background: "#f0f5ff", borderRadius: 8, border: "1px solid #adc6ff", display: "flex", alignItems: "center", gap: 10 }}>
+                                                <Spin size="small" />
+                                                <Text type="secondary">Đang quét ca làm việc & khung giờ rảnh hôm nay...</Text>
+                                            </div>
+                                        ) : availableSlots.length > 0 ? (
+                                            <div style={{ padding: "14px 18px", background: "#f6ffed", border: "1px solid #b7eb8f", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                                                <div>
+                                                    <Text strong style={{ color: "#389e0d", fontSize: 14 }}>
+                                                        {selectedStaffObj ? `🎯 Stylist chỉ định: ${selectedStaffObj.name}` : "✨ Tự động phân bổ thợ rảnh khả dụng"}
+                                                    </Text>
+                                                    <br />
+                                                    <Text style={{ fontSize: 13, color: "#262626" }}>
+                                                        🟢 Khung giờ sớm nhất hôm nay: <b style={{ color: "#52c41a", fontSize: 17 }}>{availableSlots[0].label}</b>
+                                                    </Text>
+                                                </div>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    style={{ backgroundColor: "#52c41a", borderColor: "#52c41a", borderRadius: 8, fontWeight: 600 }}
+                                                    icon={<ThunderboltOutlined />}
+                                                    onClick={handleSelectEarliestSlot}
+                                                >
+                                                    Phục vụ ngay
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <div style={{ padding: "12px 16px", background: "#fff2f0", border: "1px solid #ffccc7", borderRadius: 8 }}>
+                                                <Text type="danger" strong>
+                                                    🔴 {selectedStaffObj ? `Stylist ${selectedStaffObj.name} hiện đã kín lịch hôm nay.` : "Salon đã kín tất cả các khung giờ khả dụng hôm nay."}
+                                                </Text>
+                                            </div>
+                                        )}
                                     </Col>
 
-                                    <Col xs={24} md={12}>
-                                        <Form.Item
-                                            label="Khung giờ trống"
-                                            name="startTime"
-                                            rules={[{ required: true, message: "Chọn giờ" }]}
-                                        >
-                                            <Select
-                                                size="large"
-                                                placeholder="Chọn giờ bắt đầu"
-                                                onChange={(val) => setSelectedSlot(val)}
-                                                options={availableSlots}
-                                                loading={loadingSlots}
-                                                notFoundContent={
-                                                    loadingSlots ? (
-                                                        <Spin size="small" />
-                                                    ) : (
-                                                        <Text type="secondary">Chưa có khung giờ phù hợp</Text>
-                                                    )
-                                                }
-                                            />
-                                        </Form.Item>
-                                    </Col>
+                                    {/* Interactive Time Chips Grid showing all slots for the day */}
+                                    {selectedServicesList.length > 0 && allSlots.length > 0 && (
+                                        <Col span={24}>
+                                            <Text strong style={{ fontSize: 14, display: "block", marginBottom: 12, color: "#262626" }}>
+                                                Chọn khung giờ thực hiện hôm nay:
+                                            </Text>
+                                            <Space wrap size={[10, 10]}>
+                                                {allSlots.map((slot) => {
+                                                    const now = dayjs();
+                                                    const targetDateStr = dayjs().format("YYYY-MM-DD");
+                                                    const slotDateTime = dayjs(`${targetDateStr}T${slot.label}:00`);
+
+                                                    const isPast = slotDateTime.isValid() && !slotDateTime.isAfter(now.subtract(5, "minute"));
+                                                    const isAvailable = availableTimeSet.has(slot.label);
+                                                    const isDisabled = isPast || !isAvailable;
+
+                                                    const isSelected = Boolean(selectedSlot) && (selectedSlot === slot.value || selectedSlot === slot.label) && !isDisabled;
+                                                    const isEarliest = availableSlots.length > 0 && (availableSlots[0].value === slot.value || availableSlots[0].label === slot.label);
+
+                                                    if (isDisabled) {
+                                                        return (
+                                                            <Button
+                                                                key={slot.value}
+                                                                disabled
+                                                                size="large"
+                                                                style={{
+                                                                    borderRadius: 8,
+                                                                    fontWeight: 400,
+                                                                    borderColor: "#d9d9d9",
+                                                                    backgroundColor: isPast ? "#f5f5f5" : "#fafafa",
+                                                                    color: "#bfbfbf",
+                                                                    cursor: "not-allowed",
+                                                                    minWidth: 72
+                                                                }}
+                                                                title={isPast ? "Khung giờ đã qua trong ngày" : "Khung giờ không khả dụng (Đã kín lịch)"}
+                                                            >
+                                                                {slot.label}
+                                                            </Button>
+                                                        );
+                                                    }
+
+                                                    return (
+                                                        <Button
+                                                            key={slot.value}
+                                                            type={isSelected ? "primary" : "default"}
+                                                            size="large"
+                                                            style={{
+                                                                borderRadius: 8,
+                                                                fontWeight: isSelected ? 600 : 500,
+                                                                borderColor: isSelected ? "#1890ff" : "#b7eb8f",
+                                                                color: isSelected ? "#fff" : "#389e0d",
+                                                                backgroundColor: isSelected ? "#1890ff" : "#f6ffed",
+                                                                boxShadow: isSelected ? "0 2px 6px rgba(24,144,255,0.25)" : "none",
+                                                                minWidth: 72
+                                                            }}
+                                                            onClick={() => handleSelectSlot(slot.value)}
+                                                        >
+                                                            {slot.label}
+                                                        </Button>
+                                                    );
+                                                })}
+                                            </Space>
+                                        </Col>
+                                    )}
                                 </Row>
                             </Card>
                         </Space>
                     </Col>
 
-                    {/* RIGHT PANEL: Sticky POS Cash Counter Ticket */}
+                    {/* RIGHT PANEL: Sticky Walk-in Booking Ticket */}
                     <Col xs={24} lg={9}>
                         <Card
                             title={
-                                <Space justify="space-between" style={{ width: "100%" }}>
-                                    <Space>
-                                        <DollarOutlined style={{ color: "#52c41a" }} />
-                                        <span>POS CASH COUNTER CART</span>
-                                    </Space>
-                                    <Tag color="green">TIỀN MẶT</Tag>
+                                <Space align="center">
+                                    <CalendarOutlined style={{ color: "#1890ff", fontSize: 18 }} />
+                                    <span style={{ fontWeight: 700, fontSize: 15, color: "#002c8c" }}>THÔNG TIN ĐẶT LỊCH</span>
                                 </Space>
                             }
                             style={{
                                 borderRadius: 12,
-                                border: "1px solid #b7eb8f",
-                                background: "#f6ffed",
+                                border: "1px solid #91caff",
+                                background: "#f0f5ff",
                                 sticky: "top",
                                 position: "sticky",
                                 top: 20,
-                                boxShadow: "0 4px 12px rgba(82, 196, 26, 0.15)"
+                                boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)"
                             }}
                         >
-                            {/* Summary Branch & Staff Operator info */}
+                            {/* Summary Branch, Staff & Customer info */}
                             <div style={{ background: "#fff", padding: 12, borderRadius: 8, marginBottom: 16 }}>
-                                <Row justify="space-between" style={{ marginBottom: 4 }}>
-                                    <Text type="secondary">Thu ngân trực POS:</Text>
+                                <Row justify="space-between" align="middle" style={{ marginBottom: 6 }}>
+                                    <Text type="secondary">Tên khách hàng:</Text>
+                                    <Text bold style={{ color: "#262626" }}>
+                                        {watchedCustomerName ? watchedCustomerName : <Text type="secondary" italic>Chưa nhập tên</Text>}
+                                    </Text>
+                                </Row>
+                                <Row justify="space-between" align="middle" style={{ marginBottom: 6 }}>
+                                    <Text type="secondary">Số điện thoại:</Text>
+                                    <Text bold style={{ color: "#262626" }}>
+                                        {watchedCustomerPhone ? watchedCustomerPhone : <Text type="secondary" italic>Chưa nhập SĐT</Text>}
+                                    </Text>
+                                </Row>
+                                <Row justify="space-between" align="middle" style={{ marginBottom: 6 }}>
+                                    <Text type="secondary">Stylist đảm nhận:</Text>
+                                    <Text bold style={{ color: selectedStaffObj ? "#722ed1" : "#595959" }}>
+                                        {selectedStaffObj ? selectedStaffObj.name : "Nhân viên ngẫu nhiên"}
+                                    </Text>
+                                </Row>
+                                <Row justify="space-between" align="middle" style={{ marginBottom: 6 }}>
+                                    <Text type="secondary">Nhân viên tiếp đón:</Text>
                                     <Text bold style={{ color: "#1890ff" }}>{staffFullName}</Text>
                                 </Row>
-                                <Row justify="space-between">
+                                <Row justify="space-between" align="middle">
                                     <Text type="secondary">Chi nhánh:</Text>
                                     <Text bold>{selectedBranchObj?.name || "Chưa chọn"}</Text>
                                 </Row>
@@ -592,7 +871,7 @@ export default function WalkInBookingPage() {
 
                             {/* Itemized Services Breakdown */}
                             <Title level={5} style={{ fontSize: 14, marginBottom: 8 }}>
-                                Dịch vụ thanh toán ({selectedServicesList.length}):
+                                Dịch vụ đăng ký ({selectedServicesList.length}):
                             </Title>
 
                             {selectedServicesList.length === 0 ? (
@@ -608,7 +887,7 @@ export default function WalkInBookingPage() {
                                                 <Text style={{ fontSize: 13 }}>{item.name}</Text>
                                             </Col>
                                             <Col span={10} style={{ textAlign: "right" }}>
-                                                <Text bold style={{ color: "#52c41a" }}>
+                                                <Text bold style={{ color: "#1890ff" }}>
                                                     {(item.price || 0).toLocaleString("vi-VN")} đ
                                                 </Text>
                                             </Col>
@@ -619,77 +898,39 @@ export default function WalkInBookingPage() {
 
                             <Divider style={{ margin: "12px 0" }} />
 
-                            {/* Total Amount & Cash Change Calculator */}
-                            <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
-                                <Text style={{ fontSize: 16, fontWeight: 700 }}>Tổng tiền phải thu:</Text>
-                                <Text bold style={{ fontSize: 22, color: "#cf1322" }}>
+                            {/* Total Amount Summary */}
+                            <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
+                                <Text style={{ fontSize: 15, fontWeight: 600 }}>Dự kiến giá tiền:</Text>
+                                <Text bold style={{ fontSize: 20, color: "#1890ff" }}>
                                     {totalPrice.toLocaleString("vi-VN")} VND
                                 </Text>
                             </Row>
 
-                            {/* Payment Method Selector */}
-                            <div style={{ marginBottom: 16 }}>
-                                <Text style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                                    Phương thức thanh toán POS:
+                            <div style={{ background: "#fff", padding: "10px 12px", borderRadius: 8, marginBottom: 20, textAlign: "center" }}>
+                                <Text type="secondary" style={{ fontSize: 13, display: "block" }}>
+                                    🕒 Khách sẽ thanh toán tại màn hình Check-in & Phục vụ sau khi hoàn tất dịch vụ.
                                 </Text>
-                                <Radio.Group
-                                    value={paymentMethod}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                    style={{ width: "100%" }}
-                                >
-                                    <Space direction="vertical" style={{ width: "100%" }}>
-                                        <Radio value="CASH" style={{ background: "#fff", padding: "8px 12px", borderRadius: 6, width: "100%" }}>
-                                            <Space>
-                                                <DollarOutlined style={{ color: "#52c41a" }} />
-                                                <span>Thanh toán tiền mặt tại quầy (Direct Cash)</span>
-                                            </Space>
-                                        </Radio>
-                                    </Space>
-                                </Radio.Group>
                             </div>
 
-                            {/* Input Tiền Khách Đưa & Tự Tính Tiền Thừa */}
-                            <div style={{ background: "#fff", padding: 12, borderRadius: 8, marginBottom: 20 }}>
-                                <div style={{ marginBottom: 8 }}>
-                                    <Text style={{ fontSize: 13, fontWeight: 600 }}>Tiền khách đưa (VND):</Text>
-                                    <InputNumber
-                                        size="large"
-                                        style={{ width: "100%", marginTop: 4 }}
-                                        formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                                        parser={(val) => val.replace(/\$\s?|(,*)/g, "")}
-                                        placeholder={`Gợi ý: ${totalPrice.toLocaleString("vi-VN")}`}
-                                        value={cashReceived}
-                                        onChange={(val) => setCashReceived(val)}
-                                        min={0}
-                                    />
-                                </div>
-                                <Row justify="space-between" align="middle">
-                                    <Text type="secondary">Tiền thừa trả khách:</Text>
-                                    <Text bold style={{ fontSize: 16, color: changeAmount >= 0 ? "#52c41a" : "#ff4d4f" }}>
-                                        {changeAmount.toLocaleString("vi-VN")} VND
-                                    </Text>
-                                </Row>
-                            </div>
-
-                            {/* Button Xác Nhận Thu Tiền Mặt */}
+                            {/* Button Xác Nhận Đặt Lịch Tại Quầy */}
                             <Button
                                 type="primary"
                                 htmlType="submit"
                                 size="large"
                                 loading={submitting}
                                 block
-                                icon={<SafetyCertificateOutlined />}
+                                icon={<CheckCircleOutlined />}
                                 style={{
                                     height: 50,
                                     fontSize: 16,
                                     fontWeight: 700,
                                     borderRadius: 8,
-                                    background: "#52c41a",
-                                    borderColor: "#52c41a",
-                                    boxShadow: "0 4px 12px rgba(82, 196, 26, 0.35)"
+                                    background: "#1890ff",
+                                    borderColor: "#1890ff",
+                                    boxShadow: "0 4px 12px rgba(24, 144, 255, 0.35)"
                                 }}
                             >
-                                XÁC NHẬN ĐÃ THU TIỀN MẶT
+                                XÁC NHẬN ĐẶT LỊCH TẠI QUẦY
                             </Button>
                         </Card>
                     </Col>
@@ -707,9 +948,6 @@ export default function WalkInBookingPage() {
                 open={!!successData}
                 onCancel={() => setSuccessData(null)}
                 footer={[
-                    <Button key="checkout" icon={<QrcodeOutlined />} style={{ color: "#fa8c16", borderColor: "#fa8c16" }} onClick={() => navigate(`/manager/checkout/${successData?.bookingId}`)}>
-                        Trang Checkout (VietQR)
-                    </Button>,
                     <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={handlePrintThermalReceipt} style={{ background: "#1890ff" }}>
                         In Hóa Đơn (K80)
                     </Button>,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
     Alert,
     Button,
@@ -19,13 +20,15 @@ import {
     BranchesOutlined,
     CalendarOutlined,
     CheckCircleOutlined,
+    CloseCircleOutlined,
     DashboardOutlined,
     DollarOutlined,
     ReloadOutlined,
     RiseOutlined,
     StarOutlined,
     TeamOutlined,
-    TrophyOutlined
+    TrophyOutlined,
+    AlertOutlined
 } from "@ant-design/icons";
 
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
@@ -52,10 +55,21 @@ const getOverviewValue = (value) => (value === null || value === undefined ? 0 :
 
 export default function OwnerDashboardPage() {
     const { features } = useSubscription();
+    const { tab } = useParams();
+    const navigate = useNavigate();
+
+    const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const fullName = localStorage.getItem("fullName") || auth?.fullName || user?.fullName || auth?.username || user?.username || "Chủ Salon";
+
     const [branches, setBranches] = useState([]);
     const [salonId, setSalonId] = useState(null);
     const [selectedBranchId, setSelectedBranchId] = useState(() => localStorage.getItem("currentBranchId") || "");
-    const [activeTab, setActiveTab] = useState("overview");
+    const activeTab = tab || "overview";
+
+    const handleTabChange = (key) => {
+        navigate(`/owner/dashboard/${key}`);
+    };
 
     const [overviewData, setOverviewData] = useState(null);
     const [revenueData, setRevenueData] = useState(null);
@@ -228,14 +242,14 @@ export default function OwnerDashboardPage() {
                             <OverviewKpiCard
                                 title="Doanh thu hôm nay"
                                 value={formatCurrency(getOverviewValue(kpis.todayRevenue))}
-                                subText="Doanh thu từ các lịch hẹn hoàn thành"
+                                subText="Doanh thu lịch hẹn đã thanh toán"
                                 growthRate={kpis.revenueGrowthRate}
                                 icon={DollarOutlined}
-                                iconBg="#f6ffed"
-                                iconColor="#52c41a"
+                                iconBg="#ecfdf5"
+                                iconColor="#10b981"
                                 trendData={trendData}
                                 dataKey="revenue"
-                                color="#52c41a"
+                                color="#10b981"
                                 gradientId="owner-revenue"
                                 formatter={(v) => formatCurrency(v)}
                             />
@@ -244,14 +258,14 @@ export default function OwnerDashboardPage() {
                             <OverviewKpiCard
                                 title="Lượt đặt hôm nay"
                                 value={`${getOverviewValue(kpis.todayBookingsCount)} lượt`}
-                                subText={`${getOverviewValue(kpis.completedBookingsCount)} thành công, ${getOverviewValue(kpis.cancelledBookingsCount)} bị hủy`}
+                                subText={`${getOverviewValue(kpis.completedBookingsCount)} hoàn thành · ${getOverviewValue(kpis.cancelledBookingsCount)} hủy`}
                                 growthRate={kpis.bookingsGrowthRate}
                                 icon={CalendarOutlined}
-                                iconBg="#e6f7ff"
-                                iconColor="#1890ff"
+                                iconBg="#eef2ff"
+                                iconColor="#4f46e5"
                                 trendData={trendData}
                                 dataKey="bookingCount"
-                                color="#1890ff"
+                                color="#4f46e5"
                                 gradientId="owner-bookings"
                                 formatter={(v) => `${v} lượt`}
                             />
@@ -260,14 +274,14 @@ export default function OwnerDashboardPage() {
                             <OverviewKpiCard
                                 title="Tỷ lệ hoàn thành"
                                 value={`${getOverviewValue(kpis.completionRate)}%`}
-                                subText={`${getOverviewValue(kpis.completedBookingsCount)}/${getOverviewValue(kpis.todayBookingsCount)} lượt hẹn đã phục vụ`}
+                                subText={`${getOverviewValue(kpis.completedBookingsCount)}/${getOverviewValue(kpis.todayBookingsCount)} lịch hẹn phục vụ`}
                                 growthRate={null}
                                 icon={CheckCircleOutlined}
-                                iconBg="#fffbe6"
-                                iconColor="#fa8c16"
+                                iconBg="#fffbeb"
+                                iconColor="#f59e0b"
                                 trendData={trendData}
                                 dataKey="completedCount"
-                                color="#fa8c16"
+                                color="#f59e0b"
                                 gradientId="owner-completion"
                                 formatter={(v) => `${v} hoàn thành`}
                             />
@@ -275,15 +289,15 @@ export default function OwnerDashboardPage() {
                         <Col xs={24} sm={12} lg={6}>
                             <OverviewKpiCard
                                 title="Đánh giá trung bình"
-                                value={`${Number(kpis.averageRating || 0).toFixed(1)} / 5`}
-                                subText={`Dựa trên ${getOverviewValue(kpis.totalReviewCount)} lượt đánh giá thực tế`}
+                                value={`${Number(kpis.averageRating || 0).toFixed(1)} / 5.0`}
+                                subText={`Từ ${getOverviewValue(kpis.totalReviewCount)} đánh giá khách hàng`}
                                 growthRate={null}
                                 icon={StarOutlined}
-                                iconBg="#fff0f6"
-                                iconColor="#eb2f96"
+                                iconBg="#fdf2f8"
+                                iconColor="#ec4899"
                                 trendData={trendData}
                                 dataKey="bookingCount"
-                                color="#eb2f96"
+                                color="#ec4899"
                                 gradientId="owner-rating"
                                 formatter={(v) => `${v} đánh giá`}
                             />
@@ -293,27 +307,72 @@ export default function OwnerDashboardPage() {
                     <Row gutter={[16, 16]}>
                         <Col xs={24} lg={16}>
                             <Card
-                                title="Xu hướng doanh thu 7 ngày"
+                                title={
+                                    <Space size={8}>
+                                        <span style={{ fontSize: 18 }}>📈</span>
+                                        <span style={{ fontWeight: 700, color: "#1e293b" }}>Xu hướng doanh thu 7 ngày qua</span>
+                                    </Space>
+                                }
                                 bordered={false}
-                                style={{ borderRadius: 16, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+                                className="owner-glass-card"
                             >
-                                <Paragraph type="secondary">
-                                    So sánh doanh thu và số lượt đặt theo từng ngày trong tuần gần nhất.
+                                <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+                                    Biểu đồ so sánh doanh thu và lượng khách đặt lịch theo từng ngày trong tuần gần nhất.
                                 </Paragraph>
                                 <RevenueTrendChart timeline={trendData} period="daily" peakPeriod={overview?.peakPeriod || null} overallYoY={overview?.overallYoY || 0} />
                             </Card>
                         </Col>
                         <Col xs={24} lg={8}>
                             <Card
-                                title="Tóm tắt nhanh"
+                                title={
+                                    <Space size={8}>
+                                        <span style={{ fontSize: 18 }}>⚡</span>
+                                        <span style={{ fontWeight: 700, color: "#1e293b" }}>Tóm tắt lịch hôm nay</span>
+                                    </Space>
+                                }
                                 bordered={false}
-                                style={{ borderRadius: 16, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+                                className="owner-glass-card"
                             >
-                                <Space direction="vertical" size={12} style={{ width: "100%" }}>
-                                    <Statistic title="Tổng lịch hôm nay" value={getOverviewValue(kpis.todayBookingsCount)} />
-                                    <Statistic title="Lịch đã xác nhận" value={getOverviewValue(kpis.confirmedBookingsCount)} />
-                                    <Statistic title="Lịch chờ xử lý" value={getOverviewValue(kpis.pendingBookingsCount)} />
-                                    <Statistic title="Lịch đã hủy" value={getOverviewValue(kpis.cancelledBookingsCount)} />
+                                <Space direction="vertical" size={10} style={{ width: "100%" }}>
+                                    <div className="owner-stat-item">
+                                        <Space>
+                                            <div style={{ width: 32, height: 32, borderRadius: 8, background: "#eef2ff", color: "#4f46e5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <CalendarOutlined />
+                                            </div>
+                                            <span style={{ fontWeight: 600, color: "#475569" }}>Tổng lịch đặt</span>
+                                        </Space>
+                                        <span style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{getOverviewValue(kpis.todayBookingsCount)}</span>
+                                    </div>
+
+                                    <div className="owner-stat-item">
+                                        <Space>
+                                            <div style={{ width: 32, height: 32, borderRadius: 8, background: "#ecfdf5", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <CheckCircleOutlined />
+                                            </div>
+                                            <span style={{ fontWeight: 600, color: "#475569" }}>Đã hoàn thành</span>
+                                        </Space>
+                                        <span style={{ fontSize: 16, fontWeight: 800, color: "#10b981" }}>{getOverviewValue(kpis.completedBookingsCount)}</span>
+                                    </div>
+
+                                    <div className="owner-stat-item">
+                                        <Space>
+                                            <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fffbeb", color: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <CalendarOutlined />
+                                            </div>
+                                            <span style={{ fontWeight: 600, color: "#475569" }}>Đang chờ phục vụ</span>
+                                        </Space>
+                                        <span style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b" }}>{getOverviewValue(kpis.pendingBookingsCount)}</span>
+                                    </div>
+
+                                    <div className="owner-stat-item">
+                                        <Space>
+                                            <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fef2f2", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <AlertOutlined />
+                                            </div>
+                                            <span style={{ fontWeight: 600, color: "#475569" }}>Lịch đã hủy</span>
+                                        </Space>
+                                        <span style={{ fontSize: 16, fontWeight: 800, color: "#ef4444" }}>{getOverviewValue(kpis.cancelledBookingsCount)}</span>
+                                    </div>
                                 </Space>
                             </Card>
                         </Col>
@@ -324,7 +383,9 @@ export default function OwnerDashboardPage() {
                         requiredPlan="PRO"
                         description="Xem biểu đồ giờ cao điểm chi tiết để tối ưu hóa thời gian mở cửa và ca kíp nhân viên."
                     >
-                        <PeakHourHeatmapChart branchId={selectedBranchId} />
+                        <Card bordered={false} className="owner-glass-card">
+                            <PeakHourHeatmapChart branchId={selectedBranchId} />
+                        </Card>
                     </FeatureLockOverlay>
                 </Space>
             )
@@ -468,7 +529,7 @@ export default function OwnerDashboardPage() {
                 </Space>
             ),
             children: (
-                <ReviewAnalyticsTab salonId={salonId} branches={branches} />
+                <ReviewAnalyticsTab salonId={salonId} branches={branches} selectedBranchId={selectedBranchId} />
             )
         }
     ];
@@ -490,34 +551,46 @@ export default function OwnerDashboardPage() {
     }
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* HERO BANNER - LUXURY & MODERN GRADIENT */}
             <Card
-                variant="borderless"
-                style={{
-                    borderRadius: 18,
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.04)"
-                }}
+                className="owner-hero-banner"
+                bodyStyle={{ padding: "26px 28px" }}
             >
-                <Row justify="space-between" align="middle" gutter={[16, 16]}>
-                    <Col xs={24} lg={14}>
-                        <Space direction="vertical" size={4}>
-                            <Space size={10} align="center" wrap>
-                                <BarChartOutlined style={{ color: "#1677ff", fontSize: 22 }} />
-                                <Title level={3} style={{ margin: 0 }}>
-                                    Owner Dashboard
-                                </Title>
-                            </Space>
-                            <Text type="secondary">
-                                Theo dõi doanh thu, hiệu quả vận hành và phân tích khách hàng theo từng chi nhánh.
-                            </Text>
-                        </Space>
+                <Row justify="space-between" align="middle" gutter={[20, 20]}>
+                    <Col xs={24} lg={13}>
+
+                        <Title level={2} style={{ color: "#ffffff", margin: "0 0 6px 0", fontWeight: 800, letterSpacing: "-0.5px" }}>
+                            👋 Xin chào, {fullName}!
+                        </Title>
+                        <Text style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: 14 }}>
+                            Chào mừng bạn trở lại bảng điều khiển SalonFlow. Theo dõi tổng quan hiệu suất phục vụ, doanh thu và tăng trưởng kinh doanh các chi nhánh.
+                        </Text>
                     </Col>
-                    <Col xs={24} lg={10}>
-                        <Space wrap style={{ width: "100%", justifyContent: "flex-end" }}>
-                            <BranchesOutlined />
+
+                    <Col xs={24} lg={11} style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <div
+                            className="owner-branch-capsule"
+                            style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 10,
+                                background: "rgba(255, 255, 255, 0.12)",
+                                backdropFilter: "blur(10px)",
+                                padding: "6px 14px",
+                                borderRadius: 16,
+                                border: "1px solid rgba(255, 255, 255, 0.2)",
+                                width: "fit-content",
+                                marginLeft: "auto"
+                            }}
+                        >
+                            <Space align="center" size={6}>
+                                <BranchesOutlined style={{ color: "#818cf8", fontSize: 16 }} />
+                                <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>Chi nhánh:</span>
+                            </Space>
                             <Select
                                 showSearch
-                                style={{ width: 260 }}
+                                style={{ width: 200 }}
                                 value={selectedBranchId || undefined}
                                 onChange={setSelectedBranchId}
                                 optionFilterProp="label"
@@ -527,36 +600,51 @@ export default function OwnerDashboardPage() {
                                 }))}
                             />
                             <Button
+                                type="primary"
                                 icon={<ReloadOutlined spin={refreshing} />}
                                 onClick={handleRefresh}
                                 loading={refreshing}
+                                style={{
+                                    borderRadius: 8,
+                                    background: "rgba(255, 255, 255, 0.2)",
+                                    borderColor: "rgba(255, 255, 255, 0.3)",
+                                    fontWeight: 600
+                                }}
                             >
                                 Làm mới
                             </Button>
-                        </Space>
+                        </div>
                     </Col>
                 </Row>
             </Card>
 
             {selectedBranch ? (
-                <Alert
-                    type="info"
-                    showIcon
-                    message={`Đang xem dữ liệu của chi nhánh: ${selectedBranch.name}`}
-                    description="Dữ liệu trong dashboard sẽ tự đồng bộ theo chi nhánh đang chọn."
-                />
+                <div style={{
+                    padding: "8px 16px",
+                    borderRadius: 12,
+                    background: "#eef2ff",
+                    border: "1px solid #c7d2fe",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    color: "#4338ca",
+                    fontSize: 13,
+                    fontWeight: 600
+                }}>
+                    <span>📍</span>
+                    <span>Đang đồng bộ dữ liệu theo: <b>{selectedBranch.name}</b> {selectedBranch.address ? `(${selectedBranch.address})` : ""}</span>
+                </div>
             ) : null}
 
+            {/* TABS CONTAINER */}
             <Card
                 bordered={false}
-                style={{
-                    borderRadius: 18,
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.04)"
-                }}
+                className="owner-custom-tabs owner-glass-card"
+                bodyStyle={{ padding: "18px 24px" }}
             >
                 <Tabs
                     activeKey={activeTab}
-                    onChange={setActiveTab}
+                    onChange={handleTabChange}
                     items={tabItems}
                     size="large"
                 />

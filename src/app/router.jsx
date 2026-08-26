@@ -48,8 +48,9 @@ const StaffManagementPage = lazy(() => import("@/features/staff/pages/StaffManag
 const SchedulePage = lazy(() => import("@/features/schedule/pages/SchedulePage"));
 const ShiftTemplatePage = lazy(() => import("@/features/shift/pages/ShiftTemplatePage"));
 const OffDayManagementPage = lazy(() => import("@/features/offday/pages/OffDayManagementPage"));
+const StaffLeaveRequestPage = lazy(() => import("@/features/offday/pages/StaffLeaveRequestPage"));
 const OwnerBookingWorkflowPage = lazy(() => import("@/features/booking/pages/OwnerBookingWorkflowPage"));
-const SmartSchedulingConfigPage = lazy(() => import("@/features/ai/pages/SmartSchedulingConfigPage"));
+
 const NoShowDashboardPage = lazy(() => import("@/features/ai/pages/NoShowDashboardPage"));
 const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
 const ReviewAdminPage = lazy(() => import("@/features/review/pages/ReviewAdminPage"));
@@ -64,21 +65,16 @@ const AdminSubscriptionPage = lazy(() => import("@/features/subscription/pages/A
 const BookingPage = lazy(() => import("@/features/booking/pages/BookingPage"));
 const GuestBookingPage = lazy(() => import("@/features/booking/pages/GuestBookingPage"));
 const AppointmentsPage = lazy(() => import("@/features/booking/pages/AppointmentsPage"));
-const PaymentCallbackPage = lazy(() => import("@/features/payment/pages/PaymentCallbackPage"));
-const ManagerCheckoutPage = lazy(() => import("@/features/payment/pages/ManagerCheckoutPage"));
 const ProfilePage = lazy(() => import("@/features/user/pages/ProfilePage"));
 const CustomerNotificationsPage = lazy(() => import("@/features/notification/pages/CustomerNotificationsPage"));
 const HairStyleAiPage = lazy(() => import("@/features/hair-ai/pages/HairStyleAiPage"));
 const SearchPage = lazy(() => import("@/features/search/pages/SearchPage"));
 const CategoryListUserPage = lazy(() => import("@/features/category/pages/CategoryListUserPage"));
-const BookingStatusPage = lazy(() => import("@/features/booking/pages/BookingStatusPage"));
 const WalkInBookingPage = lazy(() => import("@/features/booking/pages/WalkInBookingPage"));
 const StaffAppointmentsPage = lazy(() => import("@/features/booking/pages/StaffAppointmentsPage"));
 const PayAtCounterSuccessPage = lazy(() => import("@/features/booking/pages/PayAtCounterSuccessPage"));
-const RecurringSuccessPage = lazy(() => import("@/features/booking/pages/RecurringSuccessPage"));
 const HelpCenterPage = lazy(() => import("@/features/support/pages/HelpCenterPage"));
 const NearbySalonsPage = lazy(() => import("@/features/geolocation/pages/NearbySalonsPage"));
-const SystemMonitoringPage = lazy(() => import("@/features/monitoring/pages/SystemMonitoringPage"));
 
 // Reusable page loader fallback
 const PageLoader = () => (
@@ -184,15 +180,7 @@ const router = createBrowserRouter([
                 path: "subscriptions",
                 element: withSuspense(AdminSubscriptionPage)
             },
-            {
-                path: "monitoring",
-                element: withSuspense(SystemMonitoringPage)
-            },
         ]
-    },
-    {
-        path: "/monitoring",
-        element: withSuspense(SystemMonitoringPage)
     },
     {
         path: "/owner",
@@ -212,6 +200,10 @@ const router = createBrowserRouter([
         children: [
             {
                 index: true,
+                element: withSuspense(OwnerDashboardPage)
+            },
+            {
+                path: "dashboard/:tab?",
                 element: withSuspense(OwnerDashboardPage)
             },
             {
@@ -254,10 +246,7 @@ const router = createBrowserRouter([
                 path: "vouchers",
                 element: withSuspense(VoucherManagementPage)
             },
-            {
-                path: "ai-smart-schedule",
-                element: withSuspense(SmartSchedulingConfigPage)
-            },
+
 
             {
                 path: "ai-no-show",
@@ -308,6 +297,10 @@ const router = createBrowserRouter([
             {
                 path: "appointments",
                 element: withSuspense(StaffAppointmentsPage)
+            },
+            {
+                path: "leave-requests",
+                element: withSuspense(StaffLeaveRequestPage)
             }
         ]
     },
@@ -335,18 +328,18 @@ const router = createBrowserRouter([
                 path: "walk-in",
                 element: withSuspense(WalkInBookingPage)
             },
+            {
+                path: "off-days",
+                element: withSuspense(OffDayManagementPage)
+            },
+            {
+                path: "leave-requests",
+                element: withSuspense(StaffLeaveRequestPage)
+            },
 
             {
                 path: "bookings",
                 element: withSuspense(OwnerBookingWorkflowPage)
-            },
-            {
-                path: "checkout",
-                element: withSuspense(ManagerCheckoutPage)
-            },
-            {
-                path: "checkout/:bookingId",
-                element: withSuspense(ManagerCheckoutPage)
             }
         ]
     },
@@ -388,12 +381,8 @@ const router = createBrowserRouter([
                 element: withSuspense(GuestBookingPage)
             },
             {
-                path: "booking/status/:variant",
-                element: withSuspense(BookingStatusPage)
-            },
-            {
-                path: "booking/status",
-                element: withSuspense(BookingStatusPage)
+                path: "booking/pay-at-counter-success",
+                element: withSuspense(PayAtCounterSuccessPage)
             },
         ]
     },
@@ -420,28 +409,8 @@ const router = createBrowserRouter([
                 element: withSuspense(BookingPage)
             },
             {
-                path: "/booking/pay-at-counter-success",
-                element: withSuspense(PayAtCounterSuccessPage)
-            },
-            {
-                path: "/booking/status/:variant",
-                element: withSuspense(BookingStatusPage)
-            },
-            {
-                path: "/booking/status",
-                element: withSuspense(BookingStatusPage)
-            },
-            {
-                path: "/recurring-success",
-                element: withSuspense(RecurringSuccessPage)
-            },
-            {
                 path: "/appointments",
                 element: withSuspense(AppointmentsPage)
-            },
-            {
-                path: "/payment/callback",
-                element: withSuspense(PaymentCallbackPage)
             },
             {
                 path: "/profile",

@@ -145,16 +145,25 @@ const NoShowDashboardPage = () => {
         {
             title: 'Lý Do Phân Tích Dữ Liệu',
             key: 'history',
+            width: 320,
             render: (_, record) => {
                 const f = record.features || {};
+                const cancelPct = Math.round((f.cancelRate || 0) * 100);
                 return (
-                    <div className="text-xs space-y-1 text-slate-600">
+                    <div style={{ fontSize: 13, lineHeight: 1.6, color: "#334155" }}>
                         <div>
-                            Tỉ lệ hủy quá khứ: <b className="text-red-600">{Math.round((f.cancelRate || 0) * 100)}%</b>
-                            {f.totalPastBookings > 0 && ` (${f.totalCancelledOrNoShowBookings}/${f.totalPastBookings} buổi)`}
+                            <span>Tỉ lệ hủy quá khứ: </span>
+                            <strong style={{ color: cancelPct > 0 ? "#dc2626" : "#16a34a" }}>{cancelPct}%</strong>
+                            {f.totalPastBookings > 0 && (
+                                <span style={{ fontSize: 12, color: "#94a3b8", marginLeft: 4 }}>
+                                    ({f.totalCancelledOrNoShowBookings}/{f.totalPastBookings} buổi)
+                                </span>
+                            )}
                         </div>
-                        <div className="text-slate-500">
-                            Đặt trước: <b>{f.leadTimeHours || 0} giờ</b> | Khoảng cách: <b>~{f.distanceKm || 0} km</b>
+                        <div style={{ fontSize: 12, color: "#64748b", whiteSpace: "nowrap", marginTop: 2 }}>
+                            <span>Đặt trước: <strong style={{ color: "#1e293b" }}>{f.leadTimeHours || 0} giờ</strong></span>
+                            <span style={{ margin: "0 8px", color: "#cbd5e1" }}>|</span>
+                            <span>Khoảng cách: <strong style={{ color: "#1e293b" }}>~{f.distanceKm || 0} km</strong></span>
                         </div>
                     </div>
                 );
@@ -166,11 +175,11 @@ const NoShowDashboardPage = () => {
             width: 160,
             render: (_, record) => (
                 record.smsSent ? (
-                    <Tag color="success" icon={<CheckCircleOutlined />}>
+                    <Tag color="success">
                         Đã gửi Email
                     </Tag>
                 ) : (
-                    <Tag color="warning" icon={<ThunderboltOutlined />}>
+                    <Tag color="warning">
                         Cần nhắc lịch
                     </Tag>
                 )
@@ -185,7 +194,6 @@ const NoShowDashboardPage = () => {
                     type="primary"
                     danger
                     size="small"
-                    icon={<SendOutlined />}
                     onClick={() => handleSendReminder(record.bookingId)}
                 >
                     Gửi Email Nhắc Lịch
@@ -224,7 +232,7 @@ const NoShowDashboardPage = () => {
             <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
                 <Col>
                     <Title level={2} style={{ margin: 0 }}>
-                        <AlertOutlined style={{ marginRight: 8, color: "#ff4d4f" }} /> Cảnh Báo Booking Nguy Cơ Bùng Kèo & Báo Cáo AI
+                        Cảnh Báo Booking Nguy Cơ Bùng Kèo & Báo Cáo AI
                     </Title>
                     <Text type="secondary">Giúp Chủ Salon chủ động phát hiện lịch hẹn có khả năng không đến cao và theo dõi hiệu quả dự đoán trực quan.</Text>
                 </Col>
@@ -232,7 +240,6 @@ const NoShowDashboardPage = () => {
                     <Col>
                         <Space size="large">
                             <Space>
-                                <ShopOutlined style={{ color: "#1890ff" }} />
                                 <Text strong>Chi nhánh:</Text>
                                 <Select
                                     style={{ width: 250 }}
@@ -257,9 +264,8 @@ const NoShowDashboardPage = () => {
                                 value={Math.round((latestEval.accuracy || 0) * 100)}
                                 suffix="%"
                                 styles={{ content: { color: '#059669', fontWeight: 'bold', fontSize: '28px' } }}
-                                prefix={<SafetyCertificateOutlined className="mr-1" />}
                             />
-                            <div className="text-xs text-slate-500 mt-2 font-medium">🎯 Độ chuẩn xác chung của AI</div>
+                            <div className="text-xs text-slate-500 mt-2 font-medium">Độ chuẩn xác chung của AI</div>
                         </Card>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
@@ -269,9 +275,8 @@ const NoShowDashboardPage = () => {
                                 value={Math.round((latestEval.f1Score || 0) * 100)}
                                 suffix="%"
                                 styles={{ content: { color: '#4f46e5', fontWeight: 'bold', fontSize: '28px' } }}
-                                prefix={<ExperimentOutlined className="mr-1" />}
                             />
-                            <div className="text-xs text-slate-500 mt-2 font-medium">🌟 Đánh giá lọc rủi ro toàn diện</div>
+                            <div className="text-xs text-slate-500 mt-2 font-medium">Đánh giá lọc rủi ro toàn diện</div>
                         </Card>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
@@ -281,7 +286,7 @@ const NoShowDashboardPage = () => {
                                 value={latestEval.totalEvaluatedBookings || 0}
                                 styles={{ content: { color: '#d97706', fontWeight: 'bold', fontSize: '28px' } }}
                             />
-                            <div className="text-xs text-slate-500 mt-2 font-medium">📅 Trong tuần vừa qua</div>
+                            <div className="text-xs text-slate-500 mt-2 font-medium">Trong tuần vừa qua</div>
                         </Card>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
@@ -290,246 +295,42 @@ const NoShowDashboardPage = () => {
                                 title={<span className="text-slate-600 font-semibold text-xs uppercase tracking-wider">Phát Hiện Đúng Bùng Lịch</span>}
                                 value={latestEval.truePositives || 0}
                                 styles={{ content: { color: '#dc2626', fontWeight: 'bold', fontSize: '28px' } }}
-                                prefix={<AlertOutlined className="mr-1" />}
                             />
-                            <div className="text-xs text-slate-500 mt-2 font-medium">⚠️ Ca cảnh báo chính xác tuyệt đối</div>
+                            <div className="text-xs text-slate-500 mt-2 font-medium">Ca cảnh báo chính xác tuyệt đối</div>
                         </Card>
                     </Col>
                 </Row>
             )}
 
-            {/* Main Content Tabs (2 Tabs) */}
+            {/* Main Content Card: Danh Sách Booking Có Nguy Cơ Bùng Kèo Cao */}
             <Card className="rounded-2xl border-slate-200 shadow-sm">
-                <Tabs
-                    defaultActiveKey="1"
-                    items={[
-                        {
-                            key: '1',
-                            label: (
-                                <span className="flex items-center gap-2 font-bold py-1">
-                                    <AlertOutlined className="text-red-500 text-base" />
-                                    Booking Nguy Cơ Cao (Nguy cơ &gt; 70%)
-                                </span>
-                            ),
-                            children: (
-                                <div className="space-y-4 pt-2">
-                                    <div className="flex justify-between items-center pb-2">
-                                        <div>
-                                            <h3 className="text-base font-bold text-slate-800 m-0">
-                                                🚨 Danh Sách Booking Có Nguy Cơ Bùng Kèo Cao
-                                            </h3>
-                                            <p className="text-xs text-slate-500 m-0 mt-0.5">
-                                                Các lịch hẹn được AI cảnh báo. Chủ salon / Nhân viên nên chủ động gọi điện hoặc bấm <b>Gửi ZNS Nhắc Nhở</b>.
-                                            </p>
-                                        </div>
-                                        <Button
-                                            icon={<ReloadOutlined />}
-                                            onClick={loadHighRiskBookings}
-                                            loading={loading}
-                                        >
-                                            Tải lại danh sách
-                                        </Button>
-                                    </div>
+                <div className="space-y-4 pt-2">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#1e293b" }}>
+                            Danh Sách Booking Có Nguy Cơ Bùng Kèo Cao
+                        </h3>
+                        <Button
+                            onClick={loadHighRiskBookings}
+                            loading={loading}
+                        >
+                            Tải lại danh sách
+                        </Button>
+                    </div>
 
-                                    <Table
-                                        columns={highRiskColumns}
-                                        dataSource={highRiskData}
-                                        rowKey="bookingId"
-                                        loading={loading}
-                                        pagination={{
-                                            current: page,
-                                            pageSize: 10,
-                                            total: highRiskTotal,
-                                            onChange: (p) => setPage(p)
-                                        }}
-                                        locale={{ emptyText: 'Hiện tại chưa có booking nào có nguy cơ No-Show cao tại chi nhánh này.' }}
-                                    />
-                                </div>
-                            )
-                        },
-                        {
-                            key: '2',
-                            label: (
-                                <span className="flex items-center gap-2 font-bold py-1">
-                                    <LineChartOutlined className="text-indigo-600 text-base" />
-                                    Báo Cáo Hiệu Quả AI (Biểu Đồ Trực Quan)
-                                </span>
-                            ),
-                            children: (
-                                <div className="space-y-6 pt-2">
-                                    <Row justify="space-between" align="middle" style={{ marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid #f1f5f9' }}>
-                                        <Col>
-                                            <h3 className="text-base font-bold text-slate-800 m-0">
-                                                📊 Báo Cáo Hiệu Năng AI Dự Đoán Theo Thời Gian
-                                            </h3>
-                                            <p className="text-xs text-slate-500 m-0 mt-0.5">
-                                                Theo dõi độ chính xác và chất lượng lọc rủi ro của AI qua từng tuần.
-                                            </p>
-                                        </Col>
-                                        <Col>
-                                            <Button
-                                                type="primary"
-                                                icon={<ExperimentOutlined />}
-                                                onClick={handleTriggerEvaluation}
-                                                loading={evalLoading}
-                                                className="bg-indigo-600 hover:bg-indigo-700"
-                                            >
-                                                Cập Nhật Báo Cáo Mới Nhất
-                                            </Button>
-                                        </Col>
-                                    </Row>
-
-                                    <Row gutter={[24, 24]}>
-                                        {/* Visual Chart: Biểu đồ đường Xu Hướng Độ Chính Xác */}
-                                        <Col xs={24} lg={14}>
-                                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                                                <h4 className="text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
-                                                    📈 Biểu Đồ Xu Hướng Tỷ Lệ Dự Đoán Đúng Qua Các Tuần (%)
-                                                </h4>
-                                                <p className="text-xs text-slate-500 mb-4">
-                                                    Đường thể hiện sự ổn định và độ chuẩn xác của AI theo thời gian.
-                                                </p>
-
-                                                {pointsCoordinates.length > 0 ? (
-                                                    <div className="w-full overflow-x-auto flex justify-center py-2">
-                                                        <svg width={svgWidth} height={svgHeight} className="overflow-visible">
-                                                            {/* Grid lines */}
-                                                            <line x1={padding} y1={padding} x2={svgWidth - padding} y2={padding} stroke="#e2e8f0" strokeDasharray="4 4" />
-                                                            <line x1={padding} y1={svgHeight / 2} x2={svgWidth - padding} y2={svgHeight / 2} stroke="#e2e8f0" strokeDasharray="4 4" />
-                                                            <line x1={padding} y1={svgHeight - padding} x2={svgWidth - padding} y2={svgHeight - padding} stroke="#cbd5e1" />
-
-                                                            {/* Trend Line */}
-                                                            {pointsCoordinates.length > 1 && (
-                                                                <path d={pathD} fill="none" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" />
-                                                            )}
-
-                                                            {/* Data Points */}
-                                                            {pointsCoordinates.map((pt, i) => (
-                                                                <g key={i}>
-                                                                    <circle cx={pt.x} cy={pt.y} r="6" fill="#4f46e5" stroke="#ffffff" strokeWidth="2" />
-                                                                    <text x={pt.x} y={pt.y - 12} textAnchor="middle" className="text-[11px] font-bold fill-indigo-700">
-                                                                        {pt.accuracy}%
-                                                                    </text>
-                                                                    <text x={pt.x} y={svgHeight - 10} textAnchor="middle" className="text-[10px] fill-slate-500">
-                                                                        {pt.date}
-                                                                    </text>
-                                                                </g>
-                                                            ))}
-                                                        </svg>
-                                                    </div>
-                                                ) : (
-                                                    <Empty description="Chưa có dữ liệu lịch sử đánh giá" />
-                                                )}
-                                            </div>
-                                        </Col>
-
-                                        {/* Bar Chart Breakdown: Thước đo chi tiết năng lực AI bằng biểu đồ cột dọc */}
-                                        <Col xs={24} lg={10}>
-                                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 h-full flex flex-col justify-between space-y-4">
-                                                <div>
-                                                    <h4 className="text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
-                                                        📊 Đánh Giá Chi Tiết Năng Lực AI Tuần Này
-                                                    </h4>
-                                                    <p className="text-xs text-slate-500 mb-4">
-                                                        Biểu đồ cột thể hiện các chỉ số chất lượng vận hành của AI.
-                                                    </p>
-
-                                                    {latestEval ? (
-                                                        <div className="w-full flex justify-center py-2 bg-white rounded-xl border border-slate-100 shadow-inner">
-                                                            <svg width="340" height="170" className="overflow-visible">
-                                                                {/* Grid lines */}
-                                                                <line x1="15" y1="20" x2="325" y2="20" stroke="#f1f5f9" strokeDasharray="3 3" />
-                                                                <line x1="15" y1="75" x2="325" y2="75" stroke="#f1f5f9" strokeDasharray="3 3" />
-                                                                <line x1="15" y1="130" x2="325" y2="130" stroke="#e2e8f0" />
-
-                                                                {/* Column 1: Độ báo chuẩn (Precision) */}
-                                                                <g>
-                                                                    <rect
-                                                                        x="35"
-                                                                        y={130 - (Math.round((latestEval.precisionScore || 0) * 100) / 100 * 110)}
-                                                                        width="48"
-                                                                        height={Math.round((latestEval.precisionScore || 0) * 100) / 100 * 110}
-                                                                        fill="#6366f1"
-                                                                        rx="4"
-                                                                    />
-                                                                    <text
-                                                                        x="59"
-                                                                        y={130 - (Math.round((latestEval.precisionScore || 0) * 100) / 100 * 110) - 6}
-                                                                        textAnchor="middle"
-                                                                        className="text-xs font-bold fill-indigo-700"
-                                                                    >
-                                                                        {Math.round((latestEval.precisionScore || 0) * 100)}%
-                                                                    </text>
-                                                                    <text x="59" y="148" textAnchor="middle" className="text-[10px] font-semibold fill-slate-700">
-                                                                        Độ Báo Chuẩn
-                                                                    </text>
-                                                                </g>
-
-                                                                {/* Column 2: Tỷ lệ bắt trúng (Recall) */}
-                                                                <g>
-                                                                    <rect
-                                                                        x="145"
-                                                                        y={130 - (Math.round((latestEval.recallScore || 0) * 100) / 100 * 110)}
-                                                                        width="48"
-                                                                        height={Math.round((latestEval.recallScore || 0) * 100) / 100 * 110}
-                                                                        fill="#10b981"
-                                                                        rx="4"
-                                                                    />
-                                                                    <text
-                                                                        x="169"
-                                                                        y={130 - (Math.round((latestEval.recallScore || 0) * 100) / 100 * 110) - 6}
-                                                                        textAnchor="middle"
-                                                                        className="text-xs font-bold fill-emerald-700"
-                                                                    >
-                                                                        {Math.round((latestEval.recallScore || 0) * 100)}%
-                                                                    </text>
-                                                                    <text x="169" y="148" textAnchor="middle" className="text-[10px] font-semibold fill-slate-700">
-                                                                        Tỷ Lệ Bắt Trúng
-                                                                    </text>
-                                                                </g>
-
-                                                                {/* Column 3: Hiệu quả chung (F1 Score) */}
-                                                                <g>
-                                                                    <rect
-                                                                        x="255"
-                                                                        y={130 - (Math.round((latestEval.f1Score || 0) * 100) / 100 * 110)}
-                                                                        width="48"
-                                                                        height={Math.round((latestEval.f1Score || 0) * 100) / 100 * 110}
-                                                                        fill="#f43f5e"
-                                                                        rx="4"
-                                                                    />
-                                                                    <text
-                                                                        x="279"
-                                                                        y={130 - (Math.round((latestEval.f1Score || 0) * 100) / 100 * 110) - 6}
-                                                                        textAnchor="middle"
-                                                                        className="text-xs font-bold fill-rose-700"
-                                                                    >
-                                                                        {Math.round((latestEval.f1Score || 0) * 100)}%
-                                                                    </text>
-                                                                    <text x="279" y="148" textAnchor="middle" className="text-[10px] font-semibold fill-slate-700">
-                                                                        Hiệu Quả Chung
-                                                                    </text>
-                                                                </g>
-                                                            </svg>
-                                                        </div>
-                                                    ) : (
-                                                        <Empty description="Chưa có dữ liệu tuần này" />
-                                                    )}
-                                                </div>
-
-                                                {latestEval && (
-                                                    <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-600">
-                                                        💡 <b>Kết luận:</b> Trong tổng số <b>{latestEval.totalEvaluatedBookings || 0}</b> booking đã kiểm tra tuần này, AI đã phát hiện chính xác <b>{latestEval.truePositives || 0}</b> lượt bùng kèo thực tế.
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </Col>
-                                    </Row>
-                                </div>
-                            )
-                        }
-                    ]}
-                />
+                    <Table
+                        columns={highRiskColumns}
+                        dataSource={highRiskData}
+                        rowKey="bookingId"
+                        loading={loading}
+                        pagination={{
+                            current: page,
+                            pageSize: 10,
+                            total: highRiskTotal,
+                            onChange: (p) => setPage(p)
+                        }}
+                        locale={{ emptyText: 'Hiện tại chưa có booking nào có nguy cơ No-Show cao tại chi nhánh này.' }}
+                    />
+                </div>
             </Card>
         </div>
         </FeatureLockOverlay>

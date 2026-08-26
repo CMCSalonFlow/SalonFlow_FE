@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ClockCircleOutlined, RobotOutlined, ThunderboltOutlined, CheckCircleOutlined, InfoCircleOutlined } from "@ant-design/icons";
-import { Spin, Button, Radio, Space, Input, Card, Tag, Tooltip, message } from "antd";
+import { Spin, Button, Radio, Space, Input, Card, Tag, Tooltip, message, Grid } from "antd";
 import { recommendSmartSlotsApi } from "@/features/ai/api/smartSchedulingApi";
+import dayjs from "dayjs";
 
 const { TextArea } = Input;
 
@@ -23,6 +24,7 @@ export default function StepTimeSlots({
     setPaymentMethod,
     customerPhone,
     setCustomerPhone,
+    showCustomerInputs = true,
     // Props cho AI Smart Scheduling
     selectedBranchId,
     selectedDate,
@@ -31,6 +33,7 @@ export default function StepTimeSlots({
     bookingType = "service",
     selectedStaff = null
 }) {
+    const screens = Grid.useBreakpoint();
     const [aiLoading, setAiLoading] = useState(false);
     const [aiRecommendations, setAiRecommendations] = useState([]);
     const [aiFetched, setAiFetched] = useState(false);
@@ -48,10 +51,12 @@ export default function StepTimeSlots({
                 ? selectedDate.format("YYYY-MM-DD") 
                 : String(selectedDate);
 
+            const userId = localStorage.getItem("userId");
             const payload = {
                 branchId: selectedBranchId,
                 date: dateStr,
-                preferredStaffId: selectedStaff?.id || null
+                preferredStaffId: selectedStaff?.id || null,
+                customerId: userId ? Number(userId) : null
             };
 
             if (bookingType === "service" && selectedServices.length > 0) {
@@ -61,7 +66,7 @@ export default function StepTimeSlots({
             }
 
             const res = await recommendSmartSlotsApi(payload);
-            const recs = res?.recommendations || [];
+            const recs = Array.isArray(res) ? res : (res?.recommendations || []);
             setAiRecommendations(recs);
             setAiFetched(true);
 
@@ -206,38 +211,56 @@ export default function StepTimeSlots({
                     {(() => {
                         const allSlots = generateAllTimeSlots();
                         if (allSlots.length > 0) {
+                            const minSlotWidth = screens.xs ? "72px" : "86px";
+                            const slotGap = screens.xs ? 8 : 10;
+                            const isToday = selectedDate && (
+                                typeof selectedDate.isSame === "function"
+                                    ? selectedDate.isSame(dayjs(), "day")
+                                    : String(selectedDate) === dayjs().format("YYYY-MM-DD")
+                            );
+                            const nowTimeString = dayjs().format("HH:mm:ss");
+
                             return (
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 12, marginBottom: 24 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${minSlotWidth}, 1fr))`, gap: slotGap, marginBottom: 24 }}>
                                     {allSlots.map(time => {
                                         const displayTime = time.substring(0, 5);
-                                        const isAvailable = availableTimes.includes(time);
+                                        const isPast = isToday && time < nowTimeString;
+                                        const isAvailable = availableTimes.includes(time) && !isPast;
                                         const isSelected = selectedTime === time;
                                         
                                         return (
                                             <Button
                                                 key={time}
-                                                size="large"
+                                                size={screens.xs ? "middle" : "large"}
                                                 disabled={!isAvailable}
                                                 style={{
                                                     borderRadius: 8,
+                                                    padding: screens.xs ? "0 4px" : "0 8px",
+                                                    fontSize: screens.xs ? 13 : 14,
                                                     fontWeight: isSelected ? "600" : "500",
                                                     backgroundColor: isSelected 
-                                                        ? "#52c41a" // Selected
-                                                        : isAvailable 
-                                                            ? "#f6ffed" // Available green
-                                                            : "#fff1f0", // Busy red
+                                                        ? "#52c41a" // Selected green
+                                                        : isPast
+                                                            ? "#f5f5f5" // Past grey
+                                                            : isAvailable 
+                                                                ? "#f6ffed" // Available green
+                                                                : "#fff1f0", // Busy red
                                                     borderColor: isSelected 
                                                         ? "#52c41a" 
-                                                        : isAvailable 
-                                                            ? "#b7eb8f" 
-                                                            : "#ffa39e",
+                                                        : isPast
+                                                            ? "#d9d9d9" // Past grey border
+                                                            : isAvailable 
+                                                                ? "#b7eb8f" 
+                                                                : "#ffa39e",
                                                     color: isSelected 
                                                         ? "#fff" 
-                                                        : isAvailable 
-                                                            ? "#389e0d" 
-                                                            : "#cf1322",
+                                                        : isPast
+                                                            ? "#bfbfbf" // Past grey text
+                                                            : isAvailable 
+                                                                ? "#389e0d" 
+                                                                : "#cf1322",
                                                     transition: "all 0.3s",
-                                                    opacity: isAvailable ? 1 : 0.65,
+                                                    opacity: isAvailable ? 1 : 0.6,
                                                     cursor: isAvailable ? "pointer" : "not-allowed"
                                                 }}
                                                 onClick={() => isAvailable && setSelectedTime(time)}
@@ -257,29 +280,33 @@ export default function StepTimeSlots({
                         }
                     })()}
 
-                    <div style={{ marginBottom: 24 }}>
-                        <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                            Số điện thoại liên hệ <span style={{ color: "#ff4d4f" }}>*</span>
-                        </label>
-                        <Input
-                            placeholder="Nhập số điện thoại để nhận thông báo lịch hẹn..."
-                            value={customerPhone}
-                            onChange={(e) => setCustomerPhone(e.target.value)}
-                            style={{ borderRadius: 8 }}
-                            size="large"
-                        />
-                    </div>
+                    {showCustomerInputs && (
+                        <>
+                            <div style={{ marginBottom: 24 }}>
+                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                                    Số điện thoại liên hệ <span style={{ color: "#ff4d4f" }}>*</span>
+                                </label>
+                                <Input
+                                    placeholder="Nhập số điện thoại để nhận thông báo lịch hẹn..."
+                                    value={customerPhone}
+                                    onChange={(e) => setCustomerPhone(e.target.value)}
+                                    style={{ borderRadius: 8 }}
+                                    size="large"
+                                />
+                            </div>
 
-                    <div style={{ marginBottom: 24 }}>
-                        <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Ghi chú gửi cho Salon (Tùy chọn)</label>
-                        <TextArea
-                            rows={3}
-                            placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt của bạn..."
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            style={{ borderRadius: 8 }}
-                        />
-                    </div>
+                            <div style={{ marginBottom: 24 }}>
+                                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Ghi chú gửi cho Salon (Tùy chọn)</label>
+                                <TextArea
+                                    rows={3}
+                                    placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt của bạn..."
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    style={{ borderRadius: 8 }}
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>
