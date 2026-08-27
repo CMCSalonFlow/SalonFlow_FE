@@ -45,7 +45,7 @@ export default function AuthForm({
                     </button>
                 </div>
 
-                <div className="auth-brand-header" style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                <div className="auth-brand-header" style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
                     <BrandLogo theme="light" subtitle="BEAUTY & SALON" size="medium" />
                 </div>
 

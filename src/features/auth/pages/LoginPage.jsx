@@ -59,6 +59,11 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (checkAuthSession()) {
+            const mustChange = localStorage.getItem("mustChangePassword") === "true";
+            if (mustChange) {
+                navigate("/force-change-password", { replace: true });
+                return;
+            }
             try {
                 const rolesStr = localStorage.getItem("roles");
                 if (rolesStr) {
@@ -69,7 +74,7 @@ export default function LoginPage() {
                 localStorage.clear();
             }
         }
-    }, [navigateAfterLogin]);
+    }, [navigate, navigateAfterLogin]);
 
     const [loading, setLoading] =
         useState(false);
@@ -89,6 +94,11 @@ export default function LoginPage() {
                     form.email,
                     form.password
                 );
+
+            if (response?.mustChangePassword) {
+                navigate("/force-change-password", { replace: true });
+                return;
+            }
 
             const roles = response.roles || [];
             navigateAfterLogin(roles);
