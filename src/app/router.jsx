@@ -146,7 +146,7 @@ const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: withSuspense(AdminDashboardPage)
+                element: <Navigate to="/admin/salons" replace />
             },
             {
                 path: "users",

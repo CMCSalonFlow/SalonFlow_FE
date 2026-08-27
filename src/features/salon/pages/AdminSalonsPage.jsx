@@ -40,7 +40,7 @@ const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 export default function AdminSalonsPage() {
-    const [activeTab, setActiveTab] = useState("PENDING");
+    const [activeTab, setActiveTab] = useState("ALL");
     const [salons, setSalons] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -292,10 +292,10 @@ export default function AdminSalonsPage() {
     ];
 
     const tabItems = [
-        { key: "PENDING", label: `Chờ duyệt (${activeTab === "PENDING" ? salons.length : "..."})` },
+        { key: "ALL", label: "Tất cả Salon" },
+        { key: "PENDING", label: "Chờ duyệt" },
         { key: "APPROVED", label: "Đã duyệt" },
-        { key: "REJECTED", label: "Đã từ chối" },
-        { key: "ALL", label: "Tất cả Salon" }
+        { key: "REJECTED", label: "Đã từ chối" }
     ];
 
     return (
