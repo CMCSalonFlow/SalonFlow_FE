@@ -36,7 +36,7 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 20px;
 }
 
 .auth-brand-header {
@@ -44,7 +44,7 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
 .auth-logo-icon {
@@ -99,16 +99,18 @@
 ========================= */
 
 .auth-title {
-    font-size: 30px;
-    font-weight: 700;
-    color: #111827;
-    margin: 0 0 6px 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.5px;
 }
 
 .auth-subtitle {
-    font-size: 15px;
+    font-size: 14px;
     color: #64748b;
-    margin: 0 0 24px 0;
+    margin: 0 0 32px 0;
+    line-height: 1.6;
 }
 
 /* =========================
@@ -127,7 +129,7 @@
     width: 100% !important;
     height: 52px !important;
     padding: 0 18px !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 20px !important;
     border-radius: 14px !important;
     border: 1px solid #dbe4ee !important;
     outline: none !important;
@@ -148,7 +150,7 @@
 .auth-password-container {
     position: relative;
     width: 100%;
-    margin-bottom: 16px;
+    margin-bottom: 20px !important;
 }
 
 .auth-password-container input {
@@ -199,7 +201,7 @@
     font-weight: 700 !important;
     cursor: pointer !important;
     transition: all 0.25s ease !important;
-    margin-top: 6px !important;
+    margin-top: 10px !important;
     box-shadow: 0 6px 20px rgba(22, 119, 255, 0.25) !important;
 }
 
@@ -234,6 +236,37 @@
 
 .forgot-password span:hover {
     text-decoration: underline;
+}
+
+/* Link-style button (Resend OTP, etc.) */
+.auth-link-button {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: #1677ff !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    display: block !important;
+    width: auto !important;
+    margin: 4px 0 16px auto !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+.auth-link-button:hover {
+    background: #f1f5f9 !important;
+    color: #0958d9 !important;
+    text-decoration: underline !important;
+}
+
+.auth-link-button:disabled {
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    background: transparent !important;
+    text-decoration: none !important;
 }
 
 /* =========================

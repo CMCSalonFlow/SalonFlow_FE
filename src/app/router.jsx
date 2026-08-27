@@ -27,6 +27,7 @@ import OAuth2SuccessPage from "@/features/auth/pages/OAuth2SuccessPage";
 import VerifyEmailPage from "@/features/auth/pages/VerifyEmailPage";
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/features/auth/pages/ResetPasswordPage";
+import ForceChangePasswordPage from "@/features/auth/pages/ForceChangePasswordPage";
 import HomePage from "@/features/auth/pages/HomePage";
 
 // Lazy-loaded Admin pages
@@ -123,6 +124,10 @@ const router = createBrowserRouter([
     {
         path: "/reset-password",
         element: <ResetPasswordPage />,
+    },
+    {
+        path: "/force-change-password",
+        element: <ForceChangePasswordPage />,
     },
     {
         path: "/check-in",

@@ -24,6 +24,7 @@ export default function UserListPage() {
 
     const [users, setUsers] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const [open, setOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
@@ -31,10 +32,13 @@ export default function UserListPage() {
     // LOAD USERS
     const loadUsers = async () => {
         try {
+            setLoading(true);
             const data = await getUsersApi();
-            setUsers(data);
+            setUsers(data || []);
         } catch {
-            message.error("Load users failed");
+            message.error("Tải danh sách người dùng thất bại");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -42,9 +46,9 @@ export default function UserListPage() {
     const loadRoles = async () => {
         try {
             const data = await getRolesApi();
-            setRoles(data);
+            setRoles(data || []);
         } catch {
-            message.error("Load roles failed");
+            message.error("Tải danh sách vai trò thất bại");
         }
     };
 
@@ -74,22 +78,20 @@ export default function UserListPage() {
     // SUBMIT
     const handleSubmit = async (values) => {
         try {
-
             if (editingUser) {
                 await updateUserApi(editingUser.id, values);
+                message.success("Cập nhật thông tin người dùng thành công!");
             } else {
                 await createUserApi(values);
+                message.success("Thêm mới người dùng thành công!");
             }
-
-            message.success("Success");
 
             setOpen(false);
             setEditingUser(null);
-
             loadUsers();
-
-        } catch {
-            message.error("Save failed");
+        } catch (err) {
+            const errMsg = err?.response?.data?.message || err?.message || "Lưu thông tin người dùng thất bại";
+            message.error(errMsg);
         }
     };
 
@@ -97,27 +99,28 @@ export default function UserListPage() {
     const handleDelete = async (id) => {
         try {
             await deleteUserApi(id);
-            message.success("Deleted");
+            message.success("Đã xóa người dùng thành công!");
             loadUsers();
-        } catch {
-            message.error("Delete failed");
+        } catch (err) {
+            const errMsg = err?.response?.data?.message || err?.message || "Xóa người dùng thất bại";
+            message.error(errMsg);
         }
     };
 
     return (
         <div>
-
             <Space style={{ marginBottom: 20 }}>
                 <Button
                     type="primary"
                     onClick={handleCreate}
                 >
-                    Create User
+                    + Thêm người dùng mới
                 </Button>
             </Space>
 
             <UserTable
                 users={users}
+                loading={loading}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
             />
@@ -129,7 +132,6 @@ export default function UserListPage() {
                 onCancel={() => setOpen(false)}
                 onSubmit={handleSubmit}
             />
-
         </div>
     );
 }
