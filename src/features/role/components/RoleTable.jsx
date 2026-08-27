@@ -1,76 +1,70 @@
 import {
     Table,
     Button,
-    Tag,
     Space,
-    Popconfirm
+    Popconfirm,
+    Tag
 } from "antd";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 export default function RoleTable({
     roles,
     onEdit,
     onDelete
 }) {
-
     const columns = [
         {
             title: "ID",
-            dataIndex: "id"
+            dataIndex: "id",
+            width: 70,
+            align: "center",
+            render: (id) => <Tag style={{ margin: 0, fontWeight: "bold" }}>#{id}</Tag>
         },
         {
-            title: "Code",
-            dataIndex: "code"
+            title: "Mã vai trò (Code)",
+            dataIndex: "code",
+            width: 220,
+            render: (code) => <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#1e293b" }}>{code}</span>
         },
         {
-            title: "Name",
-            dataIndex: "name"
+            title: "Tên vai trò",
+            dataIndex: "name",
+            width: 220,
+            render: (name) => <span style={{ fontWeight: 600, color: "#0f172a" }}>{name}</span>
         },
         {
-            title: "Description",
-            dataIndex: "description"
+            title: "Mô tả",
+            dataIndex: "description",
+            width: 380,
+            render: (desc) => <span style={{ color: "#64748b" }}>{desc || "---"}</span>
         },
         {
-            title: "Permissions",
-            dataIndex: "permissions",
-            render: (permissions) => (
-                <>
-                    {permissions?.map(
-                        permission => (
-                            <Tag
-                                key={permission}
-                            >
-                                {permission}
-                            </Tag>
-                        )
-                    )}
-                </>
-            )
-        },
-        {
-            title: "Action",
+            title: "Thao tác",
+            width: 200,
+            align: "right",
             render: (_, record) => (
-                <Space>
-
+                <Space size={8}>
                     <Button
                         type="primary"
-                        onClick={() =>
-                            onEdit(record)
-                        }
+                        icon={<EditOutlined />}
+                        onClick={() => onEdit(record)}
+                        style={{ borderRadius: 6 }}
                     >
-                        Edit
+                        Chỉnh sửa
                     </Button>
 
                     <Popconfirm
-                        title="Delete role?"
-                        onConfirm={() =>
-                            onDelete(record.id)
-                        }
+                        title="Xác nhận xóa vai trò này?"
+                        description="Hành động này không thể hoàn tác."
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        okButtonProps={{ danger: true }}
+                        onConfirm={() => onDelete(record.id)}
                     >
-                        <Button danger>
-                            Delete
+                        <Button danger icon={<DeleteOutlined />} style={{ borderRadius: 6 }}>
+                            Xóa
                         </Button>
                     </Popconfirm>
-
                 </Space>
             )
         }
@@ -81,6 +75,8 @@ export default function RoleTable({
             rowKey="id"
             columns={columns}
             dataSource={roles}
+            pagination={false}
+            style={{ borderRadius: 12 }}
         />
     );
 }

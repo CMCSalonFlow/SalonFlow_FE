@@ -4,7 +4,8 @@ import {
     CustomerServiceOutlined,
     UserOutlined,
     TeamOutlined,
-    MessageOutlined
+    MessageOutlined,
+    SettingOutlined
 } from "@ant-design/icons";
 import { Menu } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -22,7 +23,12 @@ export default function AdminSidebar({ onMenuClick }) {
         {
             key: "/admin/subscriptions",
             icon: <CreditCardOutlined />,
-            label: "Quản Lý Gói Đăng Ký"
+            label: "Thống Kê & Đăng Ký Gói"
+        },
+        {
+            key: "/admin/subscription-plans",
+            icon: <SettingOutlined />,
+            label: "Cấu Hình Bảng Giá Gói"
         },
         {
             key: "/admin/tickets",

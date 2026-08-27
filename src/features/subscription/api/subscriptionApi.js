@@ -107,3 +107,29 @@ export const deleteSubscriptionAdminApi = async (id) => {
     const res = await api.delete(ENDPOINTS.SUBSCRIPTION_ADMIN_BY_ID(id));
     return res.data;
 };
+
+/**
+ * Lấy danh sách bảng giá các gói công khai (Cho Khách & Chủ Salon)
+ */
+export const getPublicSubscriptionPlansApi = async () => {
+    const res = await api.get("/api/v1/subscription-plans/public");
+    return res.data;
+};
+
+/**
+ * Lấy danh sách cấu hình các gói (Dành cho Admin xem chi tiết)
+ */
+export const getAdminSubscriptionPlansApi = async () => {
+    const res = await api.get("/api/v1/subscription-plans/admin");
+    return res.data;
+};
+
+/**
+ * Cập nhật giá tiền & giới hạn gói dịch vụ - Dành cho Admin
+ * @param {string} plan "FREE" | "PRO" | "ENTERPRISE"
+ * @param {Object} payload
+ */
+export const updateSubscriptionPlanApi = async (plan, payload) => {
+    const res = await api.put(`/api/v1/subscription-plans/admin/${plan}`, payload);
+    return res.data;
+};
