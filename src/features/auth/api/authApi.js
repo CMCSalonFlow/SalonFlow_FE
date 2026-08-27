@@ -101,3 +101,15 @@ export const resetPasswordApi =
 
         return response.data;
     };
+
+export const changePasswordApi = async (newPassword, currentPassword = "") => {
+    const response = await api.post(
+        "/api/v1/auth/change-password",
+        {
+            currentPassword,
+            newPassword,
+        }
+    );
+
+    return response.data;
+};

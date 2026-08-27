@@ -25,56 +25,44 @@ export default function VerifyEmailPage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    const [resendCooldown, setResendCooldown] = useState(0);
+
     const handleVerify = async (form) => {
-
         try {
-
             setLoading(true);
             setError("");
-
-            await verifyEmail(
-                email,
-                form.otp
-            );
-
+            await verifyEmail(email, form.otp);
             navigate("/login");
-
         } catch (err) {
-
-            setError(
-                err.response?.data?.message ||
-                "OTP không hợp lệ"
-            );
-
+            setError(err.response?.data?.message || "OTP không hợp lệ");
         } finally {
-
             setLoading(false);
-
         }
-
     };
 
     const handleSendOtp = async () => {
+        if (resendCooldown > 0) return;
         try {
-
+            setError("");
             await sendOtp(email);
+            setSuccess("Đã gửi lại mã OTP tới email của bạn.");
+            setResendCooldown(60);
 
-            setSuccess(
-                "Đã gửi lại OTP."
-            );
-
+            const timer = setInterval(() => {
+                setResendCooldown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
         } catch {
-
-            setError(
-                "Không gửi được OTP."
-            );
-
+            setError("Không gửi được mã OTP. Vui lòng thử lại sau.");
         }
-
     };
 
     return (
-
         <AuthForm
             title="Xác thực Email"
             subtitle="Nhập OTP đã được gửi tới email"
@@ -84,10 +72,8 @@ export default function VerifyEmailPage() {
             success={success}
             onSubmit={handleVerify}
         >
-
             {(handleChange) => (
                 <>
-
                     <input
                         type="email"
                         name="email"
@@ -98,23 +84,22 @@ export default function VerifyEmailPage() {
                     <input
                         type="text"
                         name="otp"
-                        placeholder="OTP"
+                        placeholder="Nhập mã OTP (6 chữ số)"
                         onChange={handleChange}
                     />
 
-                    <button
-                        type="button"
-                        className="auth-link-button"
-                        onClick={handleSendOtp}
-                    >
-                        Gửi lại OTP
-                    </button>
-
+                    <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+                        <button
+                            type="button"
+                            className="auth-link-button"
+                            onClick={handleSendOtp}
+                            disabled={resendCooldown > 0}
+                        >
+                            {resendCooldown > 0 ? `Gửi lại OTP (${resendCooldown}s)` : "Gửi lại OTP"}
+                        </button>
+                    </div>
                 </>
             )}
-
         </AuthForm>
-
     );
-
 }
