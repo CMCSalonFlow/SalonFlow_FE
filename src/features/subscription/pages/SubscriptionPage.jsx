@@ -11,6 +11,7 @@ import {
     LockOutlined,
     PhoneOutlined,
     QrcodeOutlined,
+    ReloadOutlined,
     SafetyCertificateOutlined
 } from "@ant-design/icons";
 import { useSubscription } from "../hooks/useSubscription";
@@ -254,74 +255,80 @@ export default function SubscriptionPage() {
                 <Text type="secondary">Nâng cấp gói dịch vụ để mở rộng quy mô chi nhánh, nhân sự và sử dụng trí tuệ nhân tạo AI nâng cao doanh thu.</Text>
             </div>
 
-            {/* Current Active Plan Card */}
+            {/* Current Active Subscription Banner */}
             <Card
                 style={{
                     borderRadius: 20,
                     marginBottom: 32,
-                    background: currentPlan === "ENTERPRISE"
-                        ? "linear-gradient(135deg, #141414, #262626)"
-                        : currentPlan === "PRO"
-                            ? "linear-gradient(135deg, #096dd9, #1d39c4)"
-                            : "linear-gradient(135deg, #595959, #8c8c8c)",
-                    color: "#fff",
-                    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
+                    background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+                    boxShadow: "0 10px 25px rgba(37, 99, 235, 0.2)",
                     border: "none"
                 }}
+                bodyStyle={{ padding: "28px 32px" }}
             >
-                <Row align="middle" justify="space-between" gutter={[24, 24]}>
-                    <Col xs={24} md={16}>
-                        <Space direction="vertical" size={4}>
-                            <Space align="center">
+                <Row align="middle" justify="space-between" gutter={[24, 20]}>
+                    {/* Left Column: Plan Title & Description */}
+                    <Col xs={24} md={14}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <Badge status={currentStatus === "ACTIVE" ? "processing" : "default"} />
-                                <Text style={{ color: "rgba(255, 255, 255, 0.8)", fontSize: 13, textTransform: "uppercase", letterSpacing: 1 }}>
-                                    GÓI HIỆN TẠI
+                                <Text style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: 12, textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700 }}>
+                                    GÓI DỊCH VỤ ĐANG SỬ DỤNG
                                 </Text>
-                            </Space>
-                            <Title level={1} style={{ margin: 0, color: "#fff", display: "flex", alignItems: "center", gap: 12 }}>
-                                Gói {currentPlan}
-                                <Tag color={currentPlan === "ENTERPRISE" ? "gold" : currentPlan === "PRO" ? "blue" : "default"}>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                                <Title level={2} style={{ margin: 0, color: "#ffffff", fontWeight: 800 }}>
+                                    Gói {currentPlan}
+                                </Title>
+                                <Tag color={currentPlan === "ENTERPRISE" ? "gold" : currentPlan === "PRO" ? "cyan" : "default"} style={{ fontSize: 12, padding: "2px 10px", borderRadius: 6, fontWeight: 600 }}>
                                     {getStatusText(currentStatus)}
                                 </Tag>
-                            </Title>
-                            <Text style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 15, marginTop: 8, display: "block" }}>
+                            </div>
+
+                            <Text style={{ color: "rgba(255, 255, 255, 0.95)", fontSize: 14, lineHeight: "1.6" }}>
                                 {currentPlan === "FREE" && "Hạn mức tối thiểu cho cơ sở nhỏ: 1 chi nhánh, tối đa 3 nhân sự."}
                                 {currentPlan === "PRO" && "Đầy đủ tính năng phân tích nâng cao, 3 chi nhánh, tối đa 10 nhân sự."}
                                 {currentPlan === "ENTERPRISE" && "Không giới hạn chi nhánh/nhân sự, tối ưu hóa doanh nghiệp bằng AI thông minh."}
                             </Text>
-                            {subscription && (
-                                <Text style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: 13, marginTop: 12, display: "block" }}>
-                                    Hiệu lực từ: <strong>{new Date(subscription.startDate).toLocaleDateString("vi-VN")}</strong> đến <strong>{new Date(subscription.endDate).toLocaleDateString("vi-VN")}</strong>
-                                    {subscription.billingCycle && ` • Thanh toán: ${subscription.billingCycle}`}
-                                </Text>
-                            )}
-                        </Space>
+                        </div>
                     </Col>
-                    <Col xs={24} md={8} style={{ textAlign: "right" }}>
-                        <Space direction="vertical" size={12} style={{ width: "100%" }}>
-                            {currentPlan !== "FREE" && (
-                                <Button
-                                    type="primary"
-                                    size="large"
-                                    icon={<CreditCardOutlined />}
-                                    onClick={() => setManageModalOpen(true)}
-                                    style={{
-                                        borderRadius: 8,
-                                        background: "rgba(255, 255, 255, 0.2)",
-                                        borderColor: "rgba(255, 255, 255, 0.3)",
-                                        color: "#fff",
-                                        fontWeight: 600,
-                                        width: "100%"
-                                    }}
-                                >
-                                    Quản lý hóa đơn & Hủy gói
-                                </Button>
-                            )}
-                            <Text style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: 12, display: "block" }}>
-                                Cổng quản lý thanh toán bảo mật bởi Stripe
-                            </Text>
-                        </Space>
-                    </Col>
+
+                    {/* Right Column: Glass Card with Validity & Billing Info */}
+                    {subscription && (
+                        <Col xs={24} md={10}>
+                            <div style={{
+                                background: "rgba(255, 255, 255, 0.12)",
+                                border: "1px solid rgba(255, 255, 255, 0.2)",
+                                borderRadius: 14,
+                                padding: "16px 20px",
+                                backdropFilter: "blur(8px)",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 10
+                            }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <Text style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13 }}>
+                                        Thời gian hiệu lực:
+                                    </Text>
+                                    <Text strong style={{ color: "#ffffff", fontSize: 13 }}>
+                                        {new Date(subscription.startDate).toLocaleDateString("vi-VN")} - {new Date(subscription.endDate).toLocaleDateString("vi-VN")}
+                                    </Text>
+                                </div>
+
+                                {subscription.billingCycle && (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <Text style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13 }}>
+                                            Hình thức thanh toán:
+                                        </Text>
+                                        <Text strong style={{ color: "#ffffff", fontSize: 13 }}>
+                                            {subscription.billingCycle === "YEARLY" ? "Hàng Năm" : "Hàng Tháng"}
+                                        </Text>
+                                    </div>
+                                )}
+                            </div>
+                        </Col>
+                    )}
                 </Row>
             </Card>
 
@@ -560,12 +567,21 @@ export default function SubscriptionPage() {
                                 ) : currentPlan === "PRO" ? (
                                     <Button
                                         type="primary"
-                                        ghost
                                         size="large"
-                                        onClick={() => setManageModalOpen(true)}
-                                        style={{ width: "100%", borderRadius: 10, height: 46, marginTop: "auto", fontWeight: 700 }}
+                                        icon={<ReloadOutlined />}
+                                        onClick={() => handleOpenVietQrModal("PRO", billingCycle)}
+                                        style={{
+                                            width: "100%",
+                                            borderRadius: 10,
+                                            height: 46,
+                                            marginTop: "auto",
+                                            fontWeight: 700,
+                                            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                            border: "none",
+                                            boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)"
+                                        }}
                                     >
-                                        Quản lý thanh toán & Hủy gói
+                                        Gia Hạn Gói PRO
                                     </Button>
                                 ) : (
                                     <Button
@@ -712,11 +728,22 @@ export default function SubscriptionPage() {
                                     </Button>
                                 ) : (
                                     <Button
-                                        disabled
+                                        type="primary"
                                         size="large"
-                                        style={{ width: "100%", borderRadius: 10, height: 46, marginTop: "auto", fontWeight: 700 }}
+                                        icon={<ReloadOutlined />}
+                                        onClick={() => handleOpenVietQrModal("ENTERPRISE", billingCycle)}
+                                        style={{
+                                            width: "100%",
+                                            borderRadius: 10,
+                                            height: 46,
+                                            marginTop: "auto",
+                                            fontWeight: 700,
+                                            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                            border: "none",
+                                            boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)"
+                                        }}
                                     >
-                                        Đang sử dụng
+                                        Gia Hạn Gói ENTERPRISE
                                     </Button>
                                 )}
                             </Card>
@@ -748,58 +775,6 @@ export default function SubscriptionPage() {
                 />
             </Card>
 
-            {/* Manage Subscription & Direct Cancellation Modal */}
-            <Modal
-                title={
-                    <Space>
-                        <CreditCardOutlined style={{ color: "#1890ff" }} />
-                        <span>Quản Lý Hóa Đơn & Hủy Gói Dịch Vụ</span>
-                    </Space>
-                }
-                open={manageModalOpen}
-                onCancel={() => setManageModalOpen(false)}
-                footer={null}
-                centered
-            >
-                <div style={{ padding: "12px 0" }}>
-                    <Alert
-                        message={`Gói dịch vụ hiện tại: ${currentPlan}`}
-                        description={`Hiệu lực: từ ${new Date(subscription?.startDate).toLocaleDateString("vi-VN")} đến ${new Date(subscription?.endDate).toLocaleDateString("vi-VN")}`}
-                        type="info"
-                        showIcon
-                        style={{ marginBottom: 20 }}
-                    />
-
-                    <Paragraph>
-                        Bạn có thể hủy gói dịch vụ trực tiếp ngay trên ứng dụng để quay về gói FREE (Miễn phí).
-                    </Paragraph>
-
-                    <Button
-                        type="primary"
-                        danger
-                        block
-                        size="large"
-                        onClick={async () => {
-                            Modal.confirm({
-                                title: "Xác nhận hủy gói dịch vụ?",
-                                content: "Khi hủy gói, salon của bạn sẽ ngay lập tức trở về gói FREE mặc định.",
-                                okText: "Hủy Gói Ngay",
-                                okType: "danger",
-                                cancelText: "Quay Lại",
-                                onOk: async () => {
-                                    const ok = await cancelSubscription();
-                                    if (ok) {
-                                        setManageModalOpen(false);
-                                        refetchSubscription();
-                                    }
-                                }
-                            });
-                        }}
-                    >
-                        ❌ Hủy Gói Dịch Vụ Ngay (Trở về gói FREE)
-                    </Button>
-                </div>
-            </Modal>
 
             {/* VietQR Payment Modal */}
             <Modal
@@ -811,34 +786,7 @@ export default function SubscriptionPage() {
                 }
                 open={vietQrModalOpen}
                 onCancel={() => setVietQrModalOpen(false)}
-                footer={[
-                    <Button key="close" onClick={() => setVietQrModalOpen(false)} size="large" style={{ borderRadius: 8 }}>
-                        Đóng
-                    </Button>,
-                    <Button
-                        key="confirm"
-                        type="primary"
-                        loading={confirmingBank}
-                        size="large"
-                        style={{ backgroundColor: "#10b981", borderColor: "#10b981", borderRadius: 8, fontWeight: 700 }}
-                        onClick={async () => {
-                            if (!vietQrData?.subId) return;
-                            setConfirmingBank(true);
-                            try {
-                                await confirmSubscriptionBankTransferApi(vietQrData.subId);
-                                message.success("Kích hoạt gói dịch vụ thành công!");
-                                setVietQrModalOpen(false);
-                                refetchSubscription();
-                            } catch (err) {
-                                message.error(err.response?.data?.message || "Kích hoạt thất bại. Vui lòng thử lại!");
-                            } finally {
-                                setConfirmingBank(false);
-                            }
-                        }}
-                    >
-                        Tôi Đã Chuyển Khoản Thành Công
-                    </Button>
-                ]}
+                footer={null}
                 centered
                 width={760}
             >
@@ -892,10 +840,10 @@ export default function SubscriptionPage() {
                                 </div>
 
                                 <Alert
-                                    message="Hệ thống sẽ tự động kích hoạt gói cước ngay khi nhận được thanh toán từ Ngân hàng (SePay Webhook). Bạn cũng có thể bấm 'Tôi Đã Chuyển Khoản Thành Công' bên dưới."
+                                    message="Chính sách hoàn tiền: Gói dịch vụ được kích hoạt tự động ngay sau khi chuyển khoản. SalonFlow áp dụng chính sách hoàn tiền 100% trong vòng 7 ngày đầu nếu dịch vụ phát sinh sự cố kỹ thuật hoặc không đáp ứng nhu cầu sử dụng."
                                     type="info"
                                     showIcon
-                                    style={{ marginTop: 14, fontSize: 12.5, borderRadius: 10 }}
+                                    style={{ marginTop: 14, fontSize: 12, borderRadius: 10 }}
                                 />
                             </Col>
                         </Row>
