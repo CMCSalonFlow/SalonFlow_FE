@@ -277,14 +277,6 @@ export default function LoyaltyPointsSection({ userId }) {
             </Card>
 
             {/* Note về quy định điểm */}
-            <Alert
-                message="Quy định sử dụng điểm thưởng"
-                description="Điểm tích lũy được tự động cộng sau khi quý khách hoàn tất thanh toán dịch vụ tại salon (1.000đ = 1 điểm). Điểm có thời hạn sử dụng 1 năm kể từ ngày tích lũy. Khi quy đổi thành voucher, voucher có thể áp dụng cho các lần đặt lịch tiếp theo."
-                type="info"
-                showIcon
-                icon={<InfoCircleOutlined />}
-                style={{ marginTop: 16, borderRadius: 12 }}
-            />
 
             {/* Lịch sử giao dịch điểm */}
             <Card
