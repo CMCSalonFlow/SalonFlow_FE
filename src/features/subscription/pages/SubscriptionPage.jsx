@@ -641,12 +641,7 @@ export default function SubscriptionPage() {
                                 <Col span={14}><Text strong style={{ color: "#d46b08", fontSize: 16 }} copyable={{ text: vietQrData.content }}>{vietQrData.content}</Text></Col>
                             </Row>
                         </div>
-                        <Alert
-                            message="Hệ thống sẽ tự động kích hoạt gói cước ngay khi nhận được thanh toán từ Ngân hàng (SePay Webhook). Bạn cũng có thể bấm 'Tôi Đã Chuyển Khoản Thành Công' bên dưới."
-                            type="info"
-                            showIcon
-                            style={{ marginTop: 16, textAlign: "left", fontSize: 13 }}
-                        />
+
                     </div>
                 )}
             </Modal>

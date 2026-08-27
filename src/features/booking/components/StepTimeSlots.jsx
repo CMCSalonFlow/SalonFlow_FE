@@ -102,9 +102,6 @@ export default function StepTimeSlots({
                             <RobotOutlined style={{ fontSize: 20, color: "#2f54eb" }} />
                             <span>AI Smart Scheduling — Đề xuất Slot Tối ưu</span>
                         </div>
-                        <div style={{ fontSize: 13, color: "#595959", marginTop: 4 }}>
-                            Thuật toán phân tích tải công việc nhân viên, vị trí & tay nghề để tìm Top 3 slot trống tốt nhất.
-                        </div>
                     </div>
 
                     <Button
@@ -198,9 +195,25 @@ export default function StepTimeSlots({
             </Card>
 
             {/* DANH SÁCH GIỜ HẸN TRỐNG TIÊU CHUẨN */}
-            <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>
-                <ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Tất cả khung giờ khả dụng
-            </label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 12 }}>
+                <label style={{ fontWeight: 600, display: "flex", alignItems: "center" }}>
+                    <ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Tất cả khung giờ khả dụng
+                </label>
+                <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#595959" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ width: 14, height: 14, borderRadius: 4, background: "#f6ffed", border: "1px solid #b7eb8f" }}></div>
+                        <span>Có sẵn</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ width: 14, height: 14, borderRadius: 4, background: "#fff1f0", border: "1px solid #ffa39e" }}></div>
+                        <span>Đã đầy</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ width: 14, height: 14, borderRadius: 4, background: "#f5f5f5", border: "1px solid #d9d9d9" }}></div>
+                        <span>Đã qua</span>
+                    </div>
+                </div>
+            </div>
 
             {loadingSlots ? (
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
