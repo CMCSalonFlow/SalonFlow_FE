@@ -300,6 +300,12 @@ export default function HairStyleAiPage() {
                                 <Row gutter={[24, 24]} align="stretch">
                                     <Col xs={24} lg={14}>
                                         <Card
+                                            title={
+                                                <Space>
+                                                    <CameraOutlined style={{ color: "#1677ff" }} />
+                                                    <span>1. Chọn giới tính và upload ảnh tóc</span>
+                                                </Space>
+                                            }
                                             style={{
                                                 borderRadius: 20,
                                                 boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
@@ -308,15 +314,9 @@ export default function HairStyleAiPage() {
                                             }}
                                         >
                                             <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                                                <div>
-                                                    <Title level={4} style={{ marginBottom: 4 }}>
-                                                        <CameraOutlined style={{ color: "#1677ff", marginRight: 8 }} />
-                                                        1. Chọn giới tính và upload ảnh tóc
-                                                    </Title>
-                                                    <Text type="secondary">
-                                                        Chọn ảnh rõ nét, ánh sáng tốt để AI phân tích chính xác hơn.
-                                                    </Text>
-                                                </div>
+                                                <Text type="secondary">
+                                                    Chọn ảnh rõ nét, ánh sáng tốt để AI phân tích chính xác hơn.
+                                                </Text>
 
                                                 <Card size="small" bordered style={{ borderRadius: 14, background: "#f8fbff" }}>
                                                     <Space direction="vertical" size={8} style={{ width: "100%" }}>
@@ -407,7 +407,7 @@ export default function HairStyleAiPage() {
                                         <Card
                                             title={
                                                 <Space>
-                                                    <StarOutlined />
+                                                    <StarOutlined style={{ color: "#1677ff" }} />
                                                     <span>Hồ sơ tóc đã xác nhận</span>
                                                 </Space>
                                             }
@@ -496,7 +496,7 @@ export default function HairStyleAiPage() {
                                         <Card
                                             title={
                                                 <Space>
-                                                    <ScissorOutlined />
+                                                    <ScissorOutlined style={{ color: "#1677ff" }} />
                                                     <span>2. Kiểu tóc gợi ý</span>
                                                 </Space>
                                             }
@@ -578,11 +578,7 @@ export default function HairStyleAiPage() {
                                                                                         {style.priceRange ? <Tag color="purple">{style.priceRange}</Tag> : null}
                                                                                     </Space>
 
-                                                                                    <Space wrap>
-                                                                                        <Tag color="geekblue">AI: {style.aiScore ?? "-"}</Tag>
-                                                                                        <Tag color="cyan">Rule: {style.ruleScore ?? "-"}</Tag>
-                                                                                        <Tag color="gold">Final: {style.finalScore ?? "-"}</Tag>
-                                                                                    </Space>
+
 
                                                                                     {Array.isArray(style.reasons) && style.reasons.length > 0 ? (
                                                                                         <Space wrap>
