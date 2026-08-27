@@ -9,14 +9,17 @@ import {
     FileTextOutlined,
     RocketOutlined,
     LockOutlined,
-    PhoneOutlined
+    PhoneOutlined,
+    QrcodeOutlined,
+    SafetyCertificateOutlined
 } from "@ant-design/icons";
 import { useSubscription } from "../hooks/useSubscription";
 import {
     getSubscriptionHistoryApi,
     getActiveSubscriptionApi,
     createVietQrSubscriptionCheckoutApi,
-    confirmSubscriptionBankTransferApi
+    confirmSubscriptionBankTransferApi,
+    getPublicSubscriptionPlansApi
 } from "../api/subscriptionApi";
 
 const { Title, Text, Paragraph } = Typography;
@@ -31,6 +34,16 @@ export default function SubscriptionPage() {
     const [vietQrModalOpen, setVietQrModalOpen] = useState(false);
     const [vietQrData, setVietQrData] = useState(null);
     const [confirmingBank, setConfirmingBank] = useState(false);
+    const [planConfigs, setPlanConfigs] = useState([]);
+
+    useEffect(() => {
+        getPublicSubscriptionPlansApi()
+            .then(res => {
+                const data = res?.data || res || [];
+                if (Array.isArray(data) && data.length > 0) setPlanConfigs(data);
+            })
+            .catch(err => console.error("Lỗi lấy cấu hình gói:", err));
+    }, []);
 
     const handleOpenVietQrModal = async (plan = "PRO", cycle = billingCycle) => {
         try {
@@ -45,7 +58,16 @@ export default function SubscriptionPage() {
             });
             message.destroy("vietqr_create");
             if (res?.id) {
-                const amount = res.price || (cycle === "YEARLY" ? 4788000 : 499000);
+                const entPrice = planConfigs.find(c => c.plan === "ENTERPRISE");
+                const proPrice = planConfigs.find(c => c.plan === "PRO");
+                let amount = res.price;
+                if (!amount) {
+                    if (plan === "ENTERPRISE") {
+                        amount = cycle === "YEARLY" ? (entPrice?.yearlyPrice || 9990000) : (entPrice?.monthlyPrice || 999000);
+                    } else {
+                        amount = cycle === "YEARLY" ? (proPrice?.yearlyPrice || 4788000) : (proPrice?.monthlyPrice || 499000);
+                    }
+                }
                 const bankCode = "MBBank";
                 const accountNo = "0001247370390";
                 const accountName = "NGUYEN TRUNG DUC";
@@ -204,6 +226,23 @@ export default function SubscriptionPage() {
             </div>
         );
     }
+    const calculateSavePercent = (monthly, yearly) => {
+        if (!monthly || !yearly || monthly <= 0 || yearly <= 0) return 0;
+        const fullYear = monthly * 12;
+        if (fullYear <= yearly) return 0;
+        return Math.round(((fullYear - yearly) / fullYear) * 100);
+    };
+
+    const maxSavePercent = Math.max(
+        calculateSavePercent(
+            planConfigs.find(c => c.plan === "PRO")?.monthlyPrice,
+            planConfigs.find(c => c.plan === "PRO")?.yearlyPrice
+        ),
+        calculateSavePercent(
+            planConfigs.find(c => c.plan === "ENTERPRISE")?.monthlyPrice,
+            planConfigs.find(c => c.plan === "ENTERPRISE")?.yearlyPrice
+        )
+    );
 
     return (
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 0" }}>
@@ -295,203 +334,397 @@ export default function SubscriptionPage() {
                     size="large"
                     options={[
                         { label: "Thanh toán Hàng Tháng", value: "MONTHLY" },
-                        { label: "Thanh toán Hàng Năm (Tiết kiệm 20%)", value: "YEARLY" }
+                        { label: "Thanh toán Hàng Năm", value: "YEARLY" }
                     ]}
                     value={billingCycle}
                     onChange={setBillingCycle}
-                    style={{ borderRadius: 10, marginTop: 12 }}
+                    style={{ borderRadius: 12, padding: 4, background: "#f1f5f9" }}
                 />
             </div>
 
             {/* Pricing Cards */}
-            <Row gutter={[24, 24]} style={{ marginBottom: 48 }}>
+            <Row gutter={[24, 24]} align="stretch" style={{ marginBottom: 48, display: "flex" }}>
                 {/* FREE Plan Card */}
-                <Col xs={24} md={8}>
-                    <Card
-                        hoverable
-                        style={{
-                            borderRadius: 16,
-                            height: "100%",
-                            display: "flex",
-                            flexDirection: "column",
-                            border: currentPlan === "FREE" ? "2px solid #8c8c8c" : "1px solid #f0f0f0",
-                            boxShadow: "0 4px 15px rgba(0,0,0,0.02)"
-                        }}
-                    >
-                        <div style={{ flex: 1 }}>
-                            <Title level={4} style={{ color: "#8c8c8c", margin: 0 }}>Gói FREE</Title>
-                            <div style={{ margin: "16px 0 24px" }}>
-                                <Text strong style={{ fontSize: 32 }}>0 đ</Text>
-                                <Text type="secondary"> / tháng</Text>
-                            </div>
-                            <Divider style={{ margin: "12px 0" }} />
-                            <Space direction="vertical" size={12} style={{ width: "100%", marginBottom: 24 }}>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text>Tối đa <strong>1 chi nhánh</strong></Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text>Tối đa <strong>3 nhân viên</strong></Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text>Quản lý lịch hẹn & POS cơ bản</Text></div>
-                                <div><LockOutlined style={{ color: "#bfbfbf", marginRight: 8 }} /> <Text type="secondary">Phân tích báo cáo nâng cao</Text></div>
-                                <div><LockOutlined style={{ color: "#bfbfbf", marginRight: 8 }} /> <Text type="secondary">Tính năng thông minh AI</Text></div>
-                            </Space>
-                        </div>
-                        <Button
-                            disabled
-                            size="large"
-                            style={{ width: "100%", borderRadius: 8 }}
-                        >
-                            {currentPlan === "FREE" ? "Đang sử dụng" : "Mặc định"}
-                        </Button>
-                    </Card>
-                </Col>
+                {(() => {
+                    const freeConf = planConfigs.find(c => c.plan === "FREE") || { maxBranches: 1, maxStaffPerBranch: 3, monthlyPrice: 0, yearlyPrice: 0 };
+                    const badgeStr = freeConf.badgeText || (currentPlan === "FREE" ? "Gói đang dùng" : null);
+                    return (
+                        <Col xs={24} md={8} style={{ display: "flex" }}>
+                            <Card
+                                hoverable
+                                style={{
+                                    borderRadius: 20,
+                                    width: "100%",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    border: currentPlan === "FREE" ? "2px solid #94a3b8" : "1px solid #e2e8f0",
+                                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)",
+                                    position: "relative",
+                                    overflow: "hidden"
+                                }}
+                                bodyStyle={{ padding: 28, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
+                            >
+                                {badgeStr && (
+                                    <div style={{
+                                        position: "absolute",
+                                        top: 16,
+                                        right: 20,
+                                        background: "#64748b",
+                                        color: "#fff",
+                                        padding: "3px 12px",
+                                        borderRadius: 12,
+                                        fontSize: 11.5,
+                                        fontWeight: 700,
+                                        letterSpacing: 0.3
+                                    }}>
+                                        {badgeStr}
+                                    </div>
+                                )}
+                                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                                    <Space align="center" style={{ marginBottom: 6 }}>
+                                        <SafetyCertificateOutlined style={{ fontSize: 22, color: "#64748b" }} />
+                                        <Title level={4} style={{ color: "#334155", margin: 0, fontWeight: 800 }}>Gói FREE</Title>
+                                    </Space>
+                                    <Text style={{ color: "#64748b", fontSize: 12.5 }}>Gói cơ bản phù hợp mô hình mới bắt đầu</Text>
+
+                                    <div style={{ margin: "20px 0 20px", minHeight: 76, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                                            <Text strong style={{ fontSize: 34, color: "#0f172a", fontWeight: 800, letterSpacing: -0.5 }}>0 đ</Text>
+                                            <Text style={{ color: "#64748b", fontSize: 14, fontWeight: 500 }}>/ tháng</Text>
+                                        </div>
+                                        <Text style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>Miễn phí vĩnh viễn</Text>
+                                    </div>
+
+                                    <Divider style={{ margin: "8px 0 20px" }} />
+
+                                    <Space direction="vertical" size={14} style={{ width: "100%", marginBottom: 24, flex: 1 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}>Tối đa <strong style={{ color: "#0f172a" }}>{freeConf.maxBranches} chi nhánh</strong></Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}>Tối đa <strong style={{ color: "#0f172a" }}>{freeConf.maxStaffPerBranch} nhân viên</strong></Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}>Quản lý lịch hẹn & POS cơ bản</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <LockOutlined style={{ color: "#cbd5e1", fontSize: 16 }} />
+                                            <Text style={{ color: "#94a3b8", fontSize: 13.5 }}>Phân tích báo cáo nâng cao</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <LockOutlined style={{ color: "#cbd5e1", fontSize: 16 }} />
+                                            <Text style={{ color: "#94a3b8", fontSize: 13.5 }}>Tính năng thông minh AI</Text>
+                                        </div>
+                                    </Space>
+                                </div>
+                                <Button
+                                    disabled
+                                    size="large"
+                                    style={{
+                                        width: "100%",
+                                        borderRadius: 10,
+                                        height: 46,
+                                        marginTop: "auto",
+                                        background: "#f1f5f9",
+                                        color: "#64748b",
+                                        fontWeight: 700,
+                                        border: "1px solid #e2e8f0"
+                                    }}
+                                >
+                                    {currentPlan === "FREE" ? "Đang sử dụng" : "Mặc định"}
+                                </Button>
+                            </Card>
+                        </Col>
+                    );
+                })()}
 
                 {/* PRO Plan Card */}
-                <Col xs={24} md={8}>
-                    <Card
-                        hoverable
-                        style={{
-                            borderRadius: 16,
-                            height: "100%",
-                            display: "flex",
-                            flexDirection: "column",
-                            border: currentPlan === "PRO" ? "2px solid #1890ff" : "1px solid #f0f0f0",
-                            boxShadow: "0 8px 25px rgba(24, 144, 255, 0.08)",
-                            position: "relative"
-                        }}
-                    >
-                        {currentPlan === "PRO" && (
-                            <div style={{
-                                position: "absolute",
-                                top: -12,
-                                right: 24,
-                                background: "#1890ff",
-                                color: "#fff",
-                                padding: "4px 12px",
-                                borderRadius: 12,
-                                fontSize: 12,
-                                fontWeight: "bold"
-                            }}>
-                                Gói đang dùng
-                            </div>
-                        )}
-                        <div style={{ flex: 1 }}>
-                            <Space align="center" style={{ marginBottom: 4 }}>
-                                <Title level={4} style={{ color: "#1890ff", margin: 0 }}>Gói PRO</Title>
-                                <RocketOutlined style={{ color: "#1890ff" }} />
-                            </Space>
-                            <div style={{ margin: "16px 0 24px" }}>
-                                <Text strong style={{ fontSize: 32 }}>
-                                    {billingCycle === "MONTHLY" ? "499.000 đ" : "399.000 đ"}
-                                </Text>
-                                <Text type="secondary"> / tháng</Text>
-                                {billingCycle === "YEARLY" && (
-                                    <div style={{ marginTop: 4 }}><Tag color="green">Thanh toán theo năm: {formatPrice(4788000)} / năm</Tag></div>
-                                )}
-                            </div>
-                            <Divider style={{ margin: "12px 0" }} />
-                            <Space direction="vertical" size={12} style={{ width: "100%", marginBottom: 24 }}>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text>Tối đa <strong>3 chi nhánh</strong></Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text>Tối đa <strong>10 nhân viên</strong></Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text>Quản lý lịch hẹn & POS nâng cao</Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text strong style={{ color: "#1890ff" }}>Phân tích báo cáo chuyên sâu</Text></div>
-                                <div><LockOutlined style={{ color: "#bfbfbf", marginRight: 8 }} /> <Text type="secondary">Tính năng thông minh AI</Text></div>
-                            </Space>
-                        </div>
-                        {currentPlan === "FREE" ? (
-                            <Button
-                                type="primary"
-                                size="large"
-                                icon={<TransactionOutlined />}
-                                onClick={() => handleOpenVietQrModal("PRO", billingCycle)}
+                {(() => {
+                    const proConf = planConfigs.find(c => c.plan === "PRO") || { maxBranches: 3, maxStaffPerBranch: 10, monthlyPrice: 499000, yearlyPrice: 4788000 };
+                    const badgeStr = proConf.badgeText || (currentPlan === "PRO" ? "Gói đang dùng" : "Phổ biến");
+                    const savePct = calculateSavePercent(proConf.monthlyPrice, proConf.yearlyPrice);
+                    return (
+                        <Col xs={24} md={8} style={{ display: "flex" }}>
+                            <Card
+                                hoverable
                                 style={{
+                                    borderRadius: 20,
                                     width: "100%",
-                                    borderRadius: 8,
-                                    background: "linear-gradient(135deg, #1890ff, #096dd9)",
-                                    border: "none",
-                                    boxShadow: "0 4px 10px rgba(24, 144, 255, 0.2)"
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    border: currentPlan === "PRO" ? "2px solid #2563eb" : "1.5px solid #3b82f6",
+                                    boxShadow: "0 10px 30px rgba(37, 99, 235, 0.12)",
+                                    position: "relative",
+                                    overflow: "hidden"
                                 }}
+                                bodyStyle={{ padding: 28, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
                             >
-                                Nâng Cấp Lên PRO
-                            </Button>
-                        ) : currentPlan === "PRO" ? (
-                            <Button
-                                type="primary"
-                                ghost
-                                size="large"
-                                onClick={() => setManageModalOpen(true)}
-                                style={{ width: "100%", borderRadius: 8 }}
-                            >
-                                Quản lý thanh toán & Hủy gói
-                            </Button>
-                        ) : (
-                            <Button
-                                disabled
-                                size="large"
-                                style={{ width: "100%", borderRadius: 8 }}
-                            >
-                                Đã mở khóa ở gói cao hơn
-                            </Button>
-                        )}
-                    </Card>
-                </Col>
+                                {badgeStr && (
+                                    <div style={{
+                                        position: "absolute",
+                                        top: 16,
+                                        right: 20,
+                                        background: currentPlan === "PRO" ? "linear-gradient(135deg, #475569, #334155)" : "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                                        color: "#fff",
+                                        padding: "3px 14px",
+                                        borderRadius: 12,
+                                        fontSize: 11.5,
+                                        fontWeight: 700,
+                                        letterSpacing: 0.3,
+                                        boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)"
+                                    }}>
+                                        {badgeStr}
+                                    </div>
+                                )}
+                                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                                    <Space align="center" style={{ marginBottom: 6 }}>
+                                        <RocketOutlined style={{ fontSize: 22, color: "#2563eb" }} />
+                                        <Title level={4} style={{ color: "#2563eb", margin: 0, fontWeight: 800 }}>Gói PRO</Title>
+                                    </Space>
+                                    <Text style={{ color: "#64748b", fontSize: 12.5 }}>Giải pháp tối ưu cho Salon tăng trưởng nhanh</Text>
+
+                                    <div style={{ margin: "20px 0 20px", minHeight: 76, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        {billingCycle === "YEARLY" && (
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                                                <Text delete style={{ fontSize: 15, color: "#94a3b8", fontWeight: 600 }}>
+                                                    {formatPrice(proConf.monthlyPrice)}
+                                                </Text>
+                                                {savePct > 0 && (
+                                                    <Tag color="cyan" style={{ borderRadius: 6, fontSize: 11, fontWeight: 700, border: "none", padding: "0 6px" }}>
+                                                        Tiết kiệm {savePct}%
+                                                    </Tag>
+                                                )}
+                                            </div>
+                                        )}
+                                        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                                            <Text strong style={{ fontSize: 34, color: "#2563eb", fontWeight: 800, letterSpacing: -0.5 }}>
+                                                {billingCycle === "MONTHLY"
+                                                    ? formatPrice(proConf.monthlyPrice)
+                                                    : formatPrice(Math.round((proConf.yearlyPrice || 4788000) / 12))
+                                                }
+                                            </Text>
+                                            <Text style={{ color: "#64748b", fontSize: 14, fontWeight: 500 }}>/ tháng</Text>
+                                        </div>
+                                        <Text style={{ fontSize: 12, color: "#10b981", fontWeight: 600, marginTop: 4 }}>
+                                            {billingCycle === "YEARLY" ? `Thanh toán hàng năm: ${formatPrice(proConf.yearlyPrice)} / năm` : "Thanh toán linh hoạt từng tháng"}
+                                        </Text>
+                                    </div>
+
+                                    <Divider style={{ margin: "8px 0 20px" }} />
+
+                                    <Space direction="vertical" size={14} style={{ width: "100%", marginBottom: 24, flex: 1 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}>Tối đa <strong style={{ color: "#0f172a" }}>{proConf.maxBranches} chi nhánh</strong></Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}>Tối đa <strong style={{ color: "#0f172a" }}>{proConf.maxStaffPerBranch} nhân viên</strong></Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}>Quản lý lịch hẹn & POS nâng cao</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#2563eb", fontSize: 16 }} />
+                                            <Text style={{ color: "#2563eb", fontSize: 13.5, fontWeight: 700 }}>Phân tích báo cáo chuyên sâu</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <LockOutlined style={{ color: "#cbd5e1", fontSize: 16 }} />
+                                            <Text style={{ color: "#94a3b8", fontSize: 13.5 }}>Tính năng thông minh AI</Text>
+                                        </div>
+                                    </Space>
+                                </div>
+                                {currentPlan === "FREE" ? (
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        icon={<TransactionOutlined />}
+                                        onClick={() => handleOpenVietQrModal("PRO", billingCycle)}
+                                        style={{
+                                            width: "100%",
+                                            borderRadius: 10,
+                                            height: 46,
+                                            marginTop: "auto",
+                                            background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                                            border: "none",
+                                            fontWeight: 700,
+                                            boxShadow: "0 4px 14px rgba(37, 99, 235, 0.35)"
+                                        }}
+                                    >
+                                        Nâng Cấp Lên PRO
+                                    </Button>
+                                ) : currentPlan === "PRO" ? (
+                                    <Button
+                                        type="primary"
+                                        ghost
+                                        size="large"
+                                        onClick={() => setManageModalOpen(true)}
+                                        style={{ width: "100%", borderRadius: 10, height: 46, marginTop: "auto", fontWeight: 700 }}
+                                    >
+                                        Quản lý thanh toán & Hủy gói
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        disabled
+                                        size="large"
+                                        style={{ width: "100%", borderRadius: 10, height: 46, marginTop: "auto", fontWeight: 700 }}
+                                    >
+                                        Đã mở khóa ở gói cao hơn
+                                    </Button>
+                                )}
+                            </Card>
+                        </Col>
+                    );
+                })()}
 
                 {/* ENTERPRISE Plan Card */}
-                <Col xs={24} md={8}>
-                    <Card
-                        hoverable
-                        style={{
-                            borderRadius: 16,
-                            height: "100%",
-                            display: "flex",
-                            flexDirection: "column",
-                            border: currentPlan === "ENTERPRISE" ? "2px solid #faad14" : "1px solid #f0f0f0",
-                            boxShadow: "0 8px 25px rgba(250, 173, 20, 0.08)"
-                        }}
-                    >
-                        <div style={{ flex: 1 }}>
-                            <Space align="center" style={{ marginBottom: 4 }}>
-                                <Title level={4} style={{ color: "#faad14", margin: 0 }}>Gói ENTERPRISE</Title>
-                                <CrownOutlined style={{ color: "#faad14" }} />
-                            </Space>
-                            <div style={{ margin: "16px 0 24px" }}>
-                                <Text strong style={{ fontSize: 28 }}>Liên Hệ Admin</Text>
-                                <Text type="secondary"> / Thỏa thuận ký kết</Text>
-                            </div>
-                            <Divider style={{ margin: "12px 0" }} />
-                            <Space direction="vertical" size={12} style={{ width: "100%", marginBottom: 24 }}>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text><strong>Không giới hạn</strong> chi nhánh (999)</Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text><strong>Không giới hạn</strong> nhân viên (999)</Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text>Phân tích báo cáo chuyên sâu</Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text strong style={{ color: "#faad14" }}>AI No-Show Prediction</Text></div>
-                                <div><CheckCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} /> <Text strong style={{ color: "#faad14" }}>AI Smart Scheduling & Content Creator</Text></div>
-                            </Space>
-                        </div>
-                        {currentPlan !== "ENTERPRISE" ? (
-                            <Button
-                                type="primary"
-                                size="large"
-                                icon={<PhoneOutlined />}
-                                onClick={() => setContactModalOpen(true)}
+                {(() => {
+                    const entConf = planConfigs.find(c => c.plan === "ENTERPRISE") || { maxBranches: 999, maxStaffPerBranch: 999, monthlyPrice: 999000, yearlyPrice: 9990000 };
+                    const badgeStr = entConf.badgeText || (currentPlan === "ENTERPRISE" ? "Gói đang dùng" : "Cao cấp");
+                    const savePct = calculateSavePercent(entConf.monthlyPrice, entConf.yearlyPrice);
+                    return (
+                        <Col xs={24} md={8} style={{ display: "flex" }}>
+                            <Card
+                                hoverable
                                 style={{
+                                    borderRadius: 20,
                                     width: "100%",
-                                    borderRadius: 8,
-                                    background: "linear-gradient(135deg, #faad14, #d48806)",
-                                    border: "none",
-                                    boxShadow: "0 4px 10px rgba(250, 173, 20, 0.2)"
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    border: currentPlan === "ENTERPRISE" ? "2px solid #d97706" : "1.5px solid #f59e0b",
+                                    boxShadow: "0 10px 30px rgba(245, 158, 11, 0.12)",
+                                    position: "relative",
+                                    overflow: "hidden"
                                 }}
+                                bodyStyle={{ padding: 28, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
                             >
-                                Liên Hệ Kích Hoạt
-                            </Button>
-                        ) : (
-                            <Button
-                                disabled
-                                size="large"
-                                style={{ width: "100%", borderRadius: 8 }}
-                            >
-                                Đang sử dụng
-                            </Button>
-                        )}
-                    </Card>
-                </Col>
+                                {badgeStr && (
+                                    <div style={{
+                                        position: "absolute",
+                                        top: 16,
+                                        right: 20,
+                                        background: currentPlan === "ENTERPRISE" ? "linear-gradient(135deg, #475569, #334155)" : "linear-gradient(135deg, #f59e0b, #d97706)",
+                                        color: "#fff",
+                                        padding: "3px 14px",
+                                        borderRadius: 12,
+                                        fontSize: 11.5,
+                                        fontWeight: 700,
+                                        letterSpacing: 0.3,
+                                        boxShadow: "0 4px 12px rgba(245, 158, 11, 0.25)"
+                                    }}>
+                                        {badgeStr}
+                                    </div>
+                                )}
+                                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                                    <Space align="center" style={{ marginBottom: 6 }}>
+                                        <CrownOutlined style={{ fontSize: 22, color: "#d97706" }} />
+                                        <Title level={4} style={{ color: "#d97706", margin: 0, fontWeight: 800 }}>Gói ENTERPRISE</Title>
+                                    </Space>
+                                    <Text style={{ color: "#64748b", fontSize: 12.5 }}>Giải pháp toàn diện không giới hạn cho chuỗi lớn</Text>
+
+                                    <div style={{ margin: "20px 0 20px", minHeight: 76, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        {entConf.monthlyPrice > 0 ? (
+                                            <>
+                                                {billingCycle === "YEARLY" && (
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                                                        <Text delete style={{ fontSize: 15, color: "#94a3b8", fontWeight: 600 }}>
+                                                            {formatPrice(entConf.monthlyPrice)}
+                                                        </Text>
+                                                        {savePct > 0 && (
+                                                            <Tag color="gold" style={{ borderRadius: 6, fontSize: 11, fontWeight: 700, border: "none", padding: "0 6px" }}>
+                                                                Tiết kiệm {savePct}%
+                                                            </Tag>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                                                    <Text strong style={{ fontSize: 34, color: "#d97706", fontWeight: 800, letterSpacing: -0.5 }}>
+                                                        {billingCycle === "MONTHLY"
+                                                            ? formatPrice(entConf.monthlyPrice)
+                                                            : formatPrice(Math.round(entConf.yearlyPrice / 12))
+                                                        }
+                                                    </Text>
+                                                    <Text style={{ color: "#64748b", fontSize: 14, fontWeight: 500 }}>/ tháng</Text>
+                                                </div>
+                                                <Text style={{ fontSize: 12, color: "#10b981", fontWeight: 600, marginTop: 4 }}>
+                                                    {billingCycle === "YEARLY" ? `Thanh toán theo năm: ${formatPrice(entConf.yearlyPrice)} / năm` : "Thanh toán linh hoạt từng tháng"}
+                                                </Text>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Text strong style={{ fontSize: 28, color: "#0f172a" }}>Liên Hệ Admin</Text>
+                                                <Text style={{ color: "#64748b", fontSize: 13 }}>Thỏa thuận ký kết riêng</Text>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <Divider style={{ margin: "8px 0 20px" }} />
+
+                                    <Space direction="vertical" size={14} style={{ width: "100%", marginBottom: 24, flex: 1 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}><strong style={{ color: "#0f172a" }}>Không giới hạn</strong> chi nhánh ({entConf.maxBranches})</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}><strong style={{ color: "#0f172a" }}>Không giới hạn</strong> nhân viên ({entConf.maxStaffPerBranch})</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}>Quản lý lịch hẹn & POS nâng cao</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#10b981", fontSize: 16 }} />
+                                            <Text style={{ color: "#334155", fontSize: 13.5 }}>Phân tích báo cáo chuyên sâu</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#d97706", fontSize: 16 }} />
+                                            <Text style={{ color: "#d97706", fontSize: 13.5, fontWeight: 700 }}>AI No-Show Prediction</Text>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <CheckCircleOutlined style={{ color: "#d97706", fontSize: 16 }} />
+                                            <Text style={{ color: "#d97706", fontSize: 13.5, fontWeight: 700 }}>AI Smart Scheduling & Content Creator</Text>
+                                        </div>
+                                    </Space>
+                                </div>
+                                {currentPlan !== "ENTERPRISE" ? (
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        icon={<TransactionOutlined />}
+                                        onClick={() => handleOpenVietQrModal("ENTERPRISE", billingCycle)}
+                                        style={{
+                                            width: "100%",
+                                            borderRadius: 10,
+                                            height: 46,
+                                            marginTop: "auto",
+                                            background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+                                            border: "none",
+                                            fontWeight: 700,
+                                            boxShadow: "0 4px 14px rgba(217, 119, 6, 0.35)"
+                                        }}
+                                    >
+                                        Nâng Cấp Lên ENTERPRISE
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        disabled
+                                        size="large"
+                                        style={{ width: "100%", borderRadius: 10, height: 46, marginTop: "auto", fontWeight: 700 }}
+                                    >
+                                        Đang sử dụng
+                                    </Button>
+                                )}
+                            </Card>
+                        </Col>
+                    );
+                })()}
             </Row>
+
 
             {/* History Table Card */}
             <Card
@@ -570,18 +803,24 @@ export default function SubscriptionPage() {
 
             {/* VietQR Payment Modal */}
             <Modal
-                title="Thanh Toán Chuyển Khoản VietQR"
+                title={
+                    <Space>
+                        <QrcodeOutlined style={{ color: "#2563eb" }} />
+                        <span>Thanh Toán Chuyển Khoản VietQR</span>
+                    </Space>
+                }
                 open={vietQrModalOpen}
                 onCancel={() => setVietQrModalOpen(false)}
                 footer={[
-                    <Button key="close" onClick={() => setVietQrModalOpen(false)}>
+                    <Button key="close" onClick={() => setVietQrModalOpen(false)} size="large" style={{ borderRadius: 8 }}>
                         Đóng
                     </Button>,
                     <Button
                         key="confirm"
                         type="primary"
                         loading={confirmingBank}
-                        style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+                        size="large"
+                        style={{ backgroundColor: "#10b981", borderColor: "#10b981", borderRadius: 8, fontWeight: 700 }}
                         onClick={async () => {
                             if (!vietQrData?.subId) return;
                             setConfirmingBank(true);
@@ -601,52 +840,65 @@ export default function SubscriptionPage() {
                     </Button>
                 ]}
                 centered
-                width={480}
+                width={760}
             >
                 {vietQrData && (
-                    <div style={{ textAlign: "center", padding: "12px 0" }}>
-                        <div style={{
-                            background: "#ffffff",
-                            padding: 12,
-                            borderRadius: 16,
-                            display: "inline-block",
-                            boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
-                            border: "1px solid #f0f0f0"
-                        }}>
-                            <img
-                                src={vietQrData.qrUrl}
-                                alt="VietQR Payment Code"
-                                style={{ width: "100%", maxWidth: 260, height: "auto", display: "block" }}
-                            />
-                            <div style={{ marginTop: 8, display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}>
-                                <Tag color="blue" style={{ fontSize: 10, margin: 0, fontWeight: 600 }}>napas 247</Tag>
-                                <Tag color="orange" style={{ fontSize: 10, margin: 0, fontWeight: 600 }}>VietQR</Tag>
-                            </div>
-                        </div>
-                        <Text style={{ color: "#8c8c8c", fontSize: 12, display: "block", marginTop: 8 }}>
-                            Sử dụng App Ngân hàng hoặc Ví điện tử để quét mã
-                        </Text>
+                    <div style={{ padding: "16px 0" }}>
+                        <Row gutter={[24, 24]} align="middle">
+                            {/* Column 1: QR Code Image */}
+                            <Col xs={24} md={10} style={{ textAlign: "center" }}>
+                                <div style={{
+                                    background: "#ffffff",
+                                    padding: 14,
+                                    borderRadius: 16,
+                                    display: "inline-block",
+                                    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                                    border: "1px solid #f1f5f9"
+                                }}>
+                                    <img
+                                        src={vietQrData.qrUrl}
+                                        alt="VietQR Payment Code"
+                                        style={{ width: "100%", maxWidth: 240, height: "auto", display: "block", borderRadius: 8 }}
+                                    />
+                                    <div style={{ marginTop: 10, display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}>
+                                        <Tag color="blue" style={{ fontSize: 10, margin: 0, fontWeight: 600, borderRadius: 6 }}>napas 247</Tag>
+                                        <Tag color="orange" style={{ fontSize: 10, margin: 0, fontWeight: 600, borderRadius: 6 }}>VietQR</Tag>
+                                    </div>
+                                </div>
+                                <Text style={{ color: "#64748b", fontSize: 12, display: "block", marginTop: 10 }}>
+                                    Sử dụng App Ngân hàng hoặc Ví điện tử để quét mã
+                                </Text>
+                            </Col>
 
-                        <div style={{ marginTop: 16, textAlign: "left", background: "#f8fafc", padding: 16, borderRadius: 12, border: "1px solid #e2e8f0" }}>
-                            <Row gutter={[8, 10]}>
-                                <Col span={10}><Text type="secondary">Ngân hàng:</Text></Col>
-                                <Col span={14}><Text strong>MB Bank (Ngân Hàng Quân Đội)</Text></Col>
-                                <Col span={10}><Text type="secondary">Số tài khoản:</Text></Col>
-                                <Col span={14}><Text strong copyable={{ text: vietQrData.accountNo }} style={{ color: "#1890ff", fontSize: 15 }}>{vietQrData.accountNo}</Text></Col>
-                                <Col span={10}><Text type="secondary">Chủ tài khoản:</Text></Col>
-                                <Col span={14}><Text strong>{vietQrData.accountName}</Text></Col>
-                                <Col span={10}><Text type="secondary">Số tiền thanh toán:</Text></Col>
-                                <Col span={14}><Text strong style={{ color: "#52c41a", fontSize: 18 }}>{formatPrice(vietQrData.amount)}</Text></Col>
-                                <Col span={10}><Text type="secondary">Nội dung chuyển khoản:</Text></Col>
-                                <Col span={14}><Text strong style={{ color: "#d46b08", fontSize: 16 }} copyable={{ text: vietQrData.content }}>{vietQrData.content}</Text></Col>
-                            </Row>
-                        </div>
-                        <Alert
-                            message="Hệ thống sẽ tự động kích hoạt gói cước ngay khi nhận được thanh toán từ Ngân hàng (SePay Webhook). Bạn cũng có thể bấm 'Tôi Đã Chuyển Khoản Thành Công' bên dưới."
-                            type="info"
-                            showIcon
-                            style={{ marginTop: 16, textAlign: "left", fontSize: 13 }}
-                        />
+                            {/* Column 2: Bank Account Info & Details */}
+                            <Col xs={24} md={14}>
+                                <div style={{ background: "#f8fafc", padding: "18px 20px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
+                                    <Row gutter={[8, 12]}>
+                                        <Col span={9}><Text style={{ color: "#64748b", fontSize: 13 }}>Ngân hàng:</Text></Col>
+                                        <Col span={15}><Text strong style={{ color: "#0f172a", fontSize: 13.5 }}>MB Bank (Ngân Hàng Quân Đội)</Text></Col>
+                                        
+                                        <Col span={9}><Text style={{ color: "#64748b", fontSize: 13 }}>Số tài khoản:</Text></Col>
+                                        <Col span={15}><Text strong copyable={{ text: vietQrData.accountNo }} style={{ color: "#2563eb", fontSize: 15 }}>{vietQrData.accountNo}</Text></Col>
+                                        
+                                        <Col span={9}><Text style={{ color: "#64748b", fontSize: 13 }}>Chủ tài khoản:</Text></Col>
+                                        <Col span={15}><Text strong style={{ color: "#0f172a", fontSize: 13.5 }}>{vietQrData.accountName}</Text></Col>
+                                        
+                                        <Col span={9}><Text style={{ color: "#64748b", fontSize: 13 }}>Số tiền thanh toán:</Text></Col>
+                                        <Col span={15}><Text strong style={{ color: "#10b981", fontSize: 18, fontWeight: 800 }}>{formatPrice(vietQrData.amount)}</Text></Col>
+                                        
+                                        <Col span={9}><Text style={{ color: "#64748b", fontSize: 13 }}>Nội dung chuyển khoản:</Text></Col>
+                                        <Col span={15}><Text strong style={{ color: "#d97706", fontSize: 16, fontWeight: 700 }} copyable={{ text: vietQrData.content }}>{vietQrData.content}</Text></Col>
+                                    </Row>
+                                </div>
+
+                                <Alert
+                                    message="Hệ thống sẽ tự động kích hoạt gói cước ngay khi nhận được thanh toán từ Ngân hàng (SePay Webhook). Bạn cũng có thể bấm 'Tôi Đã Chuyển Khoản Thành Công' bên dưới."
+                                    type="info"
+                                    showIcon
+                                    style={{ marginTop: 14, fontSize: 12.5, borderRadius: 10 }}
+                                />
+                            </Col>
+                        </Row>
                     </div>
                 )}
             </Modal>

@@ -430,6 +430,19 @@ export default function OwnerBookingWorkflowPage() {
         localStorage.setItem("currentBranchId", String(branchId));
         // eslint-disable-next-line react-hooks/set-state-in-effect
         void loadBookings(branchId);
+
+        // Real-time polling every 5 seconds so booking status updates live without reloading page
+        const interval = setInterval(() => {
+            if (branchId) {
+                getBookingsByBranchApi(branchId)
+                    .then((data) => {
+                        if (Array.isArray(data)) setBookings(data);
+                    })
+                    .catch(() => {});
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [branchId]);
 

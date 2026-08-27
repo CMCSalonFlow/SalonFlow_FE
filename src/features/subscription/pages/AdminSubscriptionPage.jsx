@@ -3,21 +3,14 @@ import {
     Table,
     Tag,
     Button,
-    Modal,
-    Form,
-    Input,
     Select,
     Space,
     Typography,
     Card,
     Tooltip,
-    Popconfirm,
-    DatePicker,
-    Switch,
     Row,
     Col,
-    message,
-    InputNumber
+    message
 } from "antd";
 import {
     CalendarOutlined,
@@ -26,25 +19,17 @@ import {
     ApartmentOutlined,
     SettingOutlined,
     CrownOutlined,
-    PlusOutlined,
-    EditOutlined,
-    DeleteOutlined,
     CheckCircleOutlined,
-    SyncOutlined,
+    ReloadOutlined,
     ShopOutlined,
     ClearOutlined,
     LockOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import {
-    getSubscriptionsAdminApi,
-    activateManualEnterpriseApi,
-    updateSubscriptionAdminApi,
-    deleteSubscriptionAdminApi
-} from "../api/subscriptionApi";
+import { getSubscriptionsAdminApi } from "../api/subscriptionApi";
 import { getAllSalonsApi } from "@/features/salon/api/salonApi";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 export default function AdminSubscriptionPage() {
     const [subscriptions, setSubscriptions] = useState([]);
@@ -71,17 +56,6 @@ export default function AdminSubscriptionPage() {
         plan: undefined,
         status: undefined
     });
-
-    // Modal States
-    const [createModalOpen, setCreateModalOpen] = useState(false);
-    const [updateModalOpen, setUpdateModalOpen] = useState(false);
-    const [selectedSub, setSelectedSub] = useState(null);
-
-    // Form Hooks
-    const [createForm] = Form.useForm();
-    const [updateForm] = Form.useForm();
-    const [submittingCreate, setSubmittingCreate] = useState(false);
-    const [submittingUpdate, setSubmittingUpdate] = useState(false);
 
     // Fetch initial data
     useEffect(() => {
@@ -208,93 +182,6 @@ export default function AdminSubscriptionPage() {
         }));
     };
 
-    const handleOpenCreateModal = () => {
-        createForm.resetFields();
-        setCreateModalOpen(true);
-    };
-
-    const handleCreateSubmit = async (values) => {
-        setSubmittingCreate(true);
-        try {
-            await activateManualEnterpriseApi({
-                salonId: values.salonId,
-                plan: values.plan,
-                billingCycle: values.billingCycle,
-                price: Number(values.price || 0),
-                durationDays: Number(values.durationDays || 30)
-            });
-            message.success("Kích hoạt gói đăng ký thủ công thành công!");
-            setCreateModalOpen(false);
-            fetchSubscriptions();
-            fetchGlobalStats();
-        } catch (error) {
-            console.error(error);
-            message.error(error.response?.data?.message || "Kích hoạt gói đăng ký thất bại!");
-        } finally {
-            setSubmittingCreate(false);
-        }
-    };
-
-    const handleOpenUpdateModal = (record) => {
-        setSelectedSub(record);
-        updateForm.resetFields();
-        updateForm.setFieldsValue({
-            plan: record.plan,
-            status: record.status,
-            price: record.price,
-            billingCycle: record.billingCycle,
-            startDate: record.startDate ? dayjs(record.startDate) : null,
-            endDate: record.endDate ? dayjs(record.endDate) : null,
-            maxBranches: record.features?.maxBranches ?? 5,
-            maxStaff: record.features?.maxStaff ?? 10,
-            analyticsAdvanced: record.features?.analyticsAdvanced ?? false,
-            aiFeatures: record.features?.aiFeatures ?? false
-        });
-        setUpdateModalOpen(true);
-    };
-
-    const handleUpdateSubmit = async (values) => {
-        if (!selectedSub) return;
-        setSubmittingUpdate(true);
-        try {
-            const payload = {
-                plan: values.plan,
-                status: values.status,
-                price: Number(values.price || 0),
-                billingCycle: values.billingCycle,
-                startDate: values.startDate ? values.startDate.format("YYYY-MM-DDTHH:mm:ss") : undefined,
-                endDate: values.endDate ? values.endDate.format("YYYY-MM-DDTHH:mm:ss") : undefined,
-                maxBranches: Number(values.maxBranches),
-                maxStaff: Number(values.maxStaff),
-                analyticsAdvanced: !!values.analyticsAdvanced,
-                aiFeatures: !!values.aiFeatures
-            };
-
-            await updateSubscriptionAdminApi(selectedSub.id, payload);
-            message.success("Cập nhật thông tin gói đăng ký thành công!");
-            setUpdateModalOpen(false);
-            fetchSubscriptions();
-            fetchGlobalStats();
-        } catch (error) {
-            console.error(error);
-            message.error(error.response?.data?.message || "Cập nhật gói đăng ký thất bại!");
-        } finally {
-            setSubmittingUpdate(false);
-        }
-    };
-
-    const handleRevoke = async (id) => {
-        try {
-            await deleteSubscriptionAdminApi(id);
-            message.success("Đã hủy/thu hồi gói đăng ký thành công!");
-            fetchSubscriptions();
-            fetchGlobalStats();
-        } catch (error) {
-            console.error(error);
-            message.error("Hủy gói đăng ký thất bại!");
-        }
-    };
-
     // Styling Helpers
     const getPlanTag = (plan) => {
         switch (plan) {
@@ -335,8 +222,9 @@ export default function AdminSubscriptionPage() {
     const columns = [
         {
             title: "Salon",
+            dataIndex: "salonName",
             key: "salon",
-            width: 220,
+            width: 200,
             render: (_, record) => (
                 <Space direction="vertical" size={2}>
                     <Text strong style={{ fontSize: "14px" }}>{record.salonName || "N/A"}</Text>
@@ -348,11 +236,13 @@ export default function AdminSubscriptionPage() {
             title: "Gói",
             dataIndex: "plan",
             key: "plan",
+            width: 120,
             render: (plan) => getPlanTag(plan)
         },
         {
             title: "Thanh toán",
             key: "billing",
+            width: 140,
             render: (_, record) => (
                 <div>
                     <div><Text strong>{formatCurrency(record.price)}</Text></div>
@@ -365,35 +255,43 @@ export default function AdminSubscriptionPage() {
         {
             title: "Tính năng & Giới hạn",
             key: "features",
-            width: 280,
+            width: 360,
             render: (_, record) => {
                 const f = record.features || {};
                 return (
-                    <Space size={[4, 8]} wrap>
+                    <div style={{ whiteSpace: "nowrap", display: "flex", gap: 8, alignItems: "center" }}>
                         <Tooltip title="Chi nhánh tối đa">
-                            <Tag icon={<ApartmentOutlined />}>{f.maxBranches || 0}</Tag>
+                            <Tag icon={<ApartmentOutlined />} style={{ minWidth: 54, justifyContent: "center", display: "inline-flex", alignItems: "center", margin: 0 }}>
+                                {f.maxBranches || 0}
+                            </Tag>
                         </Tooltip>
                         <Tooltip title="Nhân viên tối đa">
-                            <Tag icon={<TeamOutlined />}>{f.maxStaff || 0}</Tag>
+                            <Tag icon={<TeamOutlined />} style={{ minWidth: 54, justifyContent: "center", display: "inline-flex", alignItems: "center", margin: 0 }}>
+                                {f.maxStaff || 0}
+                            </Tag>
                         </Tooltip>
-                        {f.analyticsAdvanced ? (
-                            <Tag color="cyan" icon={<CheckCircleOutlined />}>Analytics Pro</Tag>
-                        ) : (
-                            <Tag color="default" icon={<LockOutlined />} style={{ opacity: 0.6 }}>Analytics</Tag>
-                        )}
-                        {f.aiFeatures ? (
-                            <Tag color="geekblue" icon={<CrownOutlined />}>AI Features</Tag>
-                        ) : (
-                            <Tag color="default" icon={<LockOutlined />} style={{ opacity: 0.6 }}>AI Power</Tag>
-                        )}
-                    </Space>
+                        <div style={{ width: 112, display: "inline-flex" }}>
+                            {f.analyticsAdvanced ? (
+                                <Tag color="cyan" icon={<CheckCircleOutlined />} style={{ width: "100%", justifyContent: "center", display: "inline-flex", alignItems: "center", margin: 0 }}>Analytics Pro</Tag>
+                            ) : (
+                                <Tag color="default" icon={<LockOutlined />} style={{ width: "100%", opacity: 0.6, justifyContent: "center", display: "inline-flex", alignItems: "center", margin: 0 }}>Analytics</Tag>
+                            )}
+                        </div>
+                        <div style={{ width: 104, display: "inline-flex" }}>
+                            {f.aiFeatures ? (
+                                <Tag color="geekblue" icon={<CrownOutlined />} style={{ width: "100%", justifyContent: "center", display: "inline-flex", alignItems: "center", margin: 0 }}>AI Features</Tag>
+                            ) : (
+                                <Tag color="default" icon={<LockOutlined />} style={{ width: "100%", opacity: 0.6, justifyContent: "center", display: "inline-flex", alignItems: "center", margin: 0 }}>AI Power</Tag>
+                            )}
+                        </div>
+                    </div>
                 );
             }
         },
         {
             title: "Thời gian hiệu lực",
             key: "dates",
-            width: 220,
+            width: 200,
             render: (_, record) => (
                 <div style={{ fontSize: "13px" }}>
                     <div><Text type="secondary">Từ:</Text> {record.startDate ? dayjs(record.startDate).format("DD/MM/YYYY HH:mm") : "---"}</div>
@@ -405,73 +303,17 @@ export default function AdminSubscriptionPage() {
             title: "Trạng thái",
             dataIndex: "status",
             key: "status",
+            width: 150,
             render: (status) => getStatusTag(status)
-        },
-        {
-            title: "Nguồn Stripe",
-            key: "stripe",
-            width: 180,
-            render: (_, record) => record.stripeSubscriptionId ? (
-                <Tooltip title={`Cust: ${record.stripeCustomerId}`}>
-                    <Tag color="blue" style={{ cursor: "help" }}>Stripe Auto</Tag>
-                </Tooltip>
-            ) : (
-                <Tag color="orange">Thủ công (Manual)</Tag>
-            )
-        },
-        {
-            title: "Hành động",
-            key: "actions",
-            align: "right",
-            render: (_, record) => (
-                <Space>
-                    <Button
-                        type="text"
-                        icon={<EditOutlined style={{ color: "#1890ff" }} />}
-                        onClick={() => handleOpenUpdateModal(record)}
-                    >
-                        Sửa
-                    </Button>
-                    {record.status !== "CANCELED" && (
-                        <Popconfirm
-                            title="Xác nhận hủy/thu hồi gói đăng ký này?"
-                            description="Gói dịch vụ của Salon sẽ bị chuyển sang CANCELED ngay lập tức."
-                            onConfirm={() => handleRevoke(record.id)}
-                            okText="Xác nhận"
-                            cancelText="Hủy"
-                            okButtonProps={{ danger: true }}
-                        >
-                            <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                            >
-                                Hủy gói
-                            </Button>
-                        </Popconfirm>
-                    )}
-                </Space>
-            )
         }
     ];
 
     return (
         <div style={{ padding: 24, minHeight: "100vh", background: "#f8fafc" }}>
             {/* Page Header */}
-            <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                    <Title level={3} style={{ margin: 0 }}>Quản lý Gói đăng ký</Title>
-                    <Text type="secondary">Cấp gói thủ công, theo dõi doanh thu đăng ký và chỉnh sửa giới hạn tính năng của Salon.</Text>
-                </div>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleOpenCreateModal}
-                    size="large"
-                    style={{ background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)", border: "none", borderRadius: 8, boxShadow: "0 4px 12px rgba(24, 144, 255, 0.3)" }}
-                >
-                    Kích hoạt gói thủ công
-                </Button>
+            <div style={{ marginBottom: 24 }}>
+                <Title level={3} style={{ margin: 0 }}>Danh sách & Thống kê Gói Đăng ký</Title>
+                <Text type="secondary">Theo dõi chỉ số doanh thu MRR, phân bổ gói và danh sách đăng ký dịch vụ của các Salon.</Text>
             </div>
 
             {/* KPI Summary Cards */}
@@ -480,7 +322,7 @@ export default function AdminSubscriptionPage() {
                     <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
-                                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, textTransform: "uppercase", fontWeight: "bold" }}>Tổng gói đăng ký</div>
+                                <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12.5, textTransform: "uppercase", fontWeight: "bold", letterSpacing: 0.3 }}>Tổng lượt đăng ký</div>
                                 <div style={{ color: "#fff", fontSize: 28, fontWeight: 700, marginTop: 4 }}>{stats.total}</div>
                             </div>
                             <CalendarOutlined style={{ fontSize: 36, color: "rgba(255,255,255,0.2)" }} />
@@ -491,7 +333,7 @@ export default function AdminSubscriptionPage() {
                     <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", background: "linear-gradient(135deg, #10b981 0%, #047857 100%)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
-                                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, textTransform: "uppercase", fontWeight: "bold" }}>Đang hoạt động (ACTIVE)</div>
+                                <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12.5, textTransform: "uppercase", fontWeight: "bold", letterSpacing: 0.3 }}>Gói đang hiệu lực</div>
                                 <div style={{ color: "#fff", fontSize: 28, fontWeight: 700, marginTop: 4 }}>{stats.active}</div>
                             </div>
                             <CheckCircleOutlined style={{ fontSize: 36, color: "rgba(255,255,255,0.2)" }} />
@@ -502,7 +344,7 @@ export default function AdminSubscriptionPage() {
                     <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", background: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
-                                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, textTransform: "uppercase", fontWeight: "bold" }}>Doanh thu tháng (MRR)</div>
+                                <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12.5, textTransform: "uppercase", fontWeight: "bold", letterSpacing: 0.3 }}>Doanh thu ước tính / Tháng</div>
                                 <div style={{ color: "#fff", fontSize: 22, fontWeight: 700, marginTop: 10 }}>{formatCurrency(stats.mrr)}</div>
                             </div>
                             <DollarOutlined style={{ fontSize: 36, color: "rgba(255,255,255,0.2)" }} />
@@ -513,9 +355,9 @@ export default function AdminSubscriptionPage() {
                     <Card bordered={false} style={{ borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", background: "linear-gradient(135deg, #8b5cf6 0%, #5b21b6 100%)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
-                                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, textTransform: "uppercase", fontWeight: "bold" }}>Phân bổ gói (P / E / F)</div>
-                                <div style={{ color: "#fff", fontSize: 24, fontWeight: 700, marginTop: 6 }}>
-                                    {stats.plans.PRO} <span style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Pro</span> / {stats.plans.ENTERPRISE} <span style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Ent</span> / {stats.plans.FREE} <span style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Free</span>
+                                <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12.5, textTransform: "uppercase", fontWeight: "bold", letterSpacing: 0.3 }}>Phân loại cơ cấu gói</div>
+                                <div style={{ color: "#fff", fontSize: 22, fontWeight: 700, marginTop: 8 }}>
+                                    {stats.plans.PRO} <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>Pro</span> / {stats.plans.ENTERPRISE} <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>Ent</span> / {stats.plans.FREE} <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>Free</span>
                                 </div>
                             </div>
                             <CrownOutlined style={{ fontSize: 36, color: "rgba(255,255,255,0.2)" }} />
@@ -526,7 +368,7 @@ export default function AdminSubscriptionPage() {
 
             {/* Filter Panel */}
             <Card bordered={false} style={{ borderRadius: 12, marginBottom: 24, boxShadow: "0 4px 20px rgba(0,0,0,0.02)" }}>
-                <Row gutter={[16, 16]} align="middle">
+                <Row gutter={[16, 16]} align="bottom">
                     <Col xs={24} md={6}>
                         <div style={{ fontSize: 13, fontWeight: "bold", color: "#64748b", marginBottom: 6 }}>
                             <ShopOutlined style={{ marginRight: 6 }} /> Salon
@@ -584,24 +426,27 @@ export default function AdminSubscriptionPage() {
                         </Select>
                     </Col>
 
-                    <Col xs={24} md={6} style={{ display: "flex", gap: 12, alignSelf: "flex-end", height: 38 }}>
-                        <Button
-                            type="dashed"
-                            danger
-                            onClick={handleClearFilters}
-                            icon={<ClearOutlined />}
-                            style={{ flex: 1, borderRadius: 6 }}
-                        >
-                            Xóa bộ lọc
-                        </Button>
-                        <Button
-                            type="primary"
-                            icon={<SyncOutlined spin={loading} />}
-                            onClick={fetchSubscriptions}
-                            style={{ flex: 1, borderRadius: 6 }}
-                        >
-                            Làm mới
-                        </Button>
+                    <Col xs={24} md={6}>
+                        <div style={{ display: "flex", gap: 10 }}>
+                            <Button
+                                type="dashed"
+                                danger
+                                onClick={handleClearFilters}
+                                icon={<ClearOutlined />}
+                                style={{ flex: 1, borderRadius: 6, height: 32 }}
+                            >
+                                Xóa bộ lọc
+                            </Button>
+                            <Button
+                                type="primary"
+                                icon={<ReloadOutlined />}
+                                onClick={() => fetchSubscriptions()}
+                                loading={loading}
+                                style={{ flex: 1, borderRadius: 6, height: 32 }}
+                            >
+                                Làm mới
+                            </Button>
+                        </div>
                     </Col>
                 </Row>
             </Card>
@@ -625,282 +470,6 @@ export default function AdminSubscriptionPage() {
                     style={{ borderRadius: 12 }}
                 />
             </Card>
-
-            {/* Modal: Create Manual Subscription */}
-            <Modal
-                title={
-                    <Space>
-                        <PlusOutlined style={{ color: "#1890ff" }} />
-                        <span>Kích hoạt/Tạo gói đăng ký thủ công cho Salon</span>
-                    </Space>
-                }
-                open={createModalOpen}
-                onCancel={() => setCreateModalOpen(false)}
-                footer={null}
-                width={550}
-                destroyOnClose
-            >
-                <Form
-                    form={createForm}
-                    layout="vertical"
-                    initialValues={{ plan: "ENTERPRISE", billingCycle: "MANUAL", price: 0, durationDays: 30 }}
-                    onFinish={handleCreateSubmit}
-                    style={{ marginTop: 16 }}
-                >
-                    <Form.Item
-                        name="salonId"
-                        label="Chọn Salon thụ hưởng"
-                        rules={[{ required: true, message: "Vui lòng chọn Salon!" }]}
-                    >
-                        <Select
-                            showSearch
-                            placeholder="Nhập tên salon để tìm kiếm..."
-                            optionFilterProp="children"
-                            loading={loadingSalons}
-                        >
-                            {salons.map(s => (
-                                <Select.Option key={s.id} value={s.id}>
-                                    {s.name} (ID: #{s.id} - Email: {s.email || "Không có"})
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="plan"
-                                label="Gói đăng ký"
-                                rules={[{ required: true }]}
-                            >
-                                <Select>
-                                    <Select.Option value="FREE">FREE</Select.Option>
-                                    <Select.Option value="PRO">PRO</Select.Option>
-                                    <Select.Option value="ENTERPRISE">ENTERPRISE</Select.Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                name="billingCycle"
-                                label="Chu kỳ thanh toán"
-                                rules={[{ required: true }]}
-                            >
-                                <Select>
-                                    <Select.Option value="MONTHLY">MONTHLY (Hàng tháng)</Select.Option>
-                                    <Select.Option value="YEARLY">YEARLY (Hàng năm)</Select.Option>
-                                    <Select.Option value="MANUAL">MANUAL (Thủ công)</Select.Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="price"
-                                label="Giá gói đăng ký (VND)"
-                                rules={[{ required: true, message: "Nhập giá gói!" }]}
-                            >
-                                <InputNumber
-                                    style={{ width: "100%" }}
-                                    min={0}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, "")}
-                                    placeholder="Ví dụ: 999,000"
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                name="durationDays"
-                                label="Số ngày hiệu lực (kể từ hôm nay)"
-                                rules={[{ required: true, message: "Nhập số ngày!" }]}
-                            >
-                                <InputNumber
-                                    style={{ width: "100%" }}
-                                    min={1}
-                                    placeholder="Ví dụ: 30"
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <div style={{ textAlign: "right", marginTop: 24 }}>
-                        <Space>
-                            <Button onClick={() => setCreateModalOpen(false)}>Hủy</Button>
-                            <Button type="primary" htmlType="submit" loading={submittingCreate}>
-                                Tạo gói
-                            </Button>
-                        </Space>
-                    </div>
-                </Form>
-            </Modal>
-
-            {/* Modal: Update Subscription Details */}
-            <Modal
-                title={
-                    <Space>
-                        <EditOutlined style={{ color: "#faad14" }} />
-                        <span>Chỉnh sửa thông tin và tùy biến Limits gói đăng ký</span>
-                    </Space>
-                }
-                open={updateModalOpen}
-                onCancel={() => setUpdateModalOpen(false)}
-                footer={null}
-                width={650}
-                destroyOnClose
-            >
-                <Form
-                    form={updateForm}
-                    layout="vertical"
-                    onFinish={handleUpdateSubmit}
-                    style={{ marginTop: 16 }}
-                >
-                    <Paragraph type="secondary">
-                        Đang chỉnh sửa gói đăng ký cho Salon: <Text strong>{selectedSub?.salonName}</Text> (ID gói: #{selectedSub?.id})
-                    </Paragraph>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="plan"
-                                label="Gói dịch vụ"
-                                rules={[{ required: true }]}
-                            >
-                                <Select>
-                                    <Select.Option value="FREE">FREE</Select.Option>
-                                    <Select.Option value="PRO">PRO</Select.Option>
-                                    <Select.Option value="ENTERPRISE">ENTERPRISE</Select.Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                name="status"
-                                label="Trạng thái"
-                                rules={[{ required: true }]}
-                            >
-                                <Select>
-                                    <Select.Option value="ACTIVE">ACTIVE (Đang hoạt động)</Select.Option>
-                                    <Select.Option value="PAST_DUE">PAST_DUE (Quá hạn thanh toán)</Select.Option>
-                                    <Select.Option value="CANCELED">CANCELED (Đã hủy)</Select.Option>
-                                    <Select.Option value="EXPIRED">EXPIRED (Đã hết hạn)</Select.Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="price"
-                                label="Giá gói dịch vụ (VND)"
-                                rules={[{ required: true }]}
-                            >
-                                <InputNumber
-                                    style={{ width: "100%" }}
-                                    min={0}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, "")}
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                name="billingCycle"
-                                label="Chu kỳ thanh toán"
-                                rules={[{ required: true }]}
-                            >
-                                <Select>
-                                    <Select.Option value="MONTHLY">MONTHLY (Hàng tháng)</Select.Option>
-                                    <Select.Option value="YEARLY">YEARLY (Hàng năm)</Select.Option>
-                                    <Select.Option value="MANUAL">MANUAL (Thủ công)</Select.Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="startDate"
-                                label="Ngày bắt đầu"
-                                rules={[{ required: true, message: "Chọn ngày bắt đầu!" }]}
-                            >
-                                <DatePicker showTime style={{ width: "100%" }} format="DD/MM/YYYY HH:mm" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                name="endDate"
-                                label="Ngày kết thúc"
-                                rules={[{ required: true, message: "Chọn ngày kết thúc!" }]}
-                            >
-                                <DatePicker showTime style={{ width: "100%" }} format="DD/MM/YYYY HH:mm" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Card
-                        title="Tùy biến giới hạn tính năng (Custom Limits)"
-                        size="small"
-                        style={{ background: "#fafafa", borderRadius: 8, marginTop: 16 }}
-                        headStyle={{ fontWeight: "bold" }}
-                    >
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="maxBranches"
-                                    label="Số chi nhánh tối đa"
-                                    rules={[{ required: true, message: "Nhập giới hạn chi nhánh!" }]}
-                                >
-                                    <InputNumber style={{ width: "100%" }} min={1} />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="maxStaff"
-                                    label="Số nhân viên tối đa"
-                                    rules={[{ required: true, message: "Nhập giới hạn nhân viên!" }]}
-                                >
-                                    <InputNumber style={{ width: "100%" }} min={1} />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={24} style={{ marginTop: 8 }}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="analyticsAdvanced"
-                                    label="Báo cáo phân tích nâng cao"
-                                    valuePropName="checked"
-                                >
-                                    <Switch checkedChildren="BẬT" unCheckedChildren="TẮT" />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="aiFeatures"
-                                    label="Tính năng AI mở rộng"
-                                    valuePropName="checked"
-                                >
-                                    <Switch checkedChildren="BẬT" unCheckedChildren="TẮT" />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Card>
-
-                    <div style={{ textAlign: "right", marginTop: 24 }}>
-                        <Space>
-                            <Button onClick={() => setUpdateModalOpen(false)}>Hủy</Button>
-                            <Button type="primary" htmlType="submit" loading={submittingUpdate}>
-                                Lưu thay đổi
-                            </Button>
-                        </Space>
-                    </div>
-                </Form>
-            </Modal>
         </div>
     );
 }

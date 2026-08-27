@@ -166,20 +166,17 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
                 if (selectedBranchId) {
                     const updated = await getBookingByIdApi(selectedBranchId, booking.id);
                     if (updated && updated.status === "COMPLETED") {
-                        message.success(`Đơn hàng #${booking.id} đã được tự động xác nhận hoàn tất thanh toán!`);
+                        message.success(`Đơn hàng #${booking.id} đã được xác nhận hoàn tất thanh toán!`);
                         setBooking(updated);
-                        if (isModalMode && onCloseModal) {
-                            setTimeout(() => onCloseModal(true), 1200);
-                        }
                     }
                 }
             } catch (err) {
                 // silent catch during background polling
             }
-        }, 4000);
+        }, 3000);
 
         return () => clearInterval(pollInterval);
-    }, [booking?.id, booking?.status, selectedBranchId, isModalMode, onCloseModal]);
+    }, [booking?.id, booking?.status, selectedBranchId]);
 
     const formatTimer = (seconds) => {
         const m = Math.floor(seconds / 60);
