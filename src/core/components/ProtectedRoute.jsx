@@ -24,6 +24,16 @@ export default function ProtectedRoute({
 
     const roles = getRoles();
 
+    const mustChangePassword = localStorage.getItem("mustChangePassword") === "true";
+    if (mustChangePassword) {
+        return (
+            <Navigate
+                to="/force-change-password"
+                replace
+            />
+        );
+    }
+
 
     if (!token) {
         return (

@@ -27,6 +27,7 @@ export const saveAuthData = (response) => {
     localStorage.setItem("fullName", response.fullName || "");
     localStorage.setItem("email", response.email || "");
     localStorage.setItem("roles", JSON.stringify(response.roles || []));
+    localStorage.setItem("mustChangePassword", response.mustChangePassword ? "true" : "false");
     localStorage.setItem("authExpiry", expiryTime.toString());
     
     // Also save under "auth" key for legacy components (like OAuth2SuccessPage / HomePage)
@@ -37,7 +38,8 @@ export const saveAuthData = (response) => {
         email: response.email,
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
-        roles: response.roles
+        roles: response.roles,
+        mustChangePassword: response.mustChangePassword
     }));
 };
 
@@ -124,6 +126,7 @@ export const setupGlobalAuthListener = () => {
             path === "/forgot-password" ||
             path === "/reset-password" ||
             path === "/verify-email" ||
+            path === "/force-change-password" ||
             path === "/oauth2/success" ||
             path === "/search" ||
             path === "/services" ||
