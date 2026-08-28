@@ -41,7 +41,8 @@ import {
     CrownOutlined,
     FireOutlined,
     UnorderedListOutlined,
-    FileTextOutlined
+    FileTextOutlined,
+    ScissorOutlined
 } from "@ant-design/icons";
 import { useAuth } from "../hooks/useAuth";
 import api from "@/core/api/axios";
@@ -467,9 +468,9 @@ export default function HomePage() {
                         </Col>
                     </Row>
 
-                    <Row gutter={[24, 24]}>
+                    <div style={{ display: 'flex', overflowX: 'auto', gap: 24, paddingBottom: 16, scrollbarWidth: 'thin' }}>
                         {featuredCategories.map((item, idx) => (
-                            <Col xs={24} sm={12} lg={6} key={idx}>
+                            <div key={idx} style={{ minWidth: 280, maxWidth: 320, flexShrink: 0, display: 'flex' }}>
                                 <Card
                                     hoverable
                                     cover={
@@ -489,8 +490,8 @@ export default function HomePage() {
                                             </Tag>
                                         </div>
                                     }
-                                    style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 6px 20px rgba(0,0,0,0.04)", height: "100%" }}
-                                    bodyStyle={{ padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
+                                    style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 6px 20px rgba(0,0,0,0.04)", width: "100%", display: "flex", flexDirection: "column" }}
+                                    bodyStyle={{ padding: 20, display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}
                                 >
                                     <div>
                                         <Title level={4} style={{ margin: "0 0 8px 0", fontSize: 18 }}>
@@ -516,9 +517,9 @@ export default function HomePage() {
                                         </Button>
                                     </div>
                                 </Card>
-                            </Col>
+                            </div>
                         ))}
-                    </Row>
+                    </div>
                 </div>
 
                 {/* 🚀 QUY TRÌNH 3 BƯỚC ĐẶT LỊCH VÃNG LAI */}
@@ -765,21 +766,22 @@ export default function HomePage() {
                                 {mainActionText}
                             </Button>
                             <Button
-                                ghost
+                                type="primary"
                                 size="large"
-                                icon={<UserOutlined />}
-                                onClick={() => navigate("/profile")}
+                                icon={<ScissorOutlined />}
+                                onClick={() => navigate("/hair-ai")}
                                 style={{
                                     height: 50,
-                                    padding: "0 24px",
+                                    padding: "0 28px",
                                     borderRadius: 25,
                                     fontSize: 16,
-                                    color: "#fff",
-                                    borderColor: "rgba(255, 255, 255, 0.8)",
-                                    backdropFilter: "blur(4px)"
+                                    fontWeight: 700,
+                                    background: "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
+                                    border: "none",
+                                    boxShadow: "0 8px 20px rgba(99, 102, 241, 0.4)"
                                 }}
                             >
-                                Hồ sơ cá nhân
+                                Thử tóc AI
                             </Button>
                             <Button
                                 type="text"
