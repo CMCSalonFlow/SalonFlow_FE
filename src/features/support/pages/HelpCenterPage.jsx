@@ -188,19 +188,7 @@ export default function HelpCenterPage() {
               label: <span><PlusCircleOutlined /> Tạo yêu cầu mới</span>,
               children: (
                 <div style={{ maxWidth: 720, margin: '20px auto 0 auto' }}>
-                  <Alert
-                    message="Thời gian phản hồi hỗ trợ (SLA)"
-                    description={
-                      <div style={{ fontSize: 13, marginTop: 4, lineHeight: 1.6 }}>
-                        • <strong>P1 - Khẩn cấp</strong>: Sự cố lớn gián đoạn hoạt động — Phản hồi trong <strong>4 giờ</strong>.<br />
-                        • <strong>P2 - Cao</strong>: Lỗi chức năng ảnh hưởng vận hành — Phản hồi trong <strong>24 giờ</strong>.<br />
-                        • <strong>P3 - Bình thường</strong>: Câu hỏi, góp ý hoặc hướng dẫn — Phản hồi trong <strong>72 giờ</strong>.
-                      </div>
-                    }
-                    type="info"
-                    showIcon
-                    style={{ marginBottom: 24, borderRadius: 12 }}
-                  />
+
 
                   <Form form={form} layout="vertical" onFinish={handleCreateTicket}>
                     <Form.Item
