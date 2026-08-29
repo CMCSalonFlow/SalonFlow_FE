@@ -36,14 +36,16 @@ const NoShowDashboardPage = () => {
 
     useEffect(() => {
         loadBranches();
-        loadEvaluations();
-    }, []);
+        if (features?.aiFeatures) {
+            loadEvaluations();
+        }
+    }, [features?.aiFeatures]);
 
     useEffect(() => {
-        if (selectedBranchId) {
+        if (features?.aiFeatures && selectedBranchId) {
             loadHighRiskBookings();
         }
-    }, [selectedBranchId, page]);
+    }, [selectedBranchId, page, features?.aiFeatures]);
 
     const loadBranches = async () => {
         try {
@@ -58,20 +60,21 @@ const NoShowDashboardPage = () => {
     };
 
     const loadHighRiskBookings = async () => {
-        if (!selectedBranchId) return;
+        if (!features?.aiFeatures || !selectedBranchId) return;
         setLoading(true);
         try {
             const res = await getHighRiskBookingsApi(selectedBranchId, { page: page - 1, size: 10 });
             setHighRiskData(res.content || []);
             setHighRiskTotal(res.totalElements || 0);
         } catch (error) {
-            message.error("Không thể tải danh sách booking nguy cơ cao");
+            console.error("Không thể tải danh sách booking nguy cơ cao:", error);
         } finally {
             setLoading(false);
         }
     };
 
     const loadEvaluations = async () => {
+        if (!features?.aiFeatures) return;
         setEvalLoading(true);
         try {
             const data = await getNoShowEvaluationsApi();

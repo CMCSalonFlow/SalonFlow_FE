@@ -28,10 +28,9 @@ import {
     StarOutlined
 } from "@ant-design/icons";
 
-import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import ReviewModal from "@/features/review/components/ReviewModal";
 import {
-    getBookingsByBranchApi,
+    getMyBookingsApi,
     cancelBookingApi
 } from "../api/bookingApi";
 import { getInvoiceUrl } from "@/features/media/api/mediaApi";
@@ -103,57 +102,43 @@ export default function AppointmentsPage() {
         try {
             setLoading(true);
 
-            const branchesData = await getMyBranchesApi();
+            const data = await getMyBookingsApi();
+            const mergedBookings = Array.isArray(data) ? data : [];
 
-            if (branchesData && branchesData.length > 0) {
+            const now = new Date();
 
-                const bookingsPromises = branchesData.map(branch =>
-                    getBookingsByBranchApi(branch.id).catch(() => [])
-                );
+            const isUpcoming = (booking) => {
+                if (booking.status !== "PENDING" && booking.status !== "CONFIRMED") {
+                    return false;
+                }
+                const bookingDateTime = new Date(`${booking.bookingDate}T${booking.startTime}`);
+                return bookingDateTime >= now;
+            };
 
-                const allResults = await Promise.all(bookingsPromises);
+            mergedBookings.sort((a, b) => {
+                const aUpcoming = isUpcoming(a);
+                const bUpcoming = isUpcoming(b);
 
-                const mergedBookings = allResults
-                    .flat()
-                    .filter(
-                        booking =>
-                            String(booking.customerId) === String(currentUserId)
-                    );
+                if (aUpcoming && !bUpcoming) return -1;
+                if (!aUpcoming && bUpcoming) return 1;
 
-                const now = new Date();
+                const dateA = new Date(`${a.bookingDate}T${a.startTime}`);
+                const dateB = new Date(`${b.bookingDate}T${b.startTime}`);
 
-                const isUpcoming = (booking) => {
-                    if (booking.status !== "PENDING" && booking.status !== "CONFIRMED") {
-                        return false;
-                    }
-                    const bookingDateTime = new Date(`${booking.bookingDate}T${booking.startTime}`);
-                    return bookingDateTime >= now;
-                };
+                if (aUpcoming && bUpcoming) {
+                    // Sắp diễn ra: tăng dần (gần hiện tại nhất ở đầu)
+                    return dateA - dateB;
+                } else {
+                    // Quá khứ: giảm dần (mới diễn ra gần đây ở đầu)
+                    return dateB - dateA;
+                }
+            });
 
-                mergedBookings.sort((a, b) => {
-                    const aUpcoming = isUpcoming(a);
-                    const bUpcoming = isUpcoming(b);
+            setMyBookings(mergedBookings);
 
-                    if (aUpcoming && !bUpcoming) return -1;
-                    if (!aUpcoming && bUpcoming) return 1;
-
-                    const dateA = new Date(`${a.bookingDate}T${a.startTime}`);
-                    const dateB = new Date(`${b.bookingDate}T${b.startTime}`);
-
-                    if (aUpcoming && bUpcoming) {
-                        // Sắp diễn ra: tăng dần (gần hiện tại nhất ở đầu)
-                        return dateA - dateB;
-                    } else {
-                        // Quá khứ: giảm dần (mới diễn ra gần đây ở đầu)
-                        return dateB - dateA;
-                    }
-                });
-
-                setMyBookings(mergedBookings);
-            }
-
-        } catch {
-            message.error("Lỗi khi tải lịch sử đặt chỗ.");
+        } catch (error) {
+            console.error("Lỗi khi tải lịch hẹn cá nhân:", error);
+            message.error("Không thể tải danh sách lịch hẹn cá nhân.");
         } finally {
             setLoading(false);
         }
