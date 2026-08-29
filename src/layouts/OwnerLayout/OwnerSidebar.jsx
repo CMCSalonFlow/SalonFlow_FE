@@ -16,10 +16,11 @@ import {
     FileExcelOutlined,
     QrcodeOutlined,
     CrownOutlined,
-    GiftOutlined
+    GiftOutlined,
+    LockOutlined
 } from "@ant-design/icons";
 
-import { Menu, Tag } from "antd";
+import { Menu, Tooltip } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 
@@ -43,7 +44,11 @@ export default function OwnerSidebar({ onMenuClick }) {
             label: (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                     <span>Báo Cáo Doanh Thu</span>
-                    {!hasAnalytics && <Tag color="blue" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>PRO</Tag>}
+                    {!hasAnalytics && (
+                        <Tooltip title="Yêu cầu gói PRO">
+                            <LockOutlined style={{ color: "#1890ff", fontSize: 13 }} />
+                        </Tooltip>
+                    )}
                 </div>
             )
         },
@@ -103,7 +108,11 @@ export default function OwnerSidebar({ onMenuClick }) {
             label: (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                     <span>AI Dự Đoán Vắng Mặt</span>
-                    {!hasAi && <Tag color="gold" style={{ fontSize: 10, margin: 0, padding: "0 4px", lineHeight: "16px" }}>ENT</Tag>}
+                    {!hasAi && (
+                        <Tooltip title="Yêu cầu gói ENTERPRISE">
+                            <LockOutlined style={{ color: "#faad14", fontSize: 13 }} />
+                        </Tooltip>
+                    )}
                 </div>
             )
         },

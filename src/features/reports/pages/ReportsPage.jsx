@@ -222,6 +222,7 @@ export default function ReportsPage() {
   }, []);
 
   const fetchReportData = useCallback(async () => {
+    if (!features?.analyticsAdvanced) return;
     setLoading(true);
     try {
       const effectiveRange = (dateRange?.[0] && dateRange?.[1])
@@ -235,13 +236,16 @@ export default function ReportsPage() {
       setReportData(res);
     } catch (err) {
       console.error('Lỗi báo cáo:', err);
-      message.error('Không thể tải dữ liệu báo cáo!');
     } finally {
       setLoading(false);
     }
-  }, [reportType, dateRange, selectedBranchId]);
+  }, [reportType, dateRange, selectedBranchId, features?.analyticsAdvanced]);
 
-  useEffect(() => { fetchReportData(); }, [fetchReportData]);
+  useEffect(() => { 
+    if (features?.analyticsAdvanced) {
+      fetchReportData();
+    }
+  }, [fetchReportData, features?.analyticsAdvanced]);
 
   const handleExportExcel = async () => {
     try {

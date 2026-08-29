@@ -20,6 +20,18 @@ export const getBookingsByBranchApi = async (branchId) => {
     return response.data;
 };
 
+// Phân trang & tìm kiếm lịch hẹn đặt chỗ của chi nhánh
+export const searchBookingsByBranchApi = async (branchId, params) => {
+    const response = await api.get(`/api/v1/branches/${branchId}/bookings/search`, { params });
+    return response.data;
+};
+
+// Lấy toàn bộ lịch hẹn cá nhân của khách hàng đang đăng nhập
+export const getMyBookingsApi = async () => {
+    const response = await api.get("/api/v1/bookings/my-bookings");
+    return response.data;
+};
+
 // Lấy thông tin chi tiết của một lịch hẹn đặt chỗ
 export const getBookingByIdApi = async (branchId, bookingId) => {
     const response = await api.get(`/api/v1/branches/${branchId}/bookings/${bookingId}`);

@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import jsQR from "jsqr";
 import {
-    Alert,
     Button,
     Card,
     Col,
@@ -483,17 +482,20 @@ export default function OwnerBookingWorkflowPage() {
 
     const summary = useMemo(() => {
         const total = bookings.length;
-        const pending = bookings.filter((booking) => booking.status === "PENDING").length;
         const confirmed = bookings.filter((booking) => booking.status === "CONFIRMED").length;
         const checkedIn = bookings.filter((booking) => booking.status === "CHECKED_IN").length;
         const completed = bookings.filter((booking) => booking.status === "COMPLETED").length;
+        const cancelled = bookings.filter((booking) => booking.status === "CANCELLED").length;
+        const noShow = bookings.filter((booking) => booking.status === "NO_SHOW").length;
 
         return {
             total,
-            pending,
             confirmed,
             checkedIn,
-            completed
+            completed,
+            cancelled,
+            noShow,
+            cancelledOrNoShow: cancelled + noShow
         };
     }, [bookings]);
 
@@ -791,40 +793,26 @@ export default function OwnerBookingWorkflowPage() {
                 </Text>
             </div>
 
-            <Alert
-                type="info"
-                showIcon
-                message="Workflow"
-                description="Quy trình gợi ý: PENDING -> CONFIRMED -> CHECKED_IN -> COMPLETED. Customer chỉ có thể đánh giá sau khi booking sang COMPLETED."
-            />
-
-            <Card>
-                <Row gutter={[16, 16]}>
-                    <Col xs={24} sm={12} lg={6}>
-                        <Statistic title="Tổng booking" value={summary.total} />
-                    </Col>
-                    <Col xs={24} sm={12} lg={6}>
-                        <Statistic title="Chờ xử lý" value={summary.pending} valueStyle={{ color: "#d48806" }} />
-                    </Col>
-                    <Col xs={24} sm={12} lg={6}>
-                        <Statistic title="Đã xác nhận" value={summary.confirmed} valueStyle={{ color: "#1677ff" }} />
-                    </Col>
-                    <Col xs={24} sm={12} lg={6}>
-                        <Statistic title="Đã hoàn thành" value={summary.completed} valueStyle={{ color: "#52c41a" }} />
-                    </Col>
-                </Row>
+            <Card style={{ borderRadius: 12 }}>
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(5, 1fr)",
+                    gap: 16,
+                    alignItems: "center"
+                }}>
+                    <Statistic title="Tổng booking" value={summary.total} />
+                    <Statistic title="Đã xác nhận" value={summary.confirmed} valueStyle={{ color: "#1677ff" }} />
+                    <Statistic title="Đã check-in" value={summary.checkedIn} valueStyle={{ color: "#13c2c2" }} />
+                    <Statistic title="Đã hoàn thành" value={summary.completed} valueStyle={{ color: "#52c41a" }} />
+                    <Statistic title="Đã hủy / Vắng mặt" value={summary.cancelledOrNoShow} valueStyle={{ color: "#ff4d4f" }} />
+                </div>
             </Card>
 
             <Card>
                 <Space direction="vertical" size={16} style={{ width: "100%" }}>
                     <Space wrap style={{ width: "100%", justifyContent: "space-between" }}>
                         <Space wrap>
-                            {isManagerPage || branches.length <= 1 ? (
-                                <Tag color="orange" style={{ fontSize: 14, padding: "5px 14px", borderRadius: 6, fontWeight: 600, display: "inline-flex", alignItems: "center", height: 32 }}>
-                                    <ShopOutlined style={{ marginRight: 6 }} />
-                                    Chi nhánh: {selectedBranch?.name || "Đang tải..."}
-                                </Tag>
-                            ) : (
+                            {(!isManagerPage && branches.length > 1) && (
                                 <Select
                                     showSearch
                                     style={{ width: 260 }}
@@ -846,7 +834,6 @@ export default function OwnerBookingWorkflowPage() {
                                 onChange={setStatusFilter}
                                 options={[
                                     { value: "ALL", label: "Tất cả trạng thái" },
-                                    { value: "PENDING", label: "Chờ xử lý" },
                                     { value: "CONFIRMED", label: "Đã xác nhận" },
                                     { value: "CHECKED_IN", label: "Đã check-in" },
                                     { value: "COMPLETED", label: "Đã hoàn thành" },
@@ -892,9 +879,6 @@ export default function OwnerBookingWorkflowPage() {
                     <Space>
                         <ShoppingOutlined />
                         <span>Danh sách booking</span>
-                        {selectedBranch ? (
-                            <Tag color="blue">{selectedBranch.name}</Tag>
-                        ) : null}
                     </Space>
                 }
                 extra={
