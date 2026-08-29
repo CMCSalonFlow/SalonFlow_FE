@@ -19,7 +19,6 @@ import {
     BellOutlined,
     BellFilled,
     CalendarOutlined,
-    CustomerServiceOutlined,
     MenuOutlined
 } from "@ant-design/icons";
 
@@ -204,8 +203,13 @@ export default function AppHeader() {
     })?.key || (isLogin ? "/home" : "/");
 
     const rolesStr = localStorage.getItem("roles");
-    let roles = [];
-    try { roles = rolesStr ? JSON.parse(rolesStr) : []; } catch (e) {}
+    const roles = (() => {
+        try {
+            return rolesStr ? JSON.parse(rolesStr) : [];
+        } catch {
+            return [];
+        }
+    })();
 
     const isSalonOwner = roles.includes("SALON_OWNER");
     const isSuperAdmin = roles.includes("SUPER_ADMIN");
@@ -272,7 +276,11 @@ export default function AppHeader() {
                 background: "#fff",
                 borderBottom: "1px solid #eee",
                 padding: screens.xs ? "0 10px" : "0 16px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                position: "sticky",
+                top: 0,
+                zIndex: 1000,
+                width: "100%"
             }}
         >
             <div
@@ -292,7 +300,10 @@ export default function AppHeader() {
                         style={{
                             flex: 1,
                             justifyContent: "center",
-                            borderBottom: 0
+                            borderBottom: 0,
+                            fontSize: "17px",
+                            fontWeight: 600,
+                            gap: "32px"
                         }}
                     />
 
@@ -415,7 +426,11 @@ export default function AppHeader() {
                         navigate(key);
                         setDrawerVisible(false);
                     }}
-                    style={{ borderRight: 0 }}
+                    style={{
+                        borderRight: 0,
+                        fontSize: "17px",
+                        fontWeight: 600
+                    }}
                 />
 
                 {isLogin ? (

@@ -13,8 +13,7 @@ import {
     Statistic,
     Badge,
     Tag,
-    Rate,
-    Tooltip
+    Rate
 } from "antd";
 import {
     UserOutlined,
@@ -27,19 +26,13 @@ import {
     ShoppingOutlined,
     ArrowRightOutlined,
     LogoutOutlined,
-    CheckCircleOutlined,
     LoginOutlined,
     UserAddOutlined,
     ShopOutlined,
-    SmileOutlined,
     ThunderboltOutlined,
     SafetyCertificateOutlined,
-    GiftOutlined,
-    HeartOutlined,
     EnvironmentOutlined,
-    CheckOutlined,
     CrownOutlined,
-    FireOutlined,
     UnorderedListOutlined,
     FileTextOutlined,
     ScissorOutlined
@@ -53,10 +46,34 @@ const { Title, Text, Paragraph } = Typography;
 
 export default function HomePage() {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
-    const [loadingStats, setLoadingStats] = useState(false);
-    const [branches, setBranches] = useState([]);
+    const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("auth") || "null"));
+    // Dữ liệu đánh giá từ khách hàng (Mặc định dùng mock data nếu chưa tải được từ API)
+    const [testimonials, setTestimonials] = useState([
+        {
+            name: "Nguyễn Thị Lan",
+            role: "Khách hàng thân thiết",
+            rating: 5,
+            comment: "Dịch vụ uốn nhuộm ở SalonFlow rất đẹp và bền màu. Thợ tư vấn tận tình, đặt lịch trên web đến là được phục vụ ngay không phải chờ!",
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200"
+        },
+        {
+            name: "Trần Hoàng Anh",
+            role: "Khách hàng đặt online",
+            rating: 5,
+            comment: "Không gian salon hiện đại, sạch sẽ. Đặt giữ chỗ 30 giây xong nhận tin nhắn xác nhận rất chuyên nghiệp. Đánh giá 5 sao!",
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200"
+        },
+        {
+            name: "Lê Mỹ Duyên",
+            role: "Hội viên SalonFlow",
+            rating: 5,
+            comment: "Combo gội đầu dưỡng sinh ấn huyệt siêu dễ chịu. Cứ cuối tuần là mình lại tranh thủ đặt lịch làm đẹp và tích điểm đổi voucher.",
+            avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=200"
+        }
+    ]);
     const cachedStats = sessionStorage.getItem("homepage_stats");
+    const [loadingStats, setLoadingStats] = useState(!cachedStats);
+    const [branches, setBranches] = useState([]);
     const [stats, setStats] = useState(
         cachedStats
             ? JSON.parse(cachedStats)
@@ -97,11 +114,42 @@ export default function HomePage() {
             }
         }
 
+        const loadRealReviews = (salonId) => {
+            api.get(`/api/v1/salons/${salonId}/reviews`, { params: { rating: 5, size: 6 } })
+                .then((res) => {
+                    const content = res.data?.content || res.data || [];
+                    if (content.length > 0) {
+                        const mapped = content.map((r) => ({
+                            name: r.customerName || "Khách hàng",
+                            role: r.branchName ? `Khách tại ${r.branchName}` : "Khách hàng thân thiết",
+                            rating: r.rating || 5,
+                            comment: r.comment || "Dịch vụ rất tốt và chuyên nghiệp!",
+                            avatar: r.customerAvatar || ""
+                        }));
+                        setTestimonials(mapped);
+                    }
+                })
+                .catch((err) => {
+                    console.error("Lỗi khi tải đánh giá từ API:", err);
+                });
+        };
+
         if (!isLogin) {
             // Tải danh sách chi nhánh công khai nếu chưa đăng nhập
             api.get("/api/v1/branches")
-                .then((res) => setBranches(res.data || []))
-                .catch(() => setBranches([]));
+                .then((res) => {
+                    const bList = res.data || [];
+                    setBranches(bList);
+                    if (bList.length > 0) {
+                        loadRealReviews(bList[0].salonId || 1);
+                    } else {
+                        loadRealReviews(1);
+                    }
+                })
+                .catch(() => {
+                    setBranches([]);
+                    loadRealReviews(1);
+                });
             return;
         }
 
@@ -109,12 +157,10 @@ export default function HomePage() {
         const rawUserId = localStorage.getItem("userId");
         const currentUserId = rawUserId || auth?.id || JSON.parse(localStorage.getItem("user") || "{}")?.id;
 
-        setUser(auth);
+
         let isMounted = true;
 
-        if (!cachedStats) {
-            setLoadingStats(true);
-        }
+
 
         const isInternalUser = auth?.roles?.some((role) =>
             [ROLES.SUPER_ADMIN, ROLES.SALON_OWNER, ROLES.MANAGER, ROLES.BRANCH_MANAGER, ROLES.STAFF].includes(role.toUpperCase())
@@ -150,6 +196,7 @@ export default function HomePage() {
 
             if (branchesData && branchesData.length > 0) {
                 setBranches(branchesData);
+                loadRealReviews(branchesData[0].salonId || 1);
 
                 // Tải song song lịch hẹn tất cả các chi nhánh
                 const bookingsResults = await Promise.all(
@@ -174,6 +221,8 @@ export default function HomePage() {
                         .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")
                         .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
                 }
+            } else {
+                loadRealReviews(1);
             }
 
             const userPoints = loyaltyData?.totalPoints ?? loyaltyData?.pointsBalance ?? 0;
@@ -246,54 +295,9 @@ export default function HomePage() {
         }
     ];
 
-    // Dữ liệu đặc quyền hội viên
-    const memberPerks = [
-        {
-            icon: <GiftOutlined style={{ fontSize: 32, color: "#fa8c16" }} />,
-            title: "Tích Điểm Thưởng 5%",
-            desc: "Tích lũy 5% tổng giá trị mỗi hóa đơn để đổi Voucher giảm giá trực tiếp."
-        },
-        {
-            icon: <ThunderboltOutlined style={{ fontSize: 32, color: "#1677ff" }} />,
-            title: "Ưu Tiên Xếp Lịch",
-            desc: "Ưu tiên phục vụ đúng khung giờ đặt, không phải chờ đợi tại salon."
-        },
-        {
-            icon: <SafetyCertificateOutlined style={{ fontSize: 32, color: "#52c41a" }} />,
-            title: "Bảo Hành 7 Ngày",
-            desc: "Miễn phí dặm lại màu nhuộm hoặc chỉnh nếp uốn nếu bạn chưa hài lòng."
-        },
-        {
-            icon: <CrownOutlined style={{ fontSize: 32, color: "#722ed1" }} />,
-            title: "Quà Sinh Nhật VIP",
-            desc: "Nhận Voucher ưu đãi dịch vụ đặc biệt vào đúng tháng sinh nhật của bạn."
-        }
-    ];
 
-    // Dữ liệu đánh giá từ khách hàng
-    const testimonials = [
-        {
-            name: "Nguyễn Thị Lan",
-            role: "Khách hàng thân thiết",
-            rating: 5,
-            comment: "Dịch vụ uốn nhuộm ở SalonFlow rất đẹp và bền màu. Thợ tư vấn tận tình, đặt lịch trên web đến là được phục vụ ngay không phải chờ!",
-            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200"
-        },
-        {
-            name: "Trần Hoàng Anh",
-            role: "Khách hàng đặt online",
-            rating: 5,
-            comment: "Không gian salon hiện đại, sạch sẽ. Đặt giữ chỗ 30 giây xong nhận tin nhắn xác nhận rất chuyên nghiệp. Đánh giá 5 sao!",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200"
-        },
-        {
-            name: "Lê Mỹ Duyên",
-            role: "Hội viên SalonFlow",
-            rating: 5,
-            comment: "Combo gội đầu dưỡng sinh ấn huyệt siêu dễ chịu. Cứ cuối tuần là mình lại tranh thủ đặt lịch làm đẹp và tích điểm đổi voucher.",
-            avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=200"
-        }
-    ];
+
+
 
     // =========================================================================
     // GUEST LANDING VIEW (KHI CHƯA ĐĂNG NHẬP - KHÁCH VÃNG LAI)
@@ -1173,36 +1177,6 @@ export default function HomePage() {
                             </Row>
                         </div>
 
-                        {/* 🌟 ĐẶC QUYỀN HỘI VIÊN SALONFLOW */}
-                        <Card
-                            style={{
-                                borderRadius: 24,
-                                background: "linear-gradient(135deg, #f8fafc 0%, #e6f7ff 100%)",
-                                border: "1px solid #bae7ff",
-                                marginBottom: 48,
-                                padding: "16px 8px"
-                            }}
-                        >
-                            <Title level={2} style={{ textAlign: "center", marginBottom: 32, fontWeight: 700 }}>
-                                🌟 Đặc Quyền Dành Cho Hội Viên SalonFlow
-                            </Title>
-                            <Row gutter={[24, 24]}>
-                                {memberPerks.map((perk, pIdx) => (
-                                    <Col xs={24} sm={12} md={6} key={pIdx}>
-                                        <Card
-                                            bordered={false}
-                                            style={{ borderRadius: 20, height: "100%", textAlign: "center", boxShadow: "0 8px 24px rgba(0,0,0,0.03)" }}
-                                        >
-                                            <div style={{ marginBottom: 16 }}>{perk.icon}</div>
-                                            <Title level={4} style={{ margin: "4px 0 8px" }}>{perk.title}</Title>
-                                            <Paragraph type="secondary" style={{ fontSize: 14 }}>
-                                                {perk.desc}
-                                            </Paragraph>
-                                        </Card>
-                                    </Col>
-                                ))}
-                            </Row>
-                        </Card>
 
                         {/* 🏬 CHI NHÁNH SALON NỔI BẬT */}
                         {branches.length > 0 && (

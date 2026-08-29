@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-    Alert,
     Button,
     Card,
     Col,
     Divider,
     Empty,
     Image,
-    Progress,
     Row,
     Radio,
     Space,
@@ -51,35 +49,11 @@ const formatLabel = (value) => {
         .join(" ");
 };
 
-const formatConfidence = (value) => {
-    if (value === null || value === undefined || value === "") {
-        return "-";
-    }
-
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric)) {
-        return String(value);
-    }
-
-    if (numeric <= 1) {
-        return `${(numeric * 100).toFixed(1)}%`;
-    }
-
-    return `${numeric.toFixed(1)}%`;
-};
-
-const toPercent = (value) => {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric)) return 0;
-    if (numeric <= 1) return Math.round(numeric * 100);
-    return Math.min(100, Math.round(numeric));
-};
 
 const extractMediaId = (payload) => payload?.id ?? payload?.mediaId ?? payload?.data?.id ?? payload?.data?.mediaId ?? null;
 
 export default function HairStyleAiPage() {
     const [activeTab, setActiveTab] = useState("analysis");
-    const [selectedTryOnStyleId, setSelectedTryOnStyleId] = useState(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [analyzing, setAnalyzing] = useState(false);
     const [confirmingStyleId, setConfirmingStyleId] = useState(null);
@@ -88,21 +62,6 @@ export default function HairStyleAiPage() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState("");
     const [gender, setGender] = useState(null);
-
-    const handleOpenTryOn = (style) => {
-        const styleNameLower = (style?.styleName || "").toLowerCase();
-        let matchedId = "layered_bob";
-        if (styleNameLower.includes("curtain")) matchedId = "curtain_bangs";
-        else if (styleNameLower.includes("pixie")) matchedId = "pixie_cut";
-        else if (styleNameLower.includes("undercut")) matchedId = "undercut_fade";
-        else if (styleNameLower.includes("wave") || styleNameLower.includes("perm") || styleNameLower.includes("xoăn")) matchedId = "korean_perm";
-        else if (styleNameLower.includes("crop")) matchedId = "textured_crop";
-        else if (styleNameLower.includes("buzz")) matchedId = "buzz_cut";
-
-        setSelectedTryOnStyleId(matchedId);
-        setActiveTab("tryon");
-        message.info(`Đã mở Filter AR cho kiểu tóc: ${style.styleName}`);
-    };
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -217,7 +176,6 @@ export default function HairStyleAiPage() {
     const analysis = analysisResponse?.analysis || profile?.analysis || null;
     const suggestedStyles = analysisResponse?.suggestedStyles || [];
     const confirmedStyle = profile?.selectedStyle || null;
-    const confidencePercent = toPercent(analysis?.confidence);
 
     return (
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "8px 0 24px" }}>
@@ -444,44 +402,51 @@ export default function HairStyleAiPage() {
                                                         </Space>
                                                     </Card>
 
-                                                    <Row gutter={[12, 12]}>
-                                                        <Col span={12}>
-                                                            <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                                                <Text type="secondary">Face shape</Text>
-                                                                <div style={{ fontWeight: 600 }}>{formatLabel(profile?.faceShape)}</div>
-                                                            </Card>
-                                                        </Col>
-                                                        <Col span={12}>
-                                                            <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                                                <Text type="secondary">Hair texture</Text>
-                                                                <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairTexture)}</div>
-                                                            </Card>
-                                                        </Col>
-                                                        <Col span={12}>
-                                                            <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                                                <Text type="secondary">Hair length</Text>
-                                                                <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairLength)}</div>
-                                                            </Card>
-                                                        </Col>
-                                                        <Col span={12}>
-                                                            <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                                                <Text type="secondary">Hair density</Text>
-                                                                <div style={{ fontWeight: 600 }}>{formatLabel(profile?.hairDensity)}</div>
-                                                            </Card>
-                                                        </Col>
-                                                    </Row>
+                                                    {confirmedStyle.sampleImage?.url ? (
+                                                        <div
+                                                            style={{
+                                                                width: "100%",
+                                                                height: 280,
+                                                                borderRadius: 16,
+                                                                overflow: "hidden",
+                                                                border: "1px solid #eef2f7",
+                                                                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                                                                background: "#f5f7fa"
+                                                            }}
+                                                        >
+                                                            <Image
+                                                                src={confirmedStyle.sampleImage.url}
+                                                                alt={confirmedStyle.styleName}
+                                                                style={{ width: "100%", height: 280, objectFit: "cover" }}
+                                                                preview={true}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            style={{
+                                                                width: "100%",
+                                                                height: 280,
+                                                                borderRadius: 16,
+                                                                border: "1px dashed #d9d9d9",
+                                                                display: "flex",
+                                                                flexDirection: "column",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                background: "#fafafa"
+                                                            }}
+                                                        >
+                                                            <PictureOutlined style={{ fontSize: 40, color: "#bfbfbf", marginBottom: 8 }} />
+                                                            <Text type="secondary">Không có ảnh mẫu kiểu tóc</Text>
+                                                        </div>
+                                                    )}
 
-                                                    <Card size="small" bordered style={{ borderRadius: 14 }}>
-                                                        <Space direction="vertical" size={6} style={{ width: "100%" }}>
-                                                            <Text type="secondary">Current style</Text>
-                                                            <Text strong>{profile?.currentStyle || "-"}</Text>
-                                                            {profile?.profileSyncedAt ? (
-                                                                <Text type="secondary">
-                                                                    Đồng bộ lúc: {new Date(profile.profileSyncedAt).toLocaleString()}
-                                                                </Text>
-                                                            ) : null}
-                                                        </Space>
-                                                    </Card>
+                                                    {profile?.profileSyncedAt ? (
+                                                        <div style={{ textAlign: "right" }}>
+                                                            <Text type="secondary" style={{ fontSize: 13 }}>
+                                                                Đồng bộ lúc: {new Date(profile.profileSyncedAt).toLocaleString()}
+                                                            </Text>
+                                                        </div>
+                                                    ) : null}
                                                 </Space>
                                             ) : (
                                                 <Empty
