@@ -308,21 +308,20 @@ export default function HomePage() {
                 {/* HERO BANNER VÃNG LAI */}
                 <Card
                     className="home-hero-card"
-                    bodyStyle={{ padding: "36px 32px" }}
                 >
                     <Row align="middle" gutter={[36, 36]}>
                         <Col xs={24} lg={14}>
-                            <Tag color="cyan" style={{ borderRadius: 20, padding: "6px 16px", fontSize: 13, fontWeight: 700, marginBottom: 16, border: "none" }}>
+                            <Tag color="cyan" className="hero-tag" style={{ borderRadius: 20, fontWeight: 700, marginBottom: 16, border: "none" }}>
                                 ✨ HỆ THỐNG ĐẶT LỊCH SALON LÀM ĐẸP CAO CẤP
                             </Tag>
-                            <Title level={1} style={{ color: "#fff", margin: 0, fontSize: 38, fontWeight: 800, lineHeight: 1.2, letterSpacing: "-0.5px" }}>
+                            <Title level={1} className="hero-title" style={{ color: "#fff", margin: 0, fontWeight: 800, lineHeight: 1.2, letterSpacing: "-0.5px" }}>
                                 SalonFlow - Nâng Tầm Trải Nghiệm Làm Đẹp
                             </Title>
-                            <Paragraph style={{ color: "rgba(255, 255, 255, 0.92)", fontSize: 16, marginTop: 16, marginBottom: 32, lineHeight: 1.7 }}>
-                                Đặt lịch cắt tóc, tạo kiểu, uốn nhuộm Hàn Quốc, gội đầu dưỡng sinh & nail art trong **30 giây** mà **không cần đăng ký tài khoản**. Đảm bảo giữ chỗ 100%!
+                            <Paragraph className="hero-desc" style={{ color: "rgba(255, 255, 255, 0.92)", marginTop: 16, marginBottom: 32, lineHeight: 1.7 }}>
+                                Đặt lịch cắt tóc, tạo kiểu, uốn nhuộm Hàn Quốc, gội đầu dưỡng sinh & nail art trong <Text strong style={{ color: "#fff" }}>30 giây</Text> mà <Text strong style={{ color: "#fff" }}>không cần đăng ký tài khoản</Text>. Đảm bảo giữ chỗ 100%!
                             </Paragraph>
-
-                            <Space size="large" wrap>
+                            
+                            <div className="hero-buttons-wrap">
                                 <Button
                                     type="primary"
                                     size="large"
@@ -359,23 +358,23 @@ export default function HomePage() {
                                 >
                                     Xem dịch vụ & Bảng giá
                                 </Button>
-                            </Space>
+                            </div>
 
                             <Divider style={{ borderColor: "rgba(255,255,255,0.2)", margin: "28px 0 20px" }} />
-                            <Row gutter={[16, 16]}>
-                                <Col xs={12} sm={8}>
+                            <Row gutter={[16, 16]} className="hero-features-row">
+                                <Col xs={24} sm={8}>
                                     <Space style={{ color: "#fff" }}>
                                         <ThunderboltOutlined style={{ color: "#52c41a", fontSize: 20 }} />
                                         <Text style={{ color: "#fff", fontWeight: 600 }}>Đặt lịch 30s</Text>
                                     </Space>
                                 </Col>
-                                <Col xs={12} sm={8}>
+                                <Col xs={24} sm={8}>
                                     <Space style={{ color: "#fff" }}>
                                         <SafetyCertificateOutlined style={{ color: "#1890ff", fontSize: 20 }} />
                                         <Text style={{ color: "#fff", fontWeight: 600 }}>Giữ chỗ 100%</Text>
                                     </Space>
                                 </Col>
-                                <Col xs={12} sm={8}>
+                                <Col xs={24} sm={8}>
                                     <Space style={{ color: "#fff" }}>
                                         <StarOutlined style={{ color: "#faad14", fontSize: 20 }} />
                                         <Text style={{ color: "#fff", fontWeight: 600 }}>4.9/5★ Đánh giá</Text>
