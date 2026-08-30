@@ -10,6 +10,7 @@ import { getPublicAvailabilityApi, createPublicBookingApi } from "../api/booking
 import { getPublicAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
+import { getWebSocketUrl } from "@/core/utils/websocket";
 import BookingSummary from "../components/BookingSummary";
 import StepServiceSelection from "../components/StepServiceSelection";
 import NormalBookingForm from "../components/NormalBookingForm";
@@ -66,8 +67,8 @@ export default function GuestBookingPage() {
         let reconnectTimer = null;
 
         const connectWS = () => {
-            const wsBase = API_BASE_URL.replace(/^http/, "ws");
-            socket = new WebSocket(`${wsBase}/ws/bookings`);
+            const socketUrl = getWebSocketUrl("/ws/bookings");
+            socket = new WebSocket(socketUrl);
 
             socket.onmessage = (event) => {
                 try {

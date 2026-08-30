@@ -11,6 +11,7 @@ import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { getAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
 import { getUserByIdApi } from "@/features/user/api/userApi";
+import { getWebSocketUrl } from "@/core/utils/websocket";
 import dayjs from "dayjs";
 
 // Import refactored components
@@ -87,8 +88,7 @@ export default function BookingPage() {
         let reconnectTimer = null;
 
         const connectWS = () => {
-            const wsBase = API_BASE_URL.replace(/^http/, "ws");
-            const socketUrl = `${wsBase}/ws/bookings`;
+            const socketUrl = getWebSocketUrl("/ws/bookings");
 
             socket = new WebSocket(socketUrl);
 
