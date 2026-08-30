@@ -126,25 +126,93 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08) !important;
 }
 
+/* ─── Hero Banner Responsive Helpers ─────────────────────────────────────── */
+.home-hero-card .ant-card-body {
+  padding: 36px 32px !important;
+}
+
+.home-hero-card .hero-tag {
+  padding: 6px 16px !important;
+  font-size: 13px !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  display: inline-block !important;
+  max-width: 100% !important;
+}
+
+.home-hero-card .hero-title {
+  font-size: 38px !important;
+  line-height: 1.2;
+}
+
+.home-hero-card .hero-desc {
+  font-size: 16px !important;
+}
+
+.hero-buttons-wrap {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  margin-bottom: 32px;
+}
+
 /* ─── Responsive Media Queries ───────────────────────────────────────────── */
 @media (max-width: 768px) {
   .home-hero-card {
     border-radius: 20px !important;
     margin-bottom: 24px !important;
   }
-  
-  .home-hero-card h1 {
-    font-size: 28px !important;
+
+  .home-hero-card .ant-card-body {
+    padding: 28px 24px !important;
+  }
+
+  .home-hero-card .hero-title {
+    font-size: 30px !important;
   }
 }
 
 @media (max-width: 576px) {
-  .home-hero-card h1 {
+  .home-hero-card .ant-card-body {
+    padding: 24px 16px !important;
+  }
+
+  .home-hero-card .hero-tag {
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .home-hero-card .hero-title {
     font-size: 24px !important;
   }
 
-  .home-hero-card .ant-card-body {
-    padding: 20px 14px !important;
+  .home-hero-card .hero-desc {
+    font-size: 14px !important;
+  }
+
+  .hero-buttons-wrap {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .hero-buttons-wrap .ant-btn {
+    width: 100% !important;
+    height: 48px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .hero-features-row {
+    text-align: center;
+  }
+
+  .hero-features-row .ant-space {
+    width: 100%;
+    justify-content: center;
   }
 
   .home-glass-card {
