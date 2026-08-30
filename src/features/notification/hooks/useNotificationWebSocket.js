@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { notification } from "antd";
 import { getUnreadNotificationCountApi } from "@/features/notification/api/notificationApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
+import { getWebSocketUrl } from "@/core/utils/websocket";
 import { getStoredAuthData } from "@/core/utils/auth";
 
 export const useNotificationWebSocket = (onNewNotification) => {
@@ -36,8 +37,7 @@ export const useNotificationWebSocket = (onNewNotification) => {
             return;
         }
 
-        const wsHost = API_BASE_URL.replace(/^http/, "ws");
-        const wsUrl = `${wsHost}/ws/notifications${userId ? `?userId=${userId}` : ""}`;
+        const wsUrl = getWebSocketUrl(`/ws/notifications${userId ? `?userId=${userId}` : ""}`);
 
         const connect = () => {
             try {
