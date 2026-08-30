@@ -439,7 +439,7 @@ export default function BookingPage() {
                 totalPrice: Number(res.totalPrice || totalPrice || 0)
             };
             sessionStorage.setItem("salonflow_last_pay_at_counter_booking", JSON.stringify(bookingDetail));
-            
+
             message.success("Đặt lịch hẹn thành công!");
             navigate("/booking/pay-at-counter-success", {
                 state: {

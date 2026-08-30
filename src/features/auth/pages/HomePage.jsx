@@ -707,6 +707,7 @@ export default function HomePage() {
         <div style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 20px" }}>
             {/* 🌟 HERO BANNER CHO HỘI VIÊN DỰNG TRÊN ẢNH NỀN SALON SANG TRỌNG */}
             <Card
+                className="home-member-card"
                 style={{
                     borderRadius: 28,
                     border: "none",
@@ -716,13 +717,12 @@ export default function HomePage() {
                         : "linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(22, 119, 255, 0.8) 50%, rgba(114, 46, 209, 0.82) 100%), url('https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1600') center/cover no-repeat",
                     color: "#fff",
                     boxShadow: "0 20px 50px rgba(0, 0, 0, 0.2)",
-                    marginBottom: 40,
-                    padding: "32px 24px"
+                    marginBottom: 40
                 }}
             >
                 <Row align="middle" gutter={[32, 32]}>
                     <Col xs={24} lg={14}>
-                        <Space align="center" style={{ marginBottom: 12 }}>
+                        <div className="hero-member-header">
                             <Avatar
                                 size={72}
                                 icon={<UserOutlined />}
@@ -732,24 +732,24 @@ export default function HomePage() {
                                     boxShadow: "0 6px 20px rgba(0,0,0,0.2)"
                                 }}
                             />
-                            <div>
-                                <Title level={2} style={{ color: "#fff", margin: 0, fontWeight: 800 }}>
+                            <div className="hero-member-info">
+                                <Title level={2} className="member-greeting" style={{ color: "#fff", margin: 0, fontWeight: 800 }}>
                                     Xin chào, {user?.fullName || localStorage.getItem("fullName") || user?.username || "Thành viên"}! 👋
                                 </Title>
-                                <Space style={{ marginTop: 6 }}>
-                                    <Tag color="gold" style={{ borderRadius: 12, fontWeight: 700, padding: "2px 10px" }}>
+                                <div className="member-badges">
+                                    <Tag color="gold" style={{ borderRadius: 12, fontWeight: 700, padding: "2px 10px", margin: 0, border: "none" }}>
                                         <CrownOutlined style={{ marginRight: 4 }} /> HỘI VIÊN SALONFLOW
                                     </Tag>
                                     <TagColor role={user?.roles?.[0]} />
-                                </Space>
+                                </div>
                             </div>
-                        </Space>
+                        </div>
 
-                        <Paragraph style={{ color: "rgba(255, 255, 255, 0.92)", fontSize: 16, marginTop: 16, marginBottom: 28, lineHeight: 1.6 }}>
-                            Chào mừng bạn quay lại hệ thống **SalonFlow**. Tận hưởng ưu đãi tích điểm 5%, đặt giữ chỗ ưu tiên và trải nghiệm các dịch vụ làm đẹp cao cấp ngay hôm nay!
+                        <Paragraph className="hero-desc" style={{ color: "rgba(255, 255, 255, 0.92)", marginTop: 16, marginBottom: 28, lineHeight: 1.6 }}>
+                            Chào mừng bạn quay lại hệ thống <Text strong style={{ color: "#fff" }}>SalonFlow</Text>. Tận hưởng ưu đãi tích điểm 5%, đặt giữ chỗ ưu tiên và trải nghiệm các dịch vụ làm đẹp cao cấp ngay hôm nay!
                         </Paragraph>
 
-                        <Space size="middle" wrap>
+                        <div className="hero-member-buttons">
                             <Button
                                 type="primary"
                                 size="large"
@@ -791,52 +791,52 @@ export default function HomePage() {
                                 size="large"
                                 icon={<LogoutOutlined />}
                                 onClick={handleLogout}
-                                style={{ color: "rgba(255, 255, 255, 0.8)" }}
+                                style={{ color: "rgba(255, 255, 255, 0.8)", display: "flex", alignItems: "center" }}
                             >
                                 Đăng xuất
                             </Button>
-                        </Space>
+                        </div>
                     </Col>
 
                     {/* Khối thống kê Glassmorphism nổi bật */}
                     <Col xs={24} lg={10}>
                         <Card
+                            className="hero-loyalty-card"
                             style={{
                                 background: "rgba(255, 255, 255, 0.16)",
                                 backdropFilter: "blur(16px)",
                                 borderRadius: 24,
                                 border: "1px solid rgba(255, 255, 255, 0.3)",
-                                padding: "20px 16px",
                                 boxShadow: "0 15px 35px rgba(0, 0, 0, 0.2)"
                             }}
                         >
                             <Spin spinning={loadingStats}>
                                 <Row gutter={[16, 16]}>
                                     <Col span={24}>
-                                        <div style={{ background: "rgba(255, 255, 255, 0.15)", padding: "14px 18px", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                            <Space>
+                                        <div className="hero-loyalty-banner">
+                                            <Space align="center" size="middle">
                                                 <StarOutlined style={{ fontSize: 28, color: "#faad14" }} />
                                                 <div>
                                                     <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, display: "block" }}>Điểm thưởng tích lũy</Text>
                                                     <Text strong style={{ color: "#fff", fontSize: 22, fontWeight: 800 }}>{stats.loyaltyPoints} điểm</Text>
                                                 </div>
                                             </Space>
-                                            <Button size="small" type="primary" onClick={() => navigate("/profile")} style={{ borderRadius: 12, backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}>
+                                            <Button size="small" type="primary" onClick={() => navigate("/profile")} style={{ borderRadius: 12, backgroundColor: "#fa8c16", borderColor: "#fa8c16", fontWeight: 600 }}>
                                                 Đổi quà
                                             </Button>
                                         </div>
                                     </Col>
 
-                                    <Col span={12}>
-                                        <div style={{ background: "rgba(255, 255, 255, 0.15)", padding: "14px 16px", borderRadius: 16, textAlign: "center" }}>
+                                    <Col xs={24} sm={12}>
+                                        <div style={{ background: "rgba(255, 255, 255, 0.15)", padding: "14px 16px", borderRadius: 16, textAlign: "center", height: "100%" }}>
                                             <ClockCircleOutlined style={{ fontSize: 24, color: "#52c41a", marginBottom: 4 }} />
                                             <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12, display: "block" }}>Lịch hẹn sắp tới</Text>
                                             <Text strong style={{ color: "#fff", fontSize: 20, fontWeight: 800 }}>{stats.upcomingBookingsCount} lịch</Text>
                                         </div>
                                     </Col>
 
-                                    <Col span={12}>
-                                        <div style={{ background: "rgba(255, 255, 255, 0.15)", padding: "14px 16px", borderRadius: 16, textAlign: "center" }}>
+                                    <Col xs={24} sm={12}>
+                                        <div style={{ background: "rgba(255, 255, 255, 0.15)", padding: "14px 16px", borderRadius: 16, textAlign: "center", height: "100%" }}>
                                             <CalendarOutlined style={{ fontSize: 24, color: "#1890ff", marginBottom: 4 }} />
                                             <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12, display: "block" }}>Tổng số lượt làm đẹp</Text>
                                             <Text strong style={{ color: "#fff", fontSize: 20, fontWeight: 800 }}>{stats.totalBookings} lượt</Text>
@@ -1284,10 +1284,12 @@ export default function HomePage() {
 function TagColor({ role }) {
     if (!role) return <Badge status="default" text="GUEST" />;
 
+    const cleanRole = role.startsWith("ROLE_") ? role.substring(5) : role;
+
     let color = "blue";
-    if (role === "OWNER") color = "purple";
-    if (role === "ADMIN") color = "red";
-    if (role === "STAFF" || role === "MANAGER") color = "orange";
+    if (cleanRole === "OWNER" || cleanRole === "SALON_OWNER") color = "purple";
+    if (cleanRole === "ADMIN" || cleanRole === "SUPER_ADMIN") color = "red";
+    if (cleanRole === "STAFF" || cleanRole === "MANAGER" || cleanRole === "BRANCH_MANAGER") color = "orange";
 
     return (
         <span
@@ -1303,7 +1305,7 @@ function TagColor({ role }) {
                 marginLeft: 4
             }}
         >
-            {role.toUpperCase()}
+            {cleanRole.toUpperCase()}
         </span>
     );
 }
