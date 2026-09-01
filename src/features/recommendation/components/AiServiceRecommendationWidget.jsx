@@ -65,7 +65,7 @@ export default function AiServiceRecommendationWidget({ userId, branchId, limit 
   if (loading) {
     return (
       <Card style={{ borderRadius: 16, textAlign: "center", padding: "30px 0", marginBottom: 24 }}>
-        <Spin size="large" tip="AI đang phân tích sở thích và gợi ý dịch vụ..." />
+        <Spin size="large" description="AI đang phân tích sở thích và gợi ý dịch vụ..." />
       </Card>
     );
   }
@@ -170,7 +170,7 @@ export default function AiServiceRecommendationWidget({ userId, branchId, limit 
                 borderColor: "#e2e8f0",
                 overflow: "hidden",
               }}
-              bodyStyle={{ padding: 12, display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}
+              styles={{ body: { padding: 12, display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" } }}
             >
               <div>
                 <div style={{ width: "100%", height: 110, borderRadius: 8, marginBottom: 8, overflow: "hidden", position: "relative" }}>

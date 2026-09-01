@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Card,
@@ -10,6 +10,7 @@ import {
     Space,
     Divider,
     Spin,
+    Skeleton,
     Statistic,
     Badge,
     Tag,
@@ -35,18 +36,39 @@ import {
     CrownOutlined,
     UnorderedListOutlined,
     FileTextOutlined,
-    ScissorOutlined
+    ScissorOutlined,
+    SearchOutlined,
+    LeftOutlined,
+    RightOutlined,
+    CheckCircleOutlined
 } from "@ant-design/icons";
 import { useAuth } from "../hooks/useAuth";
 import api from "@/core/api/axios";
 import ROLES from "@/core/constants/roles";
 import AiServiceRecommendationWidget from "@/features/recommendation/components/AiServiceRecommendationWidget";
+import SalonCard from "@/features/salon/components/SalonCard";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function HomePage() {
     const navigate = useNavigate();
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("auth") || "null"));
+    const [publicSalons, setPublicSalons] = useState([]);
+    const salonScrollRef = useRef(null);
+
+    const scrollSalonsLeft = () => {
+        if (salonScrollRef.current) {
+            salonScrollRef.current.scrollBy({ left: -340, behavior: "smooth" });
+        }
+    };
+
+    const scrollSalonsRight = () => {
+        if (salonScrollRef.current) {
+            salonScrollRef.current.scrollBy({ left: 340, behavior: "smooth" });
+        }
+    };
+    const [loadingSalons, setLoadingSalons] = useState(true);
+    const [loadingBranches, setLoadingBranches] = useState(true);
     // Dữ liệu đánh giá từ khách hàng (Mặc định dùng mock data nếu chưa tải được từ API)
     const [testimonials, setTestimonials] = useState([
         {
@@ -91,6 +113,15 @@ export default function HomePage() {
     const isLogin = !!token;
 
     useEffect(() => {
+        // Tải danh sách Thương hiệu Salon công khai (Chỉ các Salon đã được duyệt - APPROVED)
+        api.get("/api/v1/salons/public")
+            .then((res) => {
+                const approvedSalons = (res.data || []).filter(s => !s.status || s.status === "APPROVED");
+                setPublicSalons(approvedSalons);
+            })
+            .catch(() => setPublicSalons([]))
+            .finally(() => setLoadingSalons(false));
+
         if (isLogin) {
             const rolesStr = localStorage.getItem("roles");
             if (rolesStr) {
@@ -129,8 +160,8 @@ export default function HomePage() {
                         setTestimonials(mapped);
                     }
                 })
-                .catch((err) => {
-                    console.error("Lỗi khi tải đánh giá từ API:", err);
+                .catch(() => {
+                    // Tránh log lỗi rác console khi Salon chưa có bài đánh giá thực tế
                 });
         };
 
@@ -140,15 +171,15 @@ export default function HomePage() {
                 .then((res) => {
                     const bList = res.data || [];
                     setBranches(bList);
-                    if (bList.length > 0) {
-                        loadRealReviews(bList[0].salonId || 1);
-                    } else {
-                        loadRealReviews(1);
+                    if (bList.length > 0 && bList[0].salonId) {
+                        loadRealReviews(bList[0].salonId);
                     }
                 })
                 .catch(() => {
                     setBranches([]);
-                    loadRealReviews(1);
+                })
+                .finally(() => {
+                    setLoadingBranches(false);
                 });
             return;
         }
@@ -180,7 +211,12 @@ export default function HomePage() {
                 api.get("/api/v1/branches").then((res) => res.data || []).catch(() => [])
             );
 
-        Promise.all([pUserInfo, pLoyalty, pBranches]).then(async ([userData, loyaltyData, branchesData]) => {
+        const pMyBookings = api
+            .get("/api/v1/bookings/my-bookings")
+            .then((res) => res.data || [])
+            .catch(() => []);
+
+        Promise.all([pUserInfo, pLoyalty, pBranches, pMyBookings]).then(([userData, loyaltyData, branchesData, myBookings]) => {
             if (!isMounted) return;
 
             if (userData) {
@@ -196,34 +232,14 @@ export default function HomePage() {
 
             if (branchesData && branchesData.length > 0) {
                 setBranches(branchesData);
-                loadRealReviews(branchesData[0].salonId || 1);
-
-                // Tải song song lịch hẹn tất cả các chi nhánh
-                const bookingsResults = await Promise.all(
-                    branchesData.map((b) =>
-                        api.get(`/api/v1/branches/${b.id}/bookings`).then((res) => res.data || []).catch(() => [])
-                    )
-                );
-
-                const allBookings = bookingsResults.flat();
-                const myBookings = allBookings.filter(
-                    (b) =>
-                        String(b.customerId) === String(currentUserId) ||
-                        String(b.userId) === String(currentUserId) ||
-                        String(b.customer?.id) === String(currentUserId)
-                );
-
-                upcoming = myBookings.filter((b) => b.status === "PENDING" || b.status === "CONFIRMED").length;
-                total = myBookings.length;
-
-                if (isInternalUser) {
-                    totalRevenue = allBookings
-                        .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")
-                        .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
+                if (branchesData[0].salonId) {
+                    loadRealReviews(branchesData[0].salonId);
                 }
-            } else {
-                loadRealReviews(1);
             }
+
+            const validMyBookings = Array.isArray(myBookings) ? myBookings : [];
+            upcoming = validMyBookings.filter((b) => b.status === "PENDING" || b.status === "CONFIRMED").length;
+            total = validMyBookings.length;
 
             const userPoints = loyaltyData?.totalPoints ?? loyaltyData?.pointsBalance ?? 0;
 
@@ -286,12 +302,12 @@ export default function HomePage() {
             image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800"
         },
         {
-            title: "Làm Móng & Nail Art",
-            desc: "Chăm sóc móng chuyên nghiệp, sơn gel và đính đá cao cấp.",
-            price: "Từ 180.000đ",
+            title: "Phục Hồi & Dưỡng Tóc VIP",
+            desc: "Phục hồi cấu trúc tóc hư tổn, liệu trình dưỡng ẩm mượt sâu.",
+            price: "Từ 250.000đ",
             tag: "YÊU THÍCH",
             tagColor: "pink",
-            image: "https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=800"
+            image: "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?q=80&w=800"
         }
     ];
 
@@ -308,86 +324,83 @@ export default function HomePage() {
                 {/* HERO BANNER VÃNG LAI */}
                 <Card
                     className="home-hero-card"
-                    bodyStyle={{ padding: "36px 32px" }}
+                    styles={{ body: { padding: "36px 32px" } }}
                 >
-                    <Row align="middle" gutter={[36, 36]}>
-                        <Col xs={24} lg={14}>
-                            <Tag color="cyan" style={{ borderRadius: 20, padding: "6px 16px", fontSize: 13, fontWeight: 700, marginBottom: 16, border: "none" }}>
-                                ✨ HỆ THỐNG ĐẶT LỊCH SALON LÀM ĐẸP CAO CẤP
-                            </Tag>
-                            <Title level={1} style={{ color: "#fff", margin: 0, fontSize: 38, fontWeight: 800, lineHeight: 1.2, letterSpacing: "-0.5px" }}>
-                                SalonFlow - Nâng Tầm Trải Nghiệm Làm Đẹp
-                            </Title>
-                            <Paragraph style={{ color: "rgba(255, 255, 255, 0.92)", fontSize: 16, marginTop: 16, marginBottom: 32, lineHeight: 1.7 }}>
-                                Đặt lịch cắt tóc, tạo kiểu, uốn nhuộm Hàn Quốc, gội đầu dưỡng sinh & nail art trong **30 giây** mà **không cần đăng ký tài khoản**. Đảm bảo giữ chỗ 100%!
-                            </Paragraph>
+                    <Row align="stretch" gutter={[36, 36]}>
+                        <Col xs={24} lg={14} style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                            <div>
+                                <Title level={1} style={{ color: "#fff", margin: 0, fontSize: 38, fontWeight: 800, lineHeight: 1.2, letterSpacing: "-0.5px" }}>
+                                    SalonFlow - Nâng Tầm Trải Nghiệm Làm Đẹp
+                                </Title>
+                                <Paragraph style={{ color: "rgba(255, 255, 255, 0.92)", fontSize: 16, marginTop: 16, marginBottom: 28, lineHeight: 1.7 }}>
+                                    Đặt lịch cắt tóc, tạo kiểu, uốn nhuộm thời trang và gội đầu dưỡng sinh chuyên nghiệp nhanh chóng trong 30 giây mà không cần đăng ký tài khoản. Đảm bảo giữ chỗ 100%!
+                                </Paragraph>
 
-                            <Space size="large" wrap>
-                                <Button
-                                    type="primary"
-                                    size="large"
-                                    icon={<CalendarOutlined />}
-                                    onClick={() => navigate("/guest-booking")}
-                                    style={{
-                                        height: 52,
-                                        padding: "0 32px",
-                                        borderRadius: 26,
-                                        fontSize: 16,
-                                        fontWeight: 700,
-                                        backgroundColor: "#4f46e5",
-                                        borderColor: "#4f46e5",
-                                        boxShadow: "0 8px 24px rgba(79, 70, 229, 0.45)"
-                                    }}
-                                >
-                                    Đặt lịch vãng lai ngay
-                                </Button>
-                                <Button
-                                    ghost
-                                    size="large"
-                                    icon={<ShoppingOutlined />}
-                                    onClick={() => navigate("/services")}
-                                    style={{
-                                        height: 54,
-                                        padding: "0 28px",
-                                        borderRadius: 27,
-                                        fontSize: 16,
-                                        fontWeight: 600,
-                                        color: "#fff",
-                                        borderColor: "rgba(255, 255, 255, 0.8)",
-                                        backdropFilter: "blur(4px)"
-                                    }}
-                                >
-                                    Xem dịch vụ & Bảng giá
-                                </Button>
+                                <Space size="large" wrap>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        icon={<CalendarOutlined />}
+                                        onClick={() => navigate("/guest-booking")}
+                                        style={{
+                                            height: 52,
+                                            padding: "0 32px",
+                                            borderRadius: 26,
+                                            fontSize: 16,
+                                            fontWeight: 700,
+                                            backgroundColor: "#4f46e5",
+                                            borderColor: "#4f46e5",
+                                            boxShadow: "0 8px 24px rgba(79, 70, 229, 0.45)"
+                                        }}
+                                    >
+                                        Đặt lịch vãng lai ngay
+                                    </Button>
+                                    <Button
+                                        ghost
+                                        size="large"
+                                        icon={<SearchOutlined />}
+                                        onClick={() => navigate("/search")}
+                                        style={{
+                                            height: 52,
+                                            padding: "0 28px",
+                                            borderRadius: 26,
+                                            fontSize: 16,
+                                            fontWeight: 600,
+                                            color: "#fff",
+                                            borderColor: "rgba(255, 255, 255, 0.8)",
+                                            backdropFilter: "blur(4px)"
+                                        }}
+                                    >
+                                        Khám phá & Tìm Salon
+                                    </Button>
+                                </Space>
+                            </div>
+
+                            {/* 🌟 ĐƯỜNG GẠCH NGANG NHẸ TẠO SỰ CÂN BẰNG */}
+                            <Divider style={{ borderColor: "rgba(255,255,255,0.18)", margin: "24px 0 16px" }} />
+
+                            {/* 🌟 3 MỤC CAM KẾT XẾP TỰ NHIÊN DỄ NHÌN */}
+                            <Space size={56} wrap>
+                                <Space style={{ color: "rgba(255,255,255,0.92)" }}>
+                                    <ThunderboltOutlined style={{ color: "#4ade80", fontSize: 16 }} />
+                                    <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Đặt lịch 30s</Text>
+                                </Space>
+                                <Space style={{ color: "rgba(255,255,255,0.92)" }}>
+                                    <SafetyCertificateOutlined style={{ color: "#60a5fa", fontSize: 16 }} />
+                                    <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Giữ chỗ 100%</Text>
+                                </Space>
+                                <Space style={{ color: "rgba(255,255,255,0.92)" }}>
+                                    <CheckCircleOutlined style={{ color: "#facc15", fontSize: 16 }} />
+                                    <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Xác nhận tức thì</Text>
+                                </Space>
                             </Space>
-
-                            <Divider style={{ borderColor: "rgba(255,255,255,0.2)", margin: "28px 0 20px" }} />
-                            <Row gutter={[16, 16]}>
-                                <Col xs={12} sm={8}>
-                                    <Space style={{ color: "#fff" }}>
-                                        <ThunderboltOutlined style={{ color: "#52c41a", fontSize: 20 }} />
-                                        <Text style={{ color: "#fff", fontWeight: 600 }}>Đặt lịch 30s</Text>
-                                    </Space>
-                                </Col>
-                                <Col xs={12} sm={8}>
-                                    <Space style={{ color: "#fff" }}>
-                                        <SafetyCertificateOutlined style={{ color: "#1890ff", fontSize: 20 }} />
-                                        <Text style={{ color: "#fff", fontWeight: 600 }}>Giữ chỗ 100%</Text>
-                                    </Space>
-                                </Col>
-                                <Col xs={12} sm={8}>
-                                    <Space style={{ color: "#fff" }}>
-                                        <StarOutlined style={{ color: "#faad14", fontSize: 20 }} />
-                                        <Text style={{ color: "#fff", fontWeight: 600 }}>4.9/5★ Đánh giá</Text>
-                                    </Space>
-                                </Col>
-                            </Row>
                         </Col>
 
                         <Col xs={24} lg={10}>
                             <Card
                                 className="home-glass-card"
                                 bodyStyle={{ padding: "26px 22px", textAlign: "center" }}
+                                style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}
                             >
                                 <Avatar
                                     size={64}
@@ -445,87 +458,6 @@ export default function HomePage() {
                     </Row>
                 </Card>
 
-                {/* 🤖 WIDGET AI GỢI Ý DỊCH VỤ DÀNH RIÊNG CHO BẠN */}
-                <AiServiceRecommendationWidget userId={user?.id} limit={5} />
-
-                {/* ✨ DANH MỤC DỊCH VỤ NỔI BẬT */}
-                <div style={{ marginBottom: 48 }}>
-                    <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-                        <Col>
-                            <Title level={2} style={{ margin: 0, fontWeight: 700 }}>
-                                ✨ Dịch Vụ Nổi Bật Tại SalonFlow
-                            </Title>
-                            <Text type="secondary" style={{ fontSize: 15 }}>
-                                Đa dạng dịch vụ chăm sóc sắc đẹp cao cấp thực hiện bởi đội ngũ Stylist giàu kinh nghiệm.
-                            </Text>
-                        </Col>
-                        <Col>
-                            <Button
-                                type="primary"
-                                ghost
-                                shape="round"
-                                icon={<ArrowRightOutlined />}
-                                onClick={() => navigate("/services")}
-                            >
-                                Xem tất cả dịch vụ
-                            </Button>
-                        </Col>
-                    </Row>
-
-                    <div style={{ display: 'flex', overflowX: 'auto', gap: 24, paddingBottom: 16, scrollbarWidth: 'thin' }}>
-                        {featuredCategories.map((item, idx) => (
-                            <div key={idx} style={{ minWidth: 280, maxWidth: 320, flexShrink: 0, display: 'flex' }}>
-                                <Card
-                                    hoverable
-                                    cover={
-                                        <div style={{ height: 200, overflow: "hidden", position: "relative" }}>
-                                            <img
-                                                alt={item.title}
-                                                src={item.image}
-                                                style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
-                                                onMouseEnter={(e) => e.target.style.transform = "scale(1.08)"}
-                                                onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                                            />
-                                            <Tag
-                                                color={item.tagColor}
-                                                style={{ position: "absolute", top: 12, right: 12, borderRadius: 10, fontWeight: 700, padding: "2px 10px" }}
-                                            >
-                                                {item.tag}
-                                            </Tag>
-                                        </div>
-                                    }
-                                    style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 6px 20px rgba(0,0,0,0.04)", width: "100%", display: "flex", flexDirection: "column" }}
-                                    bodyStyle={{ padding: 20, display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}
-                                >
-                                    <div>
-                                        <Title level={4} style={{ margin: "0 0 8px 0", fontSize: 18 }}>
-                                            {item.title}
-                                        </Title>
-                                        <Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 16, height: 40, overflow: "hidden" }}>
-                                            {item.desc}
-                                        </Paragraph>
-                                    </div>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <Text strong style={{ color: "#4f46e5", fontSize: 16, fontWeight: 700 }}>
-                                            {item.price}
-                                        </Text>
-                                        <Button
-                                            type="primary"
-                                            size="small"
-                                            shape="round"
-                                            icon={<CalendarOutlined />}
-                                            onClick={() => navigate("/guest-booking")}
-                                            style={{ background: "#4f46e5", borderColor: "#4f46e5" }}
-                                        >
-                                            Đặt ngay
-                                        </Button>
-                                    </div>
-                                </Card>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
                 {/* 🚀 QUY TRÌNH 3 BƯỚC ĐẶT LỊCH VÃNG LAI */}
                 <Card
                     style={{
@@ -537,7 +469,7 @@ export default function HomePage() {
                     }}
                 >
                     <Title level={2} style={{ textAlign: "center", marginBottom: 32, fontWeight: 700 }}>
-                        🚀 Quy Trình Đặt Lịch Khách Vãng Lai 3 Bước Siêu Tốc
+                        Quy Trình Đặt Lịch Trong Vòng 3 Bước
                     </Title>
                     <Row gutter={[24, 24]}>
                         <Col xs={24} md={8}>
@@ -547,15 +479,14 @@ export default function HomePage() {
                             >
                                 <div style={{ height: 140, borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
                                     <img
-                                        src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=500"
-                                        alt="Chọn dịch vụ"
+                                        src="https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=500"
+                                        alt="Chọn Salon & Dịch Vụ"
                                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                     />
                                 </div>
-                                <Tag color="blue" style={{ borderRadius: 12, fontWeight: 700, marginBottom: 8 }}>BƯỚC 1</Tag>
-                                <Title level={4} style={{ margin: "4px 0 8px" }}>1. Chọn Salon & Dịch Vụ</Title>
-                                <Paragraph type="secondary" style={{ fontSize: 14 }}>
-                                    Lựa chọn chi nhánh Salon mún làm đẹp và combo dịch vụ yêu thích.
+                                <Title level={4} style={{ margin: "12px 0 8px" }}>Bước 1: Chọn Salon & Dịch Vụ</Title>
+                                <Paragraph type="secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>
+                                    Dễ dàng tìm kiếm salon làm đẹp uy tín, tham khảo danh mục dịch vụ đa dạng và chọn combo chăm sóc tóc phù hợp nhất.
                                 </Paragraph>
                             </Card>
                         </Col>
@@ -566,15 +497,14 @@ export default function HomePage() {
                             >
                                 <div style={{ height: 140, borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
                                     <img
-                                        src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=500"
-                                        alt="Chọn thợ"
+                                        src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?q=80&w=500"
+                                        alt="Chọn Stylist & Giờ Cắt"
                                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                     />
                                 </div>
-                                <Tag color="purple" style={{ borderRadius: 12, fontWeight: 700, marginBottom: 8 }}>BƯỚC 2</Tag>
-                                <Title level={4} style={{ margin: "4px 0 8px" }}>2. Chọn Stylist & Giờ Cắt</Title>
-                                <Paragraph type="secondary" style={{ fontSize: 14 }}>
-                                    Tự do lựa chọn thợ làm tóc quen thuộc và khung giờ trống tiện lợi.
+                                <Title level={4} style={{ margin: "12px 0 8px" }}>Bước 2: Chọn Stylist & Giờ Cắt</Title>
+                                <Paragraph type="secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>
+                                    Chủ động lựa chọn thợ làm tóc yêu thích, xem đánh giá tay nghề và chọn khung giờ trống tiện lợi với bạn.
                                 </Paragraph>
                             </Card>
                         </Col>
@@ -585,23 +515,105 @@ export default function HomePage() {
                             >
                                 <div style={{ height: 140, borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
                                     <img
-                                        src="https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?q=80&w=500"
-                                        alt="Điền thông tin"
+                                        src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=500"
+                                        alt="Điền Thông Tin Liên Hệ"
                                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                     />
                                 </div>
-                                <Tag color="green" style={{ borderRadius: 12, fontWeight: 700, marginBottom: 8 }}>BƯỚC 3</Tag>
-                                <Title level={4} style={{ margin: "4px 0 8px" }}>3. Điền Tên & Nhận Giữ Chỗ</Title>
-                                <Paragraph type="secondary" style={{ fontSize: 14 }}>
-                                    Nhập SĐT nhận mã xác nhận cuộc hẹn tức thì mà không cần đăng nhập.
+                                <Title level={4} style={{ margin: "12px 0 8px" }}>Bước 3: Điền Thông Tin Liên Hệ</Title>
+                                <Paragraph type="secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>
+                                    Chỉ cần nhập tên và số điện thoại để hoàn tất giữ chỗ tức thì mà không bắt buộc phải đăng ký tài khoản.
                                 </Paragraph>
                             </Card>
                         </Col>
                     </Row>
                 </Card>
 
+                {/* 🏬 THƯƠNG HIỆU SALON NỔI BẬT (CAROUSEL SLIDER VỚI MŨI TÊN 2 BÊN) */}
+                {(loadingSalons || publicSalons.length > 0) && (
+                    <div style={{ marginBottom: 48, position: "relative" }}>
+                        <div style={{ marginBottom: 20 }}>
+                            <Title level={2} style={{ margin: 0, fontWeight: 700 }}>
+                                Thương Hiệu Salon Nổi Bật Trên SalonFlow
+                            </Title>
+                            <Text type="secondary" style={{ fontSize: 15 }}>
+                                Khám phá & chọn các thương hiệu Salon làm đẹp chất lượng cao đăng ký trên hệ thống.
+                            </Text>
+                        </div>
+
+                        <div style={{ position: "relative" }}>
+                            {/* Mũi tên trượt BÊN TRÁI (Chỉ hiển thị khi có TRÊN 4 Salon) */}
+                            {!loadingSalons && publicSalons.length > 4 && (
+                                <Button
+                                    shape="circle"
+                                    size="large"
+                                    icon={<LeftOutlined />}
+                                    onClick={scrollSalonsLeft}
+                                    style={{
+                                        position: "absolute",
+                                        left: -20,
+                                        top: "50%",
+                                        transform: "translateY(-50%)",
+                                        zIndex: 10,
+                                        boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+                                        backgroundColor: "#fff",
+                                        borderColor: "#e2e8f0"
+                                    }}
+                                />
+                            )}
+
+                            {/* Mũi tên trượt BÊN PHẢI (Chỉ hiển thị khi có TRÊN 4 Salon) */}
+                            {!loadingSalons && publicSalons.length > 4 && (
+                                <Button
+                                    shape="circle"
+                                    size="large"
+                                    icon={<RightOutlined />}
+                                    onClick={scrollSalonsRight}
+                                    style={{
+                                        position: "absolute",
+                                        right: -20,
+                                        top: "50%",
+                                        transform: "translateY(-50%)",
+                                        zIndex: 10,
+                                        boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+                                        backgroundColor: "#fff",
+                                        borderColor: "#e2e8f0"
+                                    }}
+                                />
+                            )}
+
+                            {/* Thanh trượt Carousel ngang mượt mà */}
+                            <div
+                                ref={salonScrollRef}
+                                style={{
+                                    display: "flex",
+                                    gap: 24,
+                                    overflowX: "auto",
+                                    scrollBehavior: "smooth",
+                                    padding: "8px 4px 20px",
+                                    msOverflowStyle: "none"
+                                }}
+                            >
+                                {loadingSalons
+                                    ? [1, 2, 3, 4].map((idx) => (
+                                        <div key={idx} style={{ flex: "0 0 calc(25% - 18px)", minWidth: 260, maxWidth: 300 }}>
+                                            <Card style={{ borderRadius: 20, height: 320, padding: 12 }}>
+                                                <Skeleton active avatar={{ shape: "square", size: 140 }} paragraph={{ rows: 3 }} />
+                                            </Card>
+                                        </div>
+                                    ))
+                                    : publicSalons.map((salon) => (
+                                        <div key={salon.id} style={{ flex: "0 0 calc(25% - 18px)", minWidth: 260, maxWidth: 300 }}>
+                                            <SalonCard salon={salon} />
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 🏬 CHI NHÁNH SALON NỔI BẬT */}
-                {branches.length > 0 && (
+                {(loadingBranches || branches.length > 0) && (
                     <div style={{ marginBottom: 48 }}>
                         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
                             <Col>
@@ -619,84 +631,54 @@ export default function HomePage() {
                             </Col>
                         </Row>
                         <Row gutter={[24, 24]}>
-                            {branches.slice(0, 3).map((branch, i) => (
-                                <Col xs={24} sm={12} md={8} key={branch.id}>
-                                    <Card
-                                        hoverable
-                                        onClick={() => navigate("/guest-booking")}
-                                        cover={
-                                            <div style={{ height: 180, overflow: "hidden", position: "relative" }}>
-                                                <img
-                                                    alt={branch.name}
-                                                    src={i === 0
-                                                        ? "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=800"
-                                                        : i === 1
-                                                            ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800"
-                                                            : "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800"
-                                                    }
-                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                                />
-                                                <Tag color="gold" style={{ position: "absolute", top: 12, left: 12, borderRadius: 10, fontWeight: 700 }}>
-                                                    ⭐ 4.9/5
-                                                </Tag>
-                                            </div>
-                                        }
-                                        style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 6px 20px rgba(0,0,0,0.04)" }}
-                                    >
-                                        <Title level={4} style={{ marginTop: 0, marginBottom: 8, color: "#1677ff" }}>
-                                            {branch.name}
-                                        </Title>
-                                        <Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 16 }}>
-                                            <EnvironmentOutlined style={{ marginRight: 6, color: "#ff4d4f" }} />
-                                            {branch.address || "Chi nhánh chính thức SalonFlow"}
-                                        </Paragraph>
-                                        <Button type="primary" ghost block shape="round" icon={<CalendarOutlined />}>
-                                            Đặt lịch tại chi nhánh này
-                                        </Button>
-                                    </Card>
-                                </Col>
-                            ))}
+                            {loadingBranches
+                                ? [1, 2, 3].map((idx) => (
+                                    <Col xs={24} sm={12} md={8} key={idx}>
+                                        <Card style={{ borderRadius: 20, height: 300, padding: 12 }}>
+                                            <Skeleton active avatar={{ shape: "square", size: 140 }} paragraph={{ rows: 3 }} />
+                                        </Card>
+                                    </Col>
+                                ))
+                                : branches.slice(0, 3).map((branch, i) => (
+                                    <Col xs={24} sm={12} md={8} key={branch.id}>
+                                        <Card
+                                            hoverable
+                                            onClick={() => navigate("/guest-booking")}
+                                            cover={
+                                                <div style={{ height: 180, overflow: "hidden", position: "relative" }}>
+                                                    <img
+                                                        alt={branch.name}
+                                                        src={i === 0
+                                                            ? "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=800"
+                                                            : i === 1
+                                                                ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800"
+                                                                : "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800"
+                                                        }
+                                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                                    />
+                                                    <Tag color="gold" style={{ position: "absolute", top: 12, left: 12, borderRadius: 10, fontWeight: 700 }}>
+                                                        ⭐ 4.9/5
+                                                    </Tag>
+                                                </div>
+                                            }
+                                            style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 6px 20px rgba(0,0,0,0.04)" }}
+                                        >
+                                            <Title level={4} style={{ marginTop: 0, marginBottom: 8, color: "#1677ff" }}>
+                                                {branch.name}
+                                            </Title>
+                                            <Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 16 }}>
+                                                <EnvironmentOutlined style={{ marginRight: 6, color: "#ff4d4f" }} />
+                                                {branch.address || "Chi nhánh chính thức SalonFlow"}
+                                            </Paragraph>
+                                            <Button type="primary" ghost block shape="round" icon={<CalendarOutlined />}>
+                                                Đặt lịch tại chi nhánh này
+                                            </Button>
+                                        </Card>
+                                    </Col>
+                                ))}
                         </Row>
                     </div>
                 )}
-
-                {/* ⭐ ĐÁNH GIÁ TỪ KHÁCH HÀNG THỰC TẾ */}
-                <div style={{ marginBottom: 40 }}>
-                    <Title level={2} style={{ textAlign: "center", marginBottom: 32, fontWeight: 700 }}>
-                        ⭐ Khách Hàng Nói Gì Về SalonFlow?
-                    </Title>
-                    <Row gutter={[24, 24]}>
-                        {testimonials.map((item, idx) => (
-                            <Col xs={24} md={8} key={idx}>
-                                <Card
-                                    bordered={false}
-                                    style={{
-                                        borderRadius: 20,
-                                        boxShadow: "0 8px 30px rgba(0,0,0,0.04)",
-                                        height: "100%",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "space-between"
-                                    }}
-                                >
-                                    <div>
-                                        <Rate disabled defaultValue={item.rating} style={{ fontSize: 16, color: "#faad14", marginBottom: 12 }} />
-                                        <Paragraph style={{ fontSize: 14, color: "#475569", lineHeight: 1.7, fontStyle: "italic", marginBottom: 20 }}>
-                                            "{item.comment}"
-                                        </Paragraph>
-                                    </div>
-                                    <Space size="middle">
-                                        <Avatar src={item.avatar} size={44} />
-                                        <div>
-                                            <Text strong style={{ display: "block", fontSize: 15 }}>{item.name}</Text>
-                                            <Text type="secondary" style={{ fontSize: 12 }}>{item.role}</Text>
-                                        </div>
-                                    </Space>
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
-                </div>
             </div>
         );
     }
@@ -747,7 +729,7 @@ export default function HomePage() {
                         </Space>
 
                         <Paragraph style={{ color: "rgba(255, 255, 255, 0.92)", fontSize: 16, marginTop: 16, marginBottom: 28, lineHeight: 1.6 }}>
-                            Chào mừng bạn quay lại hệ thống **SalonFlow**. Tận hưởng ưu đãi tích điểm 5%, đặt giữ chỗ ưu tiên và trải nghiệm các dịch vụ làm đẹp cao cấp ngay hôm nay!
+                            Chào mừng bạn quay lại hệ thống SalonFlow. Tận hưởng ưu đãi tích điểm 5%, đặt giữ chỗ ưu tiên và trải nghiệm các dịch vụ làm đẹp cao cấp ngay hôm nay!
                         </Paragraph>
 
                         <Space size="middle" wrap>
@@ -1097,87 +1079,6 @@ export default function HomePage() {
                 ) : (
                     /* Giao Diện Hội Viên Đầy Đủ Đẹp Như Bên Guest */
                     <div>
-                        {/* 🤖 WIDGET AI GỢI Ý DỊCH VỤ DÀNH RIÊNG CHO HỘI VIÊN */}
-                        <AiServiceRecommendationWidget userId={user?.id} limit={5} />
-
-                        {/* ✂️ DANH MỤC DỊCH VỤ NỔI BẬT DÀNH CHO HỘI VIÊN */}
-                        <div style={{ marginBottom: 48 }}>
-                            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-                                <Col>
-                                    <Title level={2} style={{ margin: 0, fontWeight: 700 }}>
-                                        ✂️ Khám Phá Dịch Vụ Làm Đẹp Nổi Bật
-                                    </Title>
-                                    <Text type="secondary" style={{ fontSize: 15 }}>
-                                        Dịch vụ chăm sóc sắc đẹp cao cấp thực hiện bởi đội ngũ Stylist tay nghề cao.
-                                    </Text>
-                                </Col>
-                                <Col>
-                                    <Button
-                                        type="primary"
-                                        ghost
-                                        shape="round"
-                                        icon={<ArrowRightOutlined />}
-                                        onClick={() => navigate("/services")}
-                                    >
-                                        Xem tất cả dịch vụ
-                                    </Button>
-                                </Col>
-                            </Row>
-
-                            <Row gutter={[24, 24]}>
-                                {featuredCategories.map((item, idx) => (
-                                    <Col xs={24} sm={12} lg={6} key={idx}>
-                                        <Card
-                                            hoverable
-                                            cover={
-                                                <div style={{ height: 200, overflow: "hidden", position: "relative" }}>
-                                                    <img
-                                                        alt={item.title}
-                                                        src={item.image}
-                                                        style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
-                                                        onMouseEnter={(e) => e.target.style.transform = "scale(1.08)"}
-                                                        onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                                                    />
-                                                    <Tag
-                                                        color={item.tagColor}
-                                                        style={{ position: "absolute", top: 12, right: 12, borderRadius: 10, fontWeight: 700, padding: "2px 10px" }}
-                                                    >
-                                                        {item.tag}
-                                                    </Tag>
-                                                </div>
-                                            }
-                                            style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 6px 20px rgba(0,0,0,0.04)", height: "100%" }}
-                                            bodyStyle={{ padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
-                                        >
-                                            <div>
-                                                <Title level={4} style={{ margin: "0 0 8px 0", fontSize: 18 }}>
-                                                    {item.title}
-                                                </Title>
-                                                <Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 16, height: 40, overflow: "hidden" }}>
-                                                    {item.desc}
-                                                </Paragraph>
-                                            </div>
-                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                <Text strong style={{ color: "#ff4d4f", fontSize: 16, fontWeight: 700 }}>
-                                                    {item.price}
-                                                </Text>
-                                                <Button
-                                                    type="primary"
-                                                    size="small"
-                                                    shape="round"
-                                                    icon={<CalendarOutlined />}
-                                                    onClick={() => navigate("/booking")}
-                                                >
-                                                    Đặt ngay
-                                                </Button>
-                                            </div>
-                                        </Card>
-                                    </Col>
-                                ))}
-                            </Row>
-                        </div>
-
-
                         {/* 🏬 CHI NHÁNH SALON NỔI BẬT */}
                         {branches.length > 0 && (
                             <div style={{ marginBottom: 48 }}>
@@ -1247,7 +1148,7 @@ export default function HomePage() {
                                 {testimonials.map((item, idx) => (
                                     <Col xs={24} md={8} key={idx}>
                                         <Card
-                                            bordered={false}
+                                            variant="borderless"
                                             style={{
                                                 borderRadius: 20,
                                                 boxShadow: "0 8px 30px rgba(0,0,0,0.04)",

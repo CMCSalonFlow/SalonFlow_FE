@@ -177,9 +177,20 @@ export default function GuestBookingPage() {
                     getPublicStaffByBranchApi(selectedBranchId)
                 ]);
 
-                setServices((servicesData || []).filter(s => s.isActive !== false));
+                const activeServices = (servicesData || []).filter(s => s.isActive !== false);
+                setServices(activeServices);
                 setBundles(bundlesData || []);
                 setStaffList(staffData || []);
+
+                // Auto-select service from URL query params if present
+                const searchParams = new URLSearchParams(window.location.search);
+                const queryServiceId = searchParams.get("serviceId");
+                if (queryServiceId) {
+                    const targetService = activeServices.find(s => String(s.id) === String(queryServiceId));
+                    if (targetService) {
+                        setSelectedServices([targetService]);
+                    }
+                }
 
                 // Fetch System Off-Days for the selected branch
                 const todayStr = dayjs().format("YYYY-MM-DD");

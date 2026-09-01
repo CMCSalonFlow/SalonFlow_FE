@@ -129,11 +129,13 @@ export const setupGlobalAuthListener = () => {
             path === "/force-change-password" ||
             path === "/oauth2/success" ||
             path === "/search" ||
+            path === "/nearby" ||
             path === "/services" ||
             path === "/guest-booking" ||
             path === "/public-booking" ||
             path === "/booking/pay-at-counter-success" ||
-            path === "/payment/callback";
+            path === "/payment/callback" ||
+            path.startsWith("/salons");
 
         if (!token && !isPublicPath) {
             localStorage.clear();
