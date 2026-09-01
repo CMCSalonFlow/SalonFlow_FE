@@ -12,10 +12,15 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
+
       workbox: {
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+
         globPatterns: ["**/*.{js,css,html,png,svg,woff2,ico}"],
+
         navigateFallbackDenylist: [
-          /^\/api\//,
           /^\/oauth2\//,
           /^\/login\/oauth2\//,
         ],
