@@ -126,25 +126,201 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08) !important;
 }
 
+/* ─── Hero Banner Responsive Helpers ─────────────────────────────────────── */
+.home-hero-card .ant-card-body {
+  padding: 36px 32px !important;
+}
+
+.home-member-card .ant-card-body {
+  padding: 32px 24px !important;
+}
+
+.hero-member-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.hero-member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-member-info .member-greeting {
+  font-size: 26px !important;
+  color: #fff !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.member-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.home-hero-card .hero-tag {
+  padding: 6px 16px !important;
+  font-size: 13px !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  display: inline-block !important;
+  max-width: 100% !important;
+}
+
+.home-hero-card .hero-title {
+  font-size: 38px !important;
+  line-height: 1.2;
+}
+
+.home-hero-card .hero-desc {
+  font-size: 16px !important;
+}
+
+.hero-buttons-wrap {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  margin-bottom: 32px;
+}
+
+.hero-member-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  margin-bottom: 28px;
+}
+
+.hero-loyalty-card .ant-card-body {
+  padding: 20px 16px !important;
+}
+
+.hero-loyalty-banner {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 14px 18px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 /* ─── Responsive Media Queries ───────────────────────────────────────────── */
 @media (max-width: 768px) {
   .home-hero-card {
     border-radius: 20px !important;
     margin-bottom: 24px !important;
   }
-  
-  .home-hero-card h1 {
-    font-size: 28px !important;
+
+  .home-hero-card .ant-card-body {
+    padding: 28px 24px !important;
+  }
+
+  .home-member-card .ant-card-body {
+    padding: 28px 20px !important;
+  }
+
+  .home-hero-card .hero-title {
+    font-size: 30px !important;
   }
 }
 
 @media (max-width: 576px) {
-  .home-hero-card h1 {
+  .home-hero-card .ant-card-body {
+    padding: 24px 16px !important;
+  }
+
+  .home-member-card .ant-card-body {
+    padding: 24px 16px !important;
+  }
+
+  .hero-member-header {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-member-info .member-greeting {
+    font-size: 20px !important;
+    text-align: center;
+  }
+
+  .member-badges {
+    justify-content: center;
+  }
+
+  .home-hero-card .hero-tag {
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .home-hero-card .hero-title {
     font-size: 24px !important;
   }
 
-  .home-hero-card .ant-card-body {
-    padding: 20px 14px !important;
+  .home-hero-card .hero-desc {
+    font-size: 14px !important;
+  }
+
+  .hero-buttons-wrap {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .hero-buttons-wrap .ant-btn {
+    width: 100% !important;
+    height: 48px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .hero-member-buttons {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .hero-member-buttons .ant-btn {
+    width: 100% !important;
+    height: 46px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .hero-loyalty-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .hero-loyalty-banner .ant-space {
+    width: 100%;
+  }
+
+  .hero-loyalty-banner .ant-btn {
+    width: 100% !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+  }
+
+  .hero-features-row {
+    text-align: center;
+  }
+
+  .hero-features-row .ant-space {
+    width: 100%;
+    justify-content: center;
   }
 
   .home-glass-card {
