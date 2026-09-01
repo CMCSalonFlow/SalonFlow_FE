@@ -160,10 +160,6 @@ export default function AppHeader() {
                 label: "Tìm salon"
             },
             {
-                key: "/services",
-                label: "Dịch vụ"
-            },
-            {
                 key: "/hair-ai",
                 label: "Hair AI"
             },
@@ -184,10 +180,6 @@ export default function AppHeader() {
             {
                 key: "/search",
                 label: "Tìm salon"
-            },
-            {
-                key: "/services",
-                label: "Dịch vụ"
             },
             {
                 key: "/guest-booking",
@@ -292,20 +284,23 @@ export default function AppHeader() {
 
             {screens.md ? (
                 <>
-                    <Menu
-                        mode="horizontal"
-                        selectedKeys={[selectedKey]}
-                        items={menuItems}
-                        onClick={({ key }) => navigate(key)}
-                        style={{
-                            flex: 1,
-                            justifyContent: "center",
-                            borderBottom: 0,
-                            fontSize: "17px",
-                            fontWeight: 600,
-                            gap: "32px"
-                        }}
-                    />
+                    <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", justifyContent: "center" }}>
+                        <Menu
+                            mode="horizontal"
+                            selectedKeys={[selectedKey]}
+                            items={menuItems}
+                            onClick={({ key }) => navigate(key)}
+                            style={{
+                                borderBottom: 0,
+                                fontSize: "16px",
+                                fontWeight: 600,
+                                background: "transparent",
+                                display: "flex",
+                                justifyContent: "center",
+                                gap: "24px"
+                            }}
+                        />
+                    </div>
 
                     {isLogin ? (
                         <Space size={12}>
@@ -416,7 +411,7 @@ export default function AppHeader() {
                 placement="right"
                 onClose={() => setDrawerVisible(false)}
                 open={drawerVisible}
-                width={260}
+                styles={{ wrapper: { width: 260 } }}
             >
                 <Menu
                     mode="inline"

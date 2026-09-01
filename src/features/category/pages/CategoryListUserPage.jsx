@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "@/core/api/endpoints";
 import {
     Card,
@@ -15,7 +15,8 @@ import {
     Divider,
     Rate,
     Badge,
-    Spin
+    Spin,
+    Select
 } from "antd";
 import {
     CalendarOutlined,
@@ -28,18 +29,37 @@ import {
     StarOutlined,
     HeartOutlined,
     SmileOutlined,
-    InfoCircleOutlined
+    InfoCircleOutlined,
+    ShopOutlined
 } from "@ant-design/icons";
+
+import SalonStorefrontHeader from "@/features/salon/components/SalonStorefrontHeader";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function CategoryListUserPage() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const urlSalonId = searchParams.get("salonId") || "ALL";
+
     const [selectedCategory, setSelectedCategory] = useState("ALL");
+    const [selectedSalonId, setSelectedSalonId] = useState(urlSalonId);
     const [searchTerm, setSearchTerm] = useState("");
     const [detailModalService, setDetailModalService] = useState(null);
     const [categoriesFromApi, setCategoriesFromApi] = useState([]);
+    const [publicSalons, setPublicSalons] = useState([]);
+    const [apiServices, setApiServices] = useState([]);
+    const [apiBranches, setApiBranches] = useState([]);
     const [loadingApi, setLoadingApi] = useState(false);
+
+    useEffect(() => {
+        const sId = searchParams.get("salonId");
+        if (sId) {
+            setSelectedSalonId(sId);
+        } else {
+            setSelectedSalonId("ALL");
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -57,8 +77,77 @@ export default function CategoryListUserPage() {
             }
         };
 
+        const fetchSalons = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/salons/public`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setPublicSalons(data || []);
+                }
+            } catch (err) {
+                setPublicSalons([]);
+            }
+        };
+
         fetchCategories();
+        fetchSalons();
     }, []);
+
+    useEffect(() => {
+        const fetchSalonServices = async () => {
+            if (selectedSalonId === "ALL") {
+                setApiServices([]);
+                return;
+            }
+
+            try {
+                setLoadingApi(true);
+                const branchesRes = await fetch(`${API_BASE_URL}/api/v1/branches/public?salonId=${selectedSalonId}`);
+                let branchList = [];
+                if (branchesRes.ok) {
+                    branchList = await branchesRes.json();
+                    setApiBranches(branchList || []);
+                } else {
+                    setApiBranches([]);
+                }
+
+                if (branchList.length === 0) {
+                    setApiServices([]);
+                    return;
+                }
+
+                const branchId = branchList[0].id || branchList[0].branchId;
+                const servicesRes = await fetch(`${API_BASE_URL}/api/v1/branches/${branchId}/services/public`);
+                if (servicesRes.ok) {
+                    const sData = await servicesRes.json();
+                    const mappedServices = (sData || []).map((s) => ({
+                        id: s.id,
+                        name: s.name || s.serviceName,
+                        category: s.categoryName || "DỊCH VỤ SALON",
+                        price: s.price ? `${Number(s.price).toLocaleString("vi-VN")}đ` : "100.000đ",
+                        duration: s.durationMinutes ? `${s.durationMinutes} phút` : "30 phút",
+                        tag: s.isFeatured ? "HOT" : "NỔI BẬT",
+                        tagColor: "purple",
+                        rating: s.rating || 5.0,
+                        reviewsCount: s.reviewsCount || 10,
+                        image: s.imageUrl || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800",
+                        shortDesc: s.description || "Dịch vụ làm đẹp chất lượng cao.",
+                        benefits: ["Thực hiện bởi thợ chuyên nghiệp", "Mỹ phẩm chính hãng 100%"],
+                        procedure: ["Bước 1: Tư vấn dáng tóc.", "Bước 2: Thực hiện dịch vụ.", "Bước 3: Hoàn thiện & hướng dẫn chăm sóc."]
+                    }));
+                    setApiServices(mappedServices);
+                } else {
+                    setApiServices([]);
+                }
+            } catch (err) {
+                setApiServices([]);
+            } finally {
+                setLoadingApi(false);
+            }
+        };
+
+        fetchSalonServices();
+    }, [selectedSalonId]);
 
     // Danh sách Dịch vụ & Combo Làm Đẹp Phong Phú & Chi Tiết
     const servicesCatalog = [
@@ -329,8 +418,9 @@ export default function CategoryListUserPage() {
         }
     ];
 
-    // Lọc dịch vụ theo danh mục và từ khóa tìm kiếm
-    const filteredServices = servicesCatalog.filter(service => {
+    // Lọc dịch vụ theo Salon, danh mục và từ khóa tìm kiếm
+    const activeCatalog = (selectedSalonId !== "ALL" && apiServices.length > 0) ? apiServices : servicesCatalog;
+    const filteredServices = activeCatalog.filter(service => {
         const matchesCategory = selectedCategory === "ALL" || service.category === selectedCategory;
         const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                               service.shortDesc.toLowerCase().includes(searchTerm.toLowerCase());
@@ -348,73 +438,80 @@ export default function CategoryListUserPage() {
 
     return (
         <div style={{ maxWidth: 1240, margin: "20px auto 60px", padding: "0 20px" }}>
-            {/* 🌟 HERO BANNER GIỚI THIỆU BẢNG GIÁ & DỊCH VỤ */}
-            <Card
-                style={{
-                    borderRadius: 28,
-                    border: "none",
-                    background: "linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #1677ff 100%)",
-                    color: "#fff",
-                    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
-                    marginBottom: 40,
-                    padding: "30px 24px"
-                }}
-            >
-                <Row align="middle" gutter={[32, 32]}>
-                    <Col xs={24} md={15}>
-                        <Tag color="cyan" style={{ borderRadius: 20, padding: "4px 14px", fontSize: 13, fontWeight: 700, marginBottom: 14, border: "none" }}>
-                            💎 BẢNG GIÁ DỊCH VỤ & COMBO LÀM ĐẸP CHÍNH THỨC
-                        </Tag>
-                        <Title level={1} style={{ color: "#fff", margin: 0, fontSize: 36, fontWeight: 800 }}>
-                            Dịch Vụ Làm Đẹp Đa Dạng Tại SalonFlow
-                        </Title>
-                        <Paragraph style={{ color: "rgba(255, 255, 255, 0.88)", fontSize: 16, marginTop: 12, marginBottom: 24, lineHeight: 1.7 }}>
-                            Khám phá menu làm đẹp phong phú từ Cắt tạo kiểu, Uốn nhuộm cao cấp L'Oréal, Gội đầu dưỡng sinh 14 bước đến chăm sóc Nail Art. **Đặt lịch vãng lai giữ chỗ trong 30 giây**!
-                        </Paragraph>
-
-                        <Space size="middle" wrap>
-                            <Button
-                                type="primary"
-                                size="large"
-                                icon={<CalendarOutlined />}
-                                onClick={() => navigate("/guest-booking")}
-                                style={{
-                                    height: 50,
-                                    padding: "0 30px",
-                                    borderRadius: 25,
-                                    fontSize: 16,
-                                    fontWeight: 700,
-                                    backgroundColor: "#ff4d4f",
-                                    borderColor: "#ff4d4f",
-                                    boxShadow: "0 8px 20px rgba(255, 77, 79, 0.4)"
-                                }}
-                            >
-                                Đặt lịch vãng lai giữ chỗ
-                            </Button>
-                        </Space>
-                    </Col>
-
-                    <Col xs={24} md={9} style={{ textAlign: "center" }}>
-                        <div style={{
-                            background: "rgba(255, 255, 255, 0.12)",
-                            backdropFilter: "blur(12px)",
-                            padding: 24,
-                            borderRadius: 24,
-                            border: "1px solid rgba(255, 255, 255, 0.25)"
-                        }}>
-                            <SafetyCertificateOutlined style={{ fontSize: 44, color: "#52c41a", marginBottom: 10 }} />
-                            <Title level={4} style={{ color: "#fff", margin: "0 0 6px 0" }}>
-                                Cam Kết Chất Lượng 100%
+            {/* 🌟 HERO BANNER GIỚI THIỆU / HỒ SƠ SALON STOREFRONT */}
+            {selectedSalonId !== "ALL" && publicSalons.find(s => String(s.id) === String(selectedSalonId)) ? (
+                <SalonStorefrontHeader
+                    salon={publicSalons.find(s => String(s.id) === String(selectedSalonId))}
+                    branches={apiBranches}
+                />
+            ) : (
+                <Card
+                    style={{
+                        borderRadius: 28,
+                        border: "none",
+                        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #1677ff 100%)",
+                        color: "#fff",
+                        boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
+                        marginBottom: 40,
+                        padding: "30px 24px"
+                    }}
+                >
+                    <Row align="middle" gutter={[32, 32]}>
+                        <Col xs={24} md={15}>
+                            <Tag color="cyan" style={{ borderRadius: 20, padding: "4px 14px", fontSize: 13, fontWeight: 700, marginBottom: 14, border: "none" }}>
+                                💎 BẢNG GIÁ DỊCH VỤ & COMBO LÀM ĐẸP CHÍNH THỨC
+                            </Tag>
+                            <Title level={1} style={{ color: "#fff", margin: 0, fontSize: 36, fontWeight: 800 }}>
+                                Dịch Vụ Làm Đẹp Đa Dạng Tại SalonFlow
                             </Title>
-                            <Text style={{ color: "rgba(255, 255, 255, 0.85)", display: "block", fontSize: 13 }}>
-                                ✔️ 100% Mỹ phẩm nhập khẩu (L'Oréal, Olaplex, OPI)<br />
-                                ✔️ Bảo hành kiểu tóc 7 ngày miễn phí<br />
-                                ✔️ 100% Stylist hơn 5 năm kinh nghiệm
-                            </Text>
-                        </div>
-                    </Col>
-                </Row>
-            </Card>
+                            <Paragraph style={{ color: "rgba(255, 255, 255, 0.88)", fontSize: 16, marginTop: 12, marginBottom: 24, lineHeight: 1.7 }}>
+                                Khám phá menu làm đẹp phong phú từ Cắt tạo kiểu, Uốn nhuộm cao cấp L'Oréal, Gội đầu dưỡng sinh 14 bước đến chăm sóc Nail Art. **Đặt lịch vãng lai giữ chỗ trong 30 giây**!
+                            </Paragraph>
+
+                            <Space size="middle" wrap>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    icon={<CalendarOutlined />}
+                                    onClick={() => navigate("/guest-booking")}
+                                    style={{
+                                        height: 50,
+                                        padding: "0 30px",
+                                        borderRadius: 25,
+                                        fontSize: 16,
+                                        fontWeight: 700,
+                                        backgroundColor: "#ff4d4f",
+                                        borderColor: "#ff4d4f",
+                                        boxShadow: "0 8px 20px rgba(255, 77, 79, 0.4)"
+                                    }}
+                                >
+                                    Đặt lịch vãng lai giữ chỗ
+                                </Button>
+                            </Space>
+                        </Col>
+
+                        <Col xs={24} md={9} style={{ textAlign: "center" }}>
+                            <div style={{
+                                background: "rgba(255, 255, 255, 0.12)",
+                                backdropFilter: "blur(12px)",
+                                padding: 24,
+                                borderRadius: 24,
+                                border: "1px solid rgba(255, 255, 255, 0.25)"
+                            }}>
+                                <SafetyCertificateOutlined style={{ fontSize: 44, color: "#52c41a", marginBottom: 10 }} />
+                                <Title level={4} style={{ color: "#fff", margin: "0 0 6px 0" }}>
+                                    Cam Kết Chất Lượng 100%
+                                </Title>
+                                <Text style={{ color: "rgba(255, 255, 255, 0.85)", display: "block", fontSize: 13 }}>
+                                    ✔️ 100% Mỹ phẩm nhập khẩu (L'Oréal, Olaplex, OPI)<br />
+                                    ✔️ Bảo hành kiểu tóc 7 ngày miễn phí<br />
+                                    ✔️ 100% Stylist hơn 5 năm kinh nghiệm
+                                </Text>
+                            </div>
+                        </Col>
+                    </Row>
+                </Card>
+            )}
 
             {/* 🔍 TÌM KIẾM & BỘ LỌC DANH MỤC */}
             <Card
@@ -425,16 +522,30 @@ export default function CategoryListUserPage() {
                     border: "1px solid #f1f5f9"
                 }}
             >
-                <Row gutter={[20, 20]} align="middle" justify="space-between">
-                    <Col xs={24} md={14}>
-                        <Tabs
-                            activeKey={selectedCategory}
-                            onChange={(key) => setSelectedCategory(key)}
-                            items={categoryTabs}
-                            tabBarStyle={{ marginBottom: 0 }}
+                <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 16 }}>
+                    <Col xs={24} sm={12} md={8}>
+                        <Select
+                            size="large"
+                            value={selectedSalonId}
+                            onChange={(val) => {
+                                setSelectedSalonId(val);
+                                if (val !== "ALL") {
+                                    setSearchParams({ salonId: val });
+                                } else {
+                                    setSearchParams({});
+                                }
+                            }}
+                            style={{ width: "100%" }}
+                            options={[
+                                { value: "ALL", label: "🏬 Tất cả Thương hiệu Salon" },
+                                ...publicSalons.map((s) => ({
+                                    value: String(s.id),
+                                    label: `🏬 ${s.name}`
+                                }))
+                            ]}
                         />
                     </Col>
-                    <Col xs={24} md={10}>
+                    <Col xs={24} sm={12} md={16}>
                         <Input
                             placeholder="Tìm kiếm dịch vụ, uốn nhuộm, spa, nail..."
                             prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
@@ -443,6 +554,16 @@ export default function CategoryListUserPage() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             style={{ borderRadius: 14 }}
+                        />
+                    </Col>
+                </Row>
+                <Row gutter={[20, 20]} align="middle" justify="space-between">
+                    <Col xs={24}>
+                        <Tabs
+                            activeKey={selectedCategory}
+                            onChange={(key) => setSelectedCategory(key)}
+                            items={categoryTabs}
+                            tabBarStyle={{ marginBottom: 0 }}
                         />
                     </Col>
                 </Row>

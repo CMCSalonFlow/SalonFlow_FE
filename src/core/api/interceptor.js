@@ -27,9 +27,11 @@ const isPublicRoute = (pathname) => {
         pathname === "/booking/pay-at-counter-success" ||
         pathname === "/payment/callback" ||
         pathname === "/search" ||
+        pathname === "/nearby" ||
         pathname === "/categories" ||
         pathname === "/login" ||
-        pathname === "/register"
+        pathname === "/register" ||
+        pathname.startsWith("/salons")
     );
 };
 
@@ -86,12 +88,15 @@ export function attachInterceptors(api) {
                     return Promise.reject(error);
                 }
                 
+                const clearAuthAndRedirect = () => {
+                    localStorage.clear();
+                    sessionStorage.removeItem("homepage_stats");
+                    window.location.href = "/login";
+                };
+
                 // If it is the login or refresh token request itself, don't try to refresh to prevent loops
                 if (originalRequest.url?.includes(ENDPOINTS.LOGIN) || originalRequest.url?.includes(ENDPOINTS.REFRESH_TOKEN)) {
-                    localStorage.clear();
-                    if (!isPublicRoute(window.location.pathname)) {
-                        window.location.href = "/";
-                    }
+                    clearAuthAndRedirect();
                     return Promise.reject(error);
                 }
 
@@ -153,10 +158,7 @@ export function attachInterceptors(api) {
                         };
                         sessionStorage.setItem("lastAuthError", JSON.stringify(errorInfo));
 
-                        localStorage.clear();
-                        if (!isPublicRoute(window.location.pathname)) {
-                            window.location.href = "/";
-                        }
+                        clearAuthAndRedirect();
                         return Promise.reject(refreshError);
                     }
                 } else {
@@ -169,10 +171,7 @@ export function attachInterceptors(api) {
                     };
                     sessionStorage.setItem("lastAuthError", JSON.stringify(errorInfo));
 
-                    localStorage.clear();
-                    if (!isPublicRoute(window.location.pathname)) {
-                        window.location.href = "/";
-                    }
+                    clearAuthAndRedirect();
                 }
             }
             return Promise.reject(error);

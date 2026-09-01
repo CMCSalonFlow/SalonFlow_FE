@@ -77,6 +77,7 @@ const StaffAppointmentsPage = lazy(() => import("@/features/booking/pages/StaffA
 const PayAtCounterSuccessPage = lazy(() => import("@/features/booking/pages/PayAtCounterSuccessPage"));
 const HelpCenterPage = lazy(() => import("@/features/support/pages/HelpCenterPage"));
 const NearbySalonsPage = lazy(() => import("@/features/geolocation/pages/NearbySalonsPage"));
+const SalonStorefrontPage = lazy(() => import("@/features/salon/pages/SalonStorefrontPage"));
 
 // Reusable page loader fallback
 const PageLoader = () => (
@@ -376,7 +377,7 @@ const router = createBrowserRouter([
             },
             {
                 path: "services",
-                element: withSuspense(CategoryListUserPage)
+                element: <Navigate to="/search" replace />
             },
             {
                 path: "nearby",
@@ -385,6 +386,10 @@ const router = createBrowserRouter([
             {
                 path: "salons/nearby",
                 element: withSuspense(SearchPage)
+            },
+            {
+                path: "salons/:salonId",
+                element: withSuspense(SalonStorefrontPage)
             },
             {
                 path: "guest-booking",
@@ -413,6 +418,10 @@ const router = createBrowserRouter([
             {
                 path: "/salons/nearby",
                 element: withSuspense(SearchPage)
+            },
+            {
+                path: "/salons/:salonId",
+                element: withSuspense(SalonStorefrontPage)
             },
             {
                 path: "/booking",
