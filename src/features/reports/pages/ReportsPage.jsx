@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Card, Row, Col, Typography, Button, Space, Select, DatePicker,
-  Table, Tag, Spin, Segmented, message, Progress, Avatar, Tooltip, Empty
+  Table, Tag, Spin, Segmented, message, Progress, Avatar, Tooltip, Empty, Grid
 } from 'antd';
 import {
   FileExcelOutlined, FilePdfOutlined, MailOutlined, ReloadOutlined,
@@ -56,39 +56,48 @@ function KpiCard({ title, value, sub, icon, color, growth }) {
         borderRadius: 16, border: 'none',
         background: `linear-gradient(135deg, ${color}15 0%, ${color}05 100%)`,
         boxShadow: `0 4px 20px ${color}20`,
-        height: '100%'
+        height: '100%',
+        overflow: 'hidden'
       }}
-      bodyStyle={{ padding: '16px 18px' }}
+      styles={{ body: { padding: '14px 14px' } }}
     >
-      <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ color: '#64748b', fontSize: 12, fontWeight: 500, letterSpacing: 0.3 }}>{title}</Text>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', lineHeight: 1.2, margin: '4px 0 3px', wordBreak: 'break-all' }}>
-            {value}
-          </div>
-          <Text style={{ color: '#94a3b8', fontSize: 11 }}>{sub}</Text>
-          {growth !== undefined && growth !== null && (
-            <div style={{ marginTop: 6 }}>
-              <Tag
-                color={isUp ? 'success' : isDown ? 'error' : 'default'}
-                icon={isUp ? <ArrowUpOutlined /> : isDown ? <ArrowDownOutlined /> : null}
-                style={{ fontWeight: 600, fontSize: 11, borderRadius: 6 }}
-              >
-                {isUp ? '+' : ''}{growth?.toFixed(1)}% so với cùng kỳ
-              </Tag>
-            </div>
-          )}
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: 600, letterSpacing: 0.2, flex: 1, minWidth: 0 }}>
+          {title}
+        </Text>
         <div style={{
-          width: 46, height: 46, borderRadius: 12,
+          width: 36, height: 36, borderRadius: 10,
           background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontSize: 20, flexShrink: 0,
-          boxShadow: `0 4px 12px ${color}50`
+          color: '#fff', fontSize: 16, flexShrink: 0,
+          boxShadow: `0 4px 10px ${color}40`
         }}>
           {icon}
         </div>
-      </Space>
+      </div>
+      <div style={{
+        fontSize: 19, fontWeight: 800, color: '#1e293b',
+        lineHeight: 1.25, margin: '2px 0 4px',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
+      }}>
+        {value}
+      </div>
+      <Text style={{ color: '#94a3b8', fontSize: 11, display: 'block', lineHeight: 1.3 }}>{sub}</Text>
+      {growth !== undefined && growth !== null && (
+        <div style={{ marginTop: 6 }}>
+          <Tag
+            color={isUp ? 'success' : isDown ? 'error' : 'default'}
+            icon={isUp ? <ArrowUpOutlined /> : isDown ? <ArrowDownOutlined /> : null}
+            style={{
+              fontWeight: 600, fontSize: 10, borderRadius: 6, margin: 0,
+              maxWidth: '100%', whiteSpace: 'normal', lineHeight: 1.4, padding: '2px 6px'
+            }}
+          >
+            {isUp ? '+' : ''}{growth?.toFixed(1)}% so với cùng kỳ
+          </Tag>
+        </div>
+      )}
     </Card>
   );
 }
@@ -707,8 +716,8 @@ export default function ReportsPage() {
                   {effectiveFrom} — {effectiveTo}
                 </Text>
               }
-              style={{ borderRadius: 16, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
-              bodyStyle={{ padding: 0 }}
+              style={{ borderRadius: 16, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}
+              styles={{ body: { padding: 0 } }}
             >
               <Table
                 dataSource={getDataSource()}
@@ -729,7 +738,6 @@ export default function ReportsPage() {
           .peak-row:hover td { background: #fef3c7 !important; }
           @media (max-width: 576px) {
             .ant-card-head { padding: 0 12px; }
-            .ant-card-body { padding: 12px !important; }
             .ant-table { font-size: 12px; }
             .ant-tag { font-size: 10px; padding: 0 4px; }
             .ant-segmented-item-label { font-size: 12px; padding: 0 6px; }

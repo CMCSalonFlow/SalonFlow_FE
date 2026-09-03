@@ -266,6 +266,7 @@ export default function CategoryListPage() {
                     dataSource={filteredCategories}
                     rowKey="id"
                     loading={loading}
+                    scroll={{ x: 650 }}
                     pagination={{
                         pageSize: 10,
                         showSizeChanger: true,

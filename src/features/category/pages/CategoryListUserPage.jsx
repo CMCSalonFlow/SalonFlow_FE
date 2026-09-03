@@ -16,7 +16,8 @@ import {
     Rate,
     Badge,
     Spin,
-    Select
+    Select,
+    Grid
 } from "antd";
 import {
     CalendarOutlined,
@@ -34,10 +35,13 @@ import {
 } from "@ant-design/icons";
 
 import SalonStorefrontHeader from "@/features/salon/components/SalonStorefrontHeader";
+import { isAuthenticated } from "@/core/utils/auth";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function CategoryListUserPage() {
+    const screens = Grid.useBreakpoint();
+    const isLogin = isAuthenticated();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const urlSalonId = searchParams.get("salonId") || "ALL";
@@ -437,7 +441,12 @@ export default function CategoryListUserPage() {
     ];
 
     return (
-        <div style={{ maxWidth: 1240, margin: "20px auto 60px", padding: "0 20px" }}>
+        <div style={{
+            maxWidth: 1240,
+            margin: screens.xs ? "12px auto 40px" : "20px auto 60px",
+            padding: screens.xs ? "0 12px" : "0 20px",
+            overflowX: "hidden"
+        }}>
             {/* 🌟 HERO BANNER GIỚI THIỆU / HỒ SƠ SALON STOREFRONT */}
             {selectedSalonId !== "ALL" && publicSalons.find(s => String(s.id) === String(selectedSalonId)) ? (
                 <SalonStorefrontHeader
@@ -447,62 +456,102 @@ export default function CategoryListUserPage() {
             ) : (
                 <Card
                     style={{
-                        borderRadius: 28,
+                        borderRadius: screens.xs ? 20 : 28,
                         border: "none",
                         background: "linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #1677ff 100%)",
                         color: "#fff",
                         boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
-                        marginBottom: 40,
-                        padding: "30px 24px"
+                        marginBottom: screens.xs ? 24 : 40,
+                        overflow: "hidden"
+                    }}
+                    styles={{
+                        body: {
+                            padding: screens.xs ? "24px 16px" : "36px 32px"
+                        }
                     }}
                 >
-                    <Row align="middle" gutter={[32, 32]}>
+                    <Row align="middle" gutter={screens.xs ? [20, 20] : [32, 32]}>
                         <Col xs={24} md={15}>
-                            <Tag color="cyan" style={{ borderRadius: 20, padding: "4px 14px", fontSize: 13, fontWeight: 700, marginBottom: 14, border: "none" }}>
+                            <Tag
+                                color="cyan"
+                                style={{
+                                    borderRadius: 20,
+                                    padding: screens.xs ? "4px 10px" : "4px 14px",
+                                    fontSize: screens.xs ? 11 : 13,
+                                    fontWeight: 700,
+                                    marginBottom: 12,
+                                    border: "none",
+                                    whiteSpace: "normal",
+                                    wordBreak: "break-word",
+                                    lineHeight: 1.4,
+                                    maxWidth: "100%",
+                                    display: "inline-flex",
+                                    alignItems: "center"
+                                }}
+                            >
                                 💎 BẢNG GIÁ DỊCH VỤ & COMBO LÀM ĐẸP CHÍNH THỨC
                             </Tag>
-                            <Title level={1} style={{ color: "#fff", margin: 0, fontSize: 36, fontWeight: 800 }}>
+                            <Title
+                                level={1}
+                                style={{
+                                    color: "#fff",
+                                    margin: 0,
+                                    fontSize: screens.xs ? 24 : 36,
+                                    fontWeight: 800,
+                                    lineHeight: screens.xs ? 1.25 : 1.2
+                                }}
+                            >
                                 Dịch Vụ Làm Đẹp Đa Dạng Tại SalonFlow
                             </Title>
-                            <Paragraph style={{ color: "rgba(255, 255, 255, 0.88)", fontSize: 16, marginTop: 12, marginBottom: 24, lineHeight: 1.7 }}>
-                                Khám phá menu làm đẹp phong phú từ Cắt tạo kiểu, Uốn nhuộm cao cấp L'Oréal, Gội đầu dưỡng sinh 14 bước đến chăm sóc Nail Art. **Đặt lịch vãng lai giữ chỗ trong 30 giây**!
+                            <Paragraph
+                                style={{
+                                    color: "rgba(255, 255, 255, 0.88)",
+                                    fontSize: screens.xs ? 14 : 16,
+                                    marginTop: 10,
+                                    marginBottom: 20,
+                                    lineHeight: 1.6
+                                }}
+                            >
+                                Khám phá menu làm đẹp phong phú từ Cắt tạo kiểu, Uốn nhuộm cao cấp L'Oréal, Gội đầu dưỡng sinh 14 bước đến chăm sóc Nail Art. <strong style={{ color: "#fff" }}>{isLogin ? "Đặt lịch giữ chỗ trong 30 giây!" : "Đặt lịch vãng lai giữ chỗ trong 30 giây!"}</strong>
                             </Paragraph>
 
-                            <Space size="middle" wrap>
+                            <div style={{ width: screens.xs ? "100%" : "auto" }}>
                                 <Button
                                     type="primary"
                                     size="large"
+                                    block={screens.xs}
                                     icon={<CalendarOutlined />}
-                                    onClick={() => navigate("/guest-booking")}
+                                    onClick={() => navigate(isLogin ? "/booking" : "/guest-booking")}
                                     style={{
-                                        height: 50,
-                                        padding: "0 30px",
+                                        height: screens.xs ? 46 : 50,
+                                        padding: screens.xs ? "0 18px" : "0 30px",
                                         borderRadius: 25,
-                                        fontSize: 16,
+                                        fontSize: screens.xs ? 15 : 16,
                                         fontWeight: 700,
                                         backgroundColor: "#ff4d4f",
                                         borderColor: "#ff4d4f",
-                                        boxShadow: "0 8px 20px rgba(255, 77, 79, 0.4)"
+                                        boxShadow: "0 8px 20px rgba(255, 77, 79, 0.4)",
+                                        width: screens.xs ? "100%" : "auto"
                                     }}
                                 >
-                                    Đặt lịch vãng lai giữ chỗ
+                                    {isLogin ? "Đặt lịch giữ chỗ ngay" : "Đặt lịch vãng lai giữ chỗ"}
                                 </Button>
-                            </Space>
+                            </div>
                         </Col>
 
                         <Col xs={24} md={9} style={{ textAlign: "center" }}>
                             <div style={{
                                 background: "rgba(255, 255, 255, 0.12)",
                                 backdropFilter: "blur(12px)",
-                                padding: 24,
-                                borderRadius: 24,
+                                padding: screens.xs ? "16px 14px" : 24,
+                                borderRadius: screens.xs ? 18 : 24,
                                 border: "1px solid rgba(255, 255, 255, 0.25)"
                             }}>
-                                <SafetyCertificateOutlined style={{ fontSize: 44, color: "#52c41a", marginBottom: 10 }} />
-                                <Title level={4} style={{ color: "#fff", margin: "0 0 6px 0" }}>
+                                <SafetyCertificateOutlined style={{ fontSize: screens.xs ? 36 : 44, color: "#52c41a", marginBottom: 8 }} />
+                                <Title level={4} style={{ color: "#fff", margin: "0 0 6px 0", fontSize: screens.xs ? 16 : 18 }}>
                                     Cam Kết Chất Lượng 100%
                                 </Title>
-                                <Text style={{ color: "rgba(255, 255, 255, 0.85)", display: "block", fontSize: 13 }}>
+                                <Text style={{ color: "rgba(255, 255, 255, 0.85)", display: "block", fontSize: screens.xs ? 12 : 13, lineHeight: 1.6 }}>
                                     ✔️ 100% Mỹ phẩm nhập khẩu (L'Oréal, Olaplex, OPI)<br />
                                     ✔️ Bảo hành kiểu tóc 7 ngày miễn phí<br />
                                     ✔️ 100% Stylist hơn 5 năm kinh nghiệm
@@ -516,16 +565,21 @@ export default function CategoryListUserPage() {
             {/* 🔍 TÌM KIẾM & BỘ LỌC DANH MỤC */}
             <Card
                 style={{
-                    borderRadius: 24,
+                    borderRadius: screens.xs ? 18 : 24,
                     boxShadow: "0 6px 24px rgba(0,0,0,0.03)",
-                    marginBottom: 36,
+                    marginBottom: screens.xs ? 24 : 36,
                     border: "1px solid #f1f5f9"
                 }}
+                styles={{
+                    body: {
+                        padding: screens.xs ? "16px 12px" : "24px 24px"
+                    }
+                }}
             >
-                <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 16 }}>
+                <Row gutter={[12, 12]} align="middle" style={{ marginBottom: 14 }}>
                     <Col xs={24} sm={12} md={8}>
                         <Select
-                            size="large"
+                            size={screens.xs ? "middle" : "large"}
                             value={selectedSalonId}
                             onChange={(val) => {
                                 setSelectedSalonId(val);
@@ -550,29 +604,33 @@ export default function CategoryListUserPage() {
                             placeholder="Tìm kiếm dịch vụ, uốn nhuộm, spa, nail..."
                             prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
                             allowClear
-                            size="large"
+                            size={screens.xs ? "middle" : "large"}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ borderRadius: 14 }}
+                            style={{ borderRadius: 12 }}
                         />
                     </Col>
                 </Row>
-                <Row gutter={[20, 20]} align="middle" justify="space-between">
-                    <Col xs={24}>
-                        <Tabs
-                            activeKey={selectedCategory}
-                            onChange={(key) => setSelectedCategory(key)}
-                            items={categoryTabs}
-                            tabBarStyle={{ marginBottom: 0 }}
-                        />
-                    </Col>
-                </Row>
+                <div style={{
+                    overflowX: "auto",
+                    WebkitOverflowScrolling: "touch",
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                    paddingBottom: 2
+                }}>
+                    <Tabs
+                        activeKey={selectedCategory}
+                        onChange={(key) => setSelectedCategory(key)}
+                        items={categoryTabs}
+                        tabBarStyle={{ marginBottom: 0, whiteSpace: "nowrap" }}
+                    />
+                </div>
             </Card>
 
             {/* ✂️ DANH SÁCH THẺ DỊCH VỤ SẮC NÉT & CHI TIẾT */}
-            <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: screens.xs ? 14 : 20 }}>
                 <Col>
-                    <Title level={3} style={{ margin: 0, fontWeight: 700 }}>
+                    <Title level={3} style={{ margin: 0, fontWeight: 700, fontSize: screens.xs ? 18 : 22 }}>
                         Danh Sách Dịch Vụ ({filteredServices.length})
                     </Title>
                 </Col>
@@ -585,13 +643,13 @@ export default function CategoryListUserPage() {
                     </Text>
                 </Card>
             ) : (
-                <Row gutter={[24, 24]} style={{ marginBottom: 48 }}>
+                <Row gutter={screens.xs ? [14, 14] : [24, 24]} style={{ marginBottom: screens.xs ? 32 : 48 }}>
                     {filteredServices.map((service) => (
                         <Col xs={24} sm={12} lg={8} key={service.id}>
                             <Card
                                 hoverable
                                 cover={
-                                    <div style={{ height: 210, overflow: "hidden", position: "relative" }}>
+                                    <div style={{ height: screens.xs ? 180 : 210, overflow: "hidden", position: "relative" }}>
                                         <img
                                             alt={service.name}
                                             src={service.image}
@@ -617,7 +675,7 @@ export default function CategoryListUserPage() {
                                             flexDirection: "column", gap: 8,
                                             position: "absolute", top: 0, left: 0,
                                         }}>
-                                            <span style={{ fontSize: 40 }}>✂️</span>
+                                            <span style={{ fontSize: 36 }}>✂️</span>
                                             <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, fontWeight: 600 }}>
                                                 {service.name}
                                             </span>
@@ -626,11 +684,12 @@ export default function CategoryListUserPage() {
                                             color={service.tagColor}
                                             style={{
                                                 position: "absolute",
-                                                top: 12,
-                                                right: 12,
-                                                borderRadius: 10,
+                                                top: 10,
+                                                right: 10,
+                                                borderRadius: 8,
                                                 fontWeight: 700,
-                                                padding: "3px 10px",
+                                                padding: "2px 8px",
+                                                fontSize: 11,
                                                 boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
                                             }}
                                         >
@@ -639,14 +698,14 @@ export default function CategoryListUserPage() {
                                         <div
                                             style={{
                                                 position: "absolute",
-                                                bottom: 12,
-                                                left: 12,
+                                                bottom: 10,
+                                                left: 10,
                                                 background: "rgba(15, 23, 42, 0.75)",
                                                 backdropFilter: "blur(6px)",
-                                                padding: "3px 10px",
-                                                borderRadius: 10,
+                                                padding: "2px 8px",
+                                                borderRadius: 8,
                                                 color: "#fff",
-                                                fontSize: 12,
+                                                fontSize: 11,
                                                 fontWeight: 600
                                             }}
                                         >
@@ -656,18 +715,26 @@ export default function CategoryListUserPage() {
                                     </div>
                                 }
                                 style={{
-                                    borderRadius: 20,
+                                    borderRadius: screens.xs ? 16 : 20,
                                     overflow: "hidden",
                                     boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
                                     height: "100%",
                                     display: "flex",
                                     flexDirection: "column"
                                 }}
-                                bodyStyle={{ padding: 22, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
+                                styles={{
+                                    body: {
+                                        padding: screens.xs ? "14px 14px 16px" : 22,
+                                        flex: 1,
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "space-between"
+                                    }
+                                }}
                             >
                                 <div>
-                                    <div style={{ display: "flex", justifyBetween: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                        <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 600 }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                        <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 600, fontSize: 11 }}>
                                             {service.category}
                                         </Tag>
                                         <Space size={4}>
@@ -677,19 +744,19 @@ export default function CategoryListUserPage() {
                                         </Space>
                                     </div>
 
-                                    <Title level={4} style={{ margin: "6px 0 8px 0", fontSize: 18, color: "#0f172a" }}>
+                                    <Title level={4} style={{ margin: "4px 0 6px 0", fontSize: screens.xs ? 16 : 18, color: "#0f172a", lineHeight: 1.35 }}>
                                         {service.name}
                                     </Title>
 
-                                    <Paragraph type="secondary" style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>
+                                    <Paragraph type="secondary" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}>
                                         {service.shortDesc}
                                     </Paragraph>
 
                                     {/* Danh sách lợi ích nổi bật */}
-                                    <div style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: 12, marginBottom: 16 }}>
+                                    <div style={{ background: "#f8fafc", padding: "8px 10px", borderRadius: 10, marginBottom: 12 }}>
                                         {service.benefits.slice(0, 2).map((benefit, bIdx) => (
-                                            <div key={bIdx} style={{ fontSize: 12, color: "#475569", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
-                                                <CheckCircleOutlined style={{ color: "#52c41a" }} />
+                                            <div key={bIdx} style={{ fontSize: 11, color: "#475569", marginBottom: 3, display: "flex", alignItems: "center", gap: 6 }}>
+                                                <CheckCircleOutlined style={{ color: "#52c41a", fontSize: 12 }} />
                                                 <span>{benefit}</span>
                                             </div>
                                         ))}
@@ -697,14 +764,14 @@ export default function CategoryListUserPage() {
                                 </div>
 
                                 <div>
-                                    <Divider style={{ margin: "12px 0" }} />
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                                    <Divider style={{ margin: "10px 0" }} />
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                                         <div>
-                                            <Text strong style={{ color: "#ff4d4f", fontSize: 20, fontWeight: 800 }}>
+                                            <Text strong style={{ color: "#ff4d4f", fontSize: screens.xs ? 18 : 20, fontWeight: 800 }}>
                                                 {service.price}
                                             </Text>
                                             {service.originalPrice && (
-                                                <Text delete type="secondary" style={{ fontSize: 13, marginLeft: 8 }}>
+                                                <Text delete type="secondary" style={{ fontSize: 12, marginLeft: 6 }}>
                                                     {service.originalPrice}
                                                 </Text>
                                             )}
@@ -714,7 +781,7 @@ export default function CategoryListUserPage() {
                                             size="small"
                                             icon={<InfoCircleOutlined />}
                                             onClick={() => setDetailModalService(service)}
-                                            style={{ color: "#1677ff" }}
+                                            style={{ color: "#1677ff", padding: "0 4px" }}
                                         >
                                             Quy trình
                                         </Button>
@@ -724,12 +791,12 @@ export default function CategoryListUserPage() {
                                         type="primary"
                                         block
                                         shape="round"
-                                        size="large"
+                                        size={screens.xs ? "middle" : "large"}
                                         icon={<CalendarOutlined />}
-                                        onClick={() => navigate("/guest-booking")}
+                                        onClick={() => navigate(isLogin ? `/booking?serviceId=${service.id}` : `/guest-booking?serviceId=${service.id}`)}
                                         style={{
                                             fontWeight: 700,
-                                            height: 44,
+                                            height: screens.xs ? 40 : 44,
                                             backgroundColor: "#1677ff",
                                             boxShadow: "0 4px 14px rgba(22, 119, 255, 0.25)"
                                         }}
@@ -746,49 +813,53 @@ export default function CategoryListUserPage() {
             {/* 🛡️ KHỐI CAM KẾT CHẤT LƯỢNG VƯỢT TRỘI */}
             <Card
                 style={{
-                    borderRadius: 24,
+                    borderRadius: screens.xs ? 18 : 24,
                     background: "linear-gradient(135deg, #f8fafc 0%, #e6f7ff 100%)",
                     border: "1px solid #bae7ff",
-                    marginBottom: 40,
-                    padding: "16px 8px"
+                    marginBottom: screens.xs ? 24 : 40,
+                }}
+                styles={{
+                    body: {
+                        padding: screens.xs ? "16px 12px" : "24px 16px"
+                    }
                 }}
             >
-                <Title level={3} style={{ textAlign: "center", marginBottom: 24, fontWeight: 700 }}>
+                <Title level={3} style={{ textAlign: "center", marginBottom: screens.xs ? 16 : 24, fontWeight: 700, fontSize: screens.xs ? 18 : 22 }}>
                     💎 4 Cam Kết Vàng Từ Hệ Thống SalonFlow
                 </Title>
-                <Row gutter={[20, 20]}>
-                    <Col xs={24} sm={12} md={6}>
-                        <div style={{ textAlign: "center", padding: 12 }}>
-                            <SafetyCertificateOutlined style={{ fontSize: 38, color: "#1677ff", marginBottom: 12 }} />
-                            <Title level={5} style={{ margin: "0 0 6px 0" }}>100% Thuốc Chính Hãng</Title>
-                            <Text type="secondary" style={{ fontSize: 13 }}>
+                <Row gutter={screens.xs ? [10, 14] : [20, 20]}>
+                    <Col xs={12} sm={12} md={6}>
+                        <div style={{ textAlign: "center", padding: screens.xs ? "4px 2px" : 12 }}>
+                            <SafetyCertificateOutlined style={{ fontSize: screens.xs ? 28 : 38, color: "#1677ff", marginBottom: 6 }} />
+                            <Title level={5} style={{ margin: "0 0 4px 0", fontSize: screens.xs ? 13 : 15 }}>100% Thuốc Chính Hãng</Title>
+                            <Text type="secondary" style={{ fontSize: screens.xs ? 11 : 13, lineHeight: 1.4, display: "block" }}>
                                 Nhập khẩu trực tiếp từ L'Oréal Paris, Olaplex, Kérastase & OPI.
                             </Text>
                         </div>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
-                        <div style={{ textAlign: "center", padding: 12 }}>
-                            <CheckCircleOutlined style={{ fontSize: 38, color: "#52c41a", marginBottom: 12 }} />
-                            <Title level={5} style={{ margin: "0 0 6px 0" }}>Bảo Hành Kiểu 7 Ngày</Title>
-                            <Text type="secondary" style={{ fontSize: 13 }}>
+                    <Col xs={12} sm={12} md={6}>
+                        <div style={{ textAlign: "center", padding: screens.xs ? "4px 2px" : 12 }}>
+                            <CheckCircleOutlined style={{ fontSize: screens.xs ? 28 : 38, color: "#52c41a", marginBottom: 6 }} />
+                            <Title level={5} style={{ margin: "0 0 4px 0", fontSize: screens.xs ? 13 : 15 }}>Bảo Hành Kiểu 7 Ngày</Title>
+                            <Text type="secondary" style={{ fontSize: screens.xs ? 11 : 13, lineHeight: 1.4, display: "block" }}>
                                 Miễn phí dặm màu hoặc chỉnh nếp uốn nếu khách hàng chưa hài lòng.
                             </Text>
                         </div>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
-                        <div style={{ textAlign: "center", padding: 12 }}>
-                            <ThunderboltOutlined style={{ fontSize: 38, color: "#fa8c16", marginBottom: 12 }} />
-                            <Title level={5} style={{ margin: "0 0 6px 0" }}>Giữ Chỗ Đúng Giờ</Title>
-                            <Text type="secondary" style={{ fontSize: 13 }}>
+                    <Col xs={12} sm={12} md={6}>
+                        <div style={{ textAlign: "center", padding: screens.xs ? "4px 2px" : 12 }}>
+                            <ThunderboltOutlined style={{ fontSize: screens.xs ? 28 : 38, color: "#fa8c16", marginBottom: 6 }} />
+                            <Title level={5} style={{ margin: "0 0 4px 0", fontSize: screens.xs ? 13 : 15 }}>Giữ Chỗ Đúng Giờ</Title>
+                            <Text type="secondary" style={{ fontSize: screens.xs ? 11 : 13, lineHeight: 1.4, display: "block" }}>
                                 Phục vụ ngay khi khách tới đúng giờ đặt, không xếp hàng chờ đợi.
                             </Text>
                         </div>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
-                        <div style={{ textAlign: "center", padding: 12 }}>
-                            <SmileOutlined style={{ fontSize: 38, color: "#722ed1", marginBottom: 12 }} />
-                            <Title level={5} style={{ margin: "0 0 6px 0" }}>Stylist Chuyên Nghiệp</Title>
-                            <Text type="secondary" style={{ fontSize: 13 }}>
+                    <Col xs={12} sm={12} md={6}>
+                        <div style={{ textAlign: "center", padding: screens.xs ? "4px 2px" : 12 }}>
+                            <SmileOutlined style={{ fontSize: screens.xs ? 28 : 38, color: "#722ed1", marginBottom: 6 }} />
+                            <Title level={5} style={{ margin: "0 0 4px 0", fontSize: screens.xs ? 13 : 15 }}>Stylist Chuyên Nghiệp</Title>
+                            <Text type="secondary" style={{ fontSize: screens.xs ? 11 : 13, lineHeight: 1.4, display: "block" }}>
                                 Đội ngũ thợ hơn 5 năm kinh nghiệm, liên tục cập nhật xu hướng mới.
                             </Text>
                         </div>
@@ -810,52 +881,53 @@ export default function CategoryListUserPage() {
                             type="primary"
                             icon={<CalendarOutlined />}
                             onClick={() => {
+                                const sId = detailModalService?.id;
                                 setDetailModalService(null);
-                                navigate("/guest-booking");
+                                navigate(isLogin ? `/booking?serviceId=${sId}` : `/guest-booking?serviceId=${sId}`);
                             }}
                             style={{ backgroundColor: "#1677ff", fontWeight: 700 }}
                         >
                             Đặt dịch vụ này ngay
                         </Button>
                     ]}
-                    width={640}
-                    style={{ borderRadius: 24, overflow: "hidden" }}
+                    width={screens.xs ? "95%" : 640}
+                    style={{ top: screens.xs ? 16 : 60, maxWidth: "100%" }}
                 >
-                    <div style={{ textAlign: "center", marginBottom: 20 }}>
+                    <div style={{ textAlign: "center", marginBottom: 16 }}>
                         <Tag color={detailModalService.tagColor} style={{ borderRadius: 10, fontWeight: 700, marginBottom: 8 }}>
                             {detailModalService.category}
                         </Tag>
-                        <Title level={3} style={{ margin: "4px 0 8px 0" }}>
+                        <Title level={3} style={{ margin: "4px 0 6px 0", fontSize: screens.xs ? 18 : 22 }}>
                             {detailModalService.name}
                         </Title>
-                        <Text strong style={{ color: "#ff4d4f", fontSize: 22, fontWeight: 800 }}>
+                        <Text strong style={{ color: "#ff4d4f", fontSize: screens.xs ? 18 : 22, fontWeight: 800 }}>
                             {detailModalService.price}
                         </Text>
-                        <Text type="secondary" style={{ marginLeft: 12 }}>
-                            ⏱️ Thời gian thực hiện: {detailModalService.duration}
+                        <Text type="secondary" style={{ marginLeft: 10, fontSize: screens.xs ? 12 : 14 }}>
+                            ⏱️ Thời gian: {detailModalService.duration}
                         </Text>
                     </div>
 
-                    <Divider style={{ margin: "16px 0" }} />
+                    <Divider style={{ margin: "12px 0" }} />
 
-                    <Title level={5} style={{ marginBottom: 12, color: "#1677ff" }}>
+                    <Title level={5} style={{ marginBottom: 10, color: "#1677ff", fontSize: screens.xs ? 14 : 16 }}>
                         ✨ Lợi ích & Ưu điểm vượt trội:
                     </Title>
-                    <div style={{ background: "#f8fafc", padding: 16, borderRadius: 14, marginBottom: 20 }}>
+                    <div style={{ background: "#f8fafc", padding: screens.xs ? 12 : 16, borderRadius: 12, marginBottom: 16 }}>
                         {detailModalService.benefits.map((b, idx) => (
-                            <div key={idx} style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                                <CheckOutlined style={{ color: "#52c41a", fontWeight: "bold" }} />
-                                <Text style={{ fontSize: 14 }}>{b}</Text>
+                            <div key={idx} style={{ marginBottom: 6, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                                <CheckCircleOutlined style={{ color: "#52c41a", marginTop: 2, fontSize: 13 }} />
+                                <Text style={{ fontSize: screens.xs ? 13 : 14 }}>{b}</Text>
                             </div>
                         ))}
                     </div>
 
-                    <Title level={5} style={{ marginBottom: 12, color: "#722ed1" }}>
-                        📋 Quy trình thực hiện chi tiết từng bước:
+                    <Title level={5} style={{ marginBottom: 10, color: "#722ed1", fontSize: screens.xs ? 14 : 16 }}>
+                        📋 Quy trình thực hiện chi tiết:
                     </Title>
-                    <div style={{ background: "#faf5ff", padding: 16, borderRadius: 14 }}>
+                    <div style={{ background: "#faf5ff", padding: screens.xs ? 12 : 16, borderRadius: 12 }}>
                         {detailModalService.procedure.map((step, sIdx) => (
-                            <Paragraph key={sIdx} style={{ marginBottom: 10, fontSize: 14, color: "#3b0764" }}>
+                            <Paragraph key={sIdx} style={{ marginBottom: 8, fontSize: screens.xs ? 13 : 14, color: "#3b0764" }}>
                                 {step}
                             </Paragraph>
                         ))}

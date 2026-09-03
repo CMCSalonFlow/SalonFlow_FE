@@ -380,6 +380,7 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
           dataSource={filteredStaffList}
           columns={columns}
           rowKey="staffId"
+          scroll={{ x: 900 }}
           pagination={{ pageSize: 10, showSizeChanger: true }}
           loading={loading}
           bordered={false}

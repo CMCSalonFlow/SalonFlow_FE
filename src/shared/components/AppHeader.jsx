@@ -160,6 +160,10 @@ export default function AppHeader() {
                 label: "Tìm salon"
             },
             {
+                key: "/services",
+                label: "Dịch vụ"
+            },
+            {
                 key: "/hair-ai",
                 label: "Hair AI"
             },
@@ -180,6 +184,10 @@ export default function AppHeader() {
             {
                 key: "/search",
                 label: "Tìm salon"
+            },
+            {
+                key: "/services",
+                label: "Dịch vụ"
             },
             {
                 key: "/guest-booking",

@@ -85,16 +85,15 @@ export default function ServiceBreakdownChart({ breakdown = [], totalRevenue = 0
         <Card
             bordered={false}
             title={
-                <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                     <span>
                         <PieChartOutlined style={{ color: '#eb2f96', marginRight: 8, fontSize: 18 }} />
                         <strong style={{ fontSize: 16 }}>Phân rã Doanh thu theo Dịch vụ (Pie/Donut Chart)</strong>
                     </span>
                 </div>
             }
-            bordered={false}
             style={{ borderRadius: 16, height: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-            bodyStyle={{ padding: '20px 24px' }}
+            styles={{ body: { padding: '20px 24px' } }}
         >
             <Text type="secondary" style={{ fontSize: 13, marginBottom: 20, display: 'block' }}>
                 Tỷ trọng đóng góp doanh thu của từng danh mục dịch vụ trong salon
@@ -161,6 +160,7 @@ export default function ServiceBreakdownChart({ breakdown = [], totalRevenue = 0
                 rowKey={(r) => r.serviceId || r.serviceName}
                 pagination={false}
                 size="small"
+                scroll={{ x: 500 }}
                 style={{ marginTop: 16 }}
             />
         </Card>
