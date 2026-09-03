@@ -244,9 +244,10 @@ export default function OwnerLayout() {
 
                 <Content
                     style={{
-                        padding: screens.lg ? "24px 28px" : "16px 12px",
+                        padding: screens.lg ? "24px 28px" : screens.xs ? "12px 10px" : "16px 14px",
                         background: "#f8fafc",
-                        minHeight: "calc(100vh - 68px)"
+                        minHeight: "calc(100vh - 68px)",
+                        overflowX: "hidden"
                     }}
                 >
                     <Outlet />

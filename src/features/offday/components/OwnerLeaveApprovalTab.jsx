@@ -284,6 +284,7 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
                 dataSource={requests}
                 rowKey="id"
                 loading={loading}
+                scroll={{ x: 850 }}
                 pagination={{ pageSize: 8 }}
             />
 

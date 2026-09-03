@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Select, Tabs, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin } from "antd";
+import { Card, Select, Tabs, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin, Grid } from "antd";
 import { AppstoreOutlined, PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
@@ -19,6 +19,7 @@ import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 const { Title, Text, Paragraph } = Typography;
 
 export default function ServiceManagementPage() {
+    const screens = Grid.useBreakpoint();
     const { features } = useSubscription();
     const [loadingBranches, setLoadingBranches] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
@@ -177,40 +178,46 @@ export default function ServiceManagementPage() {
             title: "Tên dịch vụ",
             dataIndex: "name",
             key: "name",
-            render: (text) => <Text strong>{text}</Text>
+            width: 220,
+            render: (text) => <Text strong style={{ whiteSpace: "nowrap" }}>{text}</Text>
         },
         {
             title: "Danh mục",
             dataIndex: "categoryName",
             key: "categoryName",
-            render: (text) => text ? <Tag color="purple">{text}</Tag> : <Text type="secondary">-</Text>
+            width: 160,
+            render: (text) => text ? <Tag color="purple" style={{ whiteSpace: "nowrap" }}>{text}</Tag> : <Text type="secondary">-</Text>
         },
         {
             title: "Thời lượng",
             dataIndex: "durationMinutes",
             key: "durationMinutes",
-            render: (min) => <Tag color="blue">{min} phút</Tag>
+            width: 120,
+            render: (min) => <Tag color="blue" style={{ whiteSpace: "nowrap" }}>{min} phút</Tag>
         },
         {
             title: "Đơn giá",
             dataIndex: "price",
             key: "price",
-            render: (price) => <Text strong style={{ color: "#faad14" }}>{parseFloat(price).toLocaleString()} đ</Text>
+            width: 130,
+            render: (price) => <Text strong style={{ color: "#faad14", whiteSpace: "nowrap" }}>{parseFloat(price).toLocaleString()} đ</Text>
         },
         {
             title: "Trạng thái",
             dataIndex: "isActive",
             key: "isActive",
+            width: 130,
             render: (active) => active ? (
-                <Tag icon={<CheckCircleOutlined />} color="success">Hoạt động</Tag>
+                <Tag icon={<CheckCircleOutlined />} color="success" style={{ whiteSpace: "nowrap" }}>Hoạt động</Tag>
             ) : (
-                <Tag icon={<CloseCircleOutlined />} color="error">Tạm dừng</Tag>
+                <Tag icon={<CloseCircleOutlined />} color="error" style={{ whiteSpace: "nowrap" }}>Tạm dừng</Tag>
             )
         },
         {
             title: "Thao tác",
             key: "actions",
-            width: 150,
+            width: 100,
+            fixed: screens.xs ? undefined : "right",
             render: (_, record) => (
                 <Space>
                     <Button
@@ -241,18 +248,19 @@ export default function ServiceManagementPage() {
             title: "Tên Combo",
             dataIndex: "name",
             key: "name",
-            render: (text) => <Text strong>{text}</Text>
+            width: 220,
+            render: (text) => <Text strong style={{ whiteSpace: "nowrap" }}>{text}</Text>
         },
         {
             title: "Dịch vụ đi kèm",
             dataIndex: "items",
             key: "items",
-            width: "30%",
+            width: 260,
             render: (items) => (
-                <Space wrap size={[4, 8]}>
+                <Space wrap size={[4, 6]}>
                     {items && items.length > 0 ? (
                         items.map((item, idx) => (
-                            <Tag color="cyan" key={item.serviceId}>
+                            <Tag color="cyan" key={item.serviceId} style={{ margin: 0 }}>
                                 {idx + 1}. {item.name}
                             </Tag>
                         ))
@@ -266,34 +274,39 @@ export default function ServiceManagementPage() {
             title: "Tổng thời gian",
             dataIndex: "totalDurationMinutes",
             key: "totalDurationMinutes",
-            render: (min) => <Tag color="blue">{min || 0} phút</Tag>
+            width: 130,
+            render: (min) => <Tag color="blue" style={{ whiteSpace: "nowrap" }}>{min || 0} phút</Tag>
         },
         {
             title: "Giá gốc",
             dataIndex: "originalPrice",
             key: "originalPrice",
-            render: (val) => <Text delete style={{ color: "#bfbfbf" }}>{parseFloat(val || 0).toLocaleString()} đ</Text>
+            width: 120,
+            render: (val) => <Text delete style={{ color: "#bfbfbf", whiteSpace: "nowrap" }}>{parseFloat(val || 0).toLocaleString()} đ</Text>
         },
         {
             title: "Giá Combo ưu đãi",
             dataIndex: "price",
             key: "price",
-            render: (price) => <Text strong style={{ color: "#52c41a", fontSize: 15 }}>{parseFloat(price).toLocaleString()} đ</Text>
+            width: 140,
+            render: (price) => <Text strong style={{ color: "#52c41a", fontSize: 15, whiteSpace: "nowrap" }}>{parseFloat(price).toLocaleString()} đ</Text>
         },
         {
             title: "Trạng thái",
             dataIndex: "isActive",
             key: "isActive",
+            width: 120,
             render: (active) => active ? (
-                <Tag icon={<CheckCircleOutlined />} color="success">Hoạt động</Tag>
+                <Tag icon={<CheckCircleOutlined />} color="success" style={{ whiteSpace: "nowrap" }}>Hoạt động</Tag>
             ) : (
-                <Tag icon={<CloseCircleOutlined />} color="error">Tạm dừng</Tag>
+                <Tag icon={<CloseCircleOutlined />} color="error" style={{ whiteSpace: "nowrap" }}>Tạm dừng</Tag>
             )
         },
         {
             title: "Thao tác",
             key: "actions",
-            width: 150,
+            width: 100,
+            fixed: screens.xs ? undefined : "right",
             render: (_, record) => (
                 <Space>
                     <Button
@@ -345,32 +358,34 @@ export default function ServiceManagementPage() {
     }
 
     return (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 0" }}>
-            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-                <Col>
-                    <Title level={2} style={{ margin: 0 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: screens.xs ? "0 4px" : "10px 0" }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 20 }} gutter={[16, 16]}>
+                <Col xs={24} md={13}>
+                    <Title level={screens.xs ? 3 : 2} style={{ margin: 0 }}>
                         <AppstoreOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Quản lý Dịch vụ & Combo
                     </Title>
-                    <Text type="secondary">Quản lý danh sách dịch vụ đơn lẻ và các gói combo ưu đãi của chi nhánh.</Text>
+                    <Text type="secondary" style={{ fontSize: screens.xs ? 13 : 14 }}>
+                        Quản lý danh sách dịch vụ đơn lẻ và các gói combo ưu đãi của chi nhánh.
+                    </Text>
                 </Col>
-                <Col>
-                    <Space size="large">
-                        <Space>
+                <Col xs={24} md={11} style={{ display: "flex", justifyContent: screens.md ? "flex-end" : "flex-start" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, width: screens.xs ? "100%" : "auto" }}>
+                        <Space style={{ flexShrink: 0 }}>
                             <ShopOutlined style={{ color: "#1890ff" }} />
                             <Text strong>Chọn Chi nhánh:</Text>
-                            <Select
-                                style={{ width: 250 }}
-                                value={selectedBranchId}
-                                onChange={setSelectedBranchId}
-                                options={branches.map(b => ({ label: b.name, value: b.id }))}
-                                size="large"
-                            />
                         </Space>
-                    </Space>
+                        <Select
+                            style={{ flex: screens.xs ? 1 : undefined, width: screens.xs ? undefined : 220 }}
+                            value={selectedBranchId}
+                            onChange={setSelectedBranchId}
+                            options={branches.map(b => ({ label: b.name, value: b.id }))}
+                            size={screens.xs ? "middle" : "large"}
+                        />
+                    </div>
                 </Col>
             </Row>
 
-            <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+            <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }} styles={{ body: { padding: screens.xs ? 12 : 24 } }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
                     <div>
                         <Title level={4} style={{ marginBottom: 4 }}>Dịch vụ & Combo</Title>
@@ -380,6 +395,7 @@ export default function ServiceManagementPage() {
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
+                            size={screens.xs ? "middle" : "large"}
                             onClick={() => {
                                 setEditingService(null);
                                 setServiceModalVisible(true);
@@ -409,6 +425,7 @@ export default function ServiceManagementPage() {
                                             rowKey="id"
                                             pagination={{ pageSize: 8 }}
                                             bordered
+                                            scroll={{ x: 860 }}
                                         />
                                     </div>
                                 )
@@ -422,7 +439,7 @@ export default function ServiceManagementPage() {
                                             <Button
                                                 type="primary"
                                                 icon={<PlusOutlined />}
-                                                size="large"
+                                                size={screens.xs ? "middle" : "large"}
                                                 onClick={() => {
                                                     setEditingBundle(null);
                                                     setBundleModalVisible(true);
@@ -437,6 +454,7 @@ export default function ServiceManagementPage() {
                                             rowKey="id"
                                             pagination={{ pageSize: 8 }}
                                             bordered
+                                            scroll={{ x: 1090 }}
                                         />
                                     </div>
                                 )

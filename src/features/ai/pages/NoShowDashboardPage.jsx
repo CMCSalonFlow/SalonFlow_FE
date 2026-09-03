@@ -325,6 +325,7 @@ const NoShowDashboardPage = () => {
                         dataSource={highRiskData}
                         rowKey="bookingId"
                         loading={loading}
+                        scroll={{ x: 1000 }}
                         pagination={{
                             current: page,
                             pageSize: 10,

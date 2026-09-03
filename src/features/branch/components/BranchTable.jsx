@@ -97,6 +97,7 @@ export default function BranchTable({
             loading={loading}
             columns={columns}
             dataSource={data}
+            scroll={{ x: 800 }}
             pagination={{
                 pageSize: 10
             }}
