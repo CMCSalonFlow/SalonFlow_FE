@@ -16,7 +16,8 @@ import {
     Alert,
     message,
     Tooltip,
-    Badge
+    Badge,
+    Grid
 } from "antd";
 import {
     SearchOutlined,
@@ -51,6 +52,7 @@ const STATUS_META = {
 };
 
 export default function StaffAppointmentsPage() {
+    const screens = Grid.useBreakpoint();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchText, setSearchText] = useState("");
@@ -308,22 +310,34 @@ export default function StaffAppointmentsPage() {
     return (
         <div style={{ maxWidth: 1280, margin: "0 auto", paddingBottom: 40 }}>
             {/* Header & Refresh */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <div style={{
+                display: "flex",
+                flexDirection: screens.xs ? "column" : "row",
+                justifyContent: "space-between",
+                alignItems: screens.xs ? "flex-start" : "center",
+                gap: 12,
+                marginBottom: 20
+            }}>
                 <div>
-                    <Title level={3} style={{ margin: 0 }}>
+                    <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>
                         ✂️ Lịch hẹn làm đẹp phân công
                     </Title>
-                    <Text type="secondary">
+                    <Text type="secondary" style={{ fontSize: screens.xs ? 12 : 14 }}>
                         Quản lý toàn bộ danh sách lịch hẹn làm đẹp do {currentFullName || "bạn"} thực hiện
                     </Text>
                 </div>
-                <Button icon={<ReloadOutlined />} loading={loading} onClick={loadStaffBookings}>
+                <Button
+                    icon={<ReloadOutlined />}
+                    loading={loading}
+                    onClick={loadStaffBookings}
+                    style={{ width: screens.xs ? "100%" : "auto" }}
+                >
                     Làm mới
                 </Button>
             </div>
 
             {/* Quick Stats */}
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Row gutter={screens.xs ? [10, 10] : [16, 16]} style={{ marginBottom: 24 }}>
                 <Col xs={24} sm={8}>
                     <Card style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
                         <Statistic
@@ -379,8 +393,8 @@ export default function StaffAppointmentsPage() {
                             onChange={(date) => setSelectedDate(date)}
                         />
                     </Col>
-                    <Col xs={24} md={10} style={{ textAlign: "right" }}>
-                        <Space wrap>
+                    <Col xs={24} md={10} style={{ textAlign: screens.xs ? "left" : "right" }}>
+                        <Space wrap size={screens.xs ? [6, 6] : 8}>
                             <Button
                                 type={statusFilter === "ALL" ? "primary" : "default"}
                                 size="small"
@@ -421,7 +435,8 @@ export default function StaffAppointmentsPage() {
                     dataSource={filteredBookings}
                     rowKey="id"
                     loading={loading}
-                    pagination={{ pageSize: 10, showSizeChanger: true }}
+                    scroll={{ x: 800 }}
+                    pagination={{ pageSize: 10, showSizeChanger: !screens.xs, simple: screens.xs }}
                 />
             </Card>
 
