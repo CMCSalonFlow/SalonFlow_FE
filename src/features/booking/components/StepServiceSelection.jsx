@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Row, Col, Card, Tag, Typography, Radio, Space } from "antd";
+import { Row, Col, Card, Tag, Typography, Radio, Space, Grid } from "antd";
 import {
     AppstoreOutlined,
     ClockCircleOutlined,
@@ -20,6 +20,7 @@ export default function StepServiceSelection({
     selectedBundle,
     setSelectedBundle
 }) {
+    const screens = Grid.useBreakpoint();
     // Group services by categoryName & Sort categories strictly by DB Order (categoryId / displayOrder)
     const { groupedServices, categories } = useMemo(() => {
         const groups = {};
@@ -80,8 +81,8 @@ export default function StepServiceSelection({
                     alignItems: "center",
                     flexWrap: "wrap",
                     gap: 10,
-                    marginBottom: 20,
-                    padding: "12px 16px",
+                    marginBottom: 16,
+                    padding: screens.xs ? "10px 12px" : "12px 16px",
                     background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
                     borderRadius: 12,
                     border: "1px solid #e2e8f0"
@@ -89,7 +90,7 @@ export default function StepServiceSelection({
             >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <ScissorOutlined style={{ color: "#1890ff", fontSize: 18 }} />
-                    <label style={{ fontWeight: 700, fontSize: 15, color: "#1e293b" }}>
+                    <label style={{ fontWeight: 700, fontSize: screens.xs ? 14 : 15, color: "#1e293b" }}>
                         Danh sách dịch vụ salon
                     </label>
                 </div>
@@ -98,6 +99,7 @@ export default function StepServiceSelection({
                     onChange={(e) => setBookingType(e.target.value)}
                     optionType="button"
                     buttonStyle="solid"
+                    size={screens.xs ? "small" : "middle"}
                 >
                     <Radio.Button value="service" style={{ borderRadius: "8px 0 0 8px", fontWeight: 600 }}>
                         <ScissorOutlined style={{ marginRight: 6 }} /> Dịch vụ lẻ
@@ -139,7 +141,7 @@ export default function StepServiceSelection({
                             </div>
 
                             {/* Service Card Grid */}
-                            <Row gutter={[16, 16]}>
+                            <Row gutter={screens.xs ? [12, 12] : [16, 16]}>
                                 {groupedServices[catName]?.map(s => {
                                     const isSelected = selectedServices.some(item => item.id === s.id);
                                     return (
@@ -158,7 +160,7 @@ export default function StepServiceSelection({
                                                         : "0 4px 12px rgba(0, 0, 0, 0.06)",
                                                     transition: "all 0.25s ease"
                                                 }}
-                                                bodyStyle={{ padding: "16px" }}
+                                                bodyStyle={{ padding: screens.xs ? "12px" : "16px" }}
                                                 onClick={() => toggleService(s)}
                                             >
                                                 {/* Active Checkmark Icon */}

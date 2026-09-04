@@ -9,7 +9,8 @@ import {
     Col,
     Statistic,
     Space,
-    Tabs
+    Tabs,
+    Grid
 } from "antd";
 import { PlusOutlined, CalendarOutlined, GlobalOutlined, BankOutlined, UserOutlined, ClockCircleOutlined } from "@ant-design/icons";
 
@@ -26,6 +27,7 @@ import { getRoles } from "@/core/utils/auth";
 const { Title, Text } = Typography;
 
 const OffDayManagementPage = () => {
+    const screens = Grid.useBreakpoint();
     const location = useLocation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -136,10 +138,10 @@ const OffDayManagementPage = () => {
                         {/* Thanh công cụ lọc & nút Thêm */}
                         <Card style={{ borderRadius: 12 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                                <Space size={12}>
+                                <Space size={12} style={{ width: screens.xs ? "100%" : "auto" }} direction={screens.xs ? "vertical" : "horizontal"}>
                                     <Text strong>Lọc theo Chi nhánh:</Text>
                                     <Select
-                                        style={{ width: 260, borderRadius: 8 }}
+                                        style={{ width: screens.xs ? "100%" : 260, borderRadius: 8 }}
                                         placeholder="Tất cả chi nhánh"
                                         value={selectedBranchId}
                                         onChange={setSelectedBranchId}
@@ -157,7 +159,7 @@ const OffDayManagementPage = () => {
                                 <Button
                                     type="primary"
                                     onClick={() => setIsModalOpen(true)}
-                                    style={{ borderRadius: 8, background: 'linear-gradient(135deg, #1890ff 0%, #722ed1 100%)', border: 'none' }}
+                                    style={{ borderRadius: 8, background: 'linear-gradient(135deg, #1890ff 0%, #722ed1 100%)', border: 'none', width: screens.xs ? "100%" : "auto" }}
                                 >
                                     Thêm ngày nghỉ lễ mới
                                 </Button>
@@ -196,22 +198,22 @@ const OffDayManagementPage = () => {
         });
 
         return items;
-    }, [isOwner, offDays, totalGlobal, totalBranchSpecific, selectedBranchId, branches, filteredOffDays, loading, isModalOpen, submitting, userRole]);
+    }, [isOwner, offDays, totalGlobal, totalBranchSpecific, selectedBranchId, branches, filteredOffDays, loading, isModalOpen, submitting, userRole, screens]);
 
     return (
-        <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ padding: screens.sm ? 24 : "12px 8px", display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-                <Title level={3} style={{ margin: 0 }}>
+                <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>
                     {isOwner ? "Quản Lý Ngày Nghỉ Lễ & Đơn Xin Nghỉ Phép" : "Phê Duyệt Đơn Xin Nghỉ Phép Nhân Viên Chi Nhánh"}
                 </Title>
-                <Text type="secondary">
+                <Text type="secondary" style={{ fontSize: screens.xs ? 13 : 14 }}>
                     {isOwner 
                         ? "Cấu hình ngày nghỉ lễ toàn Salon, đóng cửa chi nhánh và phê duyệt đơn xin nghỉ phép cá nhân từ Nhân viên & Manager."
                         : "Phê duyệt đơn xin nghỉ phép của các Kỹ thuật viên / Nhân viên thuộc chi nhánh quản lý."}
                 </Text>
             </div>
 
-            <Tabs defaultActiveKey={isOwner ? "system_offdays" : "staff_leave_requests"} items={tabItems} size="large" />
+            <Tabs defaultActiveKey={isOwner ? "system_offdays" : "staff_leave_requests"} items={tabItems} size={screens.xs ? "middle" : "large"} />
         </div>
     );
 };

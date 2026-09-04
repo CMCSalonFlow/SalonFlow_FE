@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Table, Tag, Button, Space, Typography, Row, Col, Statistic, Popconfirm, message, Tooltip } from "antd";
+import { Card, Table, Tag, Button, Space, Typography, Row, Col, Statistic, Popconfirm, message, Tooltip, Grid } from "antd";
 import { PlusOutlined, ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, FileTextOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import offdayApi from "../api/offdayApi";
@@ -22,6 +22,7 @@ const STATUS_MAP = {
 };
 
 export default function StaffLeaveRequestPage() {
+    const screens = Grid.useBreakpoint();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
@@ -136,15 +137,23 @@ export default function StaffLeaveRequestPage() {
     ];
 
     return (
-        <div style={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div style={{ padding: screens.sm ? 24 : "12px 8px" }}>
+            <div style={{
+                display: "flex",
+                flexDirection: screens.xs ? "column" : "row",
+                justifyContent: "space-between",
+                alignItems: screens.xs ? "stretch" : "center",
+                gap: 12,
+                marginBottom: 20
+            }}>
                 <div>
-                    <Title level={3} style={{ margin: 0 }}>Đơn Xin Nghỉ Phép Cá Nhân</Title>
-                    <Text type="secondary">Tạo và theo dõi lịch sử đơn xin nghỉ phép gửi lên Quản lý / Salon Owner</Text>
+                    <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>Đơn Xin Nghỉ Phép Cá Nhân</Title>
+                    <Text type="secondary" style={{ fontSize: screens.xs ? 12 : 14 }}>Tạo và theo dõi lịch sử đơn xin nghỉ phép gửi lên Quản lý / Salon Owner</Text>
                 </div>
                 <Button
                     type="primary"
-                    size="large"
+                    size={screens.xs ? "middle" : "large"}
+                    style={{ width: screens.xs ? "100%" : "auto" }}
                     onClick={() => setModalOpen(true)}
                 >
                     Nộp đơn xin nghỉ
@@ -152,7 +161,7 @@ export default function StaffLeaveRequestPage() {
             </div>
 
             {/* Thống kê đơn nghỉ */}
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Row gutter={screens.xs ? [10, 10] : [16, 16]} style={{ marginBottom: 20 }}>
                 <Col xs={12} sm={6}>
                     <Card style={{ borderRadius: 12 }}>
                         <Statistic
@@ -197,7 +206,8 @@ export default function StaffLeaveRequestPage() {
                     dataSource={requests}
                     rowKey="id"
                     loading={loading}
-                    pagination={{ pageSize: 8 }}
+                    scroll={{ x: 750 }}
+                    pagination={{ pageSize: 8, simple: screens.xs }}
                 />
             </Card>
 

@@ -18,7 +18,8 @@ import {
     Modal,
     Avatar,
     Spin,
-    InputNumber
+    InputNumber,
+    Grid
 } from "antd";
 import {
     UserOutlined,
@@ -55,6 +56,7 @@ import offdayApi from "@/features/offday/api/offdayApi";
 const { Title, Text } = Typography;
 
 export default function WalkInBookingPage() {
+    const screens = Grid.useBreakpoint();
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const thermalReceiptRef = useRef(null);
@@ -519,28 +521,28 @@ export default function WalkInBookingPage() {
             {/* Header POS Banner */}
             <Card
                 style={{
-                    marginBottom: 20,
+                    marginBottom: screens.xs ? 14 : 20,
                     borderRadius: 12,
                     background: "linear-gradient(135deg, #001529 0%, #003a8c 100%)",
                     color: "#fff",
                     border: 0,
                     boxShadow: "0 4px 16px rgba(0, 21, 41, 0.15)"
                 }}
-                bodyStyle={{ padding: "20px 24px" }}
+                bodyStyle={{ padding: screens.xs ? "14px 16px" : "20px 24px" }}
             >
                 <Row align="middle" justify="space-between">
                     <Col>
                         <Space size={12} align="center">
                             <Avatar
-                                size={48}
+                                size={screens.xs ? 40 : 48}
                                 icon={<ShopOutlined />}
                                 style={{ backgroundColor: "#1890ff" }}
                             />
                             <div>
-                                <Title level={3} style={{ color: "#fff", margin: 0 }}>
+                                <Title level={screens.xs ? 4 : 3} style={{ color: "#fff", margin: 0, fontSize: screens.xs ? 17 : undefined }}>
                                     Đặt Lịch & Thu Tiền Tại Quầy (POS)
                                 </Title>
-                                <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                                <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: screens.xs ? 12 : 13 }}>
                                     Nhân viên thực hiện: {staffFullName}
                                 </Text>
                             </div>
@@ -555,7 +557,7 @@ export default function WalkInBookingPage() {
                 onFinish={onFinish}
                 initialValues={{ paymentMethod: "CASH", bookingDate: dayjs() }}
             >
-                <Row gutter={24}>
+                <Row gutter={screens.xs ? [16, 16] : 24}>
                     {/* LEFT PANEL: Selection Forms */}
                     <Col xs={24} lg={15}>
                         <Space direction="vertical" size={16} style={{ width: "100%" }}>
@@ -722,20 +724,20 @@ export default function WalkInBookingPage() {
                                                 <Text type="secondary">Đang quét ca làm việc & khung giờ rảnh hôm nay...</Text>
                                             </div>
                                         ) : availableSlots.length > 0 ? (
-                                            <div style={{ padding: "14px 18px", background: "#f6ffed", border: "1px solid #b7eb8f", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                                            <div style={{ padding: screens.xs ? "12px 14px" : "14px 18px", background: "#f6ffed", border: "1px solid #b7eb8f", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                                                 <div>
-                                                    <Text strong style={{ color: "#389e0d", fontSize: 14 }}>
+                                                    <Text strong style={{ color: "#389e0d", fontSize: screens.xs ? 13 : 14 }}>
                                                         {selectedStaffObj ? `🎯 Stylist chỉ định: ${selectedStaffObj.name}` : "✨ Tự động phân bổ thợ rảnh khả dụng"}
                                                     </Text>
                                                     <br />
                                                     <Text style={{ fontSize: 13, color: "#262626" }}>
-                                                        🟢 Khung giờ sớm nhất hôm nay: <b style={{ color: "#52c41a", fontSize: 17 }}>{availableSlots[0].label}</b>
+                                                        🟢 Khung giờ sớm nhất hôm nay: <b style={{ color: "#52c41a", fontSize: screens.xs ? 15 : 17 }}>{availableSlots[0].label}</b>
                                                     </Text>
                                                 </div>
                                                 <Button
                                                     type="primary"
-                                                    size="large"
-                                                    style={{ backgroundColor: "#52c41a", borderColor: "#52c41a", borderRadius: 8, fontWeight: 600 }}
+                                                    size={screens.xs ? "middle" : "large"}
+                                                    style={{ backgroundColor: "#52c41a", borderColor: "#52c41a", borderRadius: 8, fontWeight: 600, width: screens.xs ? "100%" : "auto" }}
                                                     icon={<ThunderboltOutlined />}
                                                     onClick={handleSelectEarliestSlot}
                                                 >
@@ -757,7 +759,7 @@ export default function WalkInBookingPage() {
                                             <Text strong style={{ fontSize: 14, display: "block", marginBottom: 12, color: "#262626" }}>
                                                 Chọn khung giờ thực hiện hôm nay:
                                             </Text>
-                                            <Space wrap size={[10, 10]}>
+                                            <Space wrap size={screens.xs ? [6, 6] : [10, 10]}>
                                                 {allSlots.map((slot) => {
                                                     const now = dayjs();
                                                     const targetDateStr = dayjs().format("YYYY-MM-DD");
@@ -775,7 +777,7 @@ export default function WalkInBookingPage() {
                                                             <Button
                                                                 key={slot.value}
                                                                 disabled
-                                                                size="large"
+                                                                size={screens.xs ? "middle" : "large"}
                                                                 style={{
                                                                     borderRadius: 8,
                                                                     fontWeight: 400,
@@ -783,7 +785,7 @@ export default function WalkInBookingPage() {
                                                                     backgroundColor: isPast ? "#f5f5f5" : "#fafafa",
                                                                     color: "#bfbfbf",
                                                                     cursor: "not-allowed",
-                                                                    minWidth: 72
+                                                                    minWidth: screens.xs ? 60 : 72
                                                                 }}
                                                                 title={isPast ? "Khung giờ đã qua trong ngày" : "Khung giờ không khả dụng (Đã kín lịch)"}
                                                             >
@@ -796,7 +798,7 @@ export default function WalkInBookingPage() {
                                                         <Button
                                                             key={slot.value}
                                                             type={isSelected ? "primary" : "default"}
-                                                            size="large"
+                                                            size={screens.xs ? "middle" : "large"}
                                                             style={{
                                                                 borderRadius: 8,
                                                                 fontWeight: isSelected ? 600 : 500,
@@ -804,7 +806,7 @@ export default function WalkInBookingPage() {
                                                                 color: isSelected ? "#fff" : "#389e0d",
                                                                 backgroundColor: isSelected ? "#1890ff" : "#f6ffed",
                                                                 boxShadow: isSelected ? "0 2px 6px rgba(24,144,255,0.25)" : "none",
-                                                                minWidth: 72
+                                                                minWidth: screens.xs ? 60 : 72
                                                             }}
                                                             onClick={() => handleSelectSlot(slot.value)}
                                                         >
@@ -833,9 +835,8 @@ export default function WalkInBookingPage() {
                                 borderRadius: 12,
                                 border: "1px solid #91caff",
                                 background: "#f0f5ff",
-                                sticky: "top",
-                                position: "sticky",
-                                top: 20,
+                                position: screens.lg ? "sticky" : "static",
+                                top: screens.lg ? 80 : 0,
                                 boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)"
                             }}
                         >
@@ -955,7 +956,7 @@ export default function WalkInBookingPage() {
                         Tạo Đơn Mới
                     </Button>
                 ]}
-                width={480}
+                width={screens.xs ? "95%" : 480}
             >
                 {successData && (
                     <div>
