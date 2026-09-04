@@ -2,7 +2,8 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { forwardRef } from "react";
+import { forwardRef, useEffect } from "react";
+import { ScissorOutlined, UserOutlined } from "@ant-design/icons";
 
 function renderEventContent(eventInfo) {
   const { event, view } = eventInfo;
@@ -14,6 +15,7 @@ function renderEventContent(eventInfo) {
     ? event.end.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
     : "";
   const backgroundColor = event.backgroundColor || "#1a73e8";
+
   // Month view: compact
   if (view.type === "dayGridMonth") {
     return (
@@ -34,22 +36,60 @@ function renderEventContent(eventInfo) {
       </div>
     );
   }
-  // Day/Week view: full card
+
+  const isDayView = view.type === "timeGridDay";
+
+  // Day/Week view
   return (
     <div
       className="gc-event-inner"
-      style={{ color: "#fff" }}
+      style={{
+        color: "#fff",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        padding: isDayView ? "4px 8px" : "2px 4px",
+        overflow: "hidden",
+      }}
     >
-      <div className="gc-event-time">
+      <div className="gc-event-time" style={{ fontWeight: 600, fontSize: isDayView ? 12 : 11, opacity: 0.95 }}>
         {startStr} – {endStr}
       </div>
-      <div className="gc-event-title">{event.title}</div>
-      {props?.branchName && (
-        <div className="gc-event-customer">{props.branchName}</div>
+      <div
+        className="gc-event-title"
+        style={{
+          fontWeight: 700,
+          fontSize: isDayView ? 13 : 11,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          marginTop: 1,
+        }}
+      >
+        {isDayView && <UserOutlined style={{ marginRight: 4 }} />}
+        {props?.userName || event.title}
+      </div>
+
+      {isDayView && (
+        <div
+          style={{
+            fontSize: 11,
+            opacity: 0.88,
+            marginTop: 2,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          <ScissorOutlined style={{ marginRight: 4 }} />
+          {props?.serviceName || props?.branchName || "Lịch hẹn dịch vụ"}
+        </div>
       )}
     </div>
   );
 }
+
 function renderDayHeader(info) {
   const d = info.date;
   const today = new Date();
@@ -57,6 +97,7 @@ function renderDayHeader(info) {
   const isToday = d.toDateString() === today.toDateString();
   const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
   const dayName = dayNames[d.getDay()];
+
   return (
     <div className="fc-col-day-label">
       <span className="fc-col-day-name">{dayName}</span>
@@ -66,6 +107,7 @@ function renderDayHeader(info) {
     </div>
   );
 }
+
 const ScheduleCalendar = forwardRef(function ScheduleCalendar(
   {
     events,
@@ -76,6 +118,15 @@ const ScheduleCalendar = forwardRef(function ScheduleCalendar(
   },
   ref
 ) {
+  useEffect(() => {
+    if (ref && typeof ref === "object" && ref.current) {
+      const api = ref.current.getApi?.();
+      if (api && api.view && api.view.type !== currentView) {
+        api.changeView(currentView);
+      }
+    }
+  }, [currentView, ref]);
+
   return (
     <div className="schedule-calendar-wrapper">
       <FullCalendar
@@ -111,4 +162,5 @@ const ScheduleCalendar = forwardRef(function ScheduleCalendar(
     </div>
   );
 });
+
 export default ScheduleCalendar;

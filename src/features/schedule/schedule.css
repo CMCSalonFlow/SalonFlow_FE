@@ -69,11 +69,9 @@
 /* Escape Ant Design Content padding by using negative margin trick */
 
 .schedule-page-wrapper {
-
-  margin: -24px;
-
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-
 }
 
 .schedule-page {
@@ -1663,27 +1661,68 @@
    ============================================================ */
 
 @media (max-width: 768px) {
+  .schedule-sidebar:not(.ant-drawer .schedule-sidebar) {
+    display: none !important;
+  }
 
-  .schedule-sidebar {
+  .schedule-page-wrapper {
+    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
+  }
 
-    display: none;
+  .schedule-page {
+    height: 100%;
+    flex-direction: column;
+  }
 
+  .schedule-main {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .schedule-calendar-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Chống co rúm 7 cột của chế độ Tuần trên điện thoại */
+  .schedule-calendar-wrapper .fc-timeGridWeek-view .fc-timegrid,
+  .schedule-calendar-wrapper .fc-timeGridWeek-view .fc-scrollgrid-sync-table,
+  .schedule-calendar-wrapper .fc-timeGridWeek-view .fc-col-header {
+    min-width: 650px !important;
+  }
+
+  /* Chế độ Ngày chiếm trọn 100% màn hình */
+  .schedule-calendar-wrapper .fc-timeGridDay-view {
+    min-width: 100% !important;
+  }
+
+  .schedule-calendar-wrapper .fc-timegrid-slot {
+    height: 38px !important;
+  }
+
+  .schedule-calendar-wrapper .fc-timegrid-slot-label-cushion {
+    font-size: 11px !important;
+    padding: 0 4px !important;
+  }
+
+  .fc-col-day-name {
+    font-size: 10px;
+  }
+
+  .fc-col-day-num {
+    width: 26px;
+    height: 26px;
+    font-size: 15px;
   }
 
   .toolbar-title {
-
-    font-size: 16px;
-
-    min-width: 140px;
-
+    font-size: 15px;
+    min-width: auto;
   }
 
   .toolbar-view-btn {
-
-    padding: 6px 10px;
-
+    padding: 5px 8px;
     font-size: 12px;
-
   }
-
 }
