@@ -18,7 +18,8 @@ import {
     Table,
     Tag,
     Typography,
-    message
+    message,
+    Grid
 } from "antd";
 import {
     CheckCircleOutlined,
@@ -272,7 +273,8 @@ function QrScannerModal({ open, onCancel, onSuccess }) {
             open={open}
             onCancel={() => { stopCamera(); onCancel(); }}
             footer={null}
-            width={600}
+            width="95%"
+            style={{ maxWidth: 600 }}
             destroyOnClose
         >
             <Space direction="vertical" size={16} style={{ width: "100%", marginTop: 12 }}>
@@ -350,6 +352,7 @@ function QrScannerModal({ open, onCancel, onSuccess }) {
 }
 
 export default function OwnerBookingWorkflowPage() {
+    const screens = Grid.useBreakpoint();
     const location = useLocation();
     const isManagerPage = location.pathname.startsWith("/manager");
 
@@ -794,28 +797,33 @@ export default function OwnerBookingWorkflowPage() {
             </div>
 
             <Card style={{ borderRadius: 12 }}>
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(5, 1fr)",
-                    gap: 16,
-                    alignItems: "center"
-                }}>
-                    <Statistic title="Tổng booking" value={summary.total} />
-                    <Statistic title="Đã xác nhận" value={summary.confirmed} valueStyle={{ color: "#1677ff" }} />
-                    <Statistic title="Đã check-in" value={summary.checkedIn} valueStyle={{ color: "#13c2c2" }} />
-                    <Statistic title="Đã hoàn thành" value={summary.completed} valueStyle={{ color: "#52c41a" }} />
-                    <Statistic title="Đã hủy / Vắng mặt" value={summary.cancelledOrNoShow} valueStyle={{ color: "#ff4d4f" }} />
-                </div>
+                <Row gutter={[screens.xs ? 12 : 16, screens.xs ? 12 : 16]} align="middle">
+                    <Col xs={12} sm={8} md={4.8} style={{ width: screens.md ? "20%" : undefined }}>
+                        <Statistic title="Tổng booking" value={summary.total} />
+                    </Col>
+                    <Col xs={12} sm={8} md={4.8} style={{ width: screens.md ? "20%" : undefined }}>
+                        <Statistic title="Đã xác nhận" value={summary.confirmed} valueStyle={{ color: "#1677ff" }} />
+                    </Col>
+                    <Col xs={12} sm={8} md={4.8} style={{ width: screens.md ? "20%" : undefined }}>
+                        <Statistic title="Đã check-in" value={summary.checkedIn} valueStyle={{ color: "#13c2c2" }} />
+                    </Col>
+                    <Col xs={12} sm={8} md={4.8} style={{ width: screens.md ? "20%" : undefined }}>
+                        <Statistic title="Đã hoàn thành" value={summary.completed} valueStyle={{ color: "#52c41a" }} />
+                    </Col>
+                    <Col xs={24} sm={8} md={4.8} style={{ width: screens.md ? "20%" : undefined }}>
+                        <Statistic title="Đã hủy / Vắng mặt" value={summary.cancelledOrNoShow} valueStyle={{ color: "#ff4d4f" }} />
+                    </Col>
+                </Row>
             </Card>
 
             <Card>
                 <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                    <Space wrap style={{ width: "100%", justifyContent: "space-between" }}>
-                        <Space wrap>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, flex: 1, width: screens.xs ? "100%" : "auto" }}>
                             {(!isManagerPage && branches.length > 1) && (
                                 <Select
                                     showSearch
-                                    style={{ width: 260 }}
+                                    style={{ width: screens.xs ? "100%" : 260 }}
                                     placeholder="Chọn chi nhánh"
                                     value={branchId || undefined}
                                     onChange={handleBranchChange}
@@ -829,7 +837,7 @@ export default function OwnerBookingWorkflowPage() {
                             )}
 
                             <Select
-                                style={{ width: 180 }}
+                                style={{ width: screens.xs ? "100%" : 180 }}
                                 value={statusFilter}
                                 onChange={setStatusFilter}
                                 options={[
@@ -843,25 +851,26 @@ export default function OwnerBookingWorkflowPage() {
                             />
 
                             <RangePicker
+                                style={{ width: screens.xs ? "100%" : "auto" }}
                                 value={dateRange}
                                 onChange={(value) => setDateRange(value || null)}
                             />
-                        </Space>
+                        </div>
 
-                        <Space wrap>
+                        <Space wrap style={{ width: screens.xs ? "100%" : "auto" }}>
                             <Button
                                 type="primary"
                                 icon={<QrcodeOutlined />}
-                                style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
+                                style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16", flex: screens.xs ? 1 : undefined }}
                                 onClick={() => setQrModalOpen(true)}
                             >
                                 Quét mã QR Check-in
                             </Button>
-                            <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loadingBookings}>
+                            <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loadingBookings} style={{ flex: screens.xs ? 1 : undefined }}>
                                 Làm mới
                             </Button>
                         </Space>
-                    </Space>
+                    </div>
 
                     <Input.Search
                         allowClear
@@ -894,7 +903,8 @@ export default function OwnerBookingWorkflowPage() {
                     loading={loadingBookings}
                     pagination={{
                         pageSize: 10,
-                        showSizeChanger: true,
+                        showSizeChanger: !screens.xs,
+                        simple: screens.xs,
                         pageSizeOptions: ["10", "20", "50"]
                     }}
                     scroll={{ x: 1450 }}

@@ -109,11 +109,19 @@ export default function ScheduleSidebar({
   onToggleResource,
   onCreateNew,
   isStaffView = false,
+  isMobileDrawer = false,
 }) {
   return (
-    <div className="schedule-sidebar">
+    <div
+      className="schedule-sidebar"
+      style={isMobileDrawer ? { width: "100%", borderRight: "none" } : undefined}
+    >
       {/* Create button */}
-      <button className="sidebar-create-btn" onClick={onCreateNew}>
+      <button
+        className="sidebar-create-btn"
+        onClick={onCreateNew}
+        style={isMobileDrawer ? { width: "calc(100% - 24px)", justifyContent: "center" } : undefined}
+      >
         <span className="plus-icon">＋</span>
         <span>Làm mới lịch</span>
       </button>

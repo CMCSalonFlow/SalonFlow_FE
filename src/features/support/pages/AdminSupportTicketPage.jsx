@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Row, Col, Typography, Button, Space, Table, Tag, Form, Input, Select, Drawer, Avatar, Divider, Spin, message, Alert, Switch, Statistic, Badge } from 'antd';
+import { Card, Row, Col, Typography, Button, Space, Table, Tag, Form, Input, Select, Drawer, Avatar, Divider, Spin, message, Alert, Switch, Statistic, Badge, Grid } from 'antd';
 import {
   CustomerServiceOutlined,
   ClockCircleOutlined,
@@ -20,6 +19,7 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 export default function AdminSupportTicketPage() {
+  const screens = Grid.useBreakpoint();
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState([]);
   const [kpiStats, setKpiStats] = useState({ openCount: 0, inProgressCount: 0, resolvedCount: 0, closedCount: 0, slaBreachedCount: 0 });
@@ -160,16 +160,18 @@ export default function AdminSupportTicketPage() {
   };
 
   const columns = [
-    { title: 'Mã yêu cầu', dataIndex: 'ticketCode', key: 'ticketCode', render: (t) => <Text strong style={{ color: '#4f46e5' }}>#{t}</Text> },
-    { title: 'Tiêu đề', dataIndex: 'subject', key: 'subject', render: (t, r) => <div><Text strong>{t}</Text><br/><Text type="secondary" style={{ fontSize: 12 }}>Người gửi: {r.createdByUserName} ({r.createdByUserEmail})</Text></div> },
-    { title: 'Danh mục', dataIndex: 'categoryName', key: 'categoryName' },
-    { title: 'Mức độ', dataIndex: 'priority', key: 'priority', render: (p) => renderPriorityBadge(p) },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => renderStatusBadge(s) },
-    { title: 'Hạn xử lý', key: 'sla', render: (_, r) => renderSlaBadge(r) },
-    { title: 'Phụ trách', dataIndex: 'assignedToUserName', key: 'assignedToUserName', render: (u) => <Tag color="purple">{u}</Tag> },
+    { title: 'Mã yêu cầu', dataIndex: 'ticketCode', key: 'ticketCode', width: 120, render: (t) => <Text strong style={{ color: '#4f46e5' }}>#{t}</Text> },
+    { title: 'Tiêu đề', dataIndex: 'subject', key: 'subject', width: 280, render: (t, r) => <div><Text strong>{t}</Text><br/><Text type="secondary" style={{ fontSize: 12 }}>Người gửi: {r.createdByUserName} ({r.createdByUserEmail})</Text></div> },
+    { title: 'Danh mục', dataIndex: 'categoryName', key: 'categoryName', width: 140 },
+    { title: 'Mức độ', dataIndex: 'priority', key: 'priority', width: 130, render: (p) => renderPriorityBadge(p) },
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 130, render: (s) => renderStatusBadge(s) },
+    { title: 'Hạn xử lý', key: 'sla', width: 140, render: (_, r) => renderSlaBadge(r) },
+    { title: 'Phụ trách', dataIndex: 'assignedToUserName', key: 'assignedToUserName', width: 140, render: (u) => <Tag color="purple">{u || "Chưa gán"}</Tag> },
     {
       title: '',
       key: 'action',
+      width: 90,
+      fixed: screens.md ? 'right' : false,
       render: (_, r) => (
         <Button type="primary" size="small" onClick={() => handleOpenWorkspace(r.id)} style={{ borderRadius: 6 }}>
           Xử lý
@@ -179,9 +181,9 @@ export default function AdminSupportTicketPage() {
   ];
 
   return (
-    <div style={{ padding: '24px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+    <div style={{ padding: screens.xs ? '8px 4px' : '24px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       {/* HEADER & KPI STATS */}
-      <Card style={{ borderRadius: 16, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card style={{ borderRadius: screens.xs ? 10 : 16, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
           <Col>
             <Space align="center" size="middle">
@@ -189,7 +191,7 @@ export default function AdminSupportTicketPage() {
                 <CustomerServiceOutlined style={{ fontSize: 24 }} />
               </div>
               <div>
-                <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
+                <Title level={screens.xs ? 4 : 4} style={{ margin: 0, fontWeight: 700 }}>
                   Quản lý Ticket hỗ trợ
                 </Title>
                 <Text type="secondary" style={{ fontSize: 13 }}>
@@ -205,28 +207,28 @@ export default function AdminSupportTicketPage() {
           </Col>
         </Row>
 
-        <Row gutter={16}>
-          <Col span={5}>
+        <Row gutter={[12, 12]}>
+          <Col xs={12} sm={8} lg={true}>
             <Card style={{ background: '#ecfeff', borderRadius: 12, border: '1px solid #cff4fc' }}>
               <Statistic title={<Text type="secondary" style={{ fontSize: 12 }}>Mới tiếp nhận</Text>} value={kpiStats.openCount} valueStyle={{ color: '#0891b2', fontWeight: 700 }} />
             </Card>
           </Col>
-          <Col span={5}>
+          <Col xs={12} sm={8} lg={true}>
             <Card style={{ background: '#eff6ff', borderRadius: 12, border: '1px solid #dbeafe' }}>
               <Statistic title={<Text type="secondary" style={{ fontSize: 12 }}>Đang xử lý</Text>} value={kpiStats.inProgressCount} valueStyle={{ color: '#2563eb', fontWeight: 700 }} />
             </Card>
           </Col>
-          <Col span={5}>
+          <Col xs={12} sm={8} lg={true}>
             <Card style={{ background: '#f0fdf4', borderRadius: 12, border: '1px solid #dcfce7' }}>
               <Statistic title={<Text type="secondary" style={{ fontSize: 12 }}>Đã giải quyết</Text>} value={kpiStats.resolvedCount} valueStyle={{ color: '#16a34a', fontWeight: 700 }} />
             </Card>
           </Col>
-          <Col span={5}>
+          <Col xs={12} sm={8} lg={true}>
             <Card style={{ background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
               <Statistic title={<Text type="secondary" style={{ fontSize: 12 }}>Đã đóng</Text>} value={kpiStats.closedCount} valueStyle={{ color: '#64748b', fontWeight: 700 }} />
             </Card>
           </Col>
-          <Col span={4}>
+          <Col xs={24} sm={8} lg={true}>
             <Card style={{ background: '#fef2f2', borderRadius: 12, border: '1px solid #fee2e2' }}>
               <Statistic title={<Text style={{ fontSize: 12, color: '#dc2626', fontWeight: 600 }}>Quá hạn SLA</Text>} value={kpiStats.slaBreachedCount} valueStyle={{ color: '#dc2626', fontWeight: 800 }} />
             </Card>
@@ -235,40 +237,40 @@ export default function AdminSupportTicketPage() {
       </Card>
 
       {/* FILTER & TABLE CARD */}
-      <Card style={{ borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card style={{ borderRadius: screens.xs ? 10 : 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-          <Col>
-            <Space wrap size="middle">
+          <Col xs={24} lg="auto">
+            <Space wrap size="middle" style={{ width: '100%' }}>
               <Input
                 placeholder="Tìm mã ticket, tiêu đề..."
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 220, borderRadius: 8 }}
+                style={{ width: screens.xs ? '100%' : 220, borderRadius: 8 }}
               />
 
-              <Select placeholder="Trạng thái" value={statusFilter} onChange={setStatusFilter} allowClear style={{ width: 150, borderRadius: 8 }}>
+              <Select placeholder="Trạng thái" value={statusFilter} onChange={setStatusFilter} allowClear style={{ width: screens.xs ? '100%' : 150, borderRadius: 8 }}>
                 <Option value="OPEN">Mới tiếp nhận</Option>
                 <Option value="IN_PROGRESS">Đang xử lý</Option>
                 <Option value="RESOLVED">Đã giải quyết</Option>
                 <Option value="CLOSED">Đã đóng</Option>
               </Select>
 
-              <Select placeholder="Mức độ ưu tiên" value={priorityFilter} onChange={setPriorityFilter} allowClear style={{ width: 160, borderRadius: 8 }}>
+              <Select placeholder="Mức độ ưu tiên" value={priorityFilter} onChange={setPriorityFilter} allowClear style={{ width: screens.xs ? '100%' : 160, borderRadius: 8 }}>
                 <Option value="P1">P1 - Khẩn cấp (&lt; 4h)</Option>
                 <Option value="P2">P2 - Cao (&lt; 24h)</Option>
                 <Option value="P3">P3 - Bình thường (&lt; 72h)</Option>
               </Select>
 
-              <Select placeholder="Hạn SLA" value={slaBreachedFilter} onChange={setSlaBreachedFilter} allowClear style={{ width: 140, borderRadius: 8 }}>
+              <Select placeholder="Hạn SLA" value={slaBreachedFilter} onChange={setSlaBreachedFilter} allowClear style={{ width: screens.xs ? '100%' : 140, borderRadius: 8 }}>
                 <Option value={true}>Quá hạn SLA</Option>
                 <Option value={false}>Đúng hạn</Option>
               </Select>
             </Space>
           </Col>
 
-          <Col>
-            <Button type="primary" icon={<FilterOutlined />} onClick={() => fetchAdminTickets(1)} style={{ borderRadius: 8, fontWeight: 600 }}>
+          <Col xs={24} lg="auto" style={{ textAlign: screens.xs ? 'right' : 'left' }}>
+            <Button type="primary" icon={<FilterOutlined />} onClick={() => fetchAdminTickets(1)} style={{ borderRadius: 8, fontWeight: 600, width: screens.xs ? '100%' : 'auto' }}>
               Lọc
             </Button>
           </Col>
@@ -279,8 +281,10 @@ export default function AdminSupportTicketPage() {
           columns={columns}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 1150 }}
           pagination={{
             ...pagination,
+            simple: screens.xs,
             onChange: (page) => fetchAdminTickets(page)
           }}
           bordered
@@ -297,7 +301,7 @@ export default function AdminSupportTicketPage() {
             </Space>
           )
         }
-        width={680}
+        width={screens.xs ? '100%' : 680}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import dayjs from "dayjs";
-import { message, Select, Typography, Space } from "antd";
+import { message, Select, Typography, Space, Grid, Drawer } from "antd";
 import { ShopOutlined, CalendarOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
@@ -21,19 +21,24 @@ import BookingDetailModal from "../components/BookingDetailModal";
 export default function SchedulePage() {
   const calendarRef = useRef(null);
   const location = useLocation();
+  const screens = Grid.useBreakpoint();
   const isStaffPage = location.pathname.startsWith("/staff");
+  const isMobile = !screens.md;
 
   const [branches, setBranches] = useState([]);
   const [branchId, setBranchId] = useState(() =>
     localStorage.getItem("currentBranchId")
   );
 
-  const [currentView, setCurrentView] = useState("timeGridWeek");
+  const [currentView, setCurrentView] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < 768 ? "timeGridDay" : "timeGridWeek"
+  );
   const [currentDate, setCurrentDate] = useState(new Date());
   const [visibleRange, setVisibleRange] = useState(null);
   const visibleRangeKeyRef = useRef("");
 
   const [activeResources, setActiveResources] = useState([]);
+  const [sidebarDrawerOpen, setSidebarDrawerOpen] = useState(false);
 
   const [popupOpen, setPopupOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -166,9 +171,10 @@ export default function SchedulePage() {
     setCurrentDate(date);
     getApi()?.gotoDate(date);
 
-    if (currentView === "timeGridWeek" || currentView === "dayGridMonth") {
+    if (isMobile || currentView === "timeGridWeek" || currentView === "dayGridMonth") {
       handleViewChange("timeGridDay");
     }
+    setSidebarDrawerOpen(false);
   };
 
   const handleToggleResource = (id) => {
@@ -229,15 +235,43 @@ export default function SchedulePage() {
   return (
     <div className="schedule-page-wrapper">
       <div className="schedule-page">
-        <ScheduleSidebar
-          selectedDate={currentDate}
-          onDateClick={handleMiniDateClick}
-          resources={isStaffPage ? staffResources : resources}
-          activeResources={effectiveActive}
-          onToggleResource={handleToggleResource}
-          onCreateNew={reload}
-          isStaffView={isStaffPage}
-        />
+        {/* Desktop Sidebar (renders inline on screens >= md) */}
+        {!isMobile && (
+          <ScheduleSidebar
+            selectedDate={currentDate}
+            onDateClick={handleMiniDateClick}
+            resources={isStaffPage ? staffResources : resources}
+            activeResources={effectiveActive}
+            onToggleResource={handleToggleResource}
+            onCreateNew={reload}
+            isStaffView={isStaffPage}
+          />
+        )}
+
+        {/* Mobile Sidebar Drawer (renders in Drawer on screens < md) */}
+        {isMobile && (
+          <Drawer
+            title="📅 Chọn ngày & Bộ lọc lịch"
+            placement="left"
+            open={sidebarDrawerOpen}
+            onClose={() => setSidebarDrawerOpen(false)}
+            styles={{ wrapper: { width: 300 } }}
+          >
+            <ScheduleSidebar
+              selectedDate={currentDate}
+              onDateClick={handleMiniDateClick}
+              resources={isStaffPage ? staffResources : resources}
+              activeResources={effectiveActive}
+              onToggleResource={handleToggleResource}
+              onCreateNew={() => {
+                reload();
+                setSidebarDrawerOpen(false);
+              }}
+              isStaffView={isStaffPage}
+              isMobileDrawer={true}
+            />
+          </Drawer>
+        )}
 
         <div className="schedule-main">
           {systemOffDays && systemOffDays.length > 0 && (
@@ -261,14 +295,16 @@ export default function SchedulePage() {
             onPrev={handlePrev}
             onNext={handleNext}
             onViewChange={handleViewChange}
+            onOpenSidebarDrawer={() => setSidebarDrawerOpen(true)}
+            isMobile={isMobile}
             branchSelect={
               !isStaffPage && branches.length > 0 ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <ShopOutlined style={{ color: "#1890ff", fontSize: 16 }} />
-                  <Text strong style={{ fontSize: 13 }}>Chi nhánh:</Text>
+                  {!isMobile && <Text strong style={{ fontSize: 13 }}>Chi nhánh:</Text>}
                   <Select
-                    style={{ width: 190 }}
-                    size="middle"
+                    style={{ width: isMobile ? 130 : 190 }}
+                    size={isMobile ? "small" : "middle"}
                     value={branchId ? String(branchId) : undefined}
                     onChange={(val) => {
                       setBranchId(val);

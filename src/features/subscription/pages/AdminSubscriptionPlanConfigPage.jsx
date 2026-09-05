@@ -14,7 +14,8 @@ import {
     Modal,
     Spin,
     message,
-    Divider
+    Divider,
+    Grid
 } from "antd";
 import {
     EditOutlined,
@@ -56,6 +57,7 @@ export const getFixedFeaturesForPlan = (planItem) => {
 };
 
 export default function AdminSubscriptionPlanConfigPage() {
+    const screens = Grid.useBreakpoint();
     const [configs, setConfigs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -129,10 +131,10 @@ export default function AdminSubscriptionPlanConfigPage() {
     };
 
     return (
-        <div style={{ padding: "24px 32px", maxWidth: 1400, margin: "0 auto" }}>
+        <div style={{ padding: screens.xs ? "16px 8px" : "24px 32px", maxWidth: 1400, margin: "0 auto" }}>
             {/* Header */}
             <div style={{ marginBottom: 28 }}>
-                <Title level={2} style={{ margin: 0, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.5px" }}>
+                <Title level={screens.xs ? 3 : 2} style={{ margin: 0, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.5px" }}>
                     Cấu hình Bảng giá & Giới hạn Gói dịch vụ
                 </Title>
                 <Text style={{ color: "#64748b", fontSize: 14 }}>
@@ -286,7 +288,7 @@ export default function AdminSubscriptionPlanConfigPage() {
                 open={editModalOpen}
                 onCancel={() => setEditModalOpen(false)}
                 footer={null}
-                width={640}
+                width={screens.xs ? "95%" : 640}
                 centered
                 destroyOnClose
             >
@@ -297,7 +299,7 @@ export default function AdminSubscriptionPlanConfigPage() {
                     style={{ marginTop: 16 }}
                 >
                     <Row gutter={16}>
-                        <Col span={14}>
+                        <Col xs={24} sm={14}>
                             <Form.Item
                                 label="Tên hiển thị gói"
                                 name="name"
@@ -306,7 +308,7 @@ export default function AdminSubscriptionPlanConfigPage() {
                                 <Input placeholder="Gói PRO" size="large" />
                             </Form.Item>
                         </Col>
-                        <Col span={10}>
+                        <Col xs={24} sm={10}>
                             <Form.Item label="Nhãn Badge góc thẻ" name="badgeText">
                                 <Input placeholder="Phổ biến / Cao cấp..." size="large" />
                             </Form.Item>
@@ -318,7 +320,7 @@ export default function AdminSubscriptionPlanConfigPage() {
                     </Form.Item>
 
                     <Row gutter={16}>
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item
                                 label="Giá thanh toán Theo Tháng (VND)"
                                 name="monthlyPrice"
@@ -334,7 +336,7 @@ export default function AdminSubscriptionPlanConfigPage() {
                                 />
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item
                                 label="Giá thanh toán Theo Năm (VND)"
                                 name="yearlyPrice"
@@ -353,7 +355,7 @@ export default function AdminSubscriptionPlanConfigPage() {
                     </Row>
 
                     <Row gutter={16}>
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item
                                 label="Số Chi nhánh tối đa được tạo"
                                 name="maxBranches"
@@ -362,7 +364,7 @@ export default function AdminSubscriptionPlanConfigPage() {
                                 <InputNumber style={{ width: "100%" }} size="large" min={1} max={999} />
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item
                                 label="Số Nhân viên tối đa / Chi nhánh"
                                 name="maxStaffPerBranch"
@@ -374,12 +376,12 @@ export default function AdminSubscriptionPlanConfigPage() {
                     </Row>
 
                     <Row gutter={16} align="middle" style={{ marginBottom: 24 }}>
-                        <Col span={12}>
+                        <Col xs={12} sm={12}>
                             <Form.Item label="Mở Báo cáo Analytics" name="hasAnalytics" valuePropName="checked">
                                 <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
+                        <Col xs={12} sm={12}>
                             <Form.Item label="Mở Tính năng AI" name="hasAi" valuePropName="checked">
                                 <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
                             </Form.Item>
@@ -387,7 +389,7 @@ export default function AdminSubscriptionPlanConfigPage() {
                     </Row>
 
                     <div style={{ textAlign: "right", borderTop: "1px solid #f1f5f9", paddingTop: 16 }}>
-                        <Space size={12}>
+                        <Space size={12} style={screens.xs ? { width: "100%", justifyContent: "flex-end" } : {}}>
                             <Button onClick={() => setEditModalOpen(false)} size="large">
                                 Hủy bỏ
                             </Button>

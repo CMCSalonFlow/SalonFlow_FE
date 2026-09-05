@@ -5,6 +5,7 @@ import {
   Tag,
   Popconfirm,
   Typography,
+  Grid,
 } from "antd";
 import { PlusOutlined, StopOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -14,6 +15,7 @@ import VoucherFormModal from "../components/VoucherFormModal";
 const { Title } = Typography;
 
 const VoucherManagementPage = () => {
+  const screens = Grid.useBreakpoint();
   const {
     vouchers,
     loading,
@@ -128,22 +130,25 @@ const VoucherManagementPage = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: screens.xs ? "12px 4px" : 24 }}>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: 16,
+          flexWrap: "wrap",
+          gap: 12,
         }}
       >
-        <Title level={4} style={{ margin: 0 }}>
+        <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>
           Quản lý Voucher
         </Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setCreateOpen(true)}
+          size={screens.xs ? "middle" : "large"}
         >
           Tạo voucher mới
         </Button>
@@ -154,6 +159,7 @@ const VoucherManagementPage = () => {
         columns={columns}
         dataSource={vouchers}
         loading={loading}
+        scroll={{ x: 800 }}
         pagination={{ pageSize: 10 }}
       />
 

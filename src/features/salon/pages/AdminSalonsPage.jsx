@@ -15,7 +15,8 @@ import {
     message,
     Card,
     Tooltip,
-    Popconfirm
+    Popconfirm,
+    Grid
 } from "antd";
 import {
     CheckCircleOutlined,
@@ -40,6 +41,7 @@ const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 export default function AdminSalonsPage() {
+    const screens = Grid.useBreakpoint();
     const [activeTab, setActiveTab] = useState("ALL");
     const [salons, setSalons] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -181,18 +183,18 @@ export default function AdminSalonsPage() {
             title: "Salon",
             dataIndex: "name",
             key: "name",
+            width: 240,
             render: (text, record) => (
-                <Space size="middle">
+                <Space size="middle" style={{ whiteSpace: "nowrap" }}>
                     <Avatar
-                        size={48}
+                        size={44}
                         src={record.logoUrl}
                         icon={<ShopOutlined />}
-                        style={{ backgroundColor: "#1890ff" }}
+                        style={{ backgroundColor: "#1890ff", flexShrink: 0 }}
                     />
-                    <div>
-                        <Text strong style={{ fontSize: 16 }}>{text}</Text>
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 13 }}>ID: #{record.id}</Text>
+                    <div style={{ minWidth: 140 }}>
+                        <Text strong style={{ fontSize: 15, display: "block" }}>{text}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>ID: #{record.id}</Text>
                     </div>
                 </Space>
             )
@@ -200,8 +202,9 @@ export default function AdminSalonsPage() {
         {
             title: "Liên hệ",
             key: "contact",
+            width: 240,
             render: (_, record) => (
-                <div>
+                <div style={{ fontSize: 13 }}>
                     <div><Text strong>Email:</Text> {record.email || "---"}</div>
                     <div><Text strong>SĐT:</Text> {record.phone || "---"}</div>
                     {record.website && (
@@ -214,15 +217,17 @@ export default function AdminSalonsPage() {
             title: "Trạng thái",
             dataIndex: "status",
             key: "status",
+            width: 150,
             render: (status) => renderStatusTag(status)
         },
         {
             title: "Lý do từ chối",
             dataIndex: "rejectionReason",
             key: "rejectionReason",
+            width: 180,
             render: (text, record) => record.status === "REJECTED" ? (
                 <Tooltip title={text}>
-                    <Text type="danger" ellipsis={{ tooltip: text }} style={{ maxWidth: 200 }}>
+                    <Text type="danger" ellipsis={{ tooltip: text }} style={{ maxWidth: 160 }}>
                         {text || "Chưa có lý do"}
                     </Text>
                 </Tooltip>
@@ -231,7 +236,8 @@ export default function AdminSalonsPage() {
         {
             title: "Hành động",
             key: "action",
-            align: "right",
+            width: 280,
+            fixed: screens.md ? "right" : false,
             render: (_, record) => (
                 <Space>
                     <Button
@@ -299,14 +305,17 @@ export default function AdminSalonsPage() {
     ];
 
     return (
-        <div style={{ padding: 24 }}>
+        <div style={{ padding: screens.xs ? "8px 4px" : 24 }}>
             <Card
+                bordered={false}
+                style={{ borderRadius: screens.xs ? 10 : 16, boxShadow: "0 4px 16px rgba(0,0,0,0.03)" }}
+                bodyStyle={{ padding: screens.xs ? 12 : 24 }}
                 title={
-                    <Space size="middle">
-                        <ShopOutlined style={{ fontSize: 24, color: "#1890ff" }} />
+                    <Space size="middle" align="start">
+                        <ShopOutlined style={{ fontSize: 24, color: "#1890ff", marginTop: 4 }} />
                         <div>
                             <Title level={4} style={{ margin: 0 }}>Quản lý & Duyệt Salon</Title>
-                            <Text type="secondary">Phê duyệt đơn đăng ký salon mới, gửi email thông báo và theo dõi nhật ký quyết định.</Text>
+                            <Text type="secondary" style={{ fontSize: screens.xs ? 12 : 14 }}>Phê duyệt đơn đăng ký salon mới, gửi email thông báo và theo dõi nhật ký quyết định.</Text>
                         </div>
                     </Space>
                 }
@@ -315,6 +324,7 @@ export default function AdminSalonsPage() {
                     activeKey={activeTab}
                     onChange={(key) => setActiveTab(key)}
                     items={tabItems}
+                    size={screens.xs ? "small" : "middle"}
                     style={{ marginBottom: 16 }}
                 />
 
@@ -323,7 +333,8 @@ export default function AdminSalonsPage() {
                     dataSource={salons}
                     rowKey="id"
                     loading={loading}
-                    pagination={{ pageSize: 8 }}
+                    scroll={{ x: 1050 }}
+                    pagination={{ pageSize: 8, simple: screens.xs }}
                 />
             </Card>
 
@@ -333,6 +344,7 @@ export default function AdminSalonsPage() {
                 open={rejectModalOpen}
                 onCancel={() => setRejectModalOpen(false)}
                 footer={null}
+                width={screens.xs ? "95%" : 520}
             >
                 <Form
                     form={rejectForm}
@@ -365,7 +377,7 @@ export default function AdminSalonsPage() {
             <Drawer
                 title={`Nhật ký Audit: ${selectedSalon?.name}`}
                 placement="right"
-                width={450}
+                width={screens.xs ? "100%" : 450}
                 open={auditDrawerOpen}
                 onClose={() => setAuditDrawerOpen(false)}
             >
@@ -412,6 +424,7 @@ export default function AdminSalonsPage() {
                 title={`Chi tiết Salon: ${selectedSalon?.name}`}
                 open={detailModalOpen}
                 onCancel={() => setDetailModalOpen(false)}
+                width={screens.xs ? "95%" : 560}
                 footer={[
                     <Button key="close" onClick={() => setDetailModalOpen(false)}>Đóng</Button>
                 ]}
@@ -456,6 +469,7 @@ export default function AdminSalonsPage() {
                 title={`Kích hoạt gói Enterprise cho Salon: ${selectedSalon?.name}`}
                 open={enterpriseModalOpen}
                 onCancel={() => setEnterpriseModalOpen(false)}
+                width={screens.xs ? "95%" : 520}
                 footer={null}
             >
                 <Form
