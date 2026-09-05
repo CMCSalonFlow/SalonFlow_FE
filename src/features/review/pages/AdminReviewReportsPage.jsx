@@ -11,6 +11,7 @@ import {
   Tabs,
   message,
   Rate,
+  Grid,
 } from "antd";
 import dayjs from "dayjs";
 import {
@@ -23,6 +24,7 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export default function AdminReviewReportsPage() {
+  const screens = Grid.useBreakpoint();
   const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState([]);
   const [activeTab, setActiveTab] = useState("PENDING");
@@ -142,7 +144,8 @@ export default function AdminReviewReportsPage() {
     {
       title: "Thao tác",
       key: "action",
-      width: 180,
+      width: 190,
+      fixed: screens.md ? "right" : false,
       render: (_, record) => {
         if (record.status !== "PENDING") {
           return (
@@ -186,24 +189,29 @@ export default function AdminReviewReportsPage() {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: screens.xs ? "8px 4px" : 0 }}>
       <div>
-        <Title level={3} style={{ marginBottom: 4 }}>
+        <Title level={screens.xs ? 4 : 3} style={{ marginBottom: 4 }}>
           Hàng đợi báo cáo vi phạm đánh giá
         </Title>
-        <Text type="secondary">
+        <Text type="secondary" style={{ fontSize: screens.xs ? 12 : 14 }}>
           Duyệt các báo cáo từ Salon Owner/Khách hàng. Khi duyệt chấp nhận, bài đánh giá sẽ bị ẩn khỏi công khai (giữ trong DB) & gửi Email tới cả 2 bên.
         </Text>
       </div>
 
-      <Card>
+      <Card
+        bordered={false}
+        style={{ borderRadius: screens.xs ? 10 : 16, boxShadow: "0 4px 16px rgba(0,0,0,0.03)" }}
+        bodyStyle={{ padding: screens.xs ? 12 : 24 }}
+      >
         <Tabs
           activeKey={activeTab}
           onChange={(key) => setActiveTab(key)}
+          size={screens.xs ? "small" : "middle"}
           items={[
-            { key: "PENDING", label: "Chờ xử lý (Pending)" },
-            { key: "APPROVED", label: "Đã duyệt ẩn bài (Approved)" },
-            { key: "REJECTED", label: "Đã từ chối (Rejected)" },
+            { key: "PENDING", label: "Chờ xử lý" },
+            { key: "APPROVED", label: "Đã duyệt ẩn" },
+            { key: "REJECTED", label: "Đã từ chối" },
           ]}
         />
         <Table
@@ -211,8 +219,10 @@ export default function AdminReviewReportsPage() {
           columns={columns}
           dataSource={reports}
           loading={loading}
+          scroll={{ x: 1100 }}
           pagination={{
             ...pagination,
+            simple: screens.xs,
             onChange: (p) => loadReports(p, activeTab),
           }}
         />
@@ -224,6 +234,7 @@ export default function AdminReviewReportsPage() {
         onOk={handleAction}
         confirmLoading={actionLoading}
         onCancel={() => setModalOpen(false)}
+        width={screens.xs ? "95%" : 560}
         okText={modalType === "APPROVE" ? "Chấp nhận & Ẩn review" : "Từ chối báo cáo"}
         okButtonProps={{ danger: modalType === "REJECT" }}
       >

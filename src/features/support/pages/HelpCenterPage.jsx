@@ -265,6 +265,7 @@ export default function HelpCenterPage() {
                   columns={columns}
                   rowKey="id"
                   loading={loadingTickets}
+                  scroll={{ x: 750 }}
                   pagination={{
                     ...pagination,
                     onChange: (page) => fetchMyTickets(page)

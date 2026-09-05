@@ -16,6 +16,7 @@ import {
     Empty,
     Spin,
     Select,
+    Grid,
 } from "antd";
 import {
     PlusOutlined,
@@ -59,6 +60,7 @@ const DAY_NAMES = {
  *   branches — danh sách chi nhánh
  */
 export default function ShiftTemplatePage() {
+    const screens = Grid.useBreakpoint();
     const [templates, setTemplates] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -303,21 +305,23 @@ export default function ShiftTemplatePage() {
     ];
 
     return (
-        <div style={{ padding: 24 }}>
-            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }} gutter={[16, 16]}>
+        <div style={{ padding: screens.xs ? "12px 4px" : 24 }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 20 }} gutter={[16, 16]}>
                 <Col xs={24} md={8}>
-                    <Title level={3} style={{ margin: 0 }}>
+                    <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>
                         Template ca làm việc
                     </Title>
                     <Text type="secondary">Quản lý các template ca làm việc cố định theo tuần của nhân viên.</Text>
                 </Col>
-                <Col xs={24} md={16} style={{ textAlign: "right" }}>
-                    <Space wrap style={{ display: "inline-flex", justifyContent: "flex-end" }}>
-                        <Space>
-                            <ShopOutlined style={{ color: "#1890ff" }} />
-                            <Text strong>Chi nhánh:</Text>
+                <Col xs={24} md={16} style={{ textAlign: screens.xs ? "left" : "right" }}>
+                    <Space wrap style={{ display: "inline-flex", justifyContent: screens.xs ? "flex-start" : "flex-end", width: "100%" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, width: screens.xs ? "100%" : "auto" }}>
+                            <Space style={{ flexShrink: 0 }}>
+                                <ShopOutlined style={{ color: "#1890ff" }} />
+                                <Text strong>Chi nhánh:</Text>
+                            </Space>
                             <Select
-                                style={{ width: 180 }}
+                                style={{ flex: screens.xs ? 1 : undefined, width: screens.xs ? undefined : 180 }}
                                 value={branchId}
                                 onChange={(val) => {
                                     setBranchId(val);
@@ -327,7 +331,7 @@ export default function ShiftTemplatePage() {
                                     value: b.id,
                                 }))}
                             />
-                        </Space>
+                        </div>
                         <Button
                             type="primary"
                             ghost
@@ -335,13 +339,15 @@ export default function ShiftTemplatePage() {
                             onClick={() => openApply(null)}
                             disabled={templates.length === 0}
                             style={{ fontWeight: 600 }}
+                            block={screens.xs}
                         >
-                            ⚡ Áp dụng tất cả template ({templates.length})
+                            ⚡ Áp dụng tất cả ({templates.length})
                         </Button>
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
                             onClick={openCreate}
+                            block={screens.xs}
                         >
                             Tạo template mới
                         </Button>
@@ -354,6 +360,7 @@ export default function ShiftTemplatePage() {
                     dataSource={templates}
                     columns={columns}
                     rowKey="id"
+                    scroll={{ x: 850 }}
                     locale={{ emptyText: <Empty description="Chưa có template nào" /> }}
                 />
             </Spin>

@@ -1,4 +1,4 @@
-import { Card, Row, Col, Typography, Tag, Space, Button, Rate, Avatar } from "antd";
+import { Card, Row, Col, Typography, Tag, Space, Button, Rate, Avatar, Grid } from "antd";
 import {
   ShopOutlined,
   PhoneOutlined,
@@ -10,11 +10,14 @@ import {
   CheckCircleOutlined
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { isAuthenticated } from "@/core/utils/auth";
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function SalonStorefrontHeader({ salon, branches = [] }) {
   const navigate = useNavigate();
+  const screens = Grid.useBreakpoint();
+  const isLogin = isAuthenticated();
 
   if (!salon) return null;
 
@@ -33,11 +36,11 @@ export default function SalonStorefrontHeader({ salon, branches = [] }) {
   return (
     <Card
       style={{
-        borderRadius: 28,
+        borderRadius: screens.xs ? 20 : 28,
         border: "none",
         overflow: "hidden",
         boxShadow: "0 20px 45px rgba(0, 0, 0, 0.12)",
-        marginBottom: 36,
+        marginBottom: screens.xs ? 24 : 36,
         background: "#ffffff"
       }}
       styles={{ body: { padding: 0 } }}
@@ -45,37 +48,37 @@ export default function SalonStorefrontHeader({ salon, branches = [] }) {
       {/* 🖼️ COVER BANNER SANG TRỌNG */}
       <div
         style={{
-          height: 220,
+          height: screens.xs ? 150 : 220,
           background: `linear-gradient(180deg, rgba(15, 23, 42, 0.35) 0%, rgba(15, 23, 42, 0.85) 100%), url('${coverUrl}') center/cover no-repeat`,
           position: "relative",
           display: "flex",
           alignItems: "flex-end",
-          padding: "24px 32px"
+          padding: screens.xs ? "12px 16px" : "24px 32px"
         }}
       >
         <Tag
           color="gold"
           style={{
             position: "absolute",
-            top: 20,
-            right: 20,
+            top: screens.xs ? 12 : 20,
+            right: screens.xs ? 12 : 20,
             borderRadius: 14,
             fontWeight: 700,
-            padding: "4px 14px",
-            fontSize: 14,
+            padding: screens.xs ? "2px 10px" : "4px 14px",
+            fontSize: screens.xs ? 11 : 14,
             boxShadow: "0 6px 16px rgba(0,0,0,0.2)"
           }}
         >
-          <StarOutlined style={{ marginRight: 6 }} /> {displayRating}/5.0★ Thương Hiệu Uy Tín
+          <StarOutlined style={{ marginRight: 4 }} /> {displayRating}/5.0★ Thương Hiệu Uy Tín
         </Tag>
       </div>
 
       {/* 🏬 THÔNG TIN HỒ SƠ THƯƠNG HIỆU */}
-      <div style={{ padding: "0 32px 28px", marginTop: -50, position: "relative" }}>
-        <Row align="bottom" gutter={[24, 20]}>
+      <div style={{ padding: screens.xs ? "0 16px 20px" : "0 32px 28px", marginTop: screens.xs ? -36 : -50, position: "relative" }}>
+        <Row align="bottom" gutter={screens.xs ? [12, 12] : [24, 20]}>
           <Col>
             <Avatar
-              size={100}
+              size={screens.xs ? 72 : 100}
               src={salon.logoUrl || coverUrl || defaultLogo}
               style={{
                 border: "4px solid #ffffff",
@@ -86,24 +89,24 @@ export default function SalonStorefrontHeader({ salon, branches = [] }) {
           </Col>
 
           <Col flex="1">
-            <div style={{ paddingTop: 10 }}>
+            <div style={{ paddingTop: screens.xs ? 4 : 10 }}>
               <Space size="small" align="center" wrap>
-                <Title level={2} style={{ margin: 0, fontWeight: 800, color: "#0f172a" }}>
+                <Title level={2} style={{ margin: 0, fontWeight: 800, color: "#0f172a", fontSize: screens.xs ? 20 : 28 }}>
                   {salon.name}
                 </Title>
-                <Tag color="green" style={{ borderRadius: 10, fontWeight: 700, padding: "2px 10px" }}>
+                <Tag color="green" style={{ borderRadius: 10, fontWeight: 700, padding: "2px 10px", fontSize: 11 }}>
                   <CheckCircleOutlined style={{ marginRight: 4 }} /> Đang Hoạt Động
                 </Tag>
               </Space>
 
               <Paragraph
                 type="secondary"
-                style={{ fontSize: 14, margin: "6px 0 12px 0", color: "#64748b", maxWidth: 750 }}
+                style={{ fontSize: screens.xs ? 13 : 14, margin: "6px 0 10px 0", color: "#64748b", maxWidth: 750, lineHeight: 1.5 }}
               >
                 {salon.description || "Hệ thống Salon làm đẹp cao cấp chuyên tạo kiểu tóc, uốn nhuộm Hàn Quốc & chăm sóc sắc đẹp."}
               </Paragraph>
 
-              <Space size="large" wrap style={{ fontSize: 13, color: "#475569" }}>
+              <Space size={screens.xs ? "middle" : "large"} wrap style={{ fontSize: screens.xs ? 12 : 13, color: "#475569" }}>
                 {salon.phone && (
                   <span>
                     <PhoneOutlined style={{ color: "#10b981", marginRight: 6 }} />
@@ -126,21 +129,23 @@ export default function SalonStorefrontHeader({ salon, branches = [] }) {
             </div>
           </Col>
 
-          <Col xs={24} sm="auto">
+          <Col xs={24} sm="auto" style={{ width: screens.xs ? "100%" : "auto" }}>
             <Button
               type="primary"
               size="large"
+              block={screens.xs}
               icon={<CalendarOutlined />}
               style={{
                 borderRadius: 20,
                 fontWeight: 700,
-                height: 48,
-                padding: "0 28px",
+                height: screens.xs ? 44 : 48,
+                padding: screens.xs ? "0 20px" : "0 28px",
                 background: "linear-gradient(135deg, #4f46e5, #6366f1)",
                 borderColor: "transparent",
-                boxShadow: "0 8px 20px rgba(79, 70, 229, 0.35)"
+                boxShadow: "0 8px 20px rgba(79, 70, 229, 0.35)",
+                width: screens.xs ? "100%" : "auto"
               }}
-              onClick={() => navigate(`/guest-booking?salonId=${salon.id}`)}
+              onClick={() => navigate(isLogin ? `/booking?salonId=${salon.id}` : `/guest-booking?salonId=${salon.id}`)}
             >
               Đặt Lịch Ngay Tại Salon
             </Button>
@@ -149,16 +154,16 @@ export default function SalonStorefrontHeader({ salon, branches = [] }) {
 
         {/* 🏢 DANH SÁCH CHI NHÁNH DẠNG TAG */}
         {branches.length > 0 && (
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
-            <Text type="secondary" style={{ fontSize: 13, fontWeight: 600, marginRight: 12 }}>
+          <div style={{ marginTop: screens.xs ? 14 : 20, paddingTop: screens.xs ? 12 : 16, borderTop: "1px solid #f1f5f9" }}>
+            <Text type="secondary" style={{ fontSize: screens.xs ? 12 : 13, fontWeight: 600, marginRight: 12 }}>
               📍 Các Chi Nhánh:
             </Text>
-            <Space wrap size={[8, 8]}>
+            <Space wrap size={[6, 6]}>
               {branches.map((b) => (
                 <Tag
                   key={b.id || b.branchId}
                   color="blue"
-                  style={{ borderRadius: 8, padding: "4px 12px", fontSize: 12, fontWeight: 600 }}
+                  style={{ borderRadius: 8, padding: "3px 10px", fontSize: screens.xs ? 11 : 12, fontWeight: 600 }}
                 >
                   <EnvironmentOutlined style={{ marginRight: 4 }} /> {b.name} ({b.address || "Chi nhánh chính"})
                 </Tag>

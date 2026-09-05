@@ -232,7 +232,7 @@
 /* ─── Mobile Responsiveness (< 768px & < 576px) ─────────────────────────── */
 @media (max-width: 768px) {
   .owner-hero-banner .ant-card-body {
-    padding: 20px 16px !important;
+    padding: 16px 14px !important;
   }
 
   .owner-hero-banner h2 {
@@ -241,16 +241,17 @@
 
   .owner-branch-capsule {
     width: 100% !important;
-    justify-content: space-between !important;
+    margin-left: 0 !important;
   }
 
   .owner-branch-capsule .ant-select {
     flex: 1 !important;
-    min-width: 140px !important;
+    min-width: 0 !important;
   }
 
   .owner-custom-tabs .ant-tabs-nav-wrap {
     overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .owner-custom-tabs .ant-tabs-tab {
@@ -289,6 +290,46 @@
 
   .owner-glass-card .ant-card-body {
     padding: 14px 12px !important;
+  }
+}
+
+/* ─── Global Table Responsive Scaling & Horizontal Scrollbar ─────────── */
+.ant-table-wrapper {
+  max-width: 100%;
+}
+
+.ant-table-wrapper .ant-table {
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .ant-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ant-table-wrapper .ant-table-content {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Force table cells to avoid squishing and vertical letter-breaking */
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    white-space: nowrap !important;
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+  }
+
+  /* Stylish subtle horizontal scrollbar for mobile */
+  .ant-table-wrapper::-webkit-scrollbar,
+  .ant-table-content::-webkit-scrollbar {
+    height: 5px;
+  }
+  .ant-table-wrapper::-webkit-scrollbar-thumb,
+  .ant-table-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
   }
 }
 

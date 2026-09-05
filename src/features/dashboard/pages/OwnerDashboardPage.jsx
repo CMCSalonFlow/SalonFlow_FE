@@ -13,6 +13,7 @@ import {
     Statistic,
     Tabs,
     Typography,
+    Grid,
     message
 } from "antd";
 import {
@@ -54,6 +55,7 @@ const formatCurrency = (amount) =>
 const getOverviewValue = (value) => (value === null || value === undefined ? 0 : value);
 
 export default function OwnerDashboardPage() {
+    const screens = Grid.useBreakpoint();
     const { features } = useSubscription();
     const { tab } = useParams();
     const navigate = useNavigate();
@@ -551,68 +553,80 @@ export default function OwnerDashboardPage() {
     }
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: screens.xs ? 14 : 20 }}>
             {/* HERO BANNER - LUXURY & MODERN GRADIENT */}
             <Card
                 className="owner-hero-banner"
-                bodyStyle={{ padding: "26px 28px" }}
+                styles={{ body: { padding: screens.xs ? "16px 14px" : "26px 28px" } }}
             >
-                <Row justify="space-between" align="middle" gutter={[20, 20]}>
+                <Row justify="space-between" align="middle" gutter={screens.xs ? [12, 14] : [20, 20]}>
                     <Col xs={24} lg={13}>
-
-                        <Title level={2} style={{ color: "#ffffff", margin: "0 0 6px 0", fontWeight: 800, letterSpacing: "-0.5px" }}>
+                        <Title
+                            level={2}
+                            style={{
+                                color: "#ffffff",
+                                margin: "0 0 6px 0",
+                                fontWeight: 800,
+                                fontSize: screens.xs ? 20 : 26,
+                                letterSpacing: "-0.5px"
+                            }}
+                        >
                             👋 Xin chào, {fullName}!
                         </Title>
-                        <Text style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: 14 }}>
+                        <Text style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: screens.xs ? 13 : 14 }}>
                             Chào mừng bạn trở lại bảng điều khiển SalonFlow. Theo dõi tổng quan hiệu suất phục vụ, doanh thu và tăng trưởng kinh doanh các chi nhánh.
                         </Text>
                     </Col>
 
-                    <Col xs={24} lg={11} style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <Col xs={24} lg={11} style={{ display: "flex", justifyContent: screens.lg ? "flex-end" : "stretch", width: "100%" }}>
                         <div
                             className="owner-branch-capsule"
                             style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 10,
+                                display: "flex",
+                                flexDirection: screens.xs ? "column" : "row",
+                                alignItems: screens.xs ? "stretch" : "center",
+                                gap: screens.xs ? 8 : 10,
                                 background: "rgba(255, 255, 255, 0.12)",
                                 backdropFilter: "blur(10px)",
-                                padding: "6px 14px",
-                                borderRadius: 16,
+                                padding: screens.xs ? "10px 12px" : "6px 14px",
+                                borderRadius: 14,
                                 border: "1px solid rgba(255, 255, 255, 0.2)",
-                                width: "fit-content",
-                                marginLeft: "auto"
+                                width: screens.lg ? "fit-content" : "100%",
+                                marginLeft: screens.lg ? "auto" : 0
                             }}
                         >
                             <Space align="center" size={6}>
                                 <BranchesOutlined style={{ color: "#818cf8", fontSize: 16 }} />
                                 <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>Chi nhánh:</span>
                             </Space>
-                            <Select
-                                showSearch
-                                style={{ width: 200 }}
-                                value={selectedBranchId || undefined}
-                                onChange={setSelectedBranchId}
-                                optionFilterProp="label"
-                                options={branches.map((branch) => ({
-                                    value: String(branch.id),
-                                    label: branch.name
-                                }))}
-                            />
-                            <Button
-                                type="primary"
-                                icon={<ReloadOutlined spin={refreshing} />}
-                                onClick={handleRefresh}
-                                loading={refreshing}
-                                style={{
-                                    borderRadius: 8,
-                                    background: "rgba(255, 255, 255, 0.2)",
-                                    borderColor: "rgba(255, 255, 255, 0.3)",
-                                    fontWeight: 600
-                                }}
-                            >
-                                Làm mới
-                            </Button>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+                                <Select
+                                    showSearch
+                                    style={{ flex: 1, minWidth: 0, width: screens.lg ? 200 : "100%" }}
+                                    value={selectedBranchId || undefined}
+                                    onChange={setSelectedBranchId}
+                                    optionFilterProp="label"
+                                    options={branches.map((branch) => ({
+                                        value: String(branch.id),
+                                        label: branch.name
+                                    }))}
+                                />
+                                <Button
+                                    type="primary"
+                                    icon={<ReloadOutlined spin={refreshing} />}
+                                    onClick={handleRefresh}
+                                    loading={refreshing}
+                                    style={{
+                                        borderRadius: 8,
+                                        background: "rgba(255, 255, 255, 0.2)",
+                                        borderColor: "rgba(255, 255, 255, 0.3)",
+                                        fontWeight: 600,
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    Làm mới
+                                </Button>
+                            </div>
                         </div>
                     </Col>
                 </Row>
@@ -620,18 +634,20 @@ export default function OwnerDashboardPage() {
 
             {selectedBranch ? (
                 <div style={{
-                    padding: "8px 16px",
+                    padding: screens.xs ? "8px 12px" : "8px 16px",
                     borderRadius: 12,
                     background: "#eef2ff",
                     border: "1px solid #c7d2fe",
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     gap: 8,
                     color: "#4338ca",
-                    fontSize: 13,
-                    fontWeight: 600
+                    fontSize: screens.xs ? 12 : 13,
+                    fontWeight: 600,
+                    lineHeight: 1.4,
+                    wordBreak: "break-word"
                 }}>
-                    <span>📍</span>
+                    <span style={{ marginTop: 2 }}>📍</span>
                     <span>Đang đồng bộ dữ liệu theo: <b>{selectedBranch.name}</b> {selectedBranch.address ? `(${selectedBranch.address})` : ""}</span>
                 </div>
             ) : null}
@@ -640,14 +656,17 @@ export default function OwnerDashboardPage() {
             <Card
                 bordered={false}
                 className="owner-custom-tabs owner-glass-card"
-                bodyStyle={{ padding: "18px 24px" }}
+                styles={{ body: { padding: screens.xs ? "14px 10px" : "18px 24px" } }}
             >
-                <Tabs
-                    activeKey={activeTab}
-                    onChange={handleTabChange}
-                    items={tabItems}
-                    size="large"
-                />
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+                    <Tabs
+                        activeKey={activeTab}
+                        onChange={handleTabChange}
+                        items={tabItems}
+                        size={screens.xs ? "middle" : "large"}
+                        tabBarStyle={{ whiteSpace: "nowrap", marginBottom: screens.xs ? 12 : 16 }}
+                    />
+                </div>
             </Card>
         </div>
     );

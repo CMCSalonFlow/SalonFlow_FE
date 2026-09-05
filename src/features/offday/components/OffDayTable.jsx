@@ -90,6 +90,7 @@ const OffDayTable = ({ offDays = [], loading = false, onDelete }) => {
             columns={columns}
             dataSource={offDays}
             loading={loading}
+            scroll={{ x: 750 }}
             pagination={{ pageSize: 10 }}
             locale={{
                 emptyText: <Empty description="Chưa có ngày nghỉ lễ / đóng cửa nào được thiết lập" />

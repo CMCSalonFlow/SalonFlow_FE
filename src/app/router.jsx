@@ -377,7 +377,7 @@ const router = createBrowserRouter([
             },
             {
                 path: "services",
-                element: <Navigate to="/search" replace />
+                element: withSuspense(CategoryListUserPage)
             },
             {
                 path: "nearby",
@@ -411,6 +411,10 @@ const router = createBrowserRouter([
             </ProtectedRoute>
         ),
         children: [
+            {
+                path: "/services",
+                element: withSuspense(CategoryListUserPage)
+            },
             {
                 path: "/nearby",
                 element: withSuspense(SearchPage)

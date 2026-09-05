@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Table, Tag, Button, Select, Space, Typography, Row, Col, Statistic, Modal, Form, Input, Popconfirm, message, Avatar, Badge } from "antd";
+import { Card, Table, Tag, Button, Select, Space, Typography, Row, Col, Statistic, Modal, Form, Input, Popconfirm, message, Avatar, Badge, Grid } from "antd";
 import { CheckOutlined, CloseOutlined, ClockCircleOutlined, UserOutlined, ShopOutlined, FilterOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import offdayApi from "../api/offdayApi";
@@ -22,6 +22,7 @@ const STATUS_MAP = {
 };
 
 export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON_OWNER" }) {
+    const screens = Grid.useBreakpoint();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedBranchId, setSelectedBranchId] = useState(null);
@@ -226,7 +227,7 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
     return (
         <div>
             {/* Bộ lọc & Thống kê */}
-            <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 20 }}>
+            <Row gutter={screens.xs ? [12, 12] : [16, 16]} align="middle" style={{ marginBottom: 20 }}>
                 {(userRole === "SALON_OWNER" || userRole === "ROLE_SALON_OWNER") && (
                     <Col xs={24} sm={8} md={6}>
                         <label style={{ display: "block", marginBottom: 6, fontWeight: 600, fontSize: 13 }}>
@@ -262,7 +263,7 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
                     </Select>
                 </Col>
 
-                <Col xs={24} sm={8} md={12} style={{ textAlign: "right" }}>
+                <Col xs={24} sm={8} md={12} style={{ textAlign: screens.xs ? "left" : "right" }}>
                     <Space size="large">
                         <Statistic
                             title="Chờ duyệt"
@@ -284,7 +285,8 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
                 dataSource={requests}
                 rowKey="id"
                 loading={loading}
-                pagination={{ pageSize: 8 }}
+                scroll={{ x: 850 }}
+                pagination={{ pageSize: 8, simple: screens.xs }}
             />
 
             {/* Modal Nhập lý do từ chối */}
@@ -294,6 +296,7 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
                 okText="Xác nhận Từ chối"
                 cancelText="Đóng"
                 okButtonProps={{ danger: true, loading: rejecting }}
+                width={screens.xs ? "95%" : 520}
                 onCancel={() => {
                     setRejectModalOpen(false);
                     rejectForm.resetFields();

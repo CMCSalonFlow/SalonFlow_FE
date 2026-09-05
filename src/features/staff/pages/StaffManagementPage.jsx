@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Select, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin, Avatar, Empty } from "antd";
+import { Card, Select, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin, Avatar, Empty, Grid } from "antd";
 import { UserAddOutlined, EditOutlined, DeleteOutlined, ShopOutlined, IdcardOutlined, ContactsOutlined } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import { getServicesByBranchApi } from "@/features/service/api/serviceApi";
@@ -18,6 +18,7 @@ const { Title, Text, Paragraph } = Typography;
  * Trang quản lý nhân sự (StaffManagementPage) dành cho chủ Salon (Owner).
  */
 export default function StaffManagementPage() {
+    const screens = Grid.useBreakpoint();
     const { openLimitModal } = useSubscription();
     const [loadingBranches, setLoadingBranches] = useState(true);
     const [loadingData, setLoadingData] = useState(false);
@@ -120,31 +121,24 @@ export default function StaffManagementPage() {
         {
             title: "Nhân viên",
             key: "staffInfo",
-            width: "25%",
+            width: 260,
             render: (_, record) => (
-                <Space size="middle">
+                <Space size="middle" style={{ whiteSpace: "nowrap" }}>
                     <Avatar 
-                        size={52} 
+                        size={48} 
                         src={record.avatarUrl} 
                         icon={<IdcardOutlined />} 
-                        style={{ border: "2px solid #1890ff" }}
+                        style={{ border: "2px solid #1890ff", flexShrink: 0 }}
                     />
                     <div>
-                        <Text strong style={{ fontSize: 16 }}>{record.name}</Text>
+                        <Text strong style={{ fontSize: 15, display: "block" }}>{record.name}</Text>
                         {record.email && (
-                            <>
-                                <br />
-                                <Text type="secondary" style={{ fontSize: 13 }}>📧 {record.email}</Text>
-                            </>
+                            <Text type="secondary" style={{ fontSize: 12, display: "block" }}>📧 {record.email}</Text>
                         )}
                         {record.phone && (
-                            <>
-                                <br />
-                                <Text type="secondary" style={{ fontSize: 12 }}>📞 {record.phone}</Text>
-                            </>
+                            <Text type="secondary" style={{ fontSize: 12, display: "block" }}>📞 {record.phone}</Text>
                         )}
                     </div>
-
                 </Space>
             )
         },
@@ -152,14 +146,14 @@ export default function StaffManagementPage() {
             title: "Chuyên môn",
             dataIndex: "specialties",
             key: "specialties",
-            width: "20%",
+            width: 180,
             render: (text) => {
                 if (!text) return <Text type="secondary">-</Text>;
                 const tags = text.split(",").map(t => t.trim()).filter(Boolean);
                 return (
-                    <Space wrap>
+                    <Space wrap size={[4, 6]}>
                         {tags.map(tag => (
-                            <Tag color="blue" key={tag} style={{ borderRadius: 4 }}>
+                            <Tag color="blue" key={tag} style={{ borderRadius: 4, margin: 0 }}>
                                 {tag}
                             </Tag>
                         ))}
@@ -171,27 +165,25 @@ export default function StaffManagementPage() {
             title: "Dịch vụ thực hiện",
             dataIndex: "services",
             key: "services",
-            width: "35%",
+            width: 240,
             render: (items) => (
-                <Space wrap size={[4, 8]}>
+                <Space wrap size={[4, 6]}>
                     {items && items.length > 0 ? (
                         items.map(item => (
-                            <Tag color="green" key={item.id}>
+                            <Tag color="green" key={item.id} style={{ margin: 0 }}>
                                 {item.name}
                             </Tag>
                         ))
                     ) : (
                         <Text type="secondary">Chưa phân công dịch vụ</Text>
                     )}
-
                 </Space>
             )
         },
-
         {
             title: "Vai trò",
             key: "roleCode",
-            width: "15%",
+            width: 140,
             render: (_, record) => {
                 const isManager = record.roleCode === "MANAGER";
                 return isManager ? (
@@ -208,7 +200,7 @@ export default function StaffManagementPage() {
         {
             title: "Thao tác",
             key: "actions",
-            width: "15%",
+            width: 120,
             render: (_, record) => (
                 <Space>
                     <Button
@@ -281,46 +273,48 @@ export default function StaffManagementPage() {
     }
 
     return (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 0" }}>
-            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-                <Col>
-                    <Title level={2} style={{ margin: 0 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: screens.xs ? "0 4px" : "10px 0" }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 20 }} gutter={[16, 16]}>
+                <Col xs={24} md={13}>
+                    <Title level={screens.xs ? 3 : 2} style={{ margin: 0 }}>
                         <ContactsOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Quản lý Nhân sự
                     </Title>
-                    <Text type="secondary">Quản lý hồ sơ nhân viên, chuyên môn kỹ năng và phân công dịch vụ tại từng chi nhánh.</Text>
+                    <Text type="secondary" style={{ fontSize: screens.xs ? 13 : 14 }}>
+                        Quản lý hồ sơ nhân viên, chuyên môn kỹ năng và phân công dịch vụ tại từng chi nhánh.
+                    </Text>
                 </Col>
-                <Col>
-                    <Space size="large">
-                        <Space>
+                <Col xs={24} md={11} style={{ display: "flex", justifyContent: screens.md ? "flex-end" : "flex-start" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, width: screens.xs ? "100%" : "auto" }}>
+                        <Space style={{ flexShrink: 0 }}>
                             <ShopOutlined style={{ color: "#1890ff" }} />
                             <Text strong>Chọn Chi nhánh:</Text>
-                            <Select
-                                style={{ width: 250 }}
-                                value={selectedBranchId}
-                                onChange={setSelectedBranchId}
-                                options={branches.map(b => ({ label: b.name, value: b.id }))}
-                                size="large"
-                            />
                         </Space>
-                    </Space>
+                        <Select
+                            style={{ flex: screens.xs ? 1 : undefined, width: screens.xs ? undefined : 220 }}
+                            value={selectedBranchId}
+                            onChange={setSelectedBranchId}
+                            options={branches.map(b => ({ label: b.name, value: b.id }))}
+                            size={screens.xs ? "middle" : "large"}
+                        />
+                    </div>
                 </Col>
             </Row>
 
-            <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+            <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }} styles={{ body: { padding: screens.xs ? 12 : 24 } }}>
                 {loadingData ? (
                     <div style={{ textAlign: "center", padding: "50px 0" }}>
                         <Spin tip="Đang tải dữ liệu nhân viên..." />
                     </div>
                 ) : (
                     <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                             <Title level={4} style={{ margin: 0 }}>Đội ngũ nhân sự ({filteredStaffList.length})</Title>
-                            <Space size="middle" style={{ flexWrap: "wrap" }}>
-                                <Space>
-                                    <Text strong>Chuyên môn:</Text>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, width: screens.xs ? "100%" : "auto" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: screens.xs ? "1 1 100%" : "none" }}>
+                                    <Text strong style={{ flexShrink: 0 }}>Chuyên môn:</Text>
                                     <Select
                                         mode="multiple"
-                                        style={{ minWidth: 200, maxWidth: 350 }}
+                                        style={{ minWidth: 160, flex: 1, maxWidth: screens.xs ? "100%" : 300 }}
                                         value={selectedSpecialties}
                                         onChange={setSelectedSpecialties}
                                         options={uniqueSpecialties.map(spec => ({ label: spec, value: spec }))}
@@ -328,11 +322,12 @@ export default function StaffManagementPage() {
                                         maxTagCount="responsive"
                                         allowClear
                                     />
-                                </Space>
+                                </div>
                                 <Button
                                     type="primary"
                                     icon={<UserAddOutlined />}
-                                    size="large"
+                                    size={screens.xs ? "middle" : "large"}
+                                    block={screens.xs}
                                     onClick={() => {
                                         setEditingStaff(null);
                                         setModalVisible(true);
@@ -340,7 +335,7 @@ export default function StaffManagementPage() {
                                 >
                                     Thêm nhân viên mới
                                 </Button>
-                            </Space>
+                            </div>
                         </div>
                         <Table
                             columns={columns}
@@ -348,6 +343,7 @@ export default function StaffManagementPage() {
                             rowKey="id"
                             pagination={{ pageSize: 6 }}
                             bordered
+                            scroll={{ x: 940 }}
                             locale={{
                                 emptyText: <Empty description="Chưa có nhân viên nào tại chi nhánh này." />
                             }}

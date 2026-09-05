@@ -770,6 +770,7 @@ export default function SubscriptionPage() {
                     dataSource={history}
                     rowKey="id"
                     loading={historyLoading}
+                    scroll={{ x: 750 }}
                     pagination={{ pageSize: 5 }}
                     locale={{
                         emptyText: "Chưa có giao dịch nâng cấp nào."
