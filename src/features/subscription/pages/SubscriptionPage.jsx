@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Card, Row, Col, Typography, Button, Space, Table, Tag, Segmented, Spin, Badge, Divider, Modal, Alert, message } from "antd";
 import {
     CrownOutlined,
@@ -86,6 +86,7 @@ export default function SubscriptionPage() {
                     qrUrl: qrUrl
                 });
                 setVietQrModalOpen(true);
+                fetchHistory();
             }
         } catch (err) {
             message.destroy("vietqr_create");
@@ -93,21 +94,21 @@ export default function SubscriptionPage() {
         }
     };
 
-    useEffect(() => {
-        const fetchHistory = async () => {
-            setHistoryLoading(true);
-            try {
-                const data = await getSubscriptionHistoryApi();
-                setHistory(data || []);
-            } catch (error) {
-                console.error("Lỗi lấy lịch sử thanh toán:", error);
-            } finally {
-                setHistoryLoading(false);
-            }
-        };
+    const fetchHistory = useCallback(async () => {
+        setHistoryLoading(true);
+        try {
+            const data = await getSubscriptionHistoryApi();
+            setHistory(data || []);
+        } catch (error) {
+            console.error("Lỗi lấy lịch sử thanh toán:", error);
+        } finally {
+            setHistoryLoading(false);
+        }
+    }, []);
 
+    useEffect(() => {
         fetchHistory();
-    }, [subscription?.id, subscription?.status]);
+    }, [subscription?.id, subscription?.status, fetchHistory]);
 
     // Tự động kiểm tra (auto polling 3s/lần) khi mở Modal VietQR
     useEffect(() => {
@@ -121,6 +122,7 @@ export default function SubscriptionPage() {
                     message.success("Thanh toán chuyển khoản thành công! Gói dịch vụ đã được kích hoạt tự động.");
                     setVietQrModalOpen(false);
                     refetchSubscription();
+                    fetchHistory();
                 }
             } catch (err) {
                 console.error("Lỗi tự động kiểm tra thanh toán:", err);
@@ -156,7 +158,7 @@ export default function SubscriptionPage() {
     const getStatusText = (status) => {
         switch (status) {
             case "ACTIVE": return "Đang hoạt động";
-            case "PAST_DUE": return "Nợ cước";
+            case "PAST_DUE": return "Chờ thanh toán";
             case "CANCELED": return "Đã hủy gia hạn";
             case "EXPIRED": return "Đã hết hạn";
             default: return status;

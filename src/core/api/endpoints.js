@@ -39,6 +39,11 @@ export const ENDPOINTS = {
     SALONS_NEARBY: "/api/v1/salons/nearby",
     SEARCH_BRANCHES: "/api/v1/branches/search",
 
+    // Loyalty Points
+    LOYALTY_SUMMARY: "/api/v1/loyalty/summary",
+    LOYALTY_HISTORY: "/api/v1/loyalty/history",
+    LOYALTY_REDEEM: "/api/v1/loyalty/redeem",
+
     // Vouchers
     VOUCHERS: "/api/v1/vouchers",
     VOUCHERS_BATCH: "/api/v1/vouchers/batch",

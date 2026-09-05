@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Avatar, Button, Typography, Row, Col, Space, Divider, message, Spin, Tag, Modal, Form, Input } from "antd";
-import { UserOutlined, MailOutlined, PhoneOutlined, ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
+import { Card, Avatar, Button, Typography, Row, Col, Space, Divider, message, Spin, Tag, Modal, Form, Input, Upload } from "antd";
+import { UserOutlined, MailOutlined, PhoneOutlined, ArrowLeftOutlined, EditOutlined, CameraOutlined } from "@ant-design/icons";
 import api from "@/core/api/axios";
+import { uploadMediaApi } from "@/features/media/api/mediaApi";
 import LoyaltyPointsSection from "../components/LoyaltyPointsSection";
 
 const { Title, Text } = Typography;
@@ -13,6 +14,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [form] = Form.useForm();
 
     // Lấy thông tin User hiện tại từ localStorage
@@ -38,6 +40,35 @@ export default function ProfilePage() {
     useEffect(() => {
         fetchUserProfile();
     }, []);
+
+    const handleAvatarUpload = async ({ file }) => {
+        try {
+            setUploadingAvatar(true);
+            const res = await uploadMediaApi(file);
+            const uploadedUrl = res?.url || res?.fileUrl || res?.mediaUrl || (typeof res === "string" ? res : null);
+            if (!uploadedUrl) {
+                message.error("Không lấy được đường dẫn ảnh sau khi tải lên.");
+                return;
+            }
+
+            const payload = {
+                fullName: user?.fullName,
+                phone: user?.phone || "",
+                avatarUrl: uploadedUrl
+            };
+            const response = await api.put(`/api/v1/users/${userId}`, payload);
+            message.success("Cập nhật ảnh đại diện thành công!");
+            setUser(response.data);
+            if (response.data?.avatarUrl) {
+                localStorage.setItem("avatarUrl", response.data.avatarUrl);
+            }
+        } catch (error) {
+            console.error(error);
+            message.error("Lỗi khi tải ảnh đại diện lên.");
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
 
     const handleOpenEditModal = () => {
         form.setFieldsValue({
@@ -99,67 +130,84 @@ export default function ProfilePage() {
                     Quay lại
                 </Button>
 
-                {/* Header Profile */}
-                <div style={{ textAlign: "center", padding: "10px 0" }}>
-                    <Avatar
-                        size={100}
-                        src={user?.avatarUrl}
-                        icon={<UserOutlined />}
-                        style={{
-                            border: "4px solid #1677ff",
-                            boxShadow: "0 4px 15px rgba(22, 119, 255, 0.2)",
-                            marginBottom: 16
-                        }}
-                    />
-                    <Title level={3} style={{ marginBottom: 4 }}>
-                        {user?.fullName || user?.username}
-                    </Title>
-                    <Text type="secondary" style={{ fontSize: 14 }}>
-                        @{user?.username}
-                    </Text>
-                    <div style={{ marginTop: 12 }}>
-                        {(user?.roles || []).map(role => (
-                            <Tag key={role} color="blue" style={{ borderRadius: 6, fontWeight: 500, padding: "2px 8px" }}>
-                                {role}
-                            </Tag>
-                        ))}
+                {/* Header Profile: Giao diện Hàng Ngang Liền Mạch */}
+                <div style={{ display: "flex", alignItems: "center", gap: 24, padding: "12px 8px 24px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", marginBottom: 24 }}>
+                    {/* Left: Avatar with Camera button */}
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                        <Avatar
+                            size={90}
+                            src={user?.avatarUrl}
+                            icon={<UserOutlined />}
+                            style={{
+                                border: "3px solid #1677ff",
+                                boxShadow: "0 6px 18px rgba(22, 119, 255, 0.2)",
+                                backgroundColor: user?.avatarUrl ? "transparent" : "#1677ff",
+                                color: "#fff"
+                            }}
+                        />
+                        <Upload
+                            showUploadList={false}
+                            accept="image/*"
+                            customRequest={handleAvatarUpload}
+                            disabled={uploadingAvatar}
+                        >
+                            <Button
+                                shape="circle"
+                                icon={uploadingAvatar ? <Spin size="small" /> : <CameraOutlined />}
+                                size="small"
+                                style={{
+                                    position: "absolute",
+                                    bottom: 0,
+                                    right: 0,
+                                    backgroundColor: "#1677ff",
+                                    color: "#fff",
+                                    borderColor: "#fff",
+                                    boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
+                                    cursor: "pointer"
+                                }}
+                                title="Đổi ảnh đại diện"
+                            />
+                        </Upload>
+                    </div>
+
+                    {/* Middle: Full Name, Email, Phone */}
+                    <div style={{ flex: 1, minWidth: 260 }}>
+                        <Title level={3} style={{ margin: "0 0 8px 0", color: "#1e1b4b", fontWeight: 700 }}>
+                            {user?.fullName || user?.username}
+                        </Title>
+
+                        <Space size="large" wrap style={{ color: "#475569" }}>
+                            <Space style={{ fontSize: 14 }}>
+                                <MailOutlined style={{ color: "#1677ff", fontSize: 16 }} />
+                                <Text style={{ color: "#334155", fontWeight: 600 }}>{user?.email}</Text>
+                            </Space>
+                            <Space style={{ fontSize: 14 }}>
+                                <PhoneOutlined style={{ color: "#52c41a", fontSize: 16 }} />
+                                <Text style={{ color: "#334155", fontWeight: 600 }}>{user?.phone || "Chưa cập nhật SĐĐT"}</Text>
+                            </Space>
+                        </Space>
+                    </div>
+
+                    {/* Far Right: Edit Profile Button */}
+                    <div style={{ flexShrink: 0 }}>
+                        <Button
+                            type="primary"
+                            icon={<EditOutlined />}
+                            onClick={handleOpenEditModal}
+                            style={{
+                                borderRadius: 12,
+                                fontWeight: 600,
+                                height: 42,
+                                padding: "0 20px",
+                                backgroundColor: "#1677ff",
+                                borderColor: "#1677ff",
+                                boxShadow: "0 4px 14px rgba(22, 119, 255, 0.3)"
+                            }}
+                        >
+                            Chỉnh sửa hồ sơ
+                        </Button>
                     </div>
                 </div>
-
-                <Divider style={{ margin: "24px 0" }} />
-
-                {/* Thông tin chi tiết */}
-                <Card 
-                    title="Thông tin cá nhân" 
-                    bordered={false} 
-                    style={{ borderRadius: 16, background: "#fff" }}
-                    extra={
-                        <Button 
-                            type="primary" 
-                            ghost 
-                            icon={<EditOutlined />} 
-                            onClick={handleOpenEditModal}
-                            style={{ borderRadius: 8 }}
-                        >
-                            Chỉnh sửa
-                        </Button>
-                    }
-                >
-                    <Row gutter={[24, 16]}>
-                        <Col xs={24} sm={12}>
-                            <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>
-                                <MailOutlined /> Email
-                            </Text>
-                            <Text strong>{user?.email}</Text>
-                        </Col>
-                        <Col xs={24} sm={12}>
-                            <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>
-                                <PhoneOutlined /> Số điện thoại
-                            </Text>
-                            <Text strong>{user?.phone || "Chưa cập nhật"}</Text>
-                        </Col>
-                    </Row>
-                </Card>
 
                 {/* Section Điểm thưởng (Loyalty Points) */}
                 <LoyaltyPointsSection userId={user?.id} />

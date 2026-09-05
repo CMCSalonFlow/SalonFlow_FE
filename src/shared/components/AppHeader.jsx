@@ -64,6 +64,7 @@ export default function AppHeader() {
     const isLogin = !!accessToken;
 
     const [headerFullName, setHeaderFullName] = useState(localStorage.getItem("fullName") || "");
+    const [headerAvatarUrl, setHeaderAvatarUrl] = useState(localStorage.getItem("avatarUrl") || "");
 
     useEffect(() => {
         const userId = localStorage.getItem("userId");
@@ -74,12 +75,17 @@ export default function AppHeader() {
                         localStorage.setItem("fullName", res.data.fullName);
                         setHeaderFullName(res.data.fullName);
                     }
+                    if (res.data?.avatarUrl) {
+                        localStorage.setItem("avatarUrl", res.data.avatarUrl);
+                        setHeaderAvatarUrl(res.data.avatarUrl);
+                    }
                 })
                 .catch(() => {});
         }
     }, [isLogin]);
 
     const storedFullName = headerFullName || localStorage.getItem("fullName");
+    const avatarSrc = headerAvatarUrl || localStorage.getItem("avatarUrl");
     const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
     const rawName = (storedFullName && storedFullName.trim()) || storedUser?.fullName || localStorage.getItem("username") || "Tài khoản";
 
@@ -307,7 +313,7 @@ export default function AppHeader() {
                             <Dropdown menu={userMenu}>
                                 <Button type="text">
                                     <Space>
-                                        <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
+                                        <Avatar src={avatarSrc} icon={<UserOutlined />} style={{ backgroundColor: avatarSrc ? "transparent" : "#1677ff" }} />
                                         <span>{displayName}</span>
                                     </Space>
                                 </Button>
@@ -431,7 +437,7 @@ export default function AppHeader() {
                 {isLogin ? (
                     <div style={{ marginTop: 24, padding: "0 16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                            <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
+                            <Avatar src={avatarSrc} icon={<UserOutlined />} style={{ backgroundColor: avatarSrc ? "transparent" : "#1677ff" }} />
                             <Text strong>{displayName}</Text>
                         </div>
                         <Button
