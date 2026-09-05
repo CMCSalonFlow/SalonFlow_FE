@@ -70,11 +70,18 @@ const NoShowWarningBadge = ({
 
     return (
         <>
-            <Tooltip title="Click để xem phân tích chi tiết AI dự đoán nguy cơ không đến (No-Show)">
+            <Tooltip
+                title="Click để xem phân tích chi tiết AI dự đoán nguy cơ không đến (No-Show)"
+                destroyTooltipOnHide
+            >
                 <Tag
                     color={config.color}
-                    onClick={() => setDetailVisible(true)}
-                    className="cursor-pointer px-2 py-1 rounded-md font-medium inline-flex items-center gap-1.5 transition-all hover:scale-105"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setDetailVisible(true);
+                    }}
+                    className="cursor-pointer px-2 py-1 rounded-md font-medium inline-flex items-center gap-1.5 transition-all hover:scale-105 select-none"
                 >
                     <span>{config.text}</span>
                 </Tag>
@@ -87,6 +94,8 @@ const NoShowWarningBadge = ({
                     </div>
                 }
                 open={detailVisible}
+                destroyOnClose
+                maskClosable
                 onCancel={() => setDetailVisible(false)}
                 footer={[
                     <Button key="close" onClick={() => setDetailVisible(false)}>

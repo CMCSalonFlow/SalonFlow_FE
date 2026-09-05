@@ -25,6 +25,7 @@ export default function ServiceManagementPage() {
     const [loadingData, setLoadingData] = useState(false);
     const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState(null);
+    const [activeTabKey, setActiveTabKey] = useState("services");
 
     const [services, setServices] = useState([]);
     const [bundles, setBundles] = useState([]);
@@ -178,45 +179,56 @@ export default function ServiceManagementPage() {
             title: "Tên dịch vụ",
             dataIndex: "name",
             key: "name",
-            width: 220,
-            render: (text) => <Text strong style={{ whiteSpace: "nowrap" }}>{text}</Text>
+            width: 260,
+            onHeaderCell: () => ({ style: { textAlign: "center" } }),
+            ellipsis: true,
+            render: (text) => (
+                <Text strong ellipsis={{ tooltip: text }} style={{ maxWidth: 240, display: "inline-block" }}>
+                    {text}
+                </Text>
+            )
         },
         {
             title: "Danh mục",
             dataIndex: "categoryName",
             key: "categoryName",
-            width: 160,
-            render: (text) => text ? <Tag color="purple" style={{ whiteSpace: "nowrap" }}>{text}</Tag> : <Text type="secondary">-</Text>
+            width: 180,
+            align: "center",
+            render: (text) => text ? <Tag color="purple">{text}</Tag> : <Text type="secondary">-</Text>
         },
         {
             title: "Thời lượng",
             dataIndex: "durationMinutes",
             key: "durationMinutes",
-            width: 120,
-            render: (min) => <Tag color="blue" style={{ whiteSpace: "nowrap" }}>{min} phút</Tag>
+            width: 130,
+            align: "center",
+            render: (min) => <Text style={{ color: "#1e293b" }}>{min} phút</Text>
         },
         {
             title: "Đơn giá",
             dataIndex: "price",
             key: "price",
-            width: 130,
-            render: (price) => <Text strong style={{ color: "#faad14", whiteSpace: "nowrap" }}>{parseFloat(price).toLocaleString()} đ</Text>
+            width: 140,
+            align: "center",
+            render: (price) => <Text style={{ color: "#1e293b", fontWeight: 600 }}>{parseFloat(price).toLocaleString()} đ</Text>
         },
         {
             title: "Trạng thái",
             dataIndex: "isActive",
             key: "isActive",
             width: 130,
+            align: "center",
             render: (active) => active ? (
-                <Tag icon={<CheckCircleOutlined />} color="success" style={{ whiteSpace: "nowrap" }}>Hoạt động</Tag>
+                <Tag icon={<CheckCircleOutlined />} color="success">Hoạt động</Tag>
             ) : (
-                <Tag icon={<CloseCircleOutlined />} color="error" style={{ whiteSpace: "nowrap" }}>Tạm dừng</Tag>
+                <Tag icon={<CloseCircleOutlined />} color="error">Tạm dừng</Tag>
             )
         },
         {
             title: "Thao tác",
             key: "actions",
             width: 100,
+            align: "center",
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => (
                 <Space>
@@ -248,22 +260,45 @@ export default function ServiceManagementPage() {
             title: "Tên Combo",
             dataIndex: "name",
             key: "name",
-            width: 220,
-            render: (text) => <Text strong style={{ whiteSpace: "nowrap" }}>{text}</Text>
+            width: 240,
+            onHeaderCell: () => ({ style: { textAlign: "center" } }),
+            ellipsis: true,
+            render: (text) => (
+                <Text strong ellipsis={{ tooltip: text }} style={{ maxWidth: 220, display: "inline-block" }}>
+                    {text}
+                </Text>
+            )
         },
         {
             title: "Dịch vụ đi kèm",
             dataIndex: "items",
             key: "items",
-            width: 260,
+            width: 280,
+            onHeaderCell: () => ({ style: { textAlign: "center" } }),
             render: (items) => (
-                <Space wrap size={[4, 6]}>
+                <Space wrap size={[4, 6]} style={{ justifyContent: "flex-start" }}>
                     {items && items.length > 0 ? (
-                        items.map((item, idx) => (
-                            <Tag color="cyan" key={item.serviceId} style={{ margin: 0 }}>
-                                {idx + 1}. {item.name}
-                            </Tag>
-                        ))
+                        items.map((item, idx) => {
+                            const label = `${idx + 1}. ${item.name}`;
+                            return (
+                                <Tag
+                                    color="cyan"
+                                    key={item.serviceId || idx}
+                                    title={label}
+                                    style={{
+                                        margin: 0,
+                                        maxWidth: 230,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        display: "inline-block",
+                                        verticalAlign: "middle"
+                                    }}
+                                >
+                                    {label}
+                                </Tag>
+                            );
+                        })
                     ) : (
                         <Text type="secondary">Chưa có dịch vụ nào</Text>
                     )}
@@ -275,37 +310,42 @@ export default function ServiceManagementPage() {
             dataIndex: "totalDurationMinutes",
             key: "totalDurationMinutes",
             width: 130,
-            render: (min) => <Tag color="blue" style={{ whiteSpace: "nowrap" }}>{min || 0} phút</Tag>
+            align: "center",
+            render: (min) => <Text style={{ color: "#1e293b" }}>{min || 0} phút</Text>
         },
         {
             title: "Giá gốc",
             dataIndex: "originalPrice",
             key: "originalPrice",
             width: 120,
-            render: (val) => <Text delete style={{ color: "#bfbfbf", whiteSpace: "nowrap" }}>{parseFloat(val || 0).toLocaleString()} đ</Text>
+            align: "center",
+            render: (val) => <Text delete style={{ color: "#94a3b8" }}>{parseFloat(val || 0).toLocaleString()} đ</Text>
         },
         {
             title: "Giá Combo ưu đãi",
             dataIndex: "price",
             key: "price",
             width: 140,
-            render: (price) => <Text strong style={{ color: "#52c41a", fontSize: 15, whiteSpace: "nowrap" }}>{parseFloat(price).toLocaleString()} đ</Text>
+            align: "center",
+            render: (price) => <Text style={{ color: "#1e293b", fontWeight: 600 }}>{parseFloat(price).toLocaleString()} đ</Text>
         },
         {
             title: "Trạng thái",
             dataIndex: "isActive",
             key: "isActive",
             width: 120,
+            align: "center",
             render: (active) => active ? (
-                <Tag icon={<CheckCircleOutlined />} color="success" style={{ whiteSpace: "nowrap" }}>Hoạt động</Tag>
+                <Tag icon={<CheckCircleOutlined />} color="success">Hoạt động</Tag>
             ) : (
-                <Tag icon={<CloseCircleOutlined />} color="error" style={{ whiteSpace: "nowrap" }}>Tạm dừng</Tag>
+                <Tag icon={<CloseCircleOutlined />} color="error">Tạm dừng</Tag>
             )
         },
         {
             title: "Thao tác",
             key: "actions",
             width: 100,
+            align: "center",
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => (
                 <Space>
@@ -392,17 +432,31 @@ export default function ServiceManagementPage() {
                         <Text type="secondary">Quản lý danh sách dịch vụ, combo và tạo mô tả bằng AI ngay trong form thêm/sửa.</Text>
                     </div>
                     <Space wrap>
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            size={screens.xs ? "middle" : "large"}
-                            onClick={() => {
-                                setEditingService(null);
-                                setServiceModalVisible(true);
-                            }}
-                        >
-                            Thêm dịch vụ đơn
-                        </Button>
+                        {activeTabKey === "services" ? (
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                size={screens.xs ? "middle" : "large"}
+                                onClick={() => {
+                                    setEditingService(null);
+                                    setServiceModalVisible(true);
+                                }}
+                            >
+                                Thêm dịch vụ đơn
+                            </Button>
+                        ) : (
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                size={screens.xs ? "middle" : "large"}
+                                onClick={() => {
+                                    setEditingBundle(null);
+                                    setBundleModalVisible(true);
+                                }}
+                            >
+                                Thêm gói combo
+                            </Button>
+                        )}
                     </Space>
                 </div>
 
@@ -412,7 +466,8 @@ export default function ServiceManagementPage() {
                     </div>
                 ) : (
                     <Tabs
-                        defaultActiveKey="services"
+                        activeKey={activeTabKey}
+                        onChange={setActiveTabKey}
                         items={[
                             {
                                 key: "services",
@@ -435,19 +490,6 @@ export default function ServiceManagementPage() {
                                 label: <span style={{ fontSize: 16 }}>Combo / Gói ưu đãi</span>,
                                 children: (
                                     <div>
-                                        <div style={{ textAlign: "right", marginBottom: 16 }}>
-                                            <Button
-                                                type="primary"
-                                                icon={<PlusOutlined />}
-                                                size={screens.xs ? "middle" : "large"}
-                                                onClick={() => {
-                                                    setEditingBundle(null);
-                                                    setBundleModalVisible(true);
-                                                }}
-                                            >
-                                                Thêm gói combo
-                                            </Button>
-                                        </div>
                                         <Table
                                             columns={bundleColumns}
                                             dataSource={bundles}

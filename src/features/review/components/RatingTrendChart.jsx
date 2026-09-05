@@ -15,8 +15,8 @@ export default function RatingTrendChart({ points = [], periodMonths = 6, onPeri
         );
     }
 
-    const chartHeight = 200;
-    const paddingY = 24;
+    const chartHeight = 220;
+    const paddingY = 32;
     const svgWidth = 700;
     const maxRating = 5;
 
@@ -59,7 +59,7 @@ export default function RatingTrendChart({ points = [], periodMonths = 6, onPeri
                         </Title>
                     </Space>
                     <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 2 }}>
-                        Rê chuột vào điểm trên biểu đồ để xem chi tiết từng tháng
+                        Biểu đồ hiển thị điểm đánh giá trung bình & lượt review theo tháng
                     </Text>
                 </Col>
                 <Col>
@@ -96,27 +96,53 @@ export default function RatingTrendChart({ points = [], periodMonths = 6, onPeri
                 {pts.map((pt, i) => {
                     const isHovered = hoveredIdx === i;
                     const leftPct = (pt.x / svgWidth) * 100;
+                    const ratingVal = pt.rating > 0 ? pt.rating.toFixed(2) : "0.0";
                     return (
-                        <div
-                            key={i}
-                            onMouseEnter={() => setHoveredIdx(i)}
-                            onMouseLeave={() => setHoveredIdx(null)}
-                            style={{
-                                position: 'absolute',
-                                left: `${leftPct}%`,
-                                top: `${pt.y}px`,
-                                transform: 'translate(-50%, -50%)',
-                                width: isHovered ? 12 : 8,
-                                height: isHovered ? 12 : 8,
-                                borderRadius: '50%',
-                                backgroundColor: isHovered ? '#ffffff' : '#faad14',
-                                border: '2px solid #faad14',
-                                boxShadow: isHovered ? '0 0 0 3px #faad1440' : '0 1px 3px rgba(0,0,0,0.1)',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease-in-out',
-                                zIndex: 10
-                            }}
-                        />
+                        <React.Fragment key={i}>
+                            {/* Always-visible Rating Label directly above each point */}
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: `${leftPct}%`,
+                                    top: `${pt.y - 24}px`,
+                                    transform: 'translateX(-50%)',
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: pt.rating > 0 ? '#d48806' : '#8c8c8c',
+                                    background: pt.rating > 0 ? '#fffbe6' : '#ffffff',
+                                    border: `1px solid ${pt.rating > 0 ? '#ffe58f' : '#d9d9d9'}`,
+                                    padding: '1px 6px',
+                                    borderRadius: 10,
+                                    whiteSpace: 'nowrap',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                                    pointerEvents: 'none',
+                                    zIndex: 5
+                                }}
+                            >
+                                ★ {ratingVal}
+                            </div>
+
+                            {/* Dot */}
+                            <div
+                                onMouseEnter={() => setHoveredIdx(i)}
+                                onMouseLeave={() => setHoveredIdx(null)}
+                                style={{
+                                    position: 'absolute',
+                                    left: `${leftPct}%`,
+                                    top: `${pt.y}px`,
+                                    transform: 'translate(-50%, -50%)',
+                                    width: isHovered ? 12 : 8,
+                                    height: isHovered ? 12 : 8,
+                                    borderRadius: '50%',
+                                    backgroundColor: isHovered ? '#ffffff' : '#faad14',
+                                    border: '2px solid #faad14',
+                                    boxShadow: isHovered ? '0 0 0 3px #faad1440' : '0 1px 3px rgba(0,0,0,0.1)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease-in-out',
+                                    zIndex: 10
+                                }}
+                            />
+                        </React.Fragment>
                     );
                 })}
 
@@ -124,7 +150,7 @@ export default function RatingTrendChart({ points = [], periodMonths = 6, onPeri
                     <div
                         style={{
                             position: 'absolute',
-                            bottom: `${chartHeight - hovered.y + 14}px`,
+                            bottom: `${chartHeight - hovered.y + 16}px`,
                             left: `${(hovered.x / svgWidth) * 100}%`,
                             transform: getTooltipTransform(hovered.idx),
                             background: 'rgba(0, 0, 0, 0.92)',
@@ -138,8 +164,8 @@ export default function RatingTrendChart({ points = [], periodMonths = 6, onPeri
                         }}
                     >
                         <div style={{ fontWeight: 'bold', color: '#fff7e6', marginBottom: 4 }}>{hovered.item.month}</div>
-                        <div style={{ color: '#ffe58f' }}>Trung bình: {hovered.rating.toFixed(2)} / 5</div>
-                        <div style={{ color: '#bfbfbf', fontSize: 11 }}>{hovered.item.totalReviews} review</div>
+                        <div style={{ color: '#ffe58f' }}>Trung bình: {hovered.rating.toFixed(2)} / 5 ★</div>
+                        <div style={{ color: '#bfbfbf', fontSize: 11 }}>{hovered.item.totalReviews} lượt đánh giá</div>
                     </div>
                 )}
             </div>
@@ -156,7 +182,7 @@ export default function RatingTrendChart({ points = [], periodMonths = 6, onPeri
                 }}
             >
                 {points.map((item, idx) => (
-                    <div key={idx} style={{ fontSize: 11, color: '#595959' }}>
+                    <div key={idx} style={{ fontSize: 11, color: '#595959', fontWeight: 600 }}>
                         {item.month}
                     </div>
                 ))}
