@@ -5,8 +5,10 @@ import {
     Tag,
     Popconfirm,
     Skeleton,
-    Card
+    Card,
+    Grid
 } from "antd";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 export default function UserTable({
     users,
@@ -14,27 +16,38 @@ export default function UserTable({
     onEdit,
     onDelete
 }) {
+    const screens = Grid.useBreakpoint();
+
     const columns = [
         {
             title: "Mã ID",
             dataIndex: "id",
-            width: 70
+            width: 75,
+            align: "center",
+            render: (id) => <Tag style={{ margin: 0, fontWeight: "bold" }}>#{id}</Tag>
         },
         {
             title: "Tên đăng nhập",
-            dataIndex: "username"
+            dataIndex: "username",
+            width: 160,
+            render: (val) => <span style={{ fontWeight: 600, color: "#1e293b" }}>{val}</span>
         },
         {
             title: "Email",
-            dataIndex: "email"
+            dataIndex: "email",
+            width: 220,
+            render: (val) => <span style={{ color: "#475569" }}>{val}</span>
         },
         {
             title: "Họ và tên",
-            dataIndex: "fullName"
+            dataIndex: "fullName",
+            width: 180,
+            render: (val) => <span style={{ fontWeight: 500 }}>{val || "---"}</span>
         },
         {
             title: "Trạng thái",
             dataIndex: "status",
+            width: 130,
             render: (status) => (
                 <Tag color={status === "ACTIVE" ? "green" : "volcano"}>
                     {status === "ACTIVE" ? "Hoạt động" : (status || "Hoạt động")}
@@ -44,25 +57,30 @@ export default function UserTable({
         {
             title: "Vai trò",
             dataIndex: "roles",
+            width: 160,
             render: (roles) => (
-                <>
+                <Space wrap size={[0, 4]}>
                     {roles?.map(role => (
                         <Tag key={role} color="blue">
                             {role}
                         </Tag>
                     ))}
-                </>
+                </Space>
             )
         },
         {
             title: "Thao tác",
+            width: 180,
+            fixed: screens.md ? "right" : false,
             render: (_, record) => (
                 <Space>
                     <Button
                         type="primary"
+                        size="small"
+                        icon={<EditOutlined />}
                         onClick={() => onEdit(record)}
                     >
-                        Chỉnh sửa
+                        Sửa
                     </Button>
 
                     <Popconfirm
@@ -71,7 +89,7 @@ export default function UserTable({
                         cancelText="Hủy"
                         onConfirm={() => onDelete(record.id)}
                     >
-                        <Button danger>
+                        <Button danger size="small" icon={<DeleteOutlined />}>
                             Xóa
                         </Button>
                     </Popconfirm>
@@ -118,6 +136,8 @@ export default function UserTable({
             rowKey="id"
             columns={columns}
             dataSource={users}
+            scroll={{ x: 950 }}
+            pagination={{ pageSize: 10, simple: screens.xs }}
         />
     );
 }

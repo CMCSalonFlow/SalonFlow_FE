@@ -1,8 +1,13 @@
 import {
     Button,
     message,
-    Space
+    Space,
+    Grid,
+    Card,
+    Typography
 } from "antd";
+
+const { Title } = Typography;
 
 import {
     PlusOutlined
@@ -23,6 +28,7 @@ import {
 import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 
 export default function BranchListPage() {
+    const screens = Grid.useBreakpoint();
     const { openLimitModal } = useSubscription();
 
     const {
@@ -194,71 +200,57 @@ export default function BranchListPage() {
     };
 
     return (
-
-        <>
-
-            <Space
-                style={{
-                    marginBottom: 20
-                }}
-            >
-
-                <Button
-                    icon={<PlusOutlined />}
-                    type="primary"
-                    onClick={handleCreate}
+        <div style={{ padding: screens.xs ? "12px 6px" : "24px 32px" }}>
+            <Card bordered={false} style={{ borderRadius: 12 }}>
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: screens.xs ? "flex-start" : "center",
+                        flexDirection: screens.xs ? "column" : "row",
+                        gap: 12,
+                        marginBottom: 20
+                    }}
                 >
+                    <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>
+                        Quản lý Chi nhánh
+                    </Title>
+                    <Button
+                        icon={<PlusOutlined />}
+                        type="primary"
+                        onClick={handleCreate}
+                        style={{ width: screens.xs ? "100%" : "auto" }}
+                    >
+                        Thêm chi nhánh
+                    </Button>
+                </div>
 
-                    Thêm chi nhánh
-
-                </Button>
-
-            </Space>
-
-            <BranchTable
-
-                data={branches}
-
-                loading={loading}
-
-                onEdit={handleEdit}
-
-                onDelete={handleDelete}
-
-                onUsers={handleUsers}
-
-                onToggleSms={handleToggleSms}
-
-            />
+                <BranchTable
+                    data={branches}
+                    loading={loading}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onUsers={handleUsers}
+                    onToggleSms={handleToggleSms}
+                />
+            </Card>
 
             <BranchModal
-
                 open={open}
-
                 editing={editing}
-
                 onCancel={() =>
                     setOpen(false)
                 }
-
                 onSubmit={handleSubmit}
-
             />
 
             <BranchUserModal
-
                 open={userModal}
-
                 branch={selectedBranch}
-
                 onCancel={() =>
                     setUserModal(false)
                 }
-
             />
-
-        </>
-
+        </div>
     );
-
 }

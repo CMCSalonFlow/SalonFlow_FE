@@ -10,7 +10,8 @@ import {
     Tooltip,
     Row,
     Col,
-    message
+    message,
+    Grid
 } from "antd";
 import {
     CalendarOutlined,
@@ -32,6 +33,7 @@ import { getAllSalonsApi } from "@/features/salon/api/salonApi";
 const { Title, Text } = Typography;
 
 export default function AdminSubscriptionPage() {
+    const screens = Grid.useBreakpoint();
     const [subscriptions, setSubscriptions] = useState([]);
     const [totalElements, setTotalElements] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -309,10 +311,10 @@ export default function AdminSubscriptionPage() {
     ];
 
     return (
-        <div style={{ padding: 24, minHeight: "100vh", background: "#f8fafc" }}>
+        <div style={{ padding: screens.xs ? "12px 6px" : 24, minHeight: "100vh", background: "#f8fafc" }}>
             {/* Page Header */}
             <div style={{ marginBottom: 24 }}>
-                <Title level={3} style={{ margin: 0 }}>Danh sách & Thống kê Gói Đăng ký</Title>
+                <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>Danh sách & Thống kê Gói Đăng ký</Title>
                 <Text type="secondary">Theo dõi chỉ số doanh thu MRR, phân bổ gói và danh sách đăng ký dịch vụ của các Salon.</Text>
             </div>
 
@@ -459,13 +461,15 @@ export default function AdminSubscriptionPage() {
                     rowKey="id"
                     loading={loading}
                     onChange={handleTableChange}
+                    scroll={{ x: 1200 }}
                     pagination={{
                         current: queryParams.page + 1,
                         pageSize: queryParams.size,
                         total: totalElements,
-                        showSizeChanger: true,
+                        showSizeChanger: !screens.xs,
                         pageSizeOptions: ["10", "20", "50"],
-                        showTotal: (total) => `Tổng số ${total} bản ghi`
+                        showTotal: screens.xs ? undefined : ((total) => `Tổng số ${total} bản ghi`),
+                        simple: screens.xs
                     }}
                     style={{ borderRadius: 12 }}
                 />

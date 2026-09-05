@@ -4,7 +4,8 @@ import {
     Table,
     Tag,
     Popconfirm,
-    Switch
+    Switch,
+    Grid
 } from "antd";
 
 export default function BranchTable({
@@ -15,31 +16,38 @@ export default function BranchTable({
     onUsers,
     onToggleSms
 }) {
+    const screens = Grid.useBreakpoint();
 
     const columns = [
         {
             title: "Tên chi nhánh",
             dataIndex: "name",
-            key: "name"
+            key: "name",
+            width: 180
         },
         {
             title: "Địa chỉ",
             dataIndex: "address",
-            key: "address"
+            key: "address",
+            width: 240,
+            ellipsis: true
         },
         {
             title: "Điện thoại",
             dataIndex: "phone",
-            key: "phone"
+            key: "phone",
+            width: 130
         },
         {
             title: "Email",
             dataIndex: "email",
-            key: "email"
+            key: "email",
+            width: 180
         },
         {
             title: "Trạng thái",
             dataIndex: "isActive",
+            width: 120,
             render: (active) =>
                 active ? (
                     <Tag color="green">
@@ -54,6 +62,7 @@ export default function BranchTable({
         {
             title: "SMS Nhắc hẹn",
             dataIndex: "isSmsEnabled",
+            width: 140,
             render: (enabled, record) => (
                 <Switch
                     checked={enabled !== false}
@@ -65,6 +74,8 @@ export default function BranchTable({
         },
         {
             title: "Thao tác",
+            width: 140,
+            fixed: screens.md ? "right" : false,
             render: (_, record) => (
                 <Space>
                     <Button
@@ -97,9 +108,10 @@ export default function BranchTable({
             loading={loading}
             columns={columns}
             dataSource={data}
-            scroll={{ x: 800 }}
+            scroll={{ x: 1050 }}
             pagination={{
-                pageSize: 10
+                pageSize: 10,
+                simple: screens.xs
             }}
         />
     );

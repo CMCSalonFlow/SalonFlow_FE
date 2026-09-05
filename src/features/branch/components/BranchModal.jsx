@@ -12,7 +12,8 @@ import {
     Typography,
     Button,
     message,
-    Tooltip
+    Tooltip,
+    Grid
 } from "antd";
 import { useEffect, useState } from "react";
 import { CopyOutlined } from "@ant-design/icons";
@@ -45,6 +46,7 @@ export default function BranchModal({
     onSubmit,
     editing
 }) {
+    const screens = Grid.useBreakpoint();
     const [form] = Form.useForm();
     const [hours, setHours] = useState(defaultHours());
     const [activeTab, setActiveTab] = useState("general");
@@ -306,7 +308,7 @@ export default function BranchModal({
             onOk={handleOk}
             title={editing ? "Cập nhật chi nhánh" : "Thêm chi nhánh"}
             destroyOnClose
-            width={650}
+            width={screens.xs ? "95%" : 650}
         >
             <Tabs activeKey={activeTab} onChange={setActiveTab} style={{ marginTop: 10 }}>
                 <Tabs.TabPane tab="Thông tin chung" key="general">
