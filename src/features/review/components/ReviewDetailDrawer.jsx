@@ -6,7 +6,7 @@ import {
     Typography,
     Descriptions,
     Tag,
-    Divider,
+    Rate,
     message,
     Space
 } from "antd";
@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 
 import { getAdminReviewByIdApi } from "../api/reviewAdminApi";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text } = Typography;
 
 const SENTIMENT_COLORS = {
     positive: "green",
@@ -26,6 +26,21 @@ const SENTIMENT_COLORS = {
     processing: "blue",
     completed: "green",
     failed: "volcano"
+};
+
+const SENTIMENT_LABELS = {
+    positive: "TÍCH CỰC",
+    negative: "TIÊU CỰC",
+    neutral: "TRUNG TÍNH",
+    mixed: "HỖN HỢP",
+    pending: "CHỜ XỬ LÝ"
+};
+
+const STATUS_LABELS = {
+    completed: "HOÀN TẤT",
+    pending: "CHỜ XỬ LÝ",
+    processing: "ĐANG XỬ LÝ",
+    failed: "THẤT BẠI"
 };
 
 const formatDateTime = (value) => {
@@ -84,10 +99,12 @@ export default function ReviewDetailDrawer({ open, reviewId, onClose }) {
         SENTIMENT_COLORS[String(sentimentValue).toLowerCase()] ||
         "default";
 
+    const sentimentLabel = SENTIMENT_LABELS[String(sentimentValue).toLowerCase()] || String(sentimentValue).toUpperCase();
+
     return (
         <Drawer
             title="Chi tiết review"
-            width={760}
+            width={560}
             open={open}
             onClose={onClose}
             destroyOnClose
@@ -98,34 +115,18 @@ export default function ReviewDetailDrawer({ open, reviewId, onClose }) {
                 </div>
             ) : review ? (
                 <div>
-                    <Space
-                        direction="vertical"
-                        size={8}
-                        style={{ width: "100%", marginBottom: 16 }}
-                    >
+                    <div style={{ marginBottom: 16 }}>
                         <Title level={4} style={{ margin: 0 }}>
                             {review.title || "Không có tiêu đề"}
                         </Title>
-                        <Space wrap>
-                            <Tag color={sentimentColor}>
-                                {sentimentValue}
-                            </Tag>
-                            {review.sentimentStatus && (
-                                <Tag>
-                                    {review.sentimentStatus}
-                                </Tag>
-                            )}
-                        </Space>
-                    </Space>
+                    </div>
 
                     <Descriptions
                         bordered
                         size="small"
                         column={1}
+                        labelStyle={{ width: 140, fontWeight: 500, color: "#475569" }}
                     >
-                        <Descriptions.Item label="ID">
-                            {review.id ?? "-"}
-                        </Descriptions.Item>
                         <Descriptions.Item label="Người dùng">
                             {review.userName || review.userId || "-"}
                         </Descriptions.Item>
@@ -133,7 +134,12 @@ export default function ReviewDetailDrawer({ open, reviewId, onClose }) {
                             {review.branchName || review.branchId || "-"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Đánh giá">
-                            {review.rating ?? "-"}
+                            <Rate disabled value={review.rating || 0} style={{ fontSize: 13, color: "#f59e0b" }} />
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Phân tích AI">
+                            <Tag color={sentimentColor} style={{ fontWeight: 600, borderRadius: 6, margin: 0 }}>
+                                {sentimentLabel}
+                            </Tag>
                         </Descriptions.Item>
                         <Descriptions.Item label="Độ tin cậy">
                             {formatConfidence(review.sentimentConfidence)}
@@ -141,40 +147,19 @@ export default function ReviewDetailDrawer({ open, reviewId, onClose }) {
                         <Descriptions.Item label="Tạo lúc">
                             {formatDateTime(review.createdAt)}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Bình luận">
-                            {review.comment || "-"}
+                        <Descriptions.Item label="Nội dung review">
+                            <span style={{ whiteSpace: "pre-wrap" }}>
+                                {review.content || review.comment || "-"}
+                            </span>
                         </Descriptions.Item>
                         <Descriptions.Item label="Phản hồi Salon">
-                            {review.ownerReply || "-"}
+                            {review.ownerReply ? (
+                                <Text style={{ color: "#16a34a", fontWeight: 500, whiteSpace: "pre-wrap" }}>{review.ownerReply}</Text>
+                            ) : (
+                                <Text type="secondary">Chưa phản hồi</Text>
+                            )}
                         </Descriptions.Item>
                     </Descriptions>
-
-                    <Divider />
-
-                    <Title level={5}>Nội dung review</Title>
-                    <Paragraph
-                        style={{
-                            whiteSpace: "pre-wrap",
-                            marginBottom: 0
-                        }}
-                    >
-                        {review.content || "-"}
-                    </Paragraph>
-
-                    {review.sentiment && (
-                        <>
-                            <Divider />
-                            <Title level={5}>Sentiment</Title>
-                            <Paragraph
-                                style={{
-                                    whiteSpace: "pre-wrap",
-                                    marginBottom: 0
-                                }}
-                            >
-                                {review.sentiment}
-                            </Paragraph>
-                        </>
-                    )}
                 </div>
             ) : (
                 <Text type="secondary">

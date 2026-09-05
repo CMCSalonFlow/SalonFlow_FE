@@ -91,22 +91,28 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
       dataIndex: 'staffName',
       key: 'staffName',
       sorter: (a, b) => a.staffName.localeCompare(b.staffName),
-      render: (_, record) => (
-        <Space size="middle">
-          <Avatar
-            src={record.avatarUrl}
-            icon={<UserOutlined />}
-            size={42}
-            style={{ backgroundColor: '#6366f1' }}
-          />
-          <div>
-            <Text strong style={{ fontSize: 15, display: 'block' }}>{record.staffName}</Text>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {record.branchName} {record.specialties ? `• ${record.specialties}` : ''}
-            </Text>
-          </div>
-        </Space>
-      )
+      render: (_, record) => {
+        const validAvatarUrl = (record.avatarUrl && record.avatarUrl !== "null" && record.avatarUrl !== "undefined" && record.avatarUrl.trim() !== "") ? record.avatarUrl : null;
+        return (
+          <Space size="middle">
+            <Avatar
+              src={validAvatarUrl || undefined}
+              onError={() => false}
+              icon={<UserOutlined style={{ color: '#fff' }} />}
+              size={42}
+              style={{ backgroundColor: validAvatarUrl ? 'transparent' : '#6366f1', color: '#fff', fontWeight: 700 }}
+            >
+              {!validAvatarUrl && record.staffName?.[0]?.toUpperCase()}
+            </Avatar>
+            <div>
+              <Text strong style={{ fontSize: 15, display: 'block' }}>{record.staffName}</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {record.branchName} {record.specialties ? `• ${record.specialties}` : ''}
+              </Text>
+            </div>
+          </Space>
+        );
+      }
     },
     {
       title: 'Lịch hẹn hoàn thành',

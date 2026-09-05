@@ -86,7 +86,6 @@ export default function SubscriptionPage() {
                     qrUrl: qrUrl
                 });
                 setVietQrModalOpen(true);
-                fetchHistory();
             }
         } catch (err) {
             message.destroy("vietqr_create");
@@ -130,7 +129,7 @@ export default function SubscriptionPage() {
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [vietQrModalOpen, vietQrData?.subId, refetchSubscription]);
+    }, [vietQrModalOpen, vietQrData?.subId, refetchSubscription, fetchHistory]);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);
@@ -170,12 +169,6 @@ export default function SubscriptionPage() {
 
     // Table Columns for History
     const historyColumns = [
-        {
-            title: "Mã GD",
-            dataIndex: "id",
-            key: "id",
-            render: (text) => <Text strong>#{text}</Text>
-        },
         {
             title: "Gói dịch vụ",
             dataIndex: "plan",
@@ -218,7 +211,7 @@ export default function SubscriptionPage() {
             title: "Ngày tạo",
             dataIndex: "createdAt",
             key: "createdAt",
-            render: (date) => date ? new Date(date).toLocaleString("vi-VN") : "---"
+            render: (date) => date ? new Date(date).toLocaleDateString("vi-VN") : "---"
         }
     ];
 
@@ -252,7 +245,7 @@ export default function SubscriptionPage() {
             {/* Page Header */}
             <div style={{ marginBottom: 24 }}>
                 <Title level={2} style={{ margin: 0 }}>
-                    <CrownOutlined style={{ marginRight: 8, color: "#faad14" }} /> Quản lý Gói Đăng Ký
+                    Quản lý Gói Đăng Ký
                 </Title>
                 <Text type="secondary">Nâng cấp gói dịch vụ để mở rộng quy mô chi nhánh, nhân sự và sử dụng trí tuệ nhân tạo AI nâng cao doanh thu.</Text>
             </div>
@@ -757,12 +750,7 @@ export default function SubscriptionPage() {
 
             {/* History Table Card */}
             <Card
-                title={
-                    <Space>
-                        <TransactionOutlined style={{ color: "#4f46e5" }} />
-                        <span>Lịch sử giao dịch & Đăng ký gói</span>
-                    </Space>
-                }
+                title="Lịch sử giao dịch & Đăng ký gói"
                 style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}
             >
                 <Table

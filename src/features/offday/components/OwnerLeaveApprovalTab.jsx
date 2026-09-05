@@ -203,18 +203,6 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
                     );
                 }
 
-                if (record.status === "APPROVED" && userRole === "SALON_OWNER") {
-                    return (
-                        <Button
-                            danger
-                            size="small"
-                            onClick={() => handleOpenRejectModal(record.id)}
-                        >
-                            Đổi thành Từ chối
-                        </Button>
-                    );
-                }
-
                 return (
                     <div style={{ fontSize: 12, color: "#8c8c8c" }}>
                         {record.approvedByName ? `Duyệt bởi: ${record.approvedByName}` : "-"}

@@ -2,20 +2,38 @@
 import { useEffect, useRef, useState } from "react";
 
 const STATUS_COLORS = {
+  HOLIDAY: "#ff4d4f",
+  LEAVE: "#fa8c16",
+  SCHEDULED: "#1677ff",
   CONFIRMED: "#34a853",
+  WORKING: "#1677ff",
   PENDING: "#f29900",
   CANCELLED: "#c5221f",
+  COMPLETED: "#52c41a",
+  OFF: "#8c8c8c",
   default: "#1a73e8",
 };
 const STATUS_LABELS = {
+  HOLIDAY: "Nghỉ lễ",
+  LEAVE: "Nghỉ phép",
+  SCHEDULED: "Đã xếp lịch",
   CONFIRMED: "Đã xác nhận",
+  WORKING: "Đang làm việc",
   PENDING: "Chờ xử lý",
   CANCELLED: "Đã hủy",
+  COMPLETED: "Đã hoàn thành",
+  OFF: "Nghỉ làm",
 };
 const STATUS_ICONS = {
+  HOLIDAY: "",
+  LEAVE: "",
+  SCHEDULED: "",
   CONFIRMED: "✓",
+  WORKING: "",
   PENDING: "⏳",
   CANCELLED: "✕",
+  COMPLETED: "✓",
+  OFF: "",
 };
 export default function BookingDetailModal({ open, onClose, booking, anchorPos, onCancelBooking }) {
   const popupRef = useRef(null);
@@ -55,10 +73,15 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos, 
     };
   }, [open, onClose]);
   if (!open || !booking) return null;
-  const status = booking.status || "default";
-  const color = STATUS_COLORS[status] || STATUS_COLORS.default;
-  const statusLabel = STATUS_LABELS[status] || status;
-  const statusIcon = STATUS_ICONS[status] || "•";
+  const status = booking.isHoliday ? "HOLIDAY" : (booking.isStaffLeave ? "LEAVE" : (booking.status || "SCHEDULED"));
+  const color = booking.color || STATUS_COLORS[status] || STATUS_COLORS.default;
+  let statusLabel = STATUS_LABELS[status] || status;
+  if (status === "HOLIDAY") {
+    statusLabel = booking.holidayTitle ? `Nghỉ lễ (${booking.holidayTitle})` : "Nghỉ lễ";
+  } else if (status === "LEAVE") {
+    statusLabel = booking.leaveReason ? `Nghỉ phép (${booking.leaveReason})` : "Nghỉ phép";
+  }
+  const statusIcon = STATUS_ICONS[status] || "";
   const formatTime = (str) => {
     if (!str) return "";
     const d = new Date(str);
@@ -99,7 +122,7 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos, 
             className="booking-popup-color-bar"
             style={{ background: color }}
           />
-          <div className="booking-popup-title">{booking.title}</div>
+          <div className="booking-popup-title">Chi tiết lịch làm việc</div>
           <div className="booking-popup-actions">
             <button
               className="popup-action-btn close-btn"
@@ -127,21 +150,6 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos, 
               </div>
             </div>
           </div>
-          {/* Staff */}
-          <div className="popup-row">
-            <span className="popup-row-icon">👤</span>
-            <div className="popup-row-content">
-              <div className="popup-row-label">Nhân viên</div>
-              <div className="popup-row-value">
-                {booking.userName || booking.title}
-              </div>
-              {booking.branchName && (
-                <div className="popup-row-label" style={{ marginTop: 2 }}>
-                  Chi nhánh: {booking.branchName}
-                </div>
-              )}
-            </div>
-          </div>
           {/* Customer */}
           {(booking.customerName || booking.customerPhone) && (
             <div className="popup-row">
@@ -154,16 +162,14 @@ export default function BookingDetailModal({ open, onClose, booking, anchorPos, 
               </div>
             </div>
           )}
-          {/* Status & Deposit Info */}
+          {/* Status */}
           <div className="popup-row">
             <span className="popup-row-icon">📋</span>
-            <div className="popup-row-content">
-              <div className="popup-row-label">Trạng thái</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
-                <span className={`booking-status-badge status-${status}`}>
-                  {statusIcon} {statusLabel}
-                </span>
-              </div>
+            <div className="popup-row-content" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span className="popup-row-label" style={{ margin: 0 }}>Trạng thái:</span>
+              <span className="popup-row-value" style={{ fontWeight: 600, color: color }}>
+                {statusLabel}
+              </span>
             </div>
           </div>
           {/* Note */}

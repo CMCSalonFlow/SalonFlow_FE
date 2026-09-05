@@ -27,6 +27,10 @@ export function ManagerLayout() {
     const location = useLocation();
     const [drawerVisible, setDrawerVisible] = useState(false);
 
+    const [avatarUrl, setAvatarUrl] = useState(() => {
+        const stored = localStorage.getItem("avatarUrl");
+        return (stored && stored !== "null" && stored !== "undefined") ? stored : "";
+    });
     const [fullName, setFullName] = useState(() => {
         const stored = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Manager";
         if (stored && stored.includes("@")) {
@@ -47,11 +51,33 @@ export function ManagerLayout() {
                     setFullName(realName);
                     localStorage.getItem("fullName") !== realName && localStorage.setItem("fullName", realName);
                 }
+                if (userData?.avatarUrl) {
+                    setAvatarUrl(userData.avatarUrl);
+                    localStorage.setItem("avatarUrl", userData.avatarUrl);
+                }
             } catch (err) {
                 console.warn("Could not sync user profile:", err);
             }
         };
         syncUserProfile();
+    }, []);
+
+    useEffect(() => {
+        const handleProfileUpdate = (e) => {
+            const data = e?.detail;
+            if (data) {
+                if (data.avatarUrl !== undefined) {
+                    setAvatarUrl(data.avatarUrl || "");
+                    localStorage.setItem("avatarUrl", data.avatarUrl || "");
+                }
+                if (data.fullName && data.fullName.trim()) {
+                    setFullName(data.fullName.trim());
+                    localStorage.setItem("fullName", data.fullName.trim());
+                }
+            }
+        };
+        window.addEventListener("profileUpdated", handleProfileUpdate);
+        return () => window.removeEventListener("profileUpdated", handleProfileUpdate);
     }, []);
 
     const navItems = [
@@ -79,30 +105,15 @@ export function ManagerLayout() {
 
     const currentKey = navItems.find(item => location.pathname.startsWith(item.key))?.key || "/manager/walk-in";
 
+    const validAvatarUrl = (avatarUrl && avatarUrl !== "null" && avatarUrl !== "undefined" && avatarUrl.trim() !== "") ? avatarUrl : null;
+
     const userMenu = {
         items: [
-            {
-                key: "user-info",
-                label: (
-                    <div style={{ padding: "4px 0" }}>
-                        <div style={{ fontWeight: "bold", fontSize: 14 }}>{fullName}</div>
-                        <div style={{ fontSize: "12px", color: "#8c8c8c" }}>Vai trò: Quản lý / Lễ tân</div>
-                    </div>
-                ),
-                disabled: true
-            },
-            { type: "divider" },
-            {
-                key: "customer-home",
-                icon: <ShopOutlined />,
-                label: "Trang Khách Hàng",
-                onClick: () => navigate("/home")
-            },
             {
                 key: "profile",
                 icon: <UserOutlined />,
                 label: "Hồ Sơ Cá Nhân",
-                onClick: () => navigate("/profile")
+                onClick: () => navigate("/manager/profile")
             },
             { type: "divider" },
             {
@@ -195,19 +206,53 @@ export function ManagerLayout() {
                         </div>
 
                         {/* User Profile on Desktop */}
-                        <Dropdown menu={userMenu} placement="bottomRight">
-                            <Button type="text" style={{ height: 40, borderRadius: 20, padding: "0 12px" }}>
-                                <Space>
-                                    <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#fa8c16" }} />
-                                    <span style={{ fontWeight: 600, color: "#1e293b" }}>{fullName}</span>
-                                </Space>
-                            </Button>
+                        <Dropdown menu={userMenu} placement="bottomRight" arrow>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 10,
+                                    padding: "4px 12px 4px 6px",
+                                    borderRadius: 24,
+                                    background: "#f8fafc",
+                                    border: "1px solid #e2e8f0",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease"
+                                }}
+                            >
+                                <Avatar
+                                    src={validAvatarUrl || undefined}
+                                    onError={() => false}
+                                    style={{
+                                        background: validAvatarUrl ? "transparent" : "linear-gradient(135deg, #fa8c16 0%, #d46b08 100%)",
+                                        color: "#fff",
+                                        fontWeight: 700
+                                    }}
+                                    size={32}
+                                    icon={<UserOutlined style={{ color: "#fff" }} />}
+                                >
+                                    {!validAvatarUrl && fullName?.[0]?.toUpperCase()}
+                                </Avatar>
+
+                                {screens.sm && (
+                                    <div style={{ lineHeight: 1.2 }}>
+                                        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{fullName}</div>
+                                        <div style={{ fontSize: 10, color: "#64748b", fontWeight: 500 }}>Lễ tân</div>
+                                    </div>
+                                )}
+                            </div>
                         </Dropdown>
                     </>
                 ) : (
                     /* Mobile View: Avatar + Hamburger Menu Button */
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Avatar icon={<UserOutlined />} size="small" style={{ backgroundColor: "#fa8c16" }} />
+                        <Avatar
+                            src={validAvatarUrl || undefined}
+                            onError={() => false}
+                            icon={<UserOutlined style={{ color: "#fff" }} />}
+                            size="small"
+                            style={{ background: validAvatarUrl ? "transparent" : "linear-gradient(135deg, #fa8c16 0%, #d46b08 100%)", color: "#fff" }}
+                        />
                         <Button
                             icon={<MenuOutlined />}
                             onClick={() => setDrawerVisible(true)}
@@ -228,7 +273,15 @@ export function ManagerLayout() {
                 >
                     <div style={{ padding: "12px 14px", background: "#f8fafc", borderRadius: 10, marginBottom: 16 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <Avatar size={42} icon={<UserOutlined />} style={{ backgroundColor: "#fa8c16" }} />
+                            <Avatar
+                                src={validAvatarUrl || undefined}
+                                onError={() => false}
+                                size={42}
+                                icon={<UserOutlined style={{ color: "#fff" }} />}
+                                style={{ background: validAvatarUrl ? "transparent" : "linear-gradient(135deg, #fa8c16 0%, #d46b08 100%)", color: "#fff", fontWeight: 700 }}
+                            >
+                                {!validAvatarUrl && fullName?.[0]?.toUpperCase()}
+                            </Avatar>
                             <div>
                                 <Text strong style={{ fontSize: 15, display: "block", color: "#0f172a" }}>{fullName}</Text>
                                 <Tag color="orange" style={{ margin: 0, fontSize: 11 }}>Quản lý / Lễ tân</Tag>
@@ -259,20 +312,9 @@ export function ManagerLayout() {
                         <Button
                             block
                             type="dashed"
-                            icon={<ShopOutlined />}
-                            onClick={() => {
-                                navigate("/home");
-                                setDrawerVisible(false);
-                            }}
-                        >
-                            Trang khách hàng
-                        </Button>
-                        <Button
-                            block
-                            type="dashed"
                             icon={<UserOutlined />}
                             onClick={() => {
-                                navigate("/profile");
+                                navigate("/manager/profile");
                                 setDrawerVisible(false);
                             }}
                         >

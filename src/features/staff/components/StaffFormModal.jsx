@@ -131,11 +131,11 @@ export default function StaffFormModal({ visible, onCancel, onSubmit, initialVal
                     name="roleCode"
                     label="Vai trò"
                     rules={[{ required: true, message: "Vui lòng chọn vai trò nhân viên!" }]}
-                    tooltip="Thợ (STAFF) thực hiện làm dịch vụ. Lễ tân / Quản lý (MANAGER) tiếp đón khách tại quầy, check-in và thu ngân POS."
+                    tooltip="Thợ thực hiện làm dịch vụ. Quản lý tiếp đón khách tại quầy, check-in và thu ngân POS."
                 >
                     <Select size="large" placeholder="Chọn vai trò nhân viên...">
-                        <Select.Option value="STAFF">Thợ làm dịch vụ (Role STAFF)</Select.Option>
-                        <Select.Option value="MANAGER">Lễ tân / Quản lý salon (Role MANAGER)</Select.Option>
+                        <Select.Option value="STAFF">Thợ</Select.Option>
+                        <Select.Option value="MANAGER">Quản lý</Select.Option>
                     </Select>
                 </Form.Item>
 
