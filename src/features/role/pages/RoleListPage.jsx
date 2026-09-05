@@ -6,7 +6,8 @@ import {
     Button,
     message,
     Typography,
-    Card
+    Card,
+    Grid
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import RoleTable from "../components/RoleTable";
@@ -73,25 +74,34 @@ export default function RoleListPage() {
         }
     };
 
+    const screens = Grid.useBreakpoint();
+
     return (
-        <div style={{ padding: "24px 32px", maxWidth: 1200, margin: "0 auto", minHeight: "100vh" }}>
-            <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ padding: screens.xs ? "12px 8px" : "24px 32px", maxWidth: 1200, margin: "0 auto", minHeight: "100vh" }}>
+            <div style={{
+                marginBottom: 24,
+                display: "flex",
+                flexDirection: screens.xs ? "column" : "row",
+                justifyContent: "space-between",
+                alignItems: screens.xs ? "stretch" : "center",
+                gap: 12
+            }}>
                 <div>
-                    <Title level={3} style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>Phân Quyền Vai Trò Hệ Thống</Title>
-                    <Text style={{ color: "#64748b", fontSize: 14 }}>Quản lý danh sách các vai trò và quyền hạn quản trị trong hệ thống SalonFlow.</Text>
+                    <Title level={screens.xs ? 4 : 3} style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>Phân Quyền Vai Trò Hệ Thống</Title>
+                    <Text style={{ color: "#64748b", fontSize: screens.xs ? 12 : 14 }}>Quản lý danh sách các vai trò và quyền hạn quản trị trong hệ thống SalonFlow.</Text>
                 </div>
                 <Button
                     type="primary"
                     icon={<PlusOutlined />}
                     onClick={handleCreate}
-                    size="large"
+                    size={screens.xs ? "middle" : "large"}
                     style={{ borderRadius: 8, fontWeight: 600, background: "#2563eb", border: "none" }}
                 >
                     Thêm vai trò mới
                 </Button>
             </div>
 
-            <Card bordered={false} style={{ borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,0.03)" }} bodyStyle={{ padding: 0 }}>
+            <Card bordered={false} style={{ borderRadius: screens.xs ? 10 : 16, boxShadow: "0 4px 16px rgba(0,0,0,0.03)" }} bodyStyle={{ padding: 0 }}>
                 <RoleTable
                     roles={roles}
                     onEdit={handleEdit}

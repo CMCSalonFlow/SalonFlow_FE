@@ -6,8 +6,14 @@ import {
 import {
     Button,
     Space,
-    message
+    message,
+    Typography,
+    Grid,
+    Card
 } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+
+const { Title, Text } = Typography;
 
 import UserTable from "../components/UserTable";
 import UserModal from "../components/UserModal";
@@ -107,23 +113,45 @@ export default function UserListPage() {
         }
     };
 
+    const screens = Grid.useBreakpoint();
+
     return (
-        <div>
-            <Space style={{ marginBottom: 20 }}>
+        <div style={{ padding: screens.xs ? "8px 4px" : "16px 20px" }}>
+            <div style={{
+                display: "flex",
+                flexDirection: screens.xs ? "column" : "row",
+                justifyContent: "space-between",
+                alignItems: screens.xs ? "stretch" : "center",
+                gap: 12,
+                marginBottom: 20
+            }}>
+                <div>
+                    <Title level={screens.xs ? 4 : 3} style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>
+                        Quản Lý Người Dùng
+                    </Title>
+                    <Text type="secondary" style={{ fontSize: screens.xs ? 12 : 14 }}>
+                        Quản trị tài khoản, thông tin liên hệ và phân quyền người dùng trong hệ thống.
+                    </Text>
+                </div>
                 <Button
                     type="primary"
+                    icon={<PlusOutlined />}
                     onClick={handleCreate}
+                    size={screens.xs ? "middle" : "large"}
+                    style={{ borderRadius: 8 }}
                 >
-                    + Thêm người dùng mới
+                    Thêm người dùng mới
                 </Button>
-            </Space>
+            </div>
 
-            <UserTable
-                users={users}
-                loading={loading}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-            />
+            <Card bordered={false} style={{ borderRadius: screens.xs ? 10 : 16, boxShadow: "0 4px 16px rgba(0,0,0,0.03)" }} bodyStyle={{ padding: screens.xs ? 8 : 16 }}>
+                <UserTable
+                    users={users}
+                    loading={loading}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+            </Card>
 
             <UserModal
                 open={open}

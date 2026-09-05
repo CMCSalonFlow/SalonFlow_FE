@@ -212,7 +212,7 @@ export default function AdminLayout() {
 
                 <Content
                     style={{
-                        padding: screens.lg ? "24px 28px" : "16px 12px",
+                        padding: screens.lg ? "24px 28px" : (screens.xs ? "12px 8px" : "16px 14px"),
                         background: "#f8fafc",
                         minHeight: "calc(100vh - 68px)"
                     }}
