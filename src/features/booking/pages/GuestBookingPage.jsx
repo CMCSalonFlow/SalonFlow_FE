@@ -30,7 +30,38 @@ export default function GuestBookingPage() {
 
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [loadingText, setLoadingText] = useState("Đang tải dữ liệu...");
     const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
+
+    // Tọa độ GPS vị trí khách hàng
+    const [userLocation, setUserLocation] = useState(null);
+    const [locationStatus, setLocationStatus] = useState("idle");
+
+    const requestUserLocation = () => {
+        if ("geolocation" in navigator) {
+            setLocationStatus("requesting");
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                    setLocationStatus("success");
+                },
+                (error) => {
+                    console.warn("Geolocation denied or failed:", error.message);
+                    setLocationStatus("denied");
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+        } else {
+            setLocationStatus("denied");
+        }
+    };
+
+    useEffect(() => {
+        requestUserLocation();
+    }, []);
 
     const [salons, setSalons] = useState([]);
     const [selectedSalonId, setSelectedSalonId] = useState(null);
@@ -110,6 +141,7 @@ export default function GuestBookingPage() {
     useEffect(() => {
         const loadSalons = async () => {
             try {
+                setLoadingText("Đang tải danh sách Salon...");
                 setLoading(true);
                 const data = await getPublicSalonsApi();
                 setSalons(data);
@@ -135,6 +167,7 @@ export default function GuestBookingPage() {
 
         const loadBranches = async () => {
             try {
+                setLoadingText("Đang tải danh sách chi nhánh...");
                 setLoading(true);
                 const data = await getPublicBranchesApi(selectedSalonId);
                 setBranches(data);
@@ -164,6 +197,7 @@ export default function GuestBookingPage() {
 
         const loadBranchData = async () => {
             try {
+                setLoadingText("Đang tải thông tin dịch vụ...");
                 setLoading(true);
                 setSelectedServices([]);
                 setSelectedBundle(null);
@@ -383,6 +417,7 @@ export default function GuestBookingPage() {
         }
 
         try {
+            setLoadingText("Đang xử lý đặt lịch hẹn...");
             setLoading(true);
             const payload = {
                 bookingDate: selectedDate.format("YYYY-MM-DD"),
@@ -394,6 +429,11 @@ export default function GuestBookingPage() {
                 bookingChannel: "PUBLIC",
                 paymentMethod: "PAY_AT_COUNTER"
             };
+
+            if (userLocation && userLocation.lat && userLocation.lng) {
+                payload.customerLatitude = userLocation.lat;
+                payload.customerLongitude = userLocation.lng;
+            }
 
             if (guestEmail.trim()) {
                 payload.customerEmail = guestEmail.trim();
@@ -460,7 +500,7 @@ export default function GuestBookingPage() {
                     <Card style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", minHeight: 480 }} bodyStyle={{ padding: screens.xs ? "14px 12px" : "24px" }}>
                         {loading ? (
                             <div style={{ textAlign: "center", padding: "100px 0" }}>
-                                <Spin size="large" tip="Đang tải dữ liệu..." />
+                                <Spin size="large" tip={loadingText} />
                             </div>
                         ) : (
                             <>

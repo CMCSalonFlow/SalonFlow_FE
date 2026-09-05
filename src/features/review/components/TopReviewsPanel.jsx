@@ -45,11 +45,7 @@ function ReviewItem({ item }) {
 
 export default function TopReviewsPanel({ topPositive = [], topNegative = [] }) {
     return (
-        <>
-            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
-                Chỉ hiển thị review đã được AI phân tích cảm xúc xong.
-            </Text>
-            <Row gutter={[16, 16]}>
+        <Row gutter={[16, 16]}>
                 <Col xs={24} md={12}>
                     <Card
                         bordered={false}
@@ -85,6 +81,5 @@ export default function TopReviewsPanel({ topPositive = [], topNegative = [] }) 
                     </Card>
                 </Col>
             </Row>
-        </>
     );
 }

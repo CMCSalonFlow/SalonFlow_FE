@@ -77,9 +77,17 @@ export const useNotificationWebSocket = (onNewNotification) => {
                             }
 
                             const notifItem = payload.notification || {};
+                            let desc = notifItem.body || notifItem.message || "Bạn có thông báo mới.";
+                            try {
+                                if (desc && desc.includes("%")) {
+                                    desc = decodeURIComponent(desc.replace(/\+/g, " "));
+                                }
+                            } catch (e) {
+                                // fallback if not URL encoded
+                            }
                             notification.info({
                                 message: notifItem.title || "Thông báo mới",
-                                description: notifItem.body || notifItem.message || "Bạn có thông báo mới.",
+                                description: desc,
                                 placement: "topRight"
                             });
 

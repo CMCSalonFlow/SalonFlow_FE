@@ -114,9 +114,7 @@ export default function CategoryListPage() {
             width: 70,
             align: "center",
             render: (_, __, index) => (
-                <Tag style={{ borderRadius: 10, fontWeight: 700, padding: "0 8px" }} color="geekblue">
-                    #{index + 1}
-                </Tag>
+                <Text style={{ color: "#64748b", fontWeight: 600 }}>{index + 1}</Text>
             )
         },
         {
