@@ -46,6 +46,9 @@ export default function LoyaltyPointsSection({ userId }) {
     // Active Tab cho Lịch sử
     const [activeTab, setActiveTab] = useState("ALL");
 
+    const activePoints = summary?.activePoints ?? summary?.totalPoints ?? summary?.pointsBalance ?? 0;
+    const equivalentVoucherValue = summary?.equivalentVoucherValue ?? Math.floor(activePoints / 100) * 10000;
+
     const fetchData = async () => {
         try {
             setLoadingSummary(true);
@@ -60,7 +63,7 @@ export default function LoyaltyPointsSection({ userId }) {
         try {
             setLoadingHistory(true);
             const historyData = await getLoyaltyHistoryApi(userId);
-            setHistory(historyData);
+            setHistory(Array.isArray(historyData) ? historyData : (historyData?.content || []));
         } catch (error) {
             console.error("Failed to load loyalty history", error);
         } finally {
@@ -78,7 +81,7 @@ export default function LoyaltyPointsSection({ userId }) {
             return;
         }
 
-        if (summary && summary.activePoints < pointsToRedeem) {
+        if (summary && activePoints < pointsToRedeem) {
             message.error("Số điểm tích lũy của bạn không đủ.");
             return;
         }
@@ -239,13 +242,13 @@ export default function LoyaltyPointsSection({ userId }) {
                         <div style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", padding: "16px 24px", borderRadius: 16, display: "inline-block", width: "100%", maxWidth: 300 }}>
                             <Statistic
                                 title={<span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Điểm tích lũy hiện có</span>}
-                                value={summary?.activePoints || 0}
+                                value={activePoints}
                                 valueStyle={{ color: "#ffd700", fontWeight: 700, fontSize: 36 }}
                                 prefix={<TrophyOutlined />}
                                 suffix="điểm"
                             />
                             <div style={{ marginTop: 4, color: "rgba(255,255,255,0.9)", fontSize: 13 }}>
-                                ≈ {summary?.equivalentVoucherValue?.toLocaleString("vi-VN") || 0} VNĐ voucher
+                                ≈ {equivalentVoucherValue.toLocaleString("vi-VN")} VNĐ voucher
                             </div>
 
                             <Button
@@ -267,7 +270,7 @@ export default function LoyaltyPointsSection({ userId }) {
                                     setPointsToRedeem(100);
                                     setIsRedeemModalOpen(true);
                                 }}
-                                disabled={!summary || summary.activePoints < 100}
+                                disabled={!summary || activePoints < 100}
                             >
                                 Đổi điểm lấy Voucher
                             </Button>
@@ -370,7 +373,7 @@ export default function LoyaltyPointsSection({ userId }) {
                 ) : (
                     <div style={{ padding: "8px 0" }}>
                         <Alert
-                            message={`Số điểm hiện có: ${summary?.activePoints || 0} điểm`}
+                            message={`Số điểm hiện có: ${activePoints} điểm`}
                             type="warning"
                             showIcon
                             style={{ marginBottom: 20, borderRadius: 10 }}
@@ -387,7 +390,7 @@ export default function LoyaltyPointsSection({ userId }) {
                                     key={preset}
                                     type={pointsToRedeem === preset ? "primary" : "default"}
                                     onClick={() => setPointsToRedeem(preset)}
-                                    disabled={(summary?.activePoints || 0) < preset}
+                                    disabled={activePoints < preset}
                                     style={{ borderRadius: 8 }}
                                 >
                                     {preset} điểm ({ (preset / 100 * 10000).toLocaleString("vi-VN") }đ)
@@ -401,7 +404,7 @@ export default function LoyaltyPointsSection({ userId }) {
                             </Text>
                             <InputNumber
                                 min={100}
-                                max={summary?.activePoints || 100}
+                                max={activePoints || 100}
                                 step={100}
                                 value={pointsToRedeem}
                                 onChange={(val) => setPointsToRedeem(val || 100)}
@@ -425,7 +428,7 @@ export default function LoyaltyPointsSection({ userId }) {
                             <Divider style={{ margin: "8px 0" }} />
                             <Row justify="space-between" align="middle">
                                 <Text type="secondary">Số điểm còn lại:</Text>
-                                <Text strong>{Math.max(0, (summary?.activePoints || 0) - pointsToRedeem)} điểm</Text>
+                                <Text strong>{Math.max(0, activePoints - pointsToRedeem)} điểm</Text>
                             </Row>
                         </Card>
 
