@@ -154,9 +154,11 @@ export const useScheduleData = (branchId, visibleRange) => {
               textColor: "#fff",
               extendedProps: {
                 ...shift,
+                status: holiday ? "HOLIDAY" : (staffLeave ? "LEAVE" : (shift.status || "SCHEDULED")),
                 isHoliday: !!holiday,
                 isStaffLeave: !!staffLeave,
-                holidayTitle: holiday?.title || (staffLeave ? "Nghỉ phép cá nhân" : null)
+                holidayTitle: holiday?.title || null,
+                leaveReason: staffLeave?.reason || null,
               },
             };
           })

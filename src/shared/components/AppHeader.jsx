@@ -84,6 +84,24 @@ export default function AppHeader() {
         }
     }, [isLogin]);
 
+    useEffect(() => {
+        const handleProfileUpdate = (e) => {
+            const data = e?.detail;
+            if (data) {
+                if (data.avatarUrl !== undefined) {
+                    setHeaderAvatarUrl(data.avatarUrl || "");
+                    localStorage.setItem("avatarUrl", data.avatarUrl || "");
+                }
+                if (data.fullName && data.fullName.trim()) {
+                    setHeaderFullName(data.fullName.trim());
+                    localStorage.setItem("fullName", data.fullName.trim());
+                }
+            }
+        };
+        window.addEventListener("profileUpdated", handleProfileUpdate);
+        return () => window.removeEventListener("profileUpdated", handleProfileUpdate);
+    }, []);
+
     const storedFullName = headerFullName || localStorage.getItem("fullName");
     const avatarSrc = headerAvatarUrl || localStorage.getItem("avatarUrl");
     const storedUser = JSON.parse(localStorage.getItem("user") || "{}");

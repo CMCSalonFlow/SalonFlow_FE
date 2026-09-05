@@ -256,7 +256,7 @@ export default function StaffAppointmentsPage() {
                 <Space direction="vertical" size={2}>
                     {record.items && record.items.length > 0 ? (
                         record.items.map((item, idx) => (
-                            <Tag key={idx} color="blue" icon={<ScissorOutlined />}>
+                            <Tag key={idx} color="blue">
                                 {item.serviceName || item.bundleName || "Dịch vụ"}
                             </Tag>
                         ))
@@ -320,10 +320,10 @@ export default function StaffAppointmentsPage() {
             }}>
                 <div>
                     <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>
-                        ✂️ Lịch hẹn làm đẹp phân công
+                        Lịch hẹn làm đẹp phân công
                     </Title>
                     <Text type="secondary" style={{ fontSize: screens.xs ? 12 : 14 }}>
-                        Quản lý toàn bộ danh sách lịch hẹn làm đẹp do {currentFullName || "bạn"} thực hiện
+                        Quản lý toàn bộ danh sách lịch hẹn làm đẹp được phân công
                     </Text>
                 </div>
                 <Button

@@ -272,6 +272,10 @@ const router = createBrowserRouter([
                 element: withSuspense(HelpCenterPage)
             },
             {
+                path: "profile",
+                element: withSuspense(ProfilePage)
+            },
+            {
                 path: "subscription",
                 element: withSuspense(SubscriptionPage)
             },
@@ -312,6 +316,10 @@ const router = createBrowserRouter([
             {
                 path: "leave-requests",
                 element: withSuspense(StaffLeaveRequestPage)
+            },
+            {
+                path: "profile",
+                element: withSuspense(ProfilePage)
             }
         ]
     },
@@ -347,7 +355,10 @@ const router = createBrowserRouter([
                 path: "leave-requests",
                 element: withSuspense(StaffLeaveRequestPage)
             },
-
+            {
+                path: "profile",
+                element: withSuspense(ProfilePage)
+            },
             {
                 path: "bookings",
                 element: withSuspense(OwnerBookingWorkflowPage)

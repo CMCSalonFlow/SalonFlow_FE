@@ -8,13 +8,17 @@ import {
     Row,
     Select,
     Space,
+    Spin,
     Statistic,
     Table,
     Tag,
     Typography,
     Modal,
+    Rate,
+    Tooltip,
     message
 } from "antd";
+import { EyeOutlined, FlagOutlined, RobotOutlined, ReloadOutlined, MessageOutlined, SmileOutlined, MehOutlined, FrownOutlined } from "@ant-design/icons";
 
 import dayjs from "dayjs";
 
@@ -41,6 +45,14 @@ const SENTIMENT_COLORS = {
     processing: "blue",
     completed: "green",
     failed: "volcano"
+};
+
+const SENTIMENT_LABELS = {
+    positive: "TÍCH CỰC",
+    negative: "TIÊU CỰC",
+    neutral: "TRUNG TÍNH",
+    mixed: "HỖN HỢP",
+    pending: "CHỜ XỬ LÝ"
 };
 
 const formatDateTime = (value) => {
@@ -87,51 +99,61 @@ const pickSummaryCards = (summary) => {
         return [];
     }
 
-    const candidates = [
-        { key: "totalReviews", label: "Tổng review", color: "blue" },
-        { key: "total", label: "Tổng review", color: "blue" },
-        { key: "positiveCount", label: "Tích cực", color: "green" },
-        { key: "positive", label: "Tích cực", color: "green" },
-        { key: "neutralCount", label: "Trung tính", color: "gold" },
-        { key: "neutral", label: "Trung tính", color: "gold" },
-        { key: "negativeCount", label: "Tiêu cực", color: "red" },
-        { key: "negative", label: "Tiêu cực", color: "red" },
-        { key: "pendingCount", label: "Chờ xử lý", color: "default" },
-        { key: "pending", label: "Chờ xử lý", color: "default" },
-        { key: "analyzedCount", label: "Đã phân tích", color: "cyan" },
-        { key: "completedCount", label: "Hoàn tất", color: "green" },
-        { key: "failedCount", label: "Lỗi", color: "volcano" },
-        { key: "averageRating", label: "Điểm trung bình", color: "purple" }
+    const candidateKeys = [
+        {
+            key: "totalReviews",
+            altKey: "total",
+            label: "Tổng review",
+            color: "#1d4ed8",
+            bgColor: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+            borderColor: "#bfdbfe",
+            icon: <MessageOutlined style={{ fontSize: 20, color: "#2563eb" }} />
+        },
+        {
+            key: "positiveCount",
+            altKey: "positive",
+            label: "Tích cực",
+            color: "#15803d",
+            bgColor: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+            borderColor: "#bbf7d0",
+            icon: <SmileOutlined style={{ fontSize: 20, color: "#16a34a" }} />
+        },
+        {
+            key: "neutralCount",
+            altKey: "neutral",
+            label: "Trung tính",
+            color: "#b45309",
+            bgColor: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+            borderColor: "#fde68a",
+            icon: <MehOutlined style={{ fontSize: 20, color: "#d97706" }} />
+        },
+        {
+            key: "negativeCount",
+            altKey: "negative",
+            label: "Tiêu cực",
+            color: "#b91c1c",
+            bgColor: "linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)",
+            borderColor: "#fecaca",
+            icon: <FrownOutlined style={{ fontSize: 20, color: "#dc2626" }} />
+        }
     ];
 
     const cards = [];
-    const seen = new Set();
-
-    candidates.forEach((item) => {
-        const value = summary[item.key];
-        if (value === undefined || value === null || seen.has(item.key)) {
-            return;
+    candidateKeys.forEach((item) => {
+        const val = summary[item.key] !== undefined ? summary[item.key] : summary[item.altKey];
+        if (val !== undefined && val !== null) {
+            cards.push({
+                label: item.label,
+                value: val,
+                color: item.color,
+                bgColor: item.bgColor,
+                borderColor: item.borderColor,
+                icon: item.icon
+            });
         }
-
-        seen.add(item.key);
-        cards.push({
-            label: item.label,
-            value,
-            color: item.color
-        });
     });
 
-    if (cards.length > 0) {
-        return cards;
-    }
-
-    return Object.entries(summary)
-        .filter(([, value]) => typeof value === "number")
-        .map(([key, value]) => ({
-            label: key,
-            value,
-            color: "blue"
-        }));
+    return cards;
 };
 
 export default function ReviewAdminPage() {
@@ -334,132 +356,150 @@ export default function ReviewAdminPage() {
 
     const columns = [
         {
-            title: "ID",
-            dataIndex: "id",
-            width: 90
-        },
-        {
-            title: "Khách hàng",
-            dataIndex: "userName",
-            render: (_, record) =>
-                record.userName
-                    ? `${record.userName} (#${record.userId || "-"})`
-                    : record.userId || "-"
-        },
-        {
-            title: "Chi nhánh",
-            dataIndex: "branchName",
-            render: (_, record) =>
-                record.branchName
-                    ? `${record.branchName} (#${record.branchId || "-"})`
-                    : record.branchId || "-"
-        },
-        {
-            title: "Rating",
-            dataIndex: "rating",
-            width: 110,
-            render: (value) =>
-                value === undefined || value === null ? "-" : `${value}/5`
-        },
-        {
-            title: "Sentiment",
-            dataIndex: "sentiment",
-            render: (value, record) => {
-                const sentimentValue = value || "-";
-                const color =
-                    record.sentimentBadgeColor ||
-                    SENTIMENT_COLORS[String(sentimentValue).toLowerCase()] ||
-                    "default";
-
-                return <Tag color={color}>{sentimentValue}</Tag>;
+            title: "Nhận xét",
+            dataIndex: "content",
+            width: 250,
+            render: (_, record) => {
+                const textContent = record.content || record.comment || record.title || "Chưa có nội dung nhận xét";
+                return (
+                    <div style={{ maxWidth: 230 }}>
+                        {record.title && (
+                            <Text strong ellipsis style={{ display: "block", color: "#0f172a", marginBottom: 2 }}>
+                                {record.title}
+                            </Text>
+                        )}
+                        <Text type="secondary" ellipsis style={{ fontSize: 13, display: "block" }}>
+                            {textContent}
+                        </Text>
+                    </div>
+                );
             }
         },
         {
-            title: "Độ tin cậy",
-            dataIndex: "sentimentConfidence",
-            width: 130,
-            render: (value) => formatConfidence(value)
+            title: "Khách hàng & Chi nhánh",
+            dataIndex: "userName",
+            width: 170,
+            render: (_, record) => (
+                <div style={{ whiteSpace: "nowrap" }}>
+                    <Text strong style={{ display: "block", color: "#334155" }}>
+                        {record.userName ? record.userName : record.userId ? `Khách #${record.userId}` : "Khách ẩn danh"}
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                        {record.branchName ? `📍 ${record.branchName}` : "---"}
+                    </Text>
+                </div>
+            )
         },
         {
-            title: "Trạng thái",
-            dataIndex: "sentimentStatus",
-            render: (value) => (value ? <Tag>{value}</Tag> : "-")
+            title: "Đánh giá",
+            dataIndex: "rating",
+            width: 125,
+            render: (value) => (
+                <Rate disabled value={value || 0} style={{ fontSize: 12, color: "#f59e0b", whiteSpace: "nowrap" }} />
+            )
         },
         {
-            title: "Tiêu đề",
-            dataIndex: "title",
-            ellipsis: true
-        },
-        {
-            title: "Nội dung",
-            dataIndex: "content",
-            ellipsis: true,
-            render: (value) => value || "-"
-        },
-        {
-            title: "Bình luận",
-            dataIndex: "comment",
-            ellipsis: true,
-            render: (value) => value || "-"
+            title: "Phân tích AI",
+            dataIndex: "sentiment",
+            width: 140,
+            render: (_, record) => {
+                const rawVal = String(record.sentiment || "PENDING").toLowerCase();
+                const label = SENTIMENT_LABELS[rawVal] || String(record.sentiment || "CHỜ PHÂN TÍCH").toUpperCase();
+                const color = record.sentimentBadgeColor || SENTIMENT_COLORS[rawVal] || "default";
+                const confidenceText = formatConfidence(record.sentimentConfidence);
+                return (
+                    <div style={{ whiteSpace: "nowrap" }}>
+                        <Tag color={color} style={{ fontWeight: 600, borderRadius: 6, margin: 0 }}>
+                            {label}
+                        </Tag>
+                        {confidenceText !== "-" && (
+                            <div style={{ marginTop: 2 }}>
+                                <Text type="secondary" style={{ fontSize: 11 }}>
+                                    Độ tin cậy: <span style={{ fontWeight: 600, color: "#475569" }}>{confidenceText}</span>
+                                </Text>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
         },
         {
             title: "Phản hồi Salon",
             dataIndex: "ownerReply",
-            ellipsis: true,
+            width: 130,
             render: (value) => {
                 if (value) {
-                    return <Tag color="blue">💬 {value}</Tag>;
+                    return (
+                        <Tag color="green" style={{ borderRadius: 6, fontWeight: 600 }}>
+                            ✓ Đã phản hồi
+                        </Tag>
+                    );
                 }
-                return <Text type="secondary" style={{ fontSize: 12 }}>Chưa phản hồi</Text>;
+                return (
+                    <Tag color="orange" style={{ borderRadius: 6, fontWeight: 600 }}>
+                        Chưa phản hồi
+                    </Tag>
+                );
             }
         },
         {
-            title: "Tạo lúc",
+            title: "Ngày tạo",
             dataIndex: "createdAt",
-            width: 150,
-            render: (value) => formatDateTime(value)
+            width: 100,
+            render: (value) => (
+                <Text style={{ fontSize: 12.5, color: "#64748b", whiteSpace: "nowrap" }}>
+                    {value ? dayjs(value).format("DD/MM/YYYY") : "---"}
+                </Text>
+            )
         },
         {
             title: "Thao tác",
             key: "action",
-            width: 220,
+            width: 160,
+            align: "center",
             render: (_, record) => (
-                <Space>
-                    <Button
-                        type="link"
-                        size="small"
-                        onClick={() => {
-                            setSelectedReviewId(record.id);
-                            setDrawerOpen(true);
-                        }}
-                    >
-                        Xem
-                    </Button>
-                    <Button
-                        type="primary"
-                        ghost
-                        size="small"
-                        disabled={!!record.ownerReply}
-                        onClick={() => {
-                            setTargetReview(record);
-                            setReplyContent("");
-                            setReplyModalOpen(true);
-                        }}
-                    >
-                        {record.ownerReply ? "Đã trả lời" : "Phản hồi"}
-                    </Button>
-                    <Button
-                        danger
-                        type="dashed"
-                        size="small"
-                        onClick={() => {
-                            setTargetReview(record);
-                            setReportReason("");
-                            setReportModalOpen(true);
-                        }}
-                    >
-                        Báo cáo
-                    </Button>
+                <Space size={2} style={{ whiteSpace: "nowrap" }}>
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<EyeOutlined style={{ color: "#2563eb" }} />}
+                            onClick={() => {
+                                setSelectedReviewId(record.id);
+                                setDrawerOpen(true);
+                            }}
+                        >
+                            Xem
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={record.ownerReply ? "Đã phản hồi" : "Trả lời review"}>
+                        <Button
+                            type="primary"
+                            ghost
+                            size="small"
+                            disabled={!!record.ownerReply}
+                            onClick={() => {
+                                setTargetReview(record);
+                                setReplyContent("");
+                                setReplyModalOpen(true);
+                            }}
+                        >
+                            Phản hồi
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Báo cáo vi phạm">
+                        <Button
+                            type="text"
+                            danger
+                            size="small"
+                            icon={<FlagOutlined />}
+                            onClick={() => {
+                                setTargetReview(record);
+                                setReportReason("");
+                                setReportModalOpen(true);
+                            }}
+                        />
+                    </Tooltip>
                 </Space>
             )
         }
@@ -476,26 +516,31 @@ export default function ReviewAdminPage() {
                 </Text>
             </div>
 
-            <Card loading={summaryLoading}>
+            <Spin spinning={summaryLoading}>
                 <Row gutter={[16, 16]}>
                     {summaryCards.length > 0 ? (
                         summaryCards.map((item) => (
-                            <Col xs={12} sm={8} lg={6} key={item.label}>
+                            <Col xs={12} sm={12} md={6} lg={6} key={item.label}>
                                 <Card
                                     size="small"
                                     bordered
                                     style={{
-                                        borderColor: "#f0f0f0",
-                                        borderRadius: 12
+                                        background: item.bgColor,
+                                        borderColor: item.borderColor,
+                                        borderRadius: 16,
+                                        boxShadow: "0 4px 14px rgba(0,0,0,0.03)"
                                     }}
+                                    bodyStyle={{ padding: "16px 20px" }}
                                 >
-                                    <Statistic
-                                        title={item.label}
-                                        value={item.value}
-                                        valueStyle={{
-                                            color: item.color === "default" ? undefined : item.color
-                                        }}
-                                    />
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                        <Text style={{ color: "#475569", fontSize: 13, fontWeight: 600 }}>
+                                            {item.label}
+                                        </Text>
+                                        {item.icon}
+                                    </div>
+                                    <Title level={2} style={{ margin: 0, color: item.color, fontWeight: 800 }}>
+                                        {item.value}
+                                    </Title>
                                 </Card>
                             </Col>
                         ))
@@ -507,9 +552,9 @@ export default function ReviewAdminPage() {
                         </Col>
                     )}
                 </Row>
-            </Card>
+            </Spin>
 
-            <Card>
+            <Card bodyStyle={{ padding: "16px 20px" }}>
                 <Space
                     wrap
                     style={{
@@ -521,7 +566,7 @@ export default function ReviewAdminPage() {
                         <Select
                             allowClear
                             placeholder="Chọn chi nhánh"
-                            style={{ width: 240 }}
+                            style={{ width: 220 }}
                             value={branchId}
                             onChange={(value) => {
                                 setBranchId(value);
@@ -533,18 +578,26 @@ export default function ReviewAdminPage() {
                             }))}
                         />
 
-                        <Input
+                        <Select
                             allowClear
-                            placeholder="Nhập sentiment"
-                            style={{ width: 220 }}
-                            value={sentiment}
-                            onChange={(e) => setSentiment(e.target.value)}
+                            placeholder="Cảm xúc (Sentiment)"
+                            style={{ width: 180 }}
+                            value={sentiment || undefined}
+                            onChange={(value) => {
+                                setSentiment(value || "");
+                                loadReviews({ page: 1, sentiment: value || "" });
+                            }}
+                            options={[
+                                { value: "positive", label: "Tích cực" },
+                                { value: "negative", label: "Tiêu cực" },
+                                { value: "neutral", label: "Trung tính" }
+                            ]}
                         />
 
                         <Input.Search
                             allowClear
                             placeholder="Tìm theo tiêu đề, nội dung, khách hàng..."
-                            style={{ width: 360 }}
+                            style={{ width: 320 }}
                             value={searchText}
                             onChange={(e) => setSearchText(e.target.value)}
                             onSearch={handleSearch}
@@ -556,21 +609,19 @@ export default function ReviewAdminPage() {
                             <Button
                                 type="primary"
                                 ghost
+                                icon={<RobotOutlined />}
                                 onClick={handleTriggerAiReview}
                                 loading={triggerAiLoading}
                             >
                                 Trigger AI review
                             </Button>
                         )}
-                        <Button onClick={handleReset}>Đặt lại</Button>
-                        <Button type="primary" onClick={handleSearch}>
-                            Tìm kiếm
-                        </Button>
+                        <Button icon={<ReloadOutlined />} onClick={handleReset}>Đặt lại</Button>
                     </Space>
                 </Space>
             </Card>
 
-            <Card>
+            <Card bodyStyle={{ padding: 0 }}>
                 <Table
                     rowKey="id"
                     columns={columns}
@@ -578,7 +629,6 @@ export default function ReviewAdminPage() {
                     loading={loading}
                     pagination={pagination}
                     onChange={handleTableChange}
-                    scroll={{ x: 1500 }}
                 />
             </Card>
 

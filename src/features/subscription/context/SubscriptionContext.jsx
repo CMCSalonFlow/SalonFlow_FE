@@ -156,7 +156,22 @@ export const SubscriptionProvider = ({ children }) => {
 export const useSubscriptionContext = () => {
     const context = useContext(SubscriptionContext);
     if (!context) {
-        throw new Error("useSubscriptionContext must be used within a SubscriptionProvider");
+        return {
+            subscription: null,
+            features: {
+                maxBranches: Infinity,
+                maxStaff: Infinity,
+                analyticsAdvanced: false,
+                aiFeatures: false
+            },
+            loading: false,
+            isPro: false,
+            isEnterprise: false,
+            refetchSubscription: () => {},
+            openLimitModal: () => {},
+            checkout: () => {},
+            openPortal: () => {}
+        };
     }
     return context;
 };

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, Select, Button, Table, Tag, Space, Popconfirm, message, Typography, Row, Col, Spin, Avatar, Empty, Grid } from "antd";
-import { UserAddOutlined, EditOutlined, DeleteOutlined, ShopOutlined, IdcardOutlined, ContactsOutlined } from "@ant-design/icons";
+import { UserAddOutlined, EditOutlined, DeleteOutlined, ShopOutlined, IdcardOutlined, UserOutlined } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import { getServicesByBranchApi } from "@/features/service/api/serviceApi";
 import { useSubscription } from "@/features/subscription/hooks/useSubscription";
@@ -188,11 +188,11 @@ export default function StaffManagementPage() {
                 const isManager = record.roleCode === "MANAGER";
                 return isManager ? (
                     <Tag color="gold" style={{ borderRadius: 12, padding: "2px 10px", fontWeight: 600 }}>
-                        Lễ tân / Quản lý
+                        Quản lý
                     </Tag>
                 ) : (
                     <Tag color="blue" style={{ borderRadius: 12, padding: "2px 10px", fontWeight: 600 }}>
-                        Thợ (Staff)
+                        Thợ
                     </Tag>
                 );
             }
@@ -230,22 +230,26 @@ export default function StaffManagementPage() {
         }
     ];
 
-    // Lấy danh sách các chuyên môn duy nhất từ danh sách nhân viên
-    const uniqueSpecialties = Array.from(
-        new Set(
-            staffList
-                .flatMap(s => (s.specialties || "").split(","))
-                .map(t => t.trim())
-                .filter(Boolean)
-        )
-    );
+    // Lấy danh sách các chuyên môn duy nhất từ danh sách nhân viên (memoized)
+    const uniqueSpecialties = useMemo(() => {
+        return Array.from(
+            new Set(
+                staffList
+                    .flatMap(s => (s.specialties || "").split(","))
+                    .map(t => t.trim())
+                    .filter(Boolean)
+            )
+        );
+    }, [staffList]);
 
-    // Lọc danh sách nhân viên hiển thị theo nhiều chuyên môn được chọn (AND match)
-    const filteredStaffList = staffList.filter(s => {
-        if (selectedSpecialties.length === 0) return true;
-        const specs = (s.specialties || "").split(",").map(t => t.trim().toLowerCase());
-        return selectedSpecialties.every(selected => specs.includes(selected.toLowerCase()));
-    });
+    // Lọc danh sách nhân viên hiển thị theo nhiều chuyên môn được chọn (memoized)
+    const filteredStaffList = useMemo(() => {
+        return staffList.filter(s => {
+            if (selectedSpecialties.length === 0) return true;
+            const specs = (s.specialties || "").split(",").map(t => t.trim().toLowerCase());
+            return selectedSpecialties.every(selected => specs.includes(selected.toLowerCase()));
+        });
+    }, [staffList, selectedSpecialties]);
 
     if (loadingBranches) {
         return (
@@ -277,7 +281,7 @@ export default function StaffManagementPage() {
             <Row justify="space-between" align="middle" style={{ marginBottom: 20 }} gutter={[16, 16]}>
                 <Col xs={24} md={13}>
                     <Title level={screens.xs ? 3 : 2} style={{ margin: 0 }}>
-                        <ContactsOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Quản lý Nhân sự
+                        Quản lý Nhân sự
                     </Title>
                     <Text type="secondary" style={{ fontSize: screens.xs ? 13 : 14 }}>
                         Quản lý hồ sơ nhân viên, chuyên môn kỹ năng và phân công dịch vụ tại từng chi nhánh.
@@ -314,12 +318,12 @@ export default function StaffManagementPage() {
                                     <Text strong style={{ flexShrink: 0 }}>Chuyên môn:</Text>
                                     <Select
                                         mode="multiple"
-                                        style={{ minWidth: 160, flex: 1, maxWidth: screens.xs ? "100%" : 300 }}
+                                        style={{ width: screens.xs ? "100%" : 240 }}
                                         value={selectedSpecialties}
                                         onChange={setSelectedSpecialties}
                                         options={uniqueSpecialties.map(spec => ({ label: spec, value: spec }))}
                                         placeholder="Tất cả chuyên môn"
-                                        maxTagCount="responsive"
+                                        maxTagCount={1}
                                         allowClear
                                     />
                                 </div>

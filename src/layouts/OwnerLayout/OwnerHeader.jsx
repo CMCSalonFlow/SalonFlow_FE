@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
     Avatar,
     Button,
@@ -15,9 +16,8 @@ import {
     MenuOutlined
 } from "@ant-design/icons";
 
-import {
-    logout
-} from "@/core/utils/auth";
+import { logout } from "@/core/utils/auth";
+import api from "@/core/api/axios";
 import { useSubscription } from "@/features/subscription/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
 
@@ -27,21 +27,68 @@ export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
     const { subscription } = useSubscription();
     const plan = subscription?.plan || "FREE";
 
-    const rawName = localStorage.getItem("fullName") || JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Owner";
-    const username = rawName.includes("@")
-        ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
-        : rawName;
+    const [avatarUrl, setAvatarUrl] = useState(() => localStorage.getItem("avatarUrl") || "");
+    const [displayName, setDisplayName] = useState(() => {
+        const stored = localStorage.getItem("fullName");
+        if (stored && stored.trim()) return stored.trim();
+        const rawName = JSON.parse(localStorage.getItem("user") || "{}")?.fullName || localStorage.getItem("username") || "Owner";
+        return rawName.includes("@")
+            ? rawName.split("@")[0].replace(/\./g, " ").replace(/(^\w|\s\w)/g, m => m.toUpperCase())
+            : rawName;
+    });
+
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+            api.get(`/api/v1/users/${userId}`)
+                .then((res) => {
+                    const realName = res?.data?.fullName;
+                    if (realName && realName.trim()) {
+                        setDisplayName(realName.trim());
+                        localStorage.setItem("fullName", realName.trim());
+                    }
+                    if (res?.data?.avatarUrl) {
+                        setAvatarUrl(res.data.avatarUrl);
+                        localStorage.setItem("avatarUrl", res.data.avatarUrl);
+                    }
+                })
+                .catch((err) => console.error("Lỗi khi tải thông tin user header:", err));
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleProfileUpdate = (e) => {
+            const data = e?.detail;
+            if (data) {
+                if (data.avatarUrl !== undefined) {
+                    setAvatarUrl(data.avatarUrl || "");
+                    localStorage.setItem("avatarUrl", data.avatarUrl || "");
+                }
+                if (data.fullName && data.fullName.trim()) {
+                    setDisplayName(data.fullName.trim());
+                    localStorage.setItem("fullName", data.fullName.trim());
+                }
+            }
+        };
+        window.addEventListener("profileUpdated", handleProfileUpdate);
+        return () => window.removeEventListener("profileUpdated", handleProfileUpdate);
+    }, []);
+
+    const validAvatarUrl = (avatarUrl && avatarUrl !== "null" && avatarUrl !== "undefined" && avatarUrl.trim() !== "") ? avatarUrl : null;
 
     const items = [
         {
-            key: "subscription",
-            label: "Gói Dịch Vụ",
-            icon: <CrownOutlined style={{ color: "#faad14" }} />,
-            onClick: () => navigate("/owner/subscription")
+            key: "profile",
+            label: "Hồ Sơ Cá Nhân",
+            icon: <UserOutlined style={{ color: "#1677ff" }} />,
+            onClick: () => navigate("/owner/profile")
+        },
+        {
+            type: "divider"
         },
         {
             key: "logout",
-            label: "Logout",
+            label: "Đăng Xuất",
             icon: <LogoutOutlined />,
             onClick: logout
         }
@@ -132,20 +179,22 @@ export default function OwnerHeader({ showMobileToggle, onToggleMobileMenu }) {
                         }}
                     >
                         <Avatar
+                            src={validAvatarUrl || undefined}
+                            onError={() => false}
                             style={{
-                                background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                                background: validAvatarUrl ? "transparent" : "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
                                 color: "#fff",
                                 fontWeight: 700
                             }}
                             size={32}
-                            icon={<UserOutlined />}
+                            icon={<UserOutlined style={{ color: "#fff" }} />}
                         >
-                            {username?.[0]?.toUpperCase()}
+                            {!validAvatarUrl && displayName?.[0]?.toUpperCase()}
                         </Avatar>
 
                         {screens.sm && (
                             <div style={{ lineHeight: 1.2 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{username}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{displayName}</div>
                                 <div style={{ fontSize: 10, color: "#64748b", fontWeight: 500 }}>Chủ Salon</div>
                             </div>
                         )}
