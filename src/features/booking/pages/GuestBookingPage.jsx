@@ -589,6 +589,7 @@ export default function GuestBookingPage() {
                                             selectedBundle={selectedBundle}
                                             bookingType={bookingType}
                                             selectedStaff={selectedStaff}
+                                            setSelectedStaff={setSelectedStaff}
                                         />
 
                                         <Divider style={{ margin: "24px 0" }} />
