@@ -635,6 +635,7 @@ export default function BookingPage() {
                                         selectedBundle={selectedBundle}
                                         bookingType={bookingType}
                                         selectedStaff={selectedStaff}
+                                        setSelectedStaff={setSelectedStaff}
                                     />
 
                                 )}

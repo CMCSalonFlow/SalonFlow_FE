@@ -7,9 +7,9 @@ import dayjs from "dayjs";
 const { TextArea } = Input;
 
 const RANK_BADGES = [
-    { label: "Top 1 Tối Ưu", color: "gold", icon: "🥇" },
-    { label: "Top 2 Phù Hợp", color: "blue", icon: "🥈" },
-    { label: "Top 3 Đề Xuất", color: "purple", icon: "🥉" }
+    { label: "Top 1 - Đề xuất ưu tiên", color: "blue" },
+    { label: "Top 2 - Đề xuất khả dụng", color: "purple" },
+    { label: "Top 3 - Đề xuất bổ sung", color: "cyan" }
 ];
 
 export default function StepTimeSlots({
@@ -31,12 +31,29 @@ export default function StepTimeSlots({
     selectedServices = [],
     selectedBundle = null,
     bookingType = "service",
-    selectedStaff = null
+    selectedStaff = null,
+    setSelectedStaff = null
 }) {
     const screens = Grid.useBreakpoint();
     const [aiLoading, setAiLoading] = useState(false);
     const [aiRecommendations, setAiRecommendations] = useState([]);
     const [aiFetched, setAiFetched] = useState(false);
+
+    // Xử lý chọn slot gợi ý từ AI -> gán cả giờ đặt lẫn thợ được gợi ý
+    const handleSelectRecommendation = (rec) => {
+        if (!rec || !rec.startTime) return;
+        setSelectedTime(rec.startTime);
+        
+        if (typeof setSelectedStaff === "function" && rec.staffId) {
+            setSelectedStaff({
+                id: rec.staffId,
+                name: rec.staffName || rec.assignedStaffName || "Thợ Salon",
+                avatarUrl: rec.staffAvatar,
+                specialties: rec.staffSpecialties
+            });
+            message.success(`Đã chọn khung giờ ${rec.startTime.substring(0, 5)} và gán Nhân viên phục vụ ${rec.staffName || ""}`);
+        }
+    };
 
     // Xử lý gọi AI Smart Scheduling recommend slots
     const handleFetchAiRecommendations = async () => {
@@ -74,6 +91,10 @@ export default function StepTimeSlots({
                 message.info("Không có gợi ý AI nào khả dụng cho tiêu chí đã chọn.");
             } else {
                 message.success(`AI đã phân tích và tìm thấy ${recs.length} khung giờ tối ưu nhất!`);
+                // Tự động phân công thợ & khung giờ Top 1 nếu chưa chọn
+                if (recs[0]) {
+                    handleSelectRecommendation(recs[0]);
+                }
             }
         } catch (error) {
             console.error("Lỗi AI Smart Scheduling:", error);
@@ -85,7 +106,7 @@ export default function StepTimeSlots({
 
     return (
         <div>
-            {/* 🤖 KHU VỰC AI SMART SCHEDULING RECOMMENDATION */}
+            {/* KHU VỰC AI SMART SCHEDULING RECOMMENDATION */}
             <Card
                 style={{
                     marginBottom: 24,
@@ -100,7 +121,7 @@ export default function StepTimeSlots({
                     <div>
                         <div style={{ fontSize: 16, fontWeight: 700, color: "#1d39c4", display: "flex", alignItems: "center", gap: 8 }}>
                             <RobotOutlined style={{ fontSize: 20, color: "#2f54eb" }} />
-                            <span>AI Smart Scheduling — Đề xuất Slot Tối ưu</span>
+                            <span>AI Smart Scheduling — Đề xuất Khung giờ Tối ưu</span>
                         </div>
                     </div>
 
@@ -125,21 +146,32 @@ export default function StepTimeSlots({
                 {/* Danh sách gợi ý từ AI */}
                 {aiLoading ? (
                     <div style={{ textAlign: "center", padding: "20px 0" }}>
-                        <Spin tip="AI đang phân tích thuật toán Scoring..." />
+                        <Spin tip="AI đang phân tích quy luật Occupancy & Cân bằng tải nhân sự..." />
                     </div>
                 ) : aiFetched && aiRecommendations.length > 0 ? (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
                         {aiRecommendations.map((rec, index) => {
                             const badge = RANK_BADGES[index] || RANK_BADGES[2];
                             const timeStr = rec.startTime ? rec.startTime.substring(0, 5) : "";
-                            const isSelected = selectedTime === rec.startTime || selectedTime === (rec.startTime + ":00");
+                            const endTimeStr = rec.endTime ? rec.endTime.substring(0, 5) : "";
+                            
+                            const isTimeMatched = selectedTime && (
+                                selectedTime === rec.startTime ||
+                                selectedTime === timeStr ||
+                                (selectedTime + ":00") === rec.startTime ||
+                                selectedTime === (rec.startTime + ":00")
+                            );
+                            const isStaffMatched = !selectedStaff || (rec.staffId && Number(selectedStaff.id) === Number(rec.staffId));
+                            const isSelected = isTimeMatched && isStaffMatched;
+
+                            const staffName = rec.staffName || rec.assignedStaffName;
 
                             return (
                                 <div
                                     key={index}
-                                    onClick={() => setSelectedTime(rec.startTime)}
+                                    onClick={() => handleSelectRecommendation(rec)}
                                     style={{
-                                        padding: "12px 16px",
+                                        padding: "14px 16px",
                                         borderRadius: 12,
                                         backgroundColor: isSelected ? "#f6ffed" : "#ffffff",
                                         border: isSelected ? "2px solid #52c41a" : "1px solid #d9d9d9",
@@ -148,41 +180,41 @@ export default function StepTimeSlots({
                                         boxShadow: isSelected ? "0 4px 12px rgba(82, 196, 26, 0.2)" : "0 2px 6px rgba(0, 0, 0, 0.03)"
                                     }}
                                 >
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                         <Tag color={badge.color} style={{ borderRadius: 6, fontWeight: 600, fontSize: 12, padding: "2px 8px" }}>
-                                            {badge.icon} {badge.label}
+                                            {badge.label}
                                         </Tag>
-                                        <span style={{ fontSize: 12, fontWeight: 700, color: "#722ed1" }}>
-                                            Score: {Number(rec.totalScore || 0).toFixed(1)}
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: "#722ed1" }}>
+                                            Score: {Number(rec.totalScore || rec.score || 0).toFixed(1)}
                                         </span>
                                     </div>
 
-                                    <div style={{ fontSize: 20, fontWeight: 800, color: isSelected ? "#389e0d" : "#262626", marginBottom: 4 }}>
-                                        {timeStr} {isSelected && <CheckCircleOutlined style={{ color: "#52c41a", fontSize: 18 }} />}
+                                    <div style={{ fontSize: 20, fontWeight: 800, color: isSelected ? "#389e0d" : "#262626", marginBottom: 6 }}>
+                                        {timeStr} – {endTimeStr} {isSelected && <CheckCircleOutlined style={{ color: "#52c41a", fontSize: 18 }} />}
                                     </div>
 
-                                    {rec.assignedStaffName && (
-                                        <div style={{ fontSize: 12, color: "#595959", marginBottom: 4 }}>
-                                            👤 Thợ: <strong>{rec.assignedStaffName}</strong>
+                                    {staffName && (
+                                        <div style={{ fontSize: 12, color: "#434343", marginBottom: 8, fontWeight: 500 }}>
+                                            Nhân viên phục vụ: <strong>{staffName}</strong>
                                         </div>
                                     )}
 
-                                    {rec.explanation && (
-                                        <Tooltip title={rec.explanation}>
-                                            <div style={{
-                                                fontSize: 11,
-                                                color: "#8c8c8c",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 4,
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                                whiteSpace: "nowrap"
-                                            }}>
-                                                <InfoCircleOutlined style={{ color: "#1890ff" }} /> {rec.explanation}
-                                            </div>
-                                        </Tooltip>
-                                    )}
+                                    {/* Lý do đề xuất ngắn gọn chuẩn văn phong nghiệp vụ */}
+                                    {Array.isArray(rec.reasonList) && rec.reasonList.length > 0 ? (
+                                        <div style={{
+                                            fontSize: 12,
+                                            color: "#475569",
+                                            background: "#f8fafc",
+                                            padding: "8px 10px",
+                                            borderRadius: 8,
+                                            border: "1px solid #e2e8f0",
+                                            fontWeight: 500,
+                                            lineHeight: 1.4,
+                                            marginTop: 6
+                                        }}>
+                                            {rec.reasonList.join(" • ")}
+                                        </div>
+                                    ) : null}
                                 </div>
                             );
                         })}

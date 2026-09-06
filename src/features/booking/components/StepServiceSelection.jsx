@@ -141,14 +141,15 @@ export default function StepServiceSelection({
                             </div>
 
                             {/* Service Card Grid */}
-                            <Row gutter={screens.xs ? [12, 12] : [16, 16]}>
+                            <Row gutter={screens.xs ? [12, 12] : [16, 16]} style={{ display: "flex", flexWrap: "wrap" }}>
                                 {groupedServices[catName]?.map(s => {
                                     const isSelected = selectedServices.some(item => item.id === s.id);
                                     return (
-                                        <Col xs={24} sm={12} key={s.id}>
+                                        <Col xs={24} sm={12} key={s.id} style={{ display: "flex", flexDirection: "column" }}>
                                             <Card
                                                 hoverable
                                                 style={{
+                                                    height: "100%",
                                                     borderRadius: 14,
                                                     position: "relative",
                                                     border: isSelected ? "2px solid #1890ff" : "1px solid #cbd5e1",
@@ -160,7 +161,13 @@ export default function StepServiceSelection({
                                                         : "0 4px 12px rgba(0, 0, 0, 0.06)",
                                                     transition: "all 0.25s ease"
                                                 }}
-                                                bodyStyle={{ padding: screens.xs ? "12px" : "16px" }}
+                                                bodyStyle={{
+                                                    padding: screens.xs ? "12px" : "16px",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    justifyContent: "space-between",
+                                                    height: "100%"
+                                                }}
                                                 onClick={() => toggleService(s)}
                                             >
                                                 {/* Active Checkmark Icon */}

@@ -96,20 +96,22 @@ export default function NormalBookingForm({
             ) : (
                 <div>
                     <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>Chọn Nhân viên thực hiện</label>
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[16, 16]} style={{ display: "flex", flexWrap: "wrap" }}>
                         {/* Thẻ chọn "Bất kỳ ai" */}
-                        <Col xs={24} sm={12}>
+                        <Col xs={24} sm={12} style={{ display: "flex", flexDirection: "column" }}>
                             <Card
                                 hoverable
                                 style={{
+                                    height: "100%",
                                     borderRadius: 12,
                                     border: selectedStaff === null ? "2px solid #1890ff" : "1px solid #f0f0f0",
                                     backgroundColor: selectedStaff === null ? "#e6f7ff" : "#fff"
                                 }}
+                                bodyStyle={{ padding: "16px", height: "100%", display: "flex", alignItems: "center" }}
                                 onClick={() => setSelectedStaff(null)}
                             >
-                                <Space size="middle">
-                                    <Avatar size={48} icon={<SmileOutlined />} style={{ backgroundColor: "#87d068" }} />
+                                <Space size="middle" align="center" style={{ width: "100%" }}>
+                                    <Avatar size={48} icon={<SmileOutlined />} style={{ backgroundColor: "#87d068", flexShrink: 0 }} />
                                     <div>
                                         <Text strong style={{ fontSize: 16 }}>Bất kỳ ai</Text>
                                         <br />
@@ -123,18 +125,20 @@ export default function NormalBookingForm({
                         {getQualifiedStaff().map(staff => {
                             const isSelected = selectedStaff?.id === staff.id;
                             return (
-                                <Col xs={24} sm={12} key={staff.id}>
+                                <Col xs={24} sm={12} key={staff.id} style={{ display: "flex", flexDirection: "column" }}>
                                     <Card
                                         hoverable
                                         style={{
+                                            height: "100%",
                                             borderRadius: 12,
                                             border: isSelected ? "2px solid #1890ff" : "1px solid #f0f0f0",
                                             backgroundColor: isSelected ? "#e6f7ff" : "#fff"
                                         }}
+                                        bodyStyle={{ padding: "16px", height: "100%", display: "flex", alignItems: "center" }}
                                         onClick={() => setSelectedStaff(staff)}
                                     >
-                                        <Space size="middle">
-                                            <Avatar size={48} src={staff.avatarUrl} icon={<UserOutlined />} style={{ backgroundColor: "#1890ff" }} />
+                                        <Space size="middle" align="center" style={{ width: "100%" }}>
+                                            <Avatar size={48} src={staff.avatarUrl} icon={<UserOutlined />} style={{ backgroundColor: "#1890ff", flexShrink: 0 }} />
                                             <div>
                                                 <Text strong style={{ fontSize: 16 }}>{staff.name}</Text>
                                                 <br />
