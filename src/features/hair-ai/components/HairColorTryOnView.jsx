@@ -349,9 +349,6 @@ export default function HairColorTryOnView() {
                 }}
             >
                 <Space direction="vertical" size={10} style={{ width: "100%" }}>
-                    <Tag color="magenta" style={{ borderRadius: 12, padding: "2px 12px", border: "none", fontWeight: 600, width: "fit-content" }}>
-                        ✨ AI Hair Dye Try-On
-                    </Tag>
                     <Title level={2} style={{ color: "#fff", margin: 0, fontWeight: 700 }}>
                         Thử Màu Tóc AI Trực Quan & Tự Nhiên
                     </Title>
@@ -373,10 +370,7 @@ export default function HairColorTryOnView() {
                         title={
                             <Row align="middle" justify="space-between">
                                 <Col>
-                                    <Space size={12}>
-                                        <ScissorOutlined style={{ color: "#d946ef", fontSize: 20 }} />
-                                        <Text strong style={{ fontSize: 16 }}>Khung Nhìn Thử Màu Tóc</Text>
-                                    </Space>
+                                    <Text strong style={{ fontSize: 15, color: "#1a1a2e" }}>Khung Nhìn Thử Màu Tóc</Text>
                                 </Col>
                                 <Col>
                                     <Button
@@ -620,89 +614,102 @@ export default function HairColorTryOnView() {
                         {/* Panel 1: Color Presets Selection */}
                         <Card
                             title={
-                                <Space>
-                                    <StarOutlined style={{ color: "#d946ef" }} />
-                                    <Text strong>1. Bảng Màu Nhuộm Salon</Text>
-                                </Space>
+                                <Text strong style={{ fontSize: 14, letterSpacing: "0.02em", color: "#1a1a2e" }}>
+                                    Bảng màu nhuộm
+                                </Text>
                             }
                             style={{
-                                borderRadius: 20,
-                                boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-                                border: "1px solid #eef2f7"
+                                borderRadius: 16,
+                                boxShadow: "0 4px 20px rgba(15, 23, 42, 0.07)",
+                                border: "1px solid #e8ecf0"
                             }}
+                            bodyStyle={{ padding: "16px" }}
                         >
-                            <Space direction="vertical" size={14} style={{ width: "100%" }}>
-                                {/* Category Filter Tabs */}
-                                <Radio.Group
-                                    value={activeColorCategory}
-                                    onChange={(e) => setActiveColorCategory(e.target.value)}
-                                    size="small"
-                                    buttonStyle="solid"
-                                >
-                                    <Radio.Button value="all">Tất cả</Radio.Button>
-                                    <Radio.Button value="natural">Tự Nhiên</Radio.Button>
-                                    <Radio.Button value="fashion">Thời Trang</Radio.Button>
-                                    <Radio.Button value="vibrant">Rực Rỡ</Radio.Button>
-                                </Radio.Group>
+                            <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                                {/* Category Filter — Minimal pill tabs, no emoji */}
+                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                    {[
+                                        { value: "all", label: "Tất cả" },
+                                        { value: "neutral", label: "Trung tính" },
+                                        { value: "warm", label: "Tông nóng" },
+                                        { value: "cool", label: "Tông lạnh" },
+                                    ].map((tab) => (
+                                        <button
+                                            key={tab.value}
+                                            onClick={() => setActiveColorCategory(tab.value)}
+                                            style={{
+                                                padding: "5px 14px",
+                                                borderRadius: 20,
+                                                border: activeColorCategory === tab.value
+                                                    ? "1.5px solid #1a1a2e"
+                                                    : "1.5px solid #d1d5db",
+                                                background: activeColorCategory === tab.value ? "#1a1a2e" : "#fff",
+                                                color: activeColorCategory === tab.value ? "#fff" : "#4b5563",
+                                                fontSize: 12,
+                                                fontWeight: activeColorCategory === tab.value ? 600 : 400,
+                                                cursor: "pointer",
+                                                transition: "all 0.18s ease",
+                                                letterSpacing: "0.02em",
+                                            }}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
 
                                 {/* Color Swatches Grid */}
-                                <Row gutter={[10, 10]}>
+                                <Row gutter={[8, 8]}>
                                     {filteredPresets.map((preset) => {
                                         const isSelected = selectedPresetId === preset.id;
                                         return (
                                             <Col span={12} key={preset.id}>
                                                 <div
-                                                    onClick={() => setSelectedPresetId(preset.id)}
+                                                    onClick={() => {
+                                                        setSelectedPresetId(preset.id);
+                                                        if (preset.defaultOpacity != null) setOpacity(preset.defaultOpacity);
+                                                        if (preset.defaultShine != null) setShine(preset.defaultShine);
+                                                    }}
                                                     style={{
                                                         display: "flex",
                                                         alignItems: "center",
                                                         gap: 10,
-                                                        padding: "8px 12px",
-                                                        borderRadius: 14,
+                                                        padding: "9px 12px",
+                                                        borderRadius: 10,
                                                         cursor: "pointer",
-                                                        background: isSelected ? "#f0f5ff" : "#f8fafc",
-                                                        border: isSelected ? "2px solid #3b82f6" : "1px solid #e2e8f0",
-                                                        transition: "all 0.2s ease"
+                                                        background: isSelected ? "#f5f7ff" : "#fafafa",
+                                                        border: isSelected
+                                                            ? "1.5px solid #1a1a2e"
+                                                            : "1.5px solid #ebebeb",
+                                                        transition: "all 0.15s ease",
                                                     }}
                                                 >
-                                                    <div
+                                                    {/* Color circle with outer ring when selected */}
+                                                    <div style={{
+                                                        width: 32,
+                                                        height: 32,
+                                                        borderRadius: "50%",
+                                                        backgroundColor: preset.hex,
+                                                        flexShrink: 0,
+                                                        boxShadow: isSelected
+                                                            ? `0 0 0 2px #fff, 0 0 0 4px #1a1a2e`
+                                                            : "0 2px 8px rgba(0,0,0,0.18)",
+                                                        transition: "box-shadow 0.15s ease",
+                                                    }} />
+                                                    <Text
                                                         style={{
-                                                            width: 24,
-                                                            height: 24,
-                                                            borderRadius: "50%",
-                                                            backgroundColor: preset.hex,
-                                                            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                                                            border: "2px solid #fff"
+                                                            fontSize: 12.5,
+                                                            flex: 1,
+                                                            color: isSelected ? "#1a1a2e" : "#374151",
+                                                            fontWeight: isSelected ? 600 : 400,
+                                                            lineHeight: 1.3,
                                                         }}
-                                                    />
-                                                    <Text strong={isSelected} style={{ fontSize: 13, flex: 1 }}>
+                                                    >
                                                         {preset.name}
                                                     </Text>
                                                 </div>
                                             </Col>
                                         );
                                     })}
-                                </Row>
-
-                                <Divider style={{ margin: "10px 0" }} />
-
-                                {/* Custom Color Picker */}
-                                <Row align="middle" justify="space-between">
-                                    <Col>
-                                        <Text strong>Tùy chọn màu Hex linh hoạt:</Text>
-                                    </Col>
-                                    <Col>
-                                        <Space>
-                                            <ColorPicker
-                                                value={customHex}
-                                                onChange={(color) => {
-                                                    setCustomHex(color.toHexString());
-                                                    setSelectedPresetId("custom");
-                                                }}
-                                                showText
-                                            />
-                                        </Space>
-                                    </Col>
                                 </Row>
                             </Space>
                         </Card>

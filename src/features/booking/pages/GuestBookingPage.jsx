@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Steps, Select, Button, Typography, Row, Col, Space, Divider, DatePicker, message, Spin, Grid, Radio, Avatar, Tag, Input } from "antd";
 import { ShopOutlined, AppstoreOutlined, TeamOutlined, CalendarOutlined, ClockCircleOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
@@ -6,7 +6,7 @@ import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
 import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getPublicServicesByBranchApi, getPublicBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getPublicStaffByBranchApi } from "@/features/staff/api/staffApi";
-import { getPublicAvailabilityApi, createPublicBookingApi } from "../api/bookingApi";
+import { getPublicAvailabilityApi, createPublicBookingApi, lockSlotApi, unlockSlotApi } from "../api/bookingApi";
 import { getPublicAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
@@ -23,6 +23,16 @@ const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
 const BOOKING_CONTEXT_KEY = "salonflow_last_booking_context";
+
+// Unique client ID cho vãng lai để giữ chỗ slot trong 5 phút
+const getGuestClientId = () => {
+    let clientId = sessionStorage.getItem("salonflow_guest_client_id");
+    if (!clientId) {
+        clientId = "guest_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now();
+        sessionStorage.setItem("salonflow_guest_client_id", clientId);
+    }
+    return clientId;
+};
 
 export default function GuestBookingPage() {
     const navigate = useNavigate();
@@ -88,10 +98,75 @@ export default function GuestBookingPage() {
     const [guestEmail, setGuestEmail] = useState("");
 
     const [availableTimes, setAvailableTimes] = useState([]);
+    const [holdingTimes, setHoldingTimes] = useState([]);
+    const [lockedSlotKey, setLockedSlotKey] = useState(null);
+    const [lockExpiresAt, setLockExpiresAt] = useState(null);
+    const [countdownText, setCountdownText] = useState("");
+    const lockedSlotKeyRef = useRef(lockedSlotKey);
+
+    useEffect(() => {
+        lockedSlotKeyRef.current = lockedSlotKey;
+    }, [lockedSlotKey]);
+
     const [openTime, setOpenTime] = useState(null);
     const [closeTime, setCloseTime] = useState(null);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [refreshCounter, setRefreshCounter] = useState(0);
+
+    // Đếm ngược 5 phút giữ chỗ
+    useEffect(() => {
+        if (!lockExpiresAt) {
+            setCountdownText("");
+            return;
+        }
+        const tick = () => {
+            const diff = Math.max(0, Math.floor((lockExpiresAt - Date.now()) / 1000));
+            if (diff <= 0) {
+                setCountdownText("");
+                setLockedSlotKey(null);
+                setLockExpiresAt(null);
+                setSelectedTime(null);
+                message.warning("Thời gian giữ chỗ (5 phút) đã hết. Vui lòng chọn lại khung giờ.");
+                setRefreshCounter(prev => prev + 1);
+            } else {
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                setCountdownText(`${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`);
+            }
+        };
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [lockExpiresAt]);
+
+    // Giải phóng slot khi đóng tab hoặc chuyển trang
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            if (lockedSlotKeyRef.current) {
+                const clientId = sessionStorage.getItem("salonflow_guest_client_id");
+                unlockSlotApi({ slotKey: lockedSlotKeyRef.current, clientId }).catch(() => {});
+            }
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+            if (lockedSlotKeyRef.current) {
+                const clientId = sessionStorage.getItem("salonflow_guest_client_id");
+                unlockSlotApi({ slotKey: lockedSlotKeyRef.current, clientId }).catch(() => {});
+            }
+        };
+    }, []);
+
+    // Hủy giữ chỗ khi khách đổi chi nhánh, ngày hẹn hoặc nhân viên
+    useEffect(() => {
+        if (lockedSlotKey) {
+            const clientId = sessionStorage.getItem("salonflow_guest_client_id");
+            unlockSlotApi({ slotKey: lockedSlotKey, clientId }).catch(() => {});
+            setLockedSlotKey(null);
+            setLockExpiresAt(null);
+            setSelectedTime(null);
+        }
+    }, [selectedBranchId, selectedDate, selectedStaff, bookingType, selectedBundle]);
 
     useEffect(() => {
         let socket = null;
@@ -104,9 +179,9 @@ export default function GuestBookingPage() {
             socket.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data);
-                    if (msg.type === "BOOKING_UPDATE") {
+                    if (["BOOKING_UPDATE", "SLOT_LOCKED", "SLOT_UNLOCKED"].includes(msg.type)) {
                         const matchBranch = String(msg.branchId) === String(selectedBranchId);
-                        const matchDate = selectedDate && msg.date === selectedDate.format("YYYY-MM-DD");
+                        const matchDate = selectedDate && msg.date === (typeof selectedDate.format === "function" ? selectedDate.format("YYYY-MM-DD") : String(selectedDate));
                         const matchStaff = !selectedStaff || !msg.staffId || String(msg.staffId) === String(selectedStaff.id);
 
                         if (matchBranch && matchDate && matchStaff) {
@@ -279,9 +354,9 @@ export default function GuestBookingPage() {
         const fetchSlots = async () => {
             try {
                 setLoadingSlots(true);
-                setSelectedTime(null);
 
-                const params = { date: selectedDate.format("YYYY-MM-DD") };
+                const dateStr = typeof selectedDate.format === "function" ? selectedDate.format("YYYY-MM-DD") : String(selectedDate);
+                const params = { date: dateStr };
                 if (bookingType === "service") {
                     params.serviceIds = selectedServices.map(s => s.id).join(",");
                 } else {
@@ -290,6 +365,7 @@ export default function GuestBookingPage() {
 
                 const data = await getPublicAvailabilityApi(selectedBranchId, selectedStaff.id, params);
                 setAvailableTimes(data.availableStartTimes || []);
+                setHoldingTimes(data.holdingStartTimes || []);
                 setOpenTime(data.openTime || null);
                 setCloseTime(data.closeTime || null);
             } catch {
@@ -313,6 +389,51 @@ export default function GuestBookingPage() {
             current = current.add(15, "minute");
         }
         return slots;
+    };
+
+    // Xử lý khi khách vãng lai nhấp chọn một khung giờ -> gọi API lock slot 5 phút
+    const handleSelectSlot = async (time) => {
+        if (!time) return;
+        const normalizedTime = time.length === 5 ? `${time}:00` : time;
+        if (selectedTime === time && lockedSlotKey) return;
+
+        const dateStr = typeof selectedDate?.format === "function" ? selectedDate.format("YYYY-MM-DD") : String(selectedDate);
+        if (!selectedBranchId || !dateStr || !selectedStaff) {
+            message.warning("Vui lòng chọn nhân viên và ngày trước khi chọn giờ.");
+            return;
+        }
+
+        try {
+            const { duration: totalDuration } = getBookingSummary();
+            const clientId = getGuestClientId();
+            const payload = {
+                branchId: selectedBranchId,
+                staffId: selectedStaff.id,
+                bookingDate: dateStr,
+                startTime: normalizedTime,
+                durationMinutes: totalDuration || 30,
+                clientId,
+                previousSlotKey: lockedSlotKey || null
+            };
+            if (bookingType === "service") {
+                payload.serviceIds = selectedServices.map(s => s.id);
+            } else if (selectedBundle) {
+                payload.bundleId = selectedBundle.id;
+            }
+
+            const res = await lockSlotApi(payload);
+            setLockedSlotKey(res.slotKey);
+            setLockExpiresAt(Date.now() + (res.ttlSeconds || 300) * 1000);
+            setSelectedTime(time);
+            message.success("Đã giữ chỗ khung giờ thành công trong 5 phút!");
+        } catch (error) {
+            if (error.response?.status === 409) {
+                message.error("Khung giờ này vừa có khách khác giữ chỗ. Vui lòng chọn khung giờ khác!");
+            } else {
+                message.error(error.response?.data?.message || "Không thể giữ chỗ khung giờ này.");
+            }
+            setRefreshCounter(prev => prev + 1);
+        }
     };
 
     // Lọc danh sách nhân viên có kỹ năng thực hiện dịch vụ và có làm việc trong ngày đã chọn
@@ -446,6 +567,8 @@ export default function GuestBookingPage() {
             }
 
             const res = await createPublicBookingApi(selectedBranchId, payload);
+            setLockedSlotKey(null);
+            setLockExpiresAt(null);
             const bookingDetail = {
                 ...res,
                 branchId: selectedBranchId,
@@ -580,8 +703,11 @@ export default function GuestBookingPage() {
                                             loadingSlots={loadingSlots}
                                             generateAllTimeSlots={generateAllTimeSlots}
                                             availableTimes={availableTimes}
+                                            holdingTimes={holdingTimes}
                                             selectedTime={selectedTime}
                                             setSelectedTime={setSelectedTime}
+                                            onSelectTime={handleSelectSlot}
+                                            countdownText={countdownText}
                                             showCustomerInputs={false}
                                             selectedBranchId={selectedBranchId}
                                             selectedDate={selectedDate}
