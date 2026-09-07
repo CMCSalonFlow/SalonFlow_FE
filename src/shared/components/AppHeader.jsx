@@ -443,7 +443,6 @@ export default function AppHeader() {
                     )}
                     <Button
                         icon={<MenuOutlined style={{ fontSize: 18 }} />}
-                        icon={<MenuOutlined style={{ fontSize: 18 }} />}
                         onClick={() => setDrawerVisible(true)}
                         type="text"
                         size="large"

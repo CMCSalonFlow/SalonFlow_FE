@@ -15,7 +15,8 @@ import {
     Divider,
     Tabs,
     Tooltip,
-    Alert
+    Alert,
+    Grid
 } from "antd";
 import {
     TrophyOutlined,
@@ -32,6 +33,7 @@ import { getLoyaltySummaryApi, getLoyaltyHistoryApi, redeemPointsApi } from "../
 const { Title, Text, Paragraph } = Typography;
 
 export default function LoyaltyPointsSection({ userId }) {
+    const screens = Grid.useBreakpoint();
     const [summary, setSummary] = useState(null);
     const [history, setHistory] = useState([]);
     const [loadingSummary, setLoadingSummary] = useState(true);
@@ -119,14 +121,14 @@ export default function LoyaltyPointsSection({ userId }) {
             title: "Thời gian",
             dataIndex: "createdAt",
             key: "createdAt",
-            width: 170,
+            width: 155,
             render: (text) => (text ? new Date(text).toLocaleString("vi-VN") : "---")
         },
         {
             title: "Loại giao dịch",
             dataIndex: "transactionType",
             key: "transactionType",
-            width: 140,
+            width: 130,
             render: (type, record) => {
                 if (type === "EARN") {
                     return record.isExpired ? (
@@ -145,7 +147,7 @@ export default function LoyaltyPointsSection({ userId }) {
             title: "Số điểm",
             dataIndex: "points",
             key: "points",
-            width: 120,
+            width: 100,
             render: (points, record) => {
                 const isEarn = record.transactionType === "EARN";
                 const absPoints = Math.abs(Number(points) || 0);
@@ -154,7 +156,7 @@ export default function LoyaltyPointsSection({ userId }) {
                         strong
                         style={{
                             color: isEarn ? (record.isExpired ? "#8c8c8c" : "#52c41a") : "#f5222d",
-                            fontSize: 15
+                            fontSize: 14
                         }}
                     >
                         {isEarn ? `+${absPoints}` : `-${absPoints}`}
@@ -166,6 +168,7 @@ export default function LoyaltyPointsSection({ userId }) {
             title: "Mô tả / Mã tham chiếu",
             dataIndex: "description",
             key: "description",
+            width: 180,
             render: (text, record) => (
                 <div>
                     <div>{text || "Giao dịch điểm thưởng"}</div>
@@ -181,7 +184,7 @@ export default function LoyaltyPointsSection({ userId }) {
             title: "Hạn sử dụng",
             dataIndex: "expiresAt",
             key: "expiresAt",
-            width: 160,
+            width: 125,
             render: (expiresAt, record) => {
                 if (record.transactionType !== "EARN" || !expiresAt) return "---";
                 const expDate = new Date(expiresAt).toLocaleDateString("vi-VN");
@@ -197,12 +200,12 @@ export default function LoyaltyPointsSection({ userId }) {
     ];
 
     return (
-        <div style={{ marginTop: 24 }}>
+        <div style={{ marginTop: screens.xs ? 12 : 20 }}>
             {/* Banner Điểm Tích Lũy */}
             <Card
                 loading={loadingSummary}
                 style={{
-                    borderRadius: 20,
+                    borderRadius: screens.xs ? 16 : 20,
                     background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #4a00e0 100%)",
                     color: "#fff",
                     boxShadow: "0 10px 30px rgba(42, 82, 152, 0.3)",
@@ -210,41 +213,50 @@ export default function LoyaltyPointsSection({ userId }) {
                     overflow: "hidden",
                     position: "relative"
                 }}
-                bodyStyle={{ padding: "24px 32px" }}
+                bodyStyle={{ padding: screens.xs ? "16px 14px" : "24px 32px" }}
             >
                 <Row align="middle" justify="space-between" gutter={[16, 16]}>
                     <Col xs={24} md={14}>
-                        <Space direction="vertical" size={8}>
+                        <Space direction="vertical" size={8} style={{ width: "100%" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                <TrophyOutlined style={{ fontSize: 28, color: "#ffd700" }} />
-                                <Title level={4} style={{ color: "#fff", margin: 0 }}>
+                                <TrophyOutlined style={{ fontSize: screens.xs ? 22 : 28, color: "#ffd700" }} />
+                                <Title level={screens.xs ? 5 : 4} style={{ color: "#fff", margin: 0 }}>
                                     Hệ thống Điểm Thưởng SalonFlow
                                 </Title>
                             </div>
-                            <Text style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: 14 }}>
+                            <Text style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: screens.xs ? 13 : 14 }}>
                                 Tích điểm sau mỗi dịch vụ hoàn thành & Đổi voucher giảm giá hấp dẫn!
                             </Text>
 
-                            <Space wrap style={{ marginTop: 8 }}>
-                                <Tag color="gold" style={{ borderRadius: 12, padding: "2px 10px", fontWeight: 600 }}>
+                            <Space wrap style={{ marginTop: 6 }}>
+                                <Tag color="gold" style={{ borderRadius: 12, padding: "2px 8px", fontWeight: 600, fontSize: screens.xs ? 12 : 13 }}>
                                     ✨ 1.000 VNĐ = 1 điểm
                                 </Tag>
-                                <Tag color="cyan" style={{ borderRadius: 12, padding: "2px 10px", fontWeight: 600 }}>
-                                    🎟️ 100 điểm = 10.000 VNĐ voucher
+                                <Tag color="cyan" style={{ borderRadius: 12, padding: "2px 8px", fontWeight: 600, fontSize: screens.xs ? 12 : 13 }}>
+                                    🎟️ 100 điểm = 10.000 VNĐ
                                 </Tag>
-                                <Tag color="blue" style={{ borderRadius: 12, padding: "2px 10px" }}>
-                                    ⏳ Hạn dùng 1 năm
+                                <Tag color="blue" style={{ borderRadius: 12, padding: "2px 8px", fontSize: screens.xs ? 12 : 13 }}>
+                                    ⏳ Hạn 1 năm
                                 </Tag>
                             </Space>
                         </Space>
                     </Col>
 
-                    <Col xs={24} md={10} style={{ textAlign: "right" }}>
-                        <div style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", padding: "16px 24px", borderRadius: 16, display: "inline-block", width: "100%", maxWidth: 300 }}>
+                    <Col xs={24} md={10} style={{ textAlign: screens.xs ? "center" : "right" }}>
+                        <div style={{
+                            background: "rgba(255,255,255,0.12)",
+                            backdropFilter: "blur(10px)",
+                            padding: screens.xs ? "14px 16px" : "16px 24px",
+                            borderRadius: 16,
+                            display: "inline-block",
+                            width: "100%",
+                            maxWidth: screens.xs ? "100%" : 300,
+                            textAlign: "center"
+                        }}>
                             <Statistic
-                                title={<span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Điểm tích lũy hiện có</span>}
+                                title={<span style={{ color: "rgba(255,255,255,0.8)", fontSize: 13 }}>Điểm tích lũy hiện có</span>}
                                 value={activePoints}
-                                valueStyle={{ color: "#ffd700", fontWeight: 700, fontSize: 36 }}
+                                valueStyle={{ color: "#ffd700", fontWeight: 700, fontSize: screens.xs ? 28 : 36 }}
                                 prefix={<TrophyOutlined />}
                                 suffix="điểm"
                             />
@@ -257,14 +269,15 @@ export default function LoyaltyPointsSection({ userId }) {
                                 size="large"
                                 icon={<GiftOutlined />}
                                 style={{
-                                    marginTop: 16,
+                                    marginTop: 14,
                                     width: "100%",
                                     borderRadius: 12,
                                     background: "#ffd700",
                                     color: "#1e3c72",
                                     borderColor: "#ffd700",
                                     fontWeight: 700,
-                                    boxShadow: "0 4px 15px rgba(255, 215, 0, 0.4)"
+                                    boxShadow: "0 4px 15px rgba(255, 215, 0, 0.4)",
+                                    height: 42
                                 }}
                                 onClick={() => {
                                     setRedeemResult(null);
@@ -280,21 +293,21 @@ export default function LoyaltyPointsSection({ userId }) {
                 </Row>
             </Card>
 
-            {/* Note về quy định điểm */}
-
             {/* Lịch sử giao dịch điểm */}
             <Card
                 title={
-                    <Space>
-                        <HistoryOutlined style={{ color: "#1677ff" }} />
-                        <span>Lịch sử giao dịch điểm</span>
+                    <Space size={8}>
+                        <HistoryOutlined style={{ color: "#1677ff", fontSize: screens.xs ? 15 : 17 }} />
+                        <span style={{ fontSize: screens.xs ? 15 : 16, fontWeight: 600 }}>Lịch sử giao dịch điểm</span>
                     </Space>
                 }
-                style={{ marginTop: 20, borderRadius: 16 }}
+                style={{ marginTop: screens.xs ? 14 : 20, borderRadius: screens.xs ? 14 : 16 }}
+                bodyStyle={{ padding: screens.xs ? "12px 8px" : "20px 24px" }}
             >
                 <Tabs
                     activeKey={activeTab}
                     onChange={setActiveTab}
+                    size={screens.xs ? "small" : "default"}
                     items={[
                         { key: "ALL", label: `Tất cả (${history.length})` },
                         { key: "EARN", label: `Tích điểm (${history.filter(i => i.transactionType === "EARN").length})` },
@@ -308,7 +321,9 @@ export default function LoyaltyPointsSection({ userId }) {
                     dataSource={filteredHistory}
                     rowKey="id"
                     loading={loadingHistory}
-                    pagination={{ pageSize: 5, showSizeChanger: false }}
+                    pagination={{ pageSize: 5, showSizeChanger: false, size: screens.xs ? "small" : "default" }}
+                    scroll={{ x: 620 }}
+                    size={screens.xs ? "small" : "middle"}
                     locale={{ emptyText: "Chưa có lịch sử giao dịch điểm." }}
                 />
             </Card>
@@ -326,6 +341,7 @@ export default function LoyaltyPointsSection({ userId }) {
                 footer={null}
                 borderRadius={16}
                 centered
+                width={screens.xs ? "94%" : 500}
             >
                 {redeemResult ? (
                     <div style={{ textAlign: "center", padding: "16px 0" }}>

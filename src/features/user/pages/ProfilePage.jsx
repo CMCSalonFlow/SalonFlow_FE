@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Card, Avatar, Button, Typography, Row, Col, Space, Divider, message,
-    Spin, Tag, Modal, Form, Input, Upload, Descriptions, Badge
+    Spin, Tag, Modal, Form, Input, Upload, Descriptions, Badge, Grid
 } from "antd";
 import {
     UserOutlined, MailOutlined, PhoneOutlined, ArrowLeftOutlined, EditOutlined,
@@ -18,6 +18,7 @@ const { Title, Text, Paragraph } = Typography;
 
 export default function ProfilePage() {
     const navigate = useNavigate();
+    const screens = Grid.useBreakpoint();
     const { subscription, features } = useSubscription();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -184,12 +185,12 @@ export default function ProfilePage() {
     const currentPlanName = subscription?.plan || "ENTERPRISE";
 
     return (
-        <div style={{ maxWidth: 1100, margin: "24px auto", padding: "0 16px" }}>
+        <div style={{ maxWidth: 1100, margin: screens.xs ? "12px auto" : "24px auto", padding: screens.xs ? "0 8px" : "0 16px" }}>
             {/* Thẻ Khung Liền Mạch Thống Nhất */}
             <Card
                 bordered={false}
                 style={{
-                    borderRadius: 24,
+                    borderRadius: screens.xs ? 16 : 24,
                     overflow: "hidden",
                     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)",
                     background: "#ffffff"
@@ -200,11 +201,11 @@ export default function ProfilePage() {
                 <div
                     style={{
                         background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-                        padding: "24px 32px",
+                        padding: screens.xs ? "16px 14px" : "24px 32px",
                         borderBottom: "1px solid #f1f5f9"
                     }}
                 >
-                    <div style={{ marginBottom: 16 }}>
+                    <div style={{ marginBottom: 12 }}>
                         <Button
                             type="text"
                             icon={<ArrowLeftOutlined style={{ color: "#475569" }} />}
@@ -215,11 +216,23 @@ export default function ProfilePage() {
                         </Button>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 20, flex: 1, minWidth: 280 }}>
+                    <div style={{
+                        display: "flex",
+                        flexDirection: screens.xs ? "column" : "row",
+                        alignItems: screens.xs ? "stretch" : "center",
+                        justifyContent: "space-between",
+                        gap: screens.xs ? 16 : 24
+                    }}>
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: screens.xs ? 14 : 20,
+                            flex: 1,
+                            minWidth: 0
+                        }}>
                             <div style={{ position: "relative", flexShrink: 0 }}>
                                 <Avatar
-                                    size={90}
+                                    size={screens.xs ? 76 : 90}
                                     src={user?.avatarUrl}
                                     icon={<UserOutlined />}
                                     style={{
@@ -254,49 +267,70 @@ export default function ProfilePage() {
                                 </Upload>
                             </div>
 
-                            <div>
-                                <Title level={2} style={{ margin: "0 0 6px 0", color: "#0f172a", fontWeight: 700 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <Title level={screens.xs ? 4 : 2} style={{ margin: "0 0 6px 0", color: "#0f172a", fontWeight: 700, wordBreak: "break-word" }}>
                                     {user?.fullName || user?.username}
                                 </Title>
 
-                                <Space size="large" wrap style={{ color: "#475569", fontSize: 14 }}>
-                                    <span><MailOutlined style={{ color: "#1677ff", marginRight: 6 }} />{user?.email}</span>
-                                    <span><PhoneOutlined style={{ color: "#52c41a", marginRight: 6 }} />{user?.phone || "Chưa cập nhật SĐĐT"}</span>
-                                </Space>
+                                <div style={{ display: "flex", flexDirection: screens.xs ? "column" : "row", gap: screens.xs ? 4 : 16, color: "#475569", fontSize: screens.xs ? 13 : 14 }}>
+                                    <span style={{ wordBreak: "break-all" }}><MailOutlined style={{ color: "#1677ff", marginRight: 6 }} />{user?.email}</span>
+                                    <span><PhoneOutlined style={{ color: "#52c41a", marginRight: 6 }} />{user?.phone || "Chưa cập nhật SĐT"}</span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* 2 Buttons căn ngang hàng với Avatar */}
-                        <Space wrap style={{ flexShrink: 0 }}>
+                        {/* 2 Buttons căn vừa vặn, không bị tràn màn hình */}
+                        <div style={{
+                            display: "grid",
+                            gridTemplateColumns: screens.xs ? "1fr 1fr" : "auto auto",
+                            gap: 10,
+                            width: screens.xs ? "100%" : "auto",
+                            flexShrink: 0
+                        }}>
                             <Button
                                 type="primary"
                                 icon={<EditOutlined />}
                                 onClick={handleOpenEditModal}
-                                style={{ borderRadius: 10, fontWeight: 600, height: 40 }}
+                                style={{
+                                    borderRadius: 10,
+                                    fontWeight: 600,
+                                    height: 40,
+                                    fontSize: screens.xs ? 13 : 14,
+                                    padding: screens.xs ? "0 8px" : "0 16px",
+                                    width: "100%"
+                                }}
                             >
                                 Chỉnh sửa hồ sơ
                             </Button>
                             <Button
                                 icon={<LockOutlined />}
                                 onClick={() => setIsPasswordModalOpen(true)}
-                                style={{ borderRadius: 10, fontWeight: 600, color: "#334155", height: 40 }}
+                                style={{
+                                    borderRadius: 10,
+                                    fontWeight: 600,
+                                    color: "#334155",
+                                    height: 40,
+                                    fontSize: screens.xs ? 13 : 14,
+                                    padding: screens.xs ? "0 8px" : "0 16px",
+                                    width: "100%"
+                                }}
                             >
                                 Đổi mật khẩu
                             </Button>
-                        </Space>
+                        </div>
                     </div>
                 </div>
 
                 {/* 2. Phía dưới: Thông tin Gói Dịch vụ & Hạn mức (Chủ Salon) */}
                 {isOwner && (
-                    <div style={{ padding: "28px 32px", background: "#ffffff" }}>
+                    <div style={{ padding: screens.xs ? "18px 14px" : "28px 32px", background: "#ffffff" }}>
                         <div style={{ marginBottom: 16 }}>
                             <Text strong style={{ fontSize: 16, color: "#0f172a" }}>Gói Dịch Vụ & Hạn Mức</Text>
                         </div>
 
                         <Row gutter={[24, 16]} align="middle">
                             <Col xs={24} md={10}>
-                                <div style={{ background: "#f8fafc", padding: 20, borderRadius: 14, border: "1px solid #e2e8f0" }}>
+                                <div style={{ background: "#f8fafc", padding: screens.xs ? 16 : 20, borderRadius: 14, border: "1px solid #e2e8f0" }}>
                                     <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 6, fontWeight: 600 }}>GÓI ĐANG ĐĂNG KÝ</Text>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                                         <Tag color="gold" style={{ fontSize: 15, padding: "6px 14px", borderRadius: 8, fontWeight: 800 }}>
@@ -321,25 +355,25 @@ export default function ProfilePage() {
                                     Quyền lợi kích hoạt theo gói dịch vụ:
                                 </Text>
                                 <Row gutter={[12, 12]}>
-                                    <Col span={12}>
+                                    <Col xs={24} sm={12}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#334155" }}>
                                             <CheckCircleOutlined style={{ color: "#16a34a" }} />
                                             <span>AI Phân tích Cảm xúc Review</span>
                                         </div>
                                     </Col>
-                                    <Col span={12}>
+                                    <Col xs={24} sm={12}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#334155" }}>
                                             <CheckCircleOutlined style={{ color: "#16a34a" }} />
                                             <span>AI Dự đoán Vắng mặt (No-Show)</span>
                                         </div>
                                     </Col>
-                                    <Col span={12}>
+                                    <Col xs={24} sm={12}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#334155" }}>
                                             <CheckCircleOutlined style={{ color: "#16a34a" }} />
                                             <span>Quản lý Đa chi nhánh & Nhân sự</span>
                                         </div>
                                     </Col>
-                                    <Col span={12}>
+                                    <Col xs={24} sm={12}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#334155" }}>
                                             <CheckCircleOutlined style={{ color: "#16a34a" }} />
                                             <span>Báo cáo Giờ cao điểm chuyên sâu</span>
@@ -353,7 +387,7 @@ export default function ProfilePage() {
 
                 {/* 3. Section Điểm thưởng (Chỉ dành cho Khách hàng) */}
                 {showLoyalty && (
-                    <div style={{ padding: "28px 32px", background: "#ffffff", borderTop: "1px solid #f1f5f9" }}>
+                    <div style={{ padding: screens.xs ? "14px 10px" : "28px 32px", background: "#ffffff", borderTop: "1px solid #f1f5f9" }}>
                         <LoyaltyPointsSection userId={user?.id} />
                     </div>
                 )}
@@ -369,7 +403,8 @@ export default function ProfilePage() {
                 okText="Lưu thay đổi"
                 cancelText="Hủy"
                 destroyOnClose
-                style={{ top: 100 }}
+                centered
+                width={screens.xs ? "92%" : 480}
             >
                 <Form
                     form={form}
@@ -414,7 +449,8 @@ export default function ProfilePage() {
                 okText="Đổi mật khẩu"
                 cancelText="Hủy"
                 destroyOnClose
-                style={{ top: 100 }}
+                centered
+                width={screens.xs ? "92%" : 480}
             >
                 <Form
                     form={passwordForm}
