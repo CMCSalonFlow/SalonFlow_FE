@@ -1136,7 +1136,7 @@ export default function HomePage() {
                             <div style={{ marginBottom: 40 }}>
                                 <div style={{ marginBottom: 24 }}>
                                     <Title level={2} style={{ margin: 0, fontWeight: 700 }}>
-                                        🌟 Hệ Thống Salon & Thương Hiệu Nổi Bật
+                                        Hệ Thống Salon & Thương Hiệu Nổi Bật
                                     </Title>
                                     <Text type="secondary" style={{ fontSize: 15 }}>
                                         Khám phá & chọn các thương hiệu Salon làm đẹp chất lượng cao đăng ký trên hệ thống.

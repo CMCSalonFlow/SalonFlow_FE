@@ -627,12 +627,13 @@ export default function BookingPage() {
     return (
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: screens.xs ? "8px 4px" : "20px 0" }}>
             <Title level={screens.xs ? 4 : 2} style={{ textAlign: "center", marginBottom: screens.xs ? 16 : 32 }}>
-                ✂️ Đặt lịch dịch vụ làm đẹp
+                Đặt lịch dịch vụ làm đẹp
             </Title>
 
             <Steps
                 current={currentStep}
-                responsive
+                responsive={false}
+                direction="horizontal"
                 size={screens.xs ? "small" : "default"}
                 style={{ marginBottom: screens.xs ? 20 : 40 }}
                 items={[

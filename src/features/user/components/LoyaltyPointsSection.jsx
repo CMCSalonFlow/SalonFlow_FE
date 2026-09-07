@@ -148,6 +148,7 @@ export default function LoyaltyPointsSection({ userId }) {
             width: 120,
             render: (points, record) => {
                 const isEarn = record.transactionType === "EARN";
+                const absPoints = Math.abs(Number(points) || 0);
                 return (
                     <Text
                         strong
@@ -156,7 +157,7 @@ export default function LoyaltyPointsSection({ userId }) {
                             fontSize: 15
                         }}
                     >
-                        {isEarn ? `+${points}` : `-${points}`}
+                        {isEarn ? `+${absPoints}` : `-${absPoints}`}
                     </Text>
                 );
             }
