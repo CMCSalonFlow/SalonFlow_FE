@@ -89,3 +89,11 @@ export const getPublicBranchesApi = async (salonId) => {
     );
     return response.data;
 };
+
+export const geocodeAddressApi = async (address) => {
+    const response = await api.get(
+        `${ENDPOINTS.BRANCHES}/geocode`,
+        { params: { address } }
+    );
+    return response.data;
+};

@@ -184,10 +184,6 @@ export default function AppHeader() {
                 label: "Tìm salon"
             },
             {
-                key: "/services",
-                label: "Dịch vụ"
-            },
-            {
                 key: "/hair-ai",
                 label: "Hair AI"
             },
@@ -208,10 +204,6 @@ export default function AppHeader() {
             {
                 key: "/search",
                 label: "Tìm salon"
-            },
-            {
-                key: "/services",
-                label: "Dịch vụ"
             },
             {
                 key: "/guest-booking",
@@ -417,19 +409,32 @@ export default function AppHeader() {
                     )}
                 </>
             ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: screens.xs ? 4 : 8 }}>
                     {isLogin && (
-                        <Badge count={unreadCount} size="small" overflowCount={99}>
-                            <Button
-                                type="text"
-                                icon={<BellOutlined />}
-                                onClick={() => navigate("/notifications")}
-                                style={{ display: "flex", alignItems: "center" }}
-                            />
-                        </Badge>
+                        <>
+                            <Badge count={unreadCount} size="small" overflowCount={99}>
+                                <Button
+                                    type="text"
+                                    icon={<BellOutlined style={{ fontSize: 18 }} />}
+                                    onClick={() => navigate("/notifications")}
+                                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                                />
+                            </Badge>
+
+                            <Dropdown menu={userMenu} trigger={["click"]} placement="bottomRight">
+                                <div style={{ cursor: "pointer", display: "flex", alignItems: "center", padding: "0 2px" }}>
+                                    <Avatar
+                                        src={avatarSrc}
+                                        icon={<UserOutlined />}
+                                        size={32}
+                                        style={{ backgroundColor: avatarSrc ? "transparent" : "#1677ff" }}
+                                    />
+                                </div>
+                            </Dropdown>
+                        </>
                     )}
                     <Button
-                        icon={<MenuOutlined />}
+                        icon={<MenuOutlined style={{ fontSize: 18 }} />}
                         onClick={() => setDrawerVisible(true)}
                         type="text"
                         size="large"
@@ -460,40 +465,7 @@ export default function AppHeader() {
                     }}
                 />
 
-                {isLogin ? (
-                    <div style={{ marginTop: 24, padding: "0 16px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                            <Avatar src={avatarSrc} icon={<UserOutlined />} style={{ backgroundColor: avatarSrc ? "transparent" : "#1677ff" }} />
-                            <Text strong>{displayName}</Text>
-                        </div>
-                        <Button
-                            block
-                            type="dashed"
-                            icon={<UserOutlined />}
-                            onClick={() => { navigate("/profile"); setDrawerVisible(false); }}
-                            style={{ marginBottom: 8 }}
-                        >
-                            Hồ sơ
-                        </Button>
-                        <Button
-                            block
-                            type="dashed"
-                            icon={<CalendarOutlined />}
-                            onClick={() => { navigate("/appointments"); setDrawerVisible(false); }}
-                            style={{ marginBottom: 8 }}
-                        >
-                            Lịch hẹn
-                        </Button>
-                        <Button
-                            block
-                            danger
-                            icon={<LogoutOutlined />}
-                            onClick={() => { logout(); setDrawerVisible(false); }}
-                        >
-                            Đăng xuất
-                        </Button>
-                    </div>
-                ) : (
+                {!isLogin && (
                     <div style={{ marginTop: 24, padding: "0 8px", display: "flex", flexDirection: "column", gap: 8 }}>
                         <Button type="primary" block onClick={() => { navigate("/guest-booking"); setDrawerVisible(false); }}>
                             Đặt lịch ngay

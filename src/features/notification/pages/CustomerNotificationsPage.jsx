@@ -18,8 +18,7 @@ import {
     BellOutlined,
     CheckOutlined,
     ReloadOutlined,
-    CalendarOutlined,
-    RightOutlined
+    CalendarOutlined
 } from "@ant-design/icons";
 import {
     getMyNotificationsApi,
@@ -239,8 +238,6 @@ export default function CustomerNotificationsPage() {
                                         }}
                                     >
                                         <Card
-                                            hoverable
-                                            onClick={() => handleOpenRelated(item)}
                                             style={{
                                                 borderRadius: 16,
                                                 border: isRead ? "1px solid #f0f0f0" : "1px solid #91caff",
@@ -253,8 +250,6 @@ export default function CustomerNotificationsPage() {
                                                         {item?.title || "Thông báo"}
                                                     </Text>
                                                     {!isRead && <Tag color="processing">Chưa đọc</Tag>}
-                                                    {item?.eventType && <Tag>{item.eventType}</Tag>}
-                                                    {item?.channel && <Tag color="geekblue">{item.channel}</Tag>}
                                                 </Space>
 
                                                 <Text style={{ color: "#444" }}>
@@ -286,8 +281,8 @@ export default function CustomerNotificationsPage() {
                                                     ) : null}
                                                 </Space>
 
-                                                <Space wrap style={{ marginTop: 4 }}>
-                                                    {!isRead ? (
+                                                {!isRead ? (
+                                                    <Space wrap style={{ marginTop: 4 }}>
                                                         <Button
                                                             type="primary"
                                                             icon={<CheckOutlined />}
@@ -298,18 +293,8 @@ export default function CustomerNotificationsPage() {
                                                         >
                                                             Đánh dấu đã đọc
                                                         </Button>
-                                                    ) : null}
-
-                                                    <Button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleOpenRelated(item);
-                                                        }}
-                                                    >
-                                                        Mở liên quan
-                                                        <RightOutlined />
-                                                    </Button>
-                                                </Space>
+                                                    </Space>
+                                                ) : null}
                                             </Space>
                                         </Card>
                                     </List.Item>
