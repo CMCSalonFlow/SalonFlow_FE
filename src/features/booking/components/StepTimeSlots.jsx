@@ -16,8 +16,11 @@ export default function StepTimeSlots({
     loadingSlots,
     generateAllTimeSlots,
     availableTimes = [],
+    holdingTimes = [],
     selectedTime,
     setSelectedTime,
+    onSelectTime,
+    countdownText,
     notes,
     setNotes,
     paymentMethod,
@@ -42,7 +45,11 @@ export default function StepTimeSlots({
     // Xử lý chọn slot gợi ý từ AI -> gán cả giờ đặt lẫn thợ được gợi ý
     const handleSelectRecommendation = (rec) => {
         if (!rec || !rec.startTime) return;
-        setSelectedTime(rec.startTime);
+        if (typeof onSelectTime === "function") {
+            onSelectTime(rec.startTime);
+        } else {
+            setSelectedTime(rec.startTime);
+        }
         
         if (typeof setSelectedStaff === "function" && rec.staffId) {
             setSelectedStaff({
@@ -231,10 +238,14 @@ export default function StepTimeSlots({
                 <label style={{ fontWeight: 600, display: "flex", alignItems: "center" }}>
                     <ClockCircleOutlined style={{ marginRight: 8, color: "#1890ff" }} /> Tất cả khung giờ khả dụng
                 </label>
-                <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#595959" }}>
+                <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#595959", flexWrap: "wrap" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <div style={{ width: 14, height: 14, borderRadius: 4, background: "#f6ffed", border: "1px solid #b7eb8f" }}></div>
                         <span>Có sẵn</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ width: 14, height: 14, borderRadius: 4, background: "#fffbe6", border: "1px solid #ffe58f" }}></div>
+                        <span>Đang giữ chỗ</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <div style={{ width: 14, height: 14, borderRadius: 4, background: "#fff1f0", border: "1px solid #ffa39e" }}></div>
@@ -246,6 +257,30 @@ export default function StepTimeSlots({
                     </div>
                 </div>
             </div>
+
+            {selectedTime && countdownText && (
+                <div style={{
+                    marginBottom: 16,
+                    padding: "10px 16px",
+                    background: "linear-gradient(135deg, #f6ffed 0%, #e6f7ff 100%)",
+                    border: "1px solid #91d5ff",
+                    borderRadius: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    color: "#003a8c",
+                    fontWeight: 600,
+                    fontSize: 13
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <ClockCircleOutlined style={{ color: "#1890ff", fontSize: 16 }} />
+                        <span>Khung giờ <strong>{selectedTime.substring(0, 5)}</strong> đang được giữ riêng cho bạn</span>
+                    </div>
+                    <Tag color="orange" style={{ fontWeight: 700, fontSize: 13, padding: "2px 8px" }}>
+                        Thời gian giữ: {countdownText}
+                    </Tag>
+                </div>
+            )}
 
             {loadingSlots ? (
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
@@ -265,19 +300,29 @@ export default function StepTimeSlots({
                             );
                             const nowTimeString = dayjs().format("HH:mm:ss");
 
+                            const timeMatches = (list, targetTime, shortTime) => {
+                                if (!Array.isArray(list)) return false;
+                                return list.some(t => {
+                                    if (!t) return false;
+                                    const s = String(t);
+                                    return s === targetTime || s === shortTime || (s + ":00") === targetTime || (targetTime + ":00") === s;
+                                });
+                            };
+
                             return (
                                 <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${minSlotWidth}, 1fr))`, gap: slotGap, marginBottom: 24 }}>
                                     {allSlots.map(time => {
                                         const displayTime = time.substring(0, 5);
                                         const isPast = isToday && time < nowTimeString;
-                                        const isAvailable = availableTimes.includes(time) && !isPast;
-                                        const isSelected = selectedTime === time;
+                                        const isAvailable = timeMatches(availableTimes, time, displayTime) && !isPast;
+                                        const isHolding = !isAvailable && timeMatches(holdingTimes, time, displayTime) && !isPast;
+                                        const isSelected = selectedTime === time || selectedTime === displayTime || (selectedTime && (selectedTime + ":00") === time);
                                         
-                                        return (
+                                        const slotButton = (
                                             <Button
                                                 key={time}
                                                 size={screens.xs ? "middle" : "large"}
-                                                disabled={!isAvailable}
+                                                disabled={(!isAvailable && !isSelected) || isPast}
                                                 style={{
                                                     borderRadius: 8,
                                                     padding: screens.xs ? "0 4px" : "0 8px",
@@ -287,32 +332,57 @@ export default function StepTimeSlots({
                                                         ? "#52c41a" // Selected green
                                                         : isPast
                                                             ? "#f5f5f5" // Past grey
-                                                            : isAvailable 
-                                                                ? "#f6ffed" // Available green
-                                                                : "#fff1f0", // Busy red
+                                                            : isHolding
+                                                                ? "#fffbe6" // Holding yellow
+                                                                : isAvailable 
+                                                                    ? "#f6ffed" // Available green
+                                                                    : "#fff1f0", // Busy red
                                                     borderColor: isSelected 
                                                         ? "#52c41a" 
                                                         : isPast
                                                             ? "#d9d9d9" // Past grey border
-                                                            : isAvailable 
-                                                                ? "#b7eb8f" 
-                                                                : "#ffa39e",
+                                                            : isHolding
+                                                                ? "#ffe58f" // Holding yellow border
+                                                                : isAvailable 
+                                                                    ? "#b7eb8f" 
+                                                                    : "#ffa39e",
                                                     color: isSelected 
                                                         ? "#fff" 
                                                         : isPast
                                                             ? "#bfbfbf" // Past grey text
-                                                            : isAvailable 
-                                                                ? "#389e0d" 
-                                                                : "#cf1322",
+                                                            : isHolding
+                                                                ? "#d46b08" // Holding yellow-orange text
+                                                                : isAvailable 
+                                                                    ? "#389e0d" 
+                                                                    : "#cf1322",
                                                     transition: "all 0.3s",
-                                                    opacity: isAvailable ? 1 : 0.6,
-                                                    cursor: isAvailable ? "pointer" : "not-allowed"
+                                                    opacity: (isAvailable || isSelected) ? 1 : (isHolding ? 0.9 : 0.6),
+                                                    cursor: (isAvailable || isSelected) ? "pointer" : "not-allowed",
+                                                    width: "100%"
                                                 }}
-                                                onClick={() => isAvailable && setSelectedTime(time)}
+                                                onClick={() => {
+                                                    if (isAvailable || isSelected) {
+                                                        if (typeof onSelectTime === "function") {
+                                                            onSelectTime(time);
+                                                        } else if (typeof setSelectedTime === "function") {
+                                                            setSelectedTime(time);
+                                                        }
+                                                    }
+                                                }}
                                             >
                                                 {displayTime}
                                             </Button>
                                         );
+
+                                        if (isHolding && !isSelected) {
+                                            return (
+                                                <Tooltip key={time} title="Khung giờ này đang có khách giữ chỗ tạm thời (tối đa 5 phút)">
+                                                    <div>{slotButton}</div>
+                                                </Tooltip>
+                                            );
+                                        }
+
+                                        return slotButton;
                                     })}
                                 </div>
                             );
