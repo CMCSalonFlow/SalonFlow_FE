@@ -21,8 +21,11 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,png,svg,woff2,ico}"],
 
         navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/ws\//,
           /^\/oauth2\//,
           /^\/login\/oauth2\//,
+          /^\/salon-images\//,
         ],
 
         runtimeCaching: [
