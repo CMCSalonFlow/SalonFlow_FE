@@ -122,3 +122,26 @@ export const createWalkInBookingApi = async (branchId, payload) => {
 
     return response.data;
 };
+
+// Giữ chỗ slot thời gian thực (lock 5 phút)
+export const lockSlotApi = async (payload) => {
+    const response = await api.post("/api/v1/bookings/lock", payload);
+    return response.data;
+};
+
+// Hủy giữ chỗ slot
+export const unlockSlotApi = async (slotKey, clientId) => {
+    const response = await api.delete("/api/v1/bookings/lock", {
+        params: { slotKey, clientId }
+    });
+    return response.data;
+};
+
+// Kiểm tra trạng thái lock của slot
+export const checkSlotLockApi = async (slotKey) => {
+    const response = await api.get("/api/v1/bookings/lock", {
+        params: { slotKey }
+    });
+    return response.data;
+};
+
