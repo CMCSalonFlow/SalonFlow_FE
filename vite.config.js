@@ -37,14 +37,23 @@ export default defineConfig({
               url.pathname.startsWith("/salon-images/"),
             handler: "NetworkOnly",
           },
+          // ================================
+          // Real-time booking locks & availability: NEVER cache in SW
+          // ================================
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.includes("/bookings/lock") ||
+              url.pathname.includes("/availability"),
+            handler: "NetworkOnly",
+          },
           {
             urlPattern: ({ url }) => url.pathname.includes("/bookings"),
-            handler: "StaleWhileRevalidate",
+            handler: "NetworkFirst",
             options: {
               cacheName: "salonflow-bookings-v1",
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+                maxAgeSeconds: 60 * 60 * 24, // 1 day
               },
               cacheableResponse: {
                 statuses: [0, 200],
