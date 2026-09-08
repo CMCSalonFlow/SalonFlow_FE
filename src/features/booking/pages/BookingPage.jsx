@@ -597,13 +597,56 @@ export default function BookingPage() {
         }
     };
 
+    // Xác định dịch vụ chính trong combo (giá cao nhất hoặc thời lượng lâu nhất)
+    const getPrimaryServiceId = (bundle) => {
+        if (!bundle?.items || bundle.items.length === 0) return null;
+        const sorted = [...bundle.items].sort((a, b) => {
+            const priceDiff = Number(b.price || 0) - Number(a.price || 0);
+            if (priceDiff !== 0) return priceDiff;
+            return Number(b.durationMinutes || 0) - Number(a.durationMinutes || 0);
+        });
+        return sorted[0]?.serviceId;
+    };
+
+    // Xác định dịch vụ chính trong danh sách dịch vụ lẻ
+    const getPrimaryService = (serviceList) => {
+        if (!serviceList || serviceList.length === 0) return null;
+        const sorted = [...serviceList].sort((a, b) => {
+            const priceDiff = Number(b.price || 0) - Number(a.price || 0);
+            if (priceDiff !== 0) return priceDiff;
+            return Number(b.durationMinutes || 0) - Number(a.durationMinutes || 0);
+        });
+        return sorted[0];
+    };
+
+    // Kiểm tra xem chi nhánh có thợ nào làm được TẤT CẢ các dịch vụ lẻ đã chọn không
+    const hasAllRoundStaffForServices = useMemo(() => {
+        if (bookingType !== "service" || selectedServices.length <= 1) return true;
+        return staffList.some(staff => {
+            const allowedIds = (staff.services || []).map(s => s.id);
+            if (allowedIds.length === 0) return true; // Thợ đa năng làm được tất cả
+            return selectedServices.every(s => allowedIds.includes(s.id));
+        });
+    }, [bookingType, selectedServices, staffList]);
+
     // Lọc danh sách nhân viên có đủ kỹ năng thực hiện các dịch vụ đã chọn và có lịch làm việc
+    // Đối với combo hoặc nhiều dịch vụ lẻ không có ai bao trọn: Áp dụng cơ chế Thợ chính (Primary Stylist)
     const getQualifiedStaff = () => {
+        const primaryServiceForMulti = !hasAllRoundStaffForServices ? getPrimaryService(selectedServices) : null;
+        const primaryServiceId = bookingType === "bundle"
+            ? getPrimaryServiceId(selectedBundle)
+            : (primaryServiceForMulti ? primaryServiceForMulti.id : null);
+
         return staffList.filter(staff => {
             const allowedIds = (staff.services || []).map(s => s.id);
+            // Nếu nhân viên chưa gán dịch vụ riêng -> Mặc định làm được tất cả dịch vụ
+            if (allowedIds.length === 0) return true;
+
             const hasSkill = bookingType === "bundle"
-                ? Boolean(selectedBundle) && (selectedBundle.items || []).every(item => allowedIds.includes(item.serviceId))
-                : selectedServices.length > 0 && selectedServices.every(s => allowedIds.includes(s.id));
+                ? (primaryServiceId ? allowedIds.includes(primaryServiceId) : true)
+                : (primaryServiceId
+                    ? allowedIds.includes(primaryServiceId)
+                    : (selectedServices.length > 0 && selectedServices.every(s => allowedIds.includes(s.id))));
 
             if (!hasSkill) return false;
 
@@ -854,6 +897,7 @@ export default function BookingPage() {
                                         setSelectedBundle={setSelectedBundle}
                                         screens={screens}
                                         formatCurrency={formatCurrency}
+                                        staffList={staffList}
                                     />
                                 )}
 
@@ -874,6 +918,7 @@ export default function BookingPage() {
                                         bookingType={bookingType}
                                         selectedTime={selectedTime}
                                         setSelectedTime={setSelectedTime}
+                                        staffList={staffList}
                                     />
                                 )}
 
