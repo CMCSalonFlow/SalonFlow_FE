@@ -49,13 +49,13 @@ export default function SearchResultCard({
                 transition: "all 0.25s ease",
                 cursor: "pointer"
             }}
-            bodyStyle={{ padding: "18px 20px" }}
+            bodyStyle={{ padding: "14px 16px" }}
         >
-            <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                 {/* Logo / Thumbnail */}
                 <Avatar
                     src={item.logoUrl}
-                    size={64}
+                    size={{ xs: 50, sm: 56, md: 64 }}
                     shape="square"
                     style={{
                         borderRadius: 12,
