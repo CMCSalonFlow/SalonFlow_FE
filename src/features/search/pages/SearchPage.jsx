@@ -51,7 +51,7 @@ export default function SearchPage() {
     } = useBranchSearch();
 
     // View mode: 'split' (split view), 'map' (map only), 'list' (list only)
-    const [viewMode, setViewMode] = useState("split");
+    const [viewMode, setViewMode] = useState(() => (typeof window !== "undefined" && window.innerWidth < 768 ? "list" : "split"));
 
     // Search and filter input states
     const [keywordInput, setKeywordInput] = useState("");
@@ -201,48 +201,86 @@ export default function SearchPage() {
     };
 
     return (
-        <div style={{ padding: "24px 32px", background: "#f8fafc", minHeight: "calc(100vh - 70px)" }}>
+        <div style={{ padding: screens.md ? "24px 32px" : "14px 12px 24px", background: "#f8fafc", minHeight: "calc(100vh - 70px)" }}>
+            {/* Custom responsive style overrides */}
+            <style>{`
+                .radius-radio-group {
+                    display: flex !important;
+                    width: 100% !important;
+                }
+                .radius-radio-group .ant-radio-button-wrapper {
+                    flex: 1 !important;
+                    text-align: center !important;
+                    padding: 0 4px !important;
+                    font-size: 12px !important;
+                    white-space: nowrap !important;
+                }
+                .rating-radio-group {
+                    display: flex !important;
+                    width: 100% !important;
+                }
+                .rating-radio-group .ant-radio-button-wrapper {
+                    flex: 1 !important;
+                    text-align: center !important;
+                    padding: 0 6px !important;
+                    font-size: 13px !important;
+                    white-space: nowrap !important;
+                }
+                @media (max-width: 576px) {
+                    .radius-radio-group .ant-radio-button-wrapper {
+                        padding: 0 2px !important;
+                        font-size: 11px !important;
+                    }
+                    .rating-radio-group .ant-radio-button-wrapper {
+                        padding: 0 2px !important;
+                        font-size: 12px !important;
+                    }
+                }
+            `}</style>
+
             {/* Header Title Section */}
-            <div style={{ marginBottom: 20 }}>
-                <Row justify="space-between" align="middle" gutter={[16, 16]}>
-                    <Col>
-                        <Space align="center" size={14}>
+            <div style={{ marginBottom: 16 }}>
+                <Row justify="space-between" align="middle" gutter={[12, 12]}>
+                    <Col xs={24} md={18}>
+                        <Space align="center" size={screens.md ? 14 : 10}>
                             <div
                                 style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 14,
+                                    width: screens.md ? 48 : 40,
+                                    height: screens.md ? 48 : 40,
+                                    borderRadius: 12,
                                     background: "linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
                                     boxShadow: "0 4px 14px rgba(2, 132, 199, 0.35)",
                                     color: "#fff",
-                                    fontSize: 24
+                                    fontSize: screens.md ? 24 : 20,
+                                    flexShrink: 0
                                 }}
                             >
                                 <CompassOutlined />
                             </div>
                             <div>
-                                <Title level={3} style={{ margin: 0, fontWeight: 800, color: "#0f172a" }}>
+                                <Title level={screens.md ? 3 : 4} style={{ margin: 0, fontWeight: 800, color: "#0f172a" }}>
                                     Tìm Kiếm & Khám Phá Salon
                                 </Title>
-                                <Text style={{ color: "#64748b", fontSize: 14 }}>
+                                <Text style={{ color: "#64748b", fontSize: screens.md ? 14 : 12 }}>
                                     Tìm kiếm dịch vụ làm đẹp và định vị các chi nhánh salon gần bạn nhất
                                 </Text>
                             </div>
                         </Space>
                     </Col>
                     {useGps && userLocation && (
-                        <Col>
+                        <Col xs={24} md={6} style={{ textAlign: screens.md ? "right" : "left" }}>
                             <Tag
                                 color="processing"
                                 icon={<CheckCircleOutlined />}
                                 style={{
-                                    padding: "6px 14px",
+                                    padding: "4px 12px",
                                     borderRadius: 20,
-                                    fontSize: 13,
-                                    fontWeight: 600
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    margin: 0
                                 }}
                             >
                                 Vị trí: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
@@ -260,7 +298,7 @@ export default function SearchPage() {
                     type="info"
                     showIcon
                     closable
-                    style={{ marginBottom: 20, borderRadius: 12 }}
+                    style={{ marginBottom: 16, borderRadius: 12 }}
                 />
             )}
 
@@ -269,12 +307,12 @@ export default function SearchPage() {
                 style={{
                     borderRadius: 16,
                     border: "1px solid #e2e8f0",
-                    marginBottom: 24,
+                    marginBottom: 20,
                     boxShadow: "0 2px 10px rgba(0,0,0,0.03)"
                 }}
-                bodyStyle={{ padding: "16px 20px" }}
+                bodyStyle={{ padding: screens.md ? "16px 20px" : "14px 14px" }}
             >
-                <Row gutter={[16, 16]} align="middle">
+                <Row gutter={[12, 12]} align="middle">
                     {/* Keyword search input */}
                     <Col xs={24} md={8} lg={9}>
                         <Space.Compact style={{ width: "100%" }}>
@@ -292,7 +330,7 @@ export default function SearchPage() {
                                 type="primary"
                                 icon={<SearchOutlined />}
                                 onClick={handleSearchSubmit}
-                                style={{ borderRadius: "0 10px 10px 0" }}
+                                style={{ borderRadius: "0 10px 10px 0", fontWeight: 600 }}
                             >
                                 Tìm
                             </Button>
@@ -324,7 +362,7 @@ export default function SearchPage() {
 
                     {/* Min Rating Radio Button */}
                     <Col xs={24} sm={12} md={6} lg={6}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ display: "flex", flexDirection: screens.md ? "row" : "column", alignItems: screens.md ? "center" : "flex-start", gap: 6, width: "100%" }}>
                             <Text strong style={{ fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>
                                 Đánh giá:
                             </Text>
@@ -334,6 +372,7 @@ export default function SearchPage() {
                                 optionType="button"
                                 buttonStyle="solid"
                                 size="middle"
+                                className="rating-radio-group"
                             >
                                 <Radio.Button value={0}>Tất cả</Radio.Button>
                                 <Radio.Button value={4.0}>4.0 ⭐+</Radio.Button>
@@ -345,14 +384,14 @@ export default function SearchPage() {
                     {/* Apply Filters Trigger */}
                     <Col xs={24} md={4} lg={3}>
                         <Button
-                            type="default"
+                            type="primary"
                             onClick={handleSearchSubmit}
                             style={{
                                 width: "100%",
                                 borderRadius: 10,
                                 fontWeight: 600,
-                                borderColor: "#0284c7",
-                                color: "#0284c7"
+                                background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+                                borderColor: "#0284c7"
                             }}
                         >
                             Áp dụng bộ lọc
@@ -360,52 +399,30 @@ export default function SearchPage() {
                     </Col>
                 </Row>
 
-                <Divider style={{ margin: "16px 0" }} />
+                <Divider style={{ margin: "14px 0" }} />
 
                 {/* Sub row: GPS and Map View Mode toggles */}
-                <Row gutter={[16, 16]} align="middle" justify="space-between">
+                <Row gutter={[12, 12]} align="middle" justify="space-between">
                     <Col xs={24} lg={16}>
-                        <Space wrap size={16} align="center">
-                            {/* Toggle GPS mode vs Global search */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <Text strong style={{ fontSize: 13, color: "#475569" }}>
-                                    Phạm vi:
-                                </Text>
-                                <Segmented
-                                    value={useGps ? "gps" : "all"}
-                                    onChange={(value) => setUseGps(value === "gps")}
-                                    options={[
-                                        { label: "Gần tôi 📍", value: "gps" },
-                                        { label: "Toàn quốc 🌐", value: "all" }
-                                    ]}
-                                    style={{ borderRadius: 10, background: "#f1f5f9" }}
-                                />
-                            </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            {/* Row: Phạm vi & Lấy vị trí */}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <Text strong style={{ fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>
+                                        Phạm vi:
+                                    </Text>
+                                    <Segmented
+                                        value={useGps ? "gps" : "all"}
+                                        onChange={(value) => setUseGps(value === "gps")}
+                                        options={[
+                                            { label: "Gần tôi 📍", value: "gps" },
+                                            { label: "Toàn quốc 🌐", value: "all" }
+                                        ]}
+                                        style={{ borderRadius: 10, background: "#f1f5f9" }}
+                                    />
+                                </div>
 
-                            {useGps && (
-                                <>
-                                    {/* Radius Options */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                        <Text strong style={{ fontSize: 13, color: "#475569" }}>
-                                            Bán kính:
-                                        </Text>
-                                        <Radio.Group
-                                            options={[
-                                                { label: "1 km", value: 1000 },
-                                                { label: "3 km", value: 3000 },
-                                                { label: "5 km", value: 5000 },
-                                                { label: "10 km", value: 10000 },
-                                                { label: "20 km", value: 20000 }
-                                            ]}
-                                            onChange={(e) => setRadius(e.target.value)}
-                                            value={radius}
-                                            optionType="button"
-                                            buttonStyle="solid"
-                                            size="middle"
-                                        />
-                                    </div>
-
-                                    {/* Geolocation trigger */}
+                                {useGps && (
                                     <Button
                                         icon={<ReloadOutlined spin={isLocating} />}
                                         loading={isLocating}
@@ -415,23 +432,54 @@ export default function SearchPage() {
                                             borderRadius: 10,
                                             fontWeight: 600,
                                             borderColor: "#0284c7",
-                                            color: "#0284c7"
+                                            color: "#0284c7",
+                                            flex: screens.md ? "none" : 1
                                         }}
                                     >
                                         {isLocating ? "Đang định vị..." : "Lấy vị trí của tôi"}
                                     </Button>
-                                </>
+                                )}
+                            </div>
+
+                            {/* Row: Bán kính (chỉ hiện khi bật GPS) */}
+                            {useGps && (
+                                <div style={{ display: "flex", flexDirection: screens.md ? "row" : "column", alignItems: screens.md ? "center" : "flex-start", gap: 6, width: "100%" }}>
+                                    <Text strong style={{ fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>
+                                        Bán kính:
+                                    </Text>
+                                    <Radio.Group
+                                        options={[
+                                            { label: "1 km", value: 1000 },
+                                            { label: "3 km", value: 3000 },
+                                            { label: "5 km", value: 5000 },
+                                            { label: "10 km", value: 10000 },
+                                            { label: "20 km", value: 20000 }
+                                        ]}
+                                        onChange={(e) => setRadius(e.target.value)}
+                                        value={radius}
+                                        optionType="button"
+                                        buttonStyle="solid"
+                                        size="middle"
+                                        className="radius-radio-group"
+                                    />
+                                </div>
                             )}
-                        </Space>
+                        </div>
                     </Col>
 
                     {/* View Modes (Split / Map / List) */}
-                    <Col xs={24} lg={8} style={{ display: "flex", justifyContent: screens.lg ? "flex-end" : "center", width: "100%" }}>
+                    <Col xs={24} lg={8} style={{ display: "flex", justifyContent: screens.lg ? "flex-end" : "stretch", width: "100%" }}>
                         <Segmented
                             value={viewMode}
                             onChange={setViewMode}
                             size="middle"
+                            block
                             options={[
+                                {
+                                    label: "Danh sách",
+                                    value: "list",
+                                    icon: <UnorderedListOutlined />
+                                },
                                 {
                                     label: "Chia đôi",
                                     value: "split",
@@ -441,21 +489,16 @@ export default function SearchPage() {
                                     label: "Bản đồ",
                                     value: "map",
                                     icon: <GlobalOutlined />
-                                },
-                                {
-                                    label: "Danh sách",
-                                    value: "list",
-                                    icon: <UnorderedListOutlined />
                                 }
                             ]}
-                            style={{ padding: 3, borderRadius: 10, background: "#f1f5f9" }}
+                            style={{ padding: 3, borderRadius: 10, background: "#f1f5f9", width: screens.lg ? "auto" : "100%" }}
                         />
                     </Col>
                 </Row>
             </Card>
 
             {/* Results Title Count Header */}
-            <div style={{ marginBottom: 16, display: "flex", justify: "space-between", alignItems: "center" }}>
+            <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                 <Space>
                     <EnvironmentOutlined style={{ color: "#0284c7", fontSize: 16 }} />
                     <Text strong style={{ fontSize: 15, color: "#1e293b" }}>
@@ -476,12 +519,12 @@ export default function SearchPage() {
 
             {/* Main Content Layout based on viewMode */}
             {viewMode === "split" && (
-                <Row gutter={[20, 20]}>
+                <Row gutter={[16, 16]}>
                     {/* Left side: List of Results */}
                     <Col xs={24} lg={10} xl={9}>
                         <div
                             style={{
-                                maxHeight: "calc(100vh - 270px)",
+                                maxHeight: screens.md ? "calc(100vh - 270px)" : "420px",
                                 overflowY: "auto",
                                 paddingRight: 6
                             }}
@@ -542,14 +585,14 @@ export default function SearchPage() {
 
                     {/* Right side: Google Map View */}
                     <Col xs={24} lg={14} xl={15}>
-                        <div style={{ position: "sticky", top: 20 }}>
+                        <div style={{ position: screens.md ? "sticky" : "static", top: 20 }}>
                             <GoogleMapView
                                 userLocation={useGps ? userLocation : (userLocation || DEFAULT_COORDINATES)}
                                 salons={mapItemsToMap}
                                 selectedSalon={selectedSalon || hoveredSalon}
                                 onSelectSalon={(s) => setSelectedSalon(s)}
                                 radius={useGps ? radius : 0}
-                                height="calc(100vh - 270px)"
+                                height={screens.md ? "calc(100vh - 270px)" : "350px"}
                             />
                         </div>
                     </Col>
@@ -564,7 +607,7 @@ export default function SearchPage() {
                         selectedSalon={selectedSalon || hoveredSalon}
                         onSelectSalon={(s) => setSelectedSalon(s)}
                         radius={useGps ? radius : 0}
-                        height="calc(100vh - 260px)"
+                        height={screens.md ? "calc(100vh - 260px)" : "calc(100vh - 280px)"}
                     />
                 </div>
             )}
