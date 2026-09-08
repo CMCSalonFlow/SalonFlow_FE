@@ -102,10 +102,22 @@ export default function GuestBookingPage() {
         requestUserLocation();
     }, []);
 
+    // Chỉ lấy salonId và branchId nếu được truyền qua URL query params (ví dụ từ trang Chi nhánh/Tìm kiếm/Storefront)
+    const searchParams = new URLSearchParams(window.location.search);
+    const querySalonId = searchParams.get("salonId") ? Number(searchParams.get("salonId")) : null;
+    const queryBranchId = searchParams.get("branchId") ? Number(searchParams.get("branchId")) : null;
+
+    // Xóa session cũ nếu người dùng vào đặt lịch trực tiếp không kèm params
+    useEffect(() => {
+        if (!querySalonId && !queryBranchId) {
+            clearGuestBookingContext();
+        }
+    }, [querySalonId, queryBranchId]);
+
     const [salons, setSalons] = useState([]);
-    const [selectedSalonId, setSelectedSalonId] = useState(initialContext?.salonId || null);
+    const [selectedSalonId, setSelectedSalonId] = useState(querySalonId);
     const [branches, setBranches] = useState([]);
-    const [selectedBranchId, setSelectedBranchId] = useState(initialContext?.branchId || null);
+    const [selectedBranchId, setSelectedBranchId] = useState(queryBranchId);
     const [services, setServices] = useState([]);
     const [bundles, setBundles] = useState([]);
     const [staffList, setStaffList] = useState([]);
@@ -293,13 +305,11 @@ export default function GuestBookingPage() {
                 const data = await getPublicSalonsApi();
                 setSalons(data);
 
-                // Auto-select salon from search params if present
+                // Auto-select salon CHỈ KHI có query param salonId từ URL
                 const searchParams = new URLSearchParams(window.location.search);
                 const querySalonId = searchParams.get("salonId");
                 if (querySalonId && data.some(s => String(s.id) === String(querySalonId))) {
                     setSelectedSalonId(Number(querySalonId));
-                } else if (!selectedSalonId && initialContext?.salonId && data.some(s => s.id === initialContext.salonId)) {
-                    setSelectedSalonId(initialContext.salonId);
                 }
             } catch {
                 message.error("Không thể tải danh sách Salon.");
@@ -312,7 +322,11 @@ export default function GuestBookingPage() {
     }, []);
 
     useEffect(() => {
-        if (!selectedSalonId) return;
+        if (!selectedSalonId) {
+            setBranches([]);
+            setSelectedBranchId(null);
+            return;
+        }
 
         const loadBranches = async () => {
             try {
@@ -321,15 +335,13 @@ export default function GuestBookingPage() {
                 const data = await getPublicBranchesApi(selectedSalonId);
                 setBranches(data);
 
-                // Auto-select branch from search params if present and belongs to this salon
+                // Auto-select branch CHỈ KHI có query param branchId từ URL
                 const searchParams = new URLSearchParams(window.location.search);
                 const queryBranchId = searchParams.get("branchId");
                 if (queryBranchId && data.some(b => String(b.id) === String(queryBranchId))) {
                     setSelectedBranchId(Number(queryBranchId));
                 } else if (selectedBranchId && data.some(b => b.id === selectedBranchId)) {
-                    // Giữ nguyên branchId hiện tại
-                } else if (initialContext?.branchId && data.some(b => b.id === initialContext.branchId)) {
-                    setSelectedBranchId(initialContext.branchId);
+                    // Giữ nguyên branchId hiện tại nếu thuộc salon đang chọn
                 } else {
                     setSelectedBranchId(null);
                 }
@@ -826,19 +838,38 @@ export default function GuestBookingPage() {
                                         <Divider style={{ margin: "24px 0" }} />
 
                                         {/* ── BƯỚC 1: CHỌN DỊCH VỤ / COMBO ────────────────── */}
-                                        <StepServiceSelection
-                                            bookingType={bookingType}
-                                            setBookingType={setBookingType}
-                                            services={services}
-                                            selectedServices={selectedServices}
-                                            setSelectedServices={setSelectedServices}
-                                            bundles={bundles}
-                                            selectedBundle={selectedBundle}
-                                            setSelectedBundle={setSelectedBundle}
-                                            screens={screens}
-                                            formatCurrency={formatCurrency}
-                                            staffList={staffList}
-                                        />
+                                        {!selectedBranchId ? (
+                                            <div style={{
+                                                padding: "60px 24px",
+                                                textAlign: "center",
+                                                background: "#f8fafc",
+                                                borderRadius: 16,
+                                                border: "1px dashed #cbd5e1",
+                                                marginTop: 8
+                                            }}>
+                                                <ShopOutlined style={{ fontSize: 44, color: "#94a3b8", marginBottom: 12 }} />
+                                                <Title level={4} style={{ color: "#334155", marginBottom: 6 }}>
+                                                    Vui lòng chọn Salon và Chi nhánh
+                                                </Title>
+                                                <Text type="secondary" style={{ fontSize: 14 }}>
+                                                    Chọn thương hiệu và cơ sở chi nhánh bạn muốn đến để xem danh sách dịch vụ và bảng giá chi tiết.
+                                                </Text>
+                                            </div>
+                                        ) : (
+                                            <StepServiceSelection
+                                                bookingType={bookingType}
+                                                setBookingType={setBookingType}
+                                                services={services}
+                                                selectedServices={selectedServices}
+                                                setSelectedServices={setSelectedServices}
+                                                bundles={bundles}
+                                                selectedBundle={selectedBundle}
+                                                setSelectedBundle={setSelectedBundle}
+                                                screens={screens}
+                                                formatCurrency={formatCurrency}
+                                                staffList={staffList}
+                                            />
+                                        )}
                                     </div>
                                 )}
 
