@@ -313,51 +313,59 @@ export default function StepTimeSlots({
                                         const isAvailable = timeMatches(availableTimes, time, displayTime) && !isPast;
                                         const isHolding = !isAvailable && timeMatches(holdingTimes, time, displayTime) && !isPast;
                                         const isSelected = selectedTime === time || selectedTime === displayTime || (selectedTime && (selectedTime + ":00") === time);
-                                        
+                                        const isBusy = !isAvailable && !isHolding && !isPast && !isSelected;
+
+                                        // ✅ Fix: KHÔNG dùng disabled prop cho slot bận/vàng vì Ant Design sẽ ghi đè màu custom.
+                                        // Chỉ dùng disabled cho slot đã qua (isPast) — những slot này không cần màu custom.
+                                        // Slot bận (đỏ) và đang giữ (vàng) dùng pointer-events:none + style thủ công.
+                                        const isClickable = (isAvailable || isSelected) && !isPast;
+
                                         const slotButton = (
                                             <Button
                                                 key={time}
                                                 size={screens.xs ? "middle" : "large"}
-                                                disabled={(!isAvailable && !isSelected) || isPast}
+                                                disabled={isPast}
                                                 style={{
                                                     borderRadius: 8,
                                                     padding: screens.xs ? "0 4px" : "0 8px",
                                                     fontSize: screens.xs ? 13 : 14,
                                                     fontWeight: isSelected ? "600" : "500",
-                                                    backgroundColor: isSelected 
-                                                        ? "#52c41a" // Selected green
+                                                    backgroundColor: isSelected
+                                                        ? "#52c41a"     // Selected — xanh đậm
                                                         : isPast
-                                                            ? "#f5f5f5" // Past grey
-                                                            : isHolding
-                                                                ? "#fffbe6" // Holding yellow
-                                                                : isAvailable 
-                                                                    ? "#f6ffed" // Available green
-                                                                    : "#fff1f0", // Busy red
-                                                    borderColor: isSelected 
-                                                        ? "#52c41a" 
+                                                            ? "#f5f5f5" // Past — xám
+                                                            : isBusy
+                                                                ? "#fff1f0" // Busy — đỏ nhạt
+                                                                : isHolding
+                                                                    ? "#fffbe6" // Holding — vàng nhạt
+                                                                    : "#f6ffed", // Available — xanh nhạt
+                                                    borderColor: isSelected
+                                                        ? "#52c41a"
                                                         : isPast
-                                                            ? "#d9d9d9" // Past grey border
-                                                            : isHolding
-                                                                ? "#ffe58f" // Holding yellow border
-                                                                : isAvailable 
-                                                                    ? "#b7eb8f" 
-                                                                    : "#ffa39e",
-                                                    color: isSelected 
-                                                        ? "#fff" 
+                                                            ? "#d9d9d9"
+                                                            : isBusy
+                                                                ? "#ffa39e" // Busy — đỏ border
+                                                                : isHolding
+                                                                    ? "#ffe58f" // Holding — vàng border
+                                                                    : "#b7eb8f", // Available — xanh border
+                                                    color: isSelected
+                                                        ? "#fff"
                                                         : isPast
-                                                            ? "#bfbfbf" // Past grey text
-                                                            : isHolding
-                                                                ? "#d46b08" // Holding yellow-orange text
-                                                                : isAvailable 
-                                                                    ? "#389e0d" 
-                                                                    : "#cf1322",
+                                                            ? "#bfbfbf"
+                                                            : isBusy
+                                                                ? "#cf1322" // Busy — đỏ chữ
+                                                                : isHolding
+                                                                    ? "#d46b08" // Holding — cam chữ
+                                                                    : "#389e0d", // Available — xanh chữ
                                                     transition: "all 0.3s",
-                                                    opacity: (isAvailable || isSelected) ? 1 : (isHolding ? 0.9 : 0.6),
-                                                    cursor: (isAvailable || isSelected) ? "pointer" : "not-allowed",
+                                                    opacity: isPast ? 0.5 : (isBusy ? 0.75 : (isHolding ? 0.9 : 1)),
+                                                    // ✅ Dùng pointer-events thay cho disabled để giữ màu custom
+                                                    pointerEvents: isClickable ? "auto" : "none",
+                                                    cursor: isClickable ? "pointer" : "not-allowed",
                                                     width: "100%"
                                                 }}
                                                 onClick={() => {
-                                                    if (isAvailable || isSelected) {
+                                                    if (isClickable) {
                                                         if (typeof onSelectTime === "function") {
                                                             onSelectTime(time);
                                                         } else if (typeof setSelectedTime === "function") {
@@ -373,6 +381,14 @@ export default function StepTimeSlots({
                                         if (isHolding && !isSelected) {
                                             return (
                                                 <Tooltip key={time} title="Khung giờ này đang có khách giữ chỗ tạm thời (tối đa 5 phút)">
+                                                    <div>{slotButton}</div>
+                                                </Tooltip>
+                                            );
+                                        }
+
+                                        if (isBusy) {
+                                            return (
+                                                <Tooltip key={time} title="Khung giờ này đã có lịch hẹn hoặc không còn nhân viên trống">
                                                     <div>{slotButton}</div>
                                                 </Tooltip>
                                             );
