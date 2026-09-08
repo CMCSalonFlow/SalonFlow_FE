@@ -71,13 +71,11 @@ export default function CategoryListPage() {
         if (category) {
             form.setFieldsValue({
                 name: category.name,
-                color: category.color || "#1890ff",
                 description: category.description || ""
             });
         } else {
             form.setFieldsValue({
                 name: "",
-                color: "#1890ff",
                 description: ""
             });
         }
@@ -91,7 +89,6 @@ export default function CategoryListPage() {
 
             const payload = {
                 name: values.name.trim(),
-                color: typeof values.color === "string" ? values.color : values.color?.toHexString(),
                 description: values.description ? values.description.trim() : null
             };
 
