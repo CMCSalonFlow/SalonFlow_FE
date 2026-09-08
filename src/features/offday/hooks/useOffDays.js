@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import offdayApi from "../api/offdayApi";
 
-export const useOffDays = () => {
+export const useOffDays = (enabled = true) => {
     const [offDays, setOffDays] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -19,8 +19,10 @@ export const useOffDays = () => {
     }, []);
 
     useEffect(() => {
-        fetchOffDays();
-    }, [fetchOffDays]);
+        if (enabled) {
+            fetchOffDays();
+        }
+    }, [fetchOffDays, enabled]);
 
     return {
         offDays,

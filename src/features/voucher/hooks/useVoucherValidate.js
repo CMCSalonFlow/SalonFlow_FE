@@ -5,8 +5,9 @@ import { validateVoucher } from "../api/voucherApi";
 /**
  * Hook dùng tại bước checkout để validate và áp dụng voucher.
  * @param {number} orderTotal - Tổng tiền đơn hàng (để tính discountAmount)
+ * @param {number|string} salonId - ID của salon áp dụng voucher
  */
-export const useVoucherValidate = (orderTotal) => {
+export const useVoucherValidate = (orderTotal, salonId) => {
   const [code, setCode] = useState("");
   const [result, setResult] = useState(null); // ValidateVoucherResponse
   const [validating, setValidating] = useState(false);
@@ -19,7 +20,7 @@ export const useVoucherValidate = (orderTotal) => {
     }
     setValidating(true);
     try {
-      const res = await validateVoucher(code.trim().toUpperCase(), orderTotal);
+      const res = await validateVoucher(code.trim().toUpperCase(), orderTotal, salonId);
       const data = res.data;
       if (data.valid) {
         setResult(data);

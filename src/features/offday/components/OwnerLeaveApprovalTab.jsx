@@ -34,7 +34,13 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
     const [rejectForm] = Form.useForm();
     const [rejecting, setRejecting] = useState(false);
 
+    const isOwner = userRole === "SALON_OWNER" || userRole === "ROLE_SALON_OWNER";
+
     const loadData = async () => {
+        if (isOwner && branches.length === 0) {
+            setRequests([]);
+            return;
+        }
         try {
             setLoading(true);
             const params = {};
@@ -47,7 +53,7 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
             const data = await offdayApi.getApprovalLeaveRequests(params);
             setRequests(Array.isArray(data) ? data : []);
         } catch {
-            message.error("Không thể tải danh sách đơn xin nghỉ phép.");
+            setRequests([]);
         } finally {
             setLoading(false);
         }
@@ -55,7 +61,7 @@ export default function OwnerLeaveApprovalTab({ branches = [], userRole = "SALON
 
     useEffect(() => {
         loadData();
-    }, [selectedBranchId, selectedStatus]);
+    }, [selectedBranchId, selectedStatus, branches.length]);
 
     const handleApprove = async (id) => {
         try {

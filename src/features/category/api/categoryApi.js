@@ -1,7 +1,7 @@
 import api from "@/core/api/axios";
 
-export const getCategories = async () => {
-    const response = await api.get("/api/v1/categories");
+export const getCategories = async (params) => {
+    const response = await api.get("/api/v1/categories", { params });
     return response.data;
 };
 

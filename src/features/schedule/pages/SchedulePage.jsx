@@ -2,14 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import dayjs from "dayjs";
-import { message, Select, Typography, Space, Grid, Drawer } from "antd";
+import { message, Select, Typography, Space, Grid, Drawer, Spin } from "antd";
 import { ShopOutlined, CalendarOutlined } from "@ant-design/icons";
 
-const { Text } = Typography;
+const { Title, Text } = Typography;
 
 import "../schedule.css";
 
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
+import NoBranchCard from "@/core/components/NoBranchCard";
 
 import { useScheduleData } from "../hooks/useScheduleData";
 
@@ -26,6 +27,7 @@ export default function SchedulePage() {
   const isMobile = !screens.md;
 
   const [branches, setBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(true);
   const [branchId, setBranchId] = useState(() =>
     localStorage.getItem("currentBranchId")
   );
@@ -81,7 +83,7 @@ export default function SchedulePage() {
         setBranches(data || []);
 
         const storedBranchId = localStorage.getItem("currentBranchId");
-        if (storedBranchId) {
+        if (storedBranchId && data?.some(b => String(b.id) === String(storedBranchId))) {
           setBranchId(storedBranchId);
           return;
         }
@@ -93,7 +95,11 @@ export default function SchedulePage() {
         }
       } catch {
         if (active) {
-          message.error("Không thể tải danh sách chi nhánh.");
+          setBranches([]);
+        }
+      } finally {
+        if (active) {
+          setLoadingBranches(false);
         }
       }
     };
@@ -218,6 +224,26 @@ export default function SchedulePage() {
     if (!resourceId) return true;
     return effectiveActive.includes(resourceId);
   });
+
+  if (!isStaffPage && loadingBranches) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!isStaffPage && branches.length === 0) {
+    return (
+      <div style={{ padding: screens.xs ? "12px 4px" : 24 }}>
+        <NoBranchCard
+          title="Bạn chưa tạo Chi nhánh nào!"
+          description="Vui lòng thêm ít nhất một chi nhánh cho Salon của bạn trước khi phân ca và xếp lịch làm việc."
+          targetUrl="/owner/branches"
+        />
+      </div>
+    );
+  }
 
   if (loading && events.length === 0) {
     return (

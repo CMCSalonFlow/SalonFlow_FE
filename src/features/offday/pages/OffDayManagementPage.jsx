@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
     Button,
     Select,
@@ -10,9 +10,9 @@ import {
     Statistic,
     Space,
     Tabs,
-    Grid
+    Grid,
+    Spin
 } from "antd";
-import { PlusOutlined, CalendarOutlined, GlobalOutlined, BankOutlined, UserOutlined, ClockCircleOutlined } from "@ant-design/icons";
 
 import OffDayFormModal from "../components/OffDayFormModal";
 import OffDayTable from "../components/OffDayTable";
@@ -20,9 +20,10 @@ import OwnerLeaveApprovalTab from "../components/OwnerLeaveApprovalTab";
 
 import { useOffDays } from "../hooks/useOffDays";
 import offdayApi from "../api/offdayApi";
-import { getBranchesApi } from "@/features/branch/api/branchApi";
+import { getMyBranchesApi, getBranchesApi } from "@/features/branch/api/branchApi";
 import { useLocation } from "react-router-dom";
 import { getRoles } from "@/core/utils/auth";
+import NoBranchCard from "@/core/components/NoBranchCard";
 
 const { Title, Text } = Typography;
 
@@ -32,34 +33,36 @@ const OffDayManagementPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [branches, setBranches] = useState([]);
+    const [loadingBranches, setLoadingBranches] = useState(true);
     const [selectedBranchId, setSelectedBranchId] = useState(null);
-    const [userRole, setUserRole] = useState("MANAGER");
 
-    const { offDays, loading, reload } = useOffDays();
+    const isManagerPath = location.pathname.startsWith("/manager");
+    const roles = getRoles();
+    const hasOwnerRole = Array.isArray(roles) && roles.some(r => r === "SALON_OWNER" || r === "ROLE_SALON_OWNER");
+    const isOwner = !isManagerPath && hasOwnerRole;
+    const userRole = isOwner ? "SALON_OWNER" : "MANAGER";
+
+    const loadBranches = useCallback(async (ownerMode) => {
+        setLoadingBranches(true);
+        try {
+            const fetcher = ownerMode ? getMyBranchesApi : getBranchesApi;
+            const data = await fetcher();
+            setBranches(Array.isArray(data) ? data : []);
+        } catch {
+            setBranches([]);
+        } finally {
+            setLoadingBranches(false);
+        }
+    }, []);
 
     useEffect(() => {
-        loadBranches();
-        const isManagerPath = location.pathname.startsWith("/manager");
-        const roles = getRoles();
-        const hasOwnerRole = Array.isArray(roles) && roles.some(r => r === "SALON_OWNER" || r === "ROLE_SALON_OWNER");
-        
-        if (!isManagerPath && hasOwnerRole) {
-            setUserRole("SALON_OWNER");
-        } else {
-            setUserRole("MANAGER");
-        }
-    }, [location.pathname]);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadBranches(isOwner);
+    }, [loadBranches, isOwner]);
 
-    const loadBranches = async () => {
-        try {
-            const data = await getBranchesApi();
-            setBranches(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Không tải được danh sách chi nhánh:", error);
-        }
-    };
+    const { offDays, loading, reload } = useOffDays(!isOwner || branches.length > 0);
 
-    const handleCreate = async (values) => {
+    const handleCreate = useCallback(async (values) => {
         try {
             setSubmitting(true);
             await offdayApi.createSystemOffDay(values);
@@ -72,9 +75,9 @@ const OffDayManagementPage = () => {
         } finally {
             setSubmitting(false);
         }
-    };
+    }, [reload]);
 
-    const handleDelete = async (id) => {
+    const handleDelete = useCallback(async (id) => {
         try {
             await offdayApi.deleteSystemOffDay(id);
             message.success("Xóa ngày nghỉ thành công!");
@@ -83,7 +86,7 @@ const OffDayManagementPage = () => {
             console.error(error);
             message.error(error.response?.data?.message || "Xóa ngày nghỉ thất bại!");
         }
-    };
+    }, [reload]);
 
     const filteredOffDays = useMemo(() => {
         if (!selectedBranchId) return offDays;
@@ -92,8 +95,6 @@ const OffDayManagementPage = () => {
 
     const totalGlobal = useMemo(() => offDays.filter(i => i.isAllBranches).length, [offDays]);
     const totalBranchSpecific = useMemo(() => offDays.filter(i => !i.isAllBranches).length, [offDays]);
-
-    const isOwner = userRole === "SALON_OWNER" || userRole === "ROLE_SALON_OWNER";
 
     const tabItems = useMemo(() => {
         const items = [];
@@ -198,7 +199,27 @@ const OffDayManagementPage = () => {
         });
 
         return items;
-    }, [isOwner, offDays, totalGlobal, totalBranchSpecific, selectedBranchId, branches, filteredOffDays, loading, isModalOpen, submitting, userRole, screens]);
+    }, [isOwner, offDays, totalGlobal, totalBranchSpecific, selectedBranchId, branches, filteredOffDays, loading, isModalOpen, submitting, userRole, screens, handleCreate, handleDelete]);
+
+    if (isOwner && loadingBranches) {
+        return (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    if (isOwner && branches.length === 0) {
+        return (
+            <div style={{ padding: screens.sm ? 24 : "12px 8px" }}>
+                <NoBranchCard
+                    title="Bạn chưa tạo Chi nhánh nào!"
+                    description="Vui lòng thêm ít nhất một chi nhánh cho Salon của bạn trước khi thiết lập ngày nghỉ và duyệt đơn nghỉ phép."
+                    targetUrl="/owner/branches"
+                />
+            </div>
+        );
+    }
 
     return (
         <div style={{ padding: screens.sm ? 24 : "12px 8px", display: "flex", flexDirection: "column", gap: 16 }}>

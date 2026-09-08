@@ -9,10 +9,11 @@ const { Text } = Typography;
  *
  * Props:
  *   orderTotal (number)         - Tổng tiền trước giảm
+ *   salonId (number|string)     - ID salon áp dụng
  *   onApply ({ code, discountAmount }) - Callback khi áp dụng thành công
  *   onRemove ()                 - Callback khi gỡ voucher
  */
-const VoucherInput = ({ orderTotal, onApply, onRemove }) => {
+const VoucherInput = ({ orderTotal, salonId, onApply, onRemove }) => {
   const {
     code,
     setCode,
@@ -23,7 +24,7 @@ const VoucherInput = ({ orderTotal, onApply, onRemove }) => {
     discountAmount,
     formatDiscount,
     result,
-  } = useVoucherValidate(orderTotal);
+  } = useVoucherValidate(orderTotal, salonId);
 
   const handleApply = async () => {
     await validate();
