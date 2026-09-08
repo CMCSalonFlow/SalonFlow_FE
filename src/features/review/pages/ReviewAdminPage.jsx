@@ -22,9 +22,10 @@ import { EyeOutlined, FlagOutlined, RobotOutlined, ReloadOutlined, MessageOutlin
 
 import dayjs from "dayjs";
 
-import { getBranchesApi } from "@/features/branch/api/branchApi";
+import { getBranchesApi, getMyBranchesApi } from "@/features/branch/api/branchApi";
 import { getRoles } from "@/core/utils/auth";
 import ROLES from "@/core/constants/roles";
+import NoBranchCard from "@/core/components/NoBranchCard";
 import {
     getAdminReviewSummaryApi,
     getAdminReviewsApi,
@@ -163,6 +164,7 @@ export default function ReviewAdminPage() {
     const [reviews, setReviews] = useState([]);
     const [summary, setSummary] = useState(null);
     const [branches, setBranches] = useState([]);
+    const [loadingBranches, setLoadingBranches] = useState(true);
     const [salonId, setSalonId] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedReviewId, setSelectedReviewId] = useState(null);
@@ -244,12 +246,17 @@ export default function ReviewAdminPage() {
     };
 
     const loadBranches = async () => {
+        setLoadingBranches(true);
         try {
-            const data = await getBranchesApi();
-            setBranches(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error(error);
-            message.error("Không thể tải danh sách chi nhánh.");
+            const data = isSalonOwner ? await getMyBranchesApi() : await getBranchesApi();
+            const list = Array.isArray(data) ? data : [];
+            setBranches(list);
+            return list;
+        } catch {
+            setBranches([]);
+            return [];
+        } finally {
+            setLoadingBranches(false);
         }
     };
 
@@ -258,9 +265,8 @@ export default function ReviewAdminPage() {
         try {
             const data = await getAdminReviewSummaryApi(selectedBranchId);
             setSummary(data);
-        } catch (error) {
-            console.error(error);
-            message.error("Không thể tải thống kê review.");
+        } catch {
+            setSummary(null);
         } finally {
             setSummaryLoading(false);
         }
@@ -317,25 +323,31 @@ export default function ReviewAdminPage() {
             });
         } catch (error) {
             console.error(error);
-            message.error("Không thể tải danh sách review.");
+            setReviews([]);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadBranches();
-        loadReviews({ page: 1, pageSize: 10 });
+        loadBranches().then((list) => {
+            if (!isSalonOwner || (list && list.length > 0)) {
+                loadReviews({ page: 1, pageSize: 10 });
+                loadSummary(undefined);
+            }
+        });
         getMySalonApi()
             .then((data) => setSalonId(data?.id || null))
-            .catch((err) => console.error("Không lấy được thông tin salon:", err));
+            .catch(() => {});
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
-        loadSummary(branchId);
+        if (!isSalonOwner || branches.length > 0) {
+            loadSummary(branchId);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [branchId]);
+    }, [branchId, branches.length]);
 
     const summaryCards = useMemo(() => pickSummaryCards(summary), [summary]);
 
@@ -504,6 +516,26 @@ export default function ReviewAdminPage() {
             )
         }
     ];
+
+    if (isSalonOwner && loadingBranches) {
+        return (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    if (isSalonOwner && branches.length === 0) {
+        return (
+            <div style={{ padding: 24 }}>
+                <NoBranchCard
+                    title="Bạn chưa tạo Chi nhánh nào!"
+                    description="Vui lòng thêm ít nhất một chi nhánh cho Salon của bạn trước khi theo dõi và quản lý đánh giá của khách hàng."
+                    targetUrl="/owner/branches"
+                />
+            </div>
+        );
+    }
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

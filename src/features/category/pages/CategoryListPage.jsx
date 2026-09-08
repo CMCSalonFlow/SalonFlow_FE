@@ -11,12 +11,16 @@ import {
     updateCategory,
     deleteCategory
 } from "../api/categoryApi";
+import { getMyBranchesApi } from "@/features/branch/api/branchApi";
+import NoBranchCard from "@/core/components/NoBranchCard";
 
 const { Title, Paragraph, Text } = Typography;
 
 export default function CategoryListPage() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [branches, setBranches] = useState([]);
+    const [loadingBranches, setLoadingBranches] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
@@ -30,14 +34,27 @@ export default function CategoryListPage() {
             const data = await getCategories();
             setCategories(data || []);
         } catch (error) {
-            message.error(error.response?.data?.message || "Tải danh sách danh mục thất bại");
+            console.error("Tải danh mục:", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadCategories();
+        const init = async () => {
+            try {
+                const branchData = await getMyBranchesApi();
+                setBranches(branchData || []);
+                if (branchData && branchData.length > 0) {
+                    loadCategories();
+                }
+            } catch (err) {
+                console.error("Lỗi tải chi nhánh:", err);
+            } finally {
+                setLoadingBranches(false);
+            }
+        };
+        init();
     }, []);
 
     const filteredCategories = useMemo(() => {
@@ -175,6 +192,23 @@ export default function CategoryListPage() {
             )
         }
     ];
+
+    if (loadingBranches) {
+        return (
+            <div style={{ textAlign: "center", padding: "100px 0" }}>
+                <Spin size="large" tip="Đang tải dữ liệu chi nhánh..." />
+            </div>
+        );
+    }
+
+    if (branches.length === 0) {
+        return (
+            <NoBranchCard
+                title="Bạn chưa tạo Chi nhánh nào!"
+                description="Vui lòng thêm ít nhất một chi nhánh cho Salon của bạn trước khi quản lý danh mục dịch vụ."
+            />
+        );
+    }
 
     return (
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 16px" }}>

@@ -7,25 +7,28 @@ import {
   deactivateVoucher,
 } from "../api/voucherApi";
 
-export const useVoucher = () => {
+export const useVoucher = (salonId, enabled = true) => {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchVouchers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getAllVouchers();
+      const params = salonId ? { salonId } : {};
+      const res = await getAllVouchers(params);
       setVouchers(res.data);
     } catch {
       message.error("Không thể tải danh sách voucher.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [salonId]);
 
   useEffect(() => {
-    fetchVouchers();
-  }, [fetchVouchers]);
+    if (enabled) {
+      fetchVouchers();
+    }
+  }, [fetchVouchers, enabled]);
 
   const handleCreate = async (values) => {
     try {

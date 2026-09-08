@@ -4,7 +4,8 @@ import {
     Space,
     Grid,
     Card,
-    Typography
+    Typography,
+    Spin
 } from "antd";
 
 const { Title } = Typography;
@@ -26,129 +27,78 @@ import {
     useBranch
 } from "../hooks/useBranch";
 import { useSubscription } from "@/features/subscription/hooks/useSubscription";
+import { getMySalonApi } from "@/features/salon/api/salonApi";
+import NoBranchCard from "@/core/components/NoBranchCard";
 
 export default function BranchListPage() {
     const screens = Grid.useBreakpoint();
     const { openLimitModal } = useSubscription();
 
     const {
-
         getBranches,
-
         createBranch,
-
         updateBranch,
-
         deleteBranch
-
     } = useBranch();
 
-    const [
+    const [branches, setBranches] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [open, setOpen] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [userModal, setUserModal] = useState(false);
+    const [selectedBranch, setSelectedBranch] = useState();
 
-        branches,
-
-        setBranches
-
-    ] = useState([]);
-
-    const [
-
-        loading,
-
-        setLoading
-
-    ] = useState(false);
-
-    const [
-
-        open,
-
-        setOpen
-
-    ] = useState(false);
-
-    const [
-
-        editing,
-
-        setEditing
-
-    ] = useState(null);
-
-    const [
-
-        userModal,
-
-        setUserModal
-
-    ] = useState(false);
-
-    const [
-
-        selectedBranch,
-
-        setSelectedBranch
-
-    ] = useState();
+    // Salon check
+    const [hasSalon, setHasSalon] = useState(null); // null = loading
+    const [loadingSalon, setLoadingSalon] = useState(true);
 
     useEffect(() => {
-
-        loadBranches();
-
+        const init = async () => {
+            try {
+                const salon = await getMySalonApi();
+                if (salon && salon.id) {
+                    setHasSalon(true);
+                    await loadBranches();
+                } else {
+                    setHasSalon(false);
+                }
+            } catch {
+                setHasSalon(false);
+            } finally {
+                setLoadingSalon(false);
+            }
+        };
+        init();
     }, []);
 
     const loadBranches = async () => {
-
         setLoading(true);
-
         try {
-
-            const data =
-                await getBranches();
-
+            const data = await getBranches();
             setBranches(data);
-
         } finally {
-
             setLoading(false);
-
         }
-
     };
 
     const handleCreate = () => {
-
         setEditing(null);
-
         setOpen(true);
-
     };
 
     const handleEdit = (branch) => {
-
         setEditing(branch);
-
         setOpen(true);
-
     };
 
     const handleSubmit = async (values) => {
         try {
             if (editing) {
-                await updateBranch(
-                    editing.id,
-                    values
-                );
-                message.success(
-                    "Cập nhật thành công"
-                );
+                await updateBranch(editing.id, values);
+                message.success("Cập nhật thành công");
             } else {
-                await createBranch(
-                    values
-                );
-                message.success(
-                    "Thêm thành công"
-                );
+                await createBranch(values);
+                message.success("Thêm thành công");
             }
             setOpen(false);
             loadBranches();
@@ -166,9 +116,7 @@ export default function BranchListPage() {
     const handleDelete = async (id) => {
         try {
             await deleteBranch(id);
-            message.success(
-                "Đã xóa"
-            );
+            message.success("Đã xóa");
             loadBranches();
         } catch (error) {
             console.error("Delete error:", error);
@@ -179,10 +127,7 @@ export default function BranchListPage() {
 
     const handleToggleSms = async (branch, isSmsEnabled) => {
         try {
-            await updateBranch(branch.id, {
-                ...branch,
-                isSmsEnabled
-            });
+            await updateBranch(branch.id, { ...branch, isSmsEnabled });
             message.success(`Đã ${isSmsEnabled ? "bật" : "tắt"} SMS cho chi nhánh ${branch.name}`);
             loadBranches();
         } catch (error) {
@@ -192,12 +137,30 @@ export default function BranchListPage() {
     };
 
     const handleUsers = (branch) => {
-
         setSelectedBranch(branch);
-
         setUserModal(true);
-
     };
+
+    if (loadingSalon) {
+        return (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    if (!hasSalon) {
+        return (
+            <div style={{ padding: screens.xs ? "12px 6px" : "24px 32px" }}>
+                <NoBranchCard
+                    title="Bạn chưa tạo Salon!"
+                    description="Vui lòng tạo thông tin Salon của bạn trước khi thêm và quản lý Chi nhánh."
+                    buttonText="Tới trang Salon Của Tôi"
+                    targetUrl="/owner/salon"
+                />
+            </div>
+        );
+    }
 
     return (
         <div style={{ padding: screens.xs ? "12px 6px" : "24px 32px" }}>
@@ -238,18 +201,14 @@ export default function BranchListPage() {
             <BranchModal
                 open={open}
                 editing={editing}
-                onCancel={() =>
-                    setOpen(false)
-                }
+                onCancel={() => setOpen(false)}
                 onSubmit={handleSubmit}
             />
 
             <BranchUserModal
                 open={userModal}
                 branch={selectedBranch}
-                onCancel={() =>
-                    setUserModal(false)
-                }
+                onCancel={() => setUserModal(false)}
             />
         </div>
     );

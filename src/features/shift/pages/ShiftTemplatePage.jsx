@@ -40,6 +40,7 @@ import {
 
 import ShiftTemplateFormModal from "../components/ShiftTemplateFormModal";
 import { getMyBranchesApi, getBranchUsersApi } from "@/features/branch/api/branchApi";
+import NoBranchCard from "@/core/components/NoBranchCard";
 dayjs.extend(isoWeek);
 
 const { Title, Text } = Typography;
@@ -65,6 +66,7 @@ export default function ShiftTemplatePage() {
     const [loading, setLoading] = useState(false);
 
     const [branches, setBranches] = useState([]);
+    const [loadingBranches, setLoadingBranches] = useState(true);
     const [users, setUsers] = useState([]);
     const [branchId, setBranchId] = useState(null);
 
@@ -83,11 +85,13 @@ export default function ShiftTemplatePage() {
         try {
             const data = await getMyBranchesApi();
             setBranches(data);
-            if (data.length > 0) {
+            if (data && data.length > 0) {
                 setBranchId(data[0].id);
             }
         } catch {
-            message.error("Không thể tải danh sách chi nhánh");
+            setBranches([]);
+        } finally {
+            setLoadingBranches(false);
         }
     };
 
@@ -304,8 +308,28 @@ export default function ShiftTemplatePage() {
         },
     ];
 
+  if (loadingBranches) {
     return (
-        <div style={{ padding: screens.xs ? "12px 4px" : 24 }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (branches.length === 0) {
+    return (
+      <div style={{ padding: screens.xs ? "12px 4px" : 24 }}>
+        <NoBranchCard
+          title="Bạn chưa tạo Chi nhánh nào!"
+          description="Vui lòng thêm ít nhất một chi nhánh cho Salon của bạn trước khi thiết lập mẫu ca làm việc."
+          targetUrl="/owner/branches"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: screens.xs ? "12px 4px" : 24 }}>
             <Row justify="space-between" align="middle" style={{ marginBottom: 20 }} gutter={[16, 16]}>
                 <Col xs={24} md={8}>
                     <Title level={screens.xs ? 4 : 3} style={{ margin: 0 }}>

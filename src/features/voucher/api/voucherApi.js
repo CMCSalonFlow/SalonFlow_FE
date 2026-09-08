@@ -3,9 +3,9 @@ import { ENDPOINTS } from "@/core/api/endpoints";
 
 // ── Admin ──────────────────────────────────────────────
 
-/** Lấy toàn bộ voucher */
-export const getAllVouchers = () =>
-  api.get(ENDPOINTS.VOUCHERS);
+/** Lấy toàn bộ voucher (hoặc theo params như salonId) */
+export const getAllVouchers = (params) =>
+  api.get(ENDPOINTS.VOUCHERS, { params });
 
 /** Tạo 1 voucher đơn */
 export const createVoucher = (data) =>
@@ -21,8 +21,8 @@ export const deactivateVoucher = (id) =>
 
 // ── Customer ───────────────────────────────────────────
 
-/** Validate voucher tại checkout, orderTotal optional */
-export const validateVoucher = (code, orderTotal) =>
-  api.post(ENDPOINTS.VOUCHERS_VALIDATE, { code }, {
+/** Validate voucher tại checkout, orderTotal optional, salonId optional */
+export const validateVoucher = (code, orderTotal, salonId) =>
+  api.post(ENDPOINTS.VOUCHERS_VALIDATE, { code, salonId }, {
     params: orderTotal ? { orderTotal } : {},
   });

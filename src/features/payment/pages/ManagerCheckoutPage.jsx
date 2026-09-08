@@ -274,7 +274,9 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
         try {
             setVoucherLoading(true);
             setVoucherError("");
-            const res = await validateVoucher(code, subtotal);
+            const currentBranch = branches.find(b => String(b.id) === String(selectedBranchId));
+            const currentSalonId = booking?.salonId || currentBranch?.salonId;
+            const res = await validateVoucher(code, subtotal, currentSalonId);
             const voucherData = res?.data || res;
 
             if (voucherData && voucherData.valid !== false) {
@@ -287,8 +289,12 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
                 setAppliedVoucher(null);
             }
         } catch (err) {
-            // Fallback for custom demo codes
-            if (code === "SF10" || code === "WELCOME10") {
+            const apiMsg = err?.response?.data?.message;
+            if (apiMsg) {
+                setVoucherError(apiMsg);
+                message.error(apiMsg);
+                setAppliedVoucher(null);
+            } else if (code === "SF10" || code === "WELCOME10") {
                 setAppliedVoucher({ code, discountType: "PERCENTAGE", percentage: 10, discountValue: 10, valid: true });
                 message.success(`Đã áp dụng mã giảm giá [${code}] (-10%)!`);
                 setVoucherError("");
@@ -297,7 +303,7 @@ export default function ManagerCheckoutPage({ initialBooking = null, isModalMode
                 message.success(`Đã áp dụng mã giảm giá [${code}] (-50.000đ)!`);
                 setVoucherError("");
             } else {
-                const msg = err?.response?.data?.message || err?.message || "Mã giảm giá không tồn tại hoặc không đủ điều kiện!";
+                const msg = err?.message || "Mã giảm giá không tồn tại hoặc không đủ điều kiện!";
                 setVoucherError(msg);
                 message.error(msg);
                 setAppliedVoucher(null);

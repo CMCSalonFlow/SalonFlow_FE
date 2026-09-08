@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Button,
   Table,
@@ -6,22 +6,41 @@ import {
   Popconfirm,
   Typography,
   Grid,
+  Spin,
 } from "antd";
 import { PlusOutlined, StopOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useVoucher } from "../hooks/useVoucher";
 import VoucherFormModal from "../components/VoucherFormModal";
+import { getMyBranchesApi } from "@/features/branch/api/branchApi";
+import NoBranchCard from "@/core/components/NoBranchCard";
 
 const { Title } = Typography;
 
 const VoucherManagementPage = () => {
   const screens = Grid.useBreakpoint();
+  const [branches, setBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(true);
+
+  useEffect(() => {
+    getMyBranchesApi()
+      .then((res) => {
+        setBranches(Array.isArray(res) ? res : res?.data || []);
+      })
+      .catch(() => {
+        setBranches([]);
+      })
+      .finally(() => {
+        setLoadingBranches(false);
+      });
+  }, []);
+
   const {
     vouchers,
     loading,
     handleCreate,
     handleDeactivate,
-  } = useVoucher();
+  } = useVoucher(null, branches.length > 0);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -128,6 +147,26 @@ const VoucherManagementPage = () => {
         ),
     },
   ];
+
+  if (loadingBranches) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (branches.length === 0) {
+    return (
+      <div style={{ padding: screens.xs ? "12px 4px" : 24 }}>
+        <NoBranchCard
+          title="Bạn chưa tạo Chi nhánh nào!"
+          description="Vui lòng thêm ít nhất một chi nhánh cho Salon của bạn trước khi quản lý và phát hành voucher."
+          targetUrl="/owner/branches"
+        />
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: screens.xs ? "12px 4px" : 24 }}>
