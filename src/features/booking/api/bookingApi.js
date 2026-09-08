@@ -42,7 +42,10 @@ export const getBookingByIdApi = async (branchId, bookingId) => {
 export const getAvailabilityApi = async (branchId, params) => {
     const response = await api.get(
         `/api/v1/branches/${branchId}/bookings/availability`,
-        { params }
+        { 
+            params: { ...params, _t: Date.now() },
+            headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+        }
     );
 
     return response.data;
@@ -52,7 +55,11 @@ export const getAvailabilityApi = async (branchId, params) => {
 export const getPublicAvailabilityApi = async (branchId, staffId, params) => {
     const response = await api.get(
         `/api/v1/branches/${branchId}/staff/${staffId}/availability`,
-        { params, skipAuth: true }
+        { 
+            params: { ...params, _t: Date.now() }, 
+            skipAuth: true,
+            headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+        }
     );
 
     return response.data;
@@ -129,18 +136,59 @@ export const lockSlotApi = async (payload) => {
     return response.data;
 };
 
-// Hủy giữ chỗ slot
-export const unlockSlotApi = async (slotKey, clientId) => {
-    const response = await api.delete("/api/v1/bookings/lock", {
-        params: { slotKey, clientId }
-    });
+// Hủy giữ chỗ slot (hỗ trợ cả 2 dạng: unlockSlotApi(slotKey, clientId) hoặc unlockSlotApi({ slotKey, clientId }))
+export const unlockSlotApi = async (arg1, arg2) => {
+    let slotKey = arg1;
+    let clientId = arg2;
+    if (typeof arg1 === "object" && arg1 !== null) {
+        slotKey = arg1.slotKey;
+        clientId = arg1.clientId;
+    }
+    if (!slotKey) return null;
+
+    const params = { slotKey };
+    if (clientId) {
+        params.clientId = clientId;
+    }
+    const response = await api.delete("/api/v1/bookings/lock", { params });
     return response.data;
+};
+
+// Hủy giữ chỗ slot qua fetch keepalive để gửi thành công 100% khi reload/đóng tab
+export const unlockSlotKeepAlive = (arg1, arg2) => {
+    let slotKey = arg1;
+    let clientId = arg2;
+    if (typeof arg1 === "object" && arg1 !== null) {
+        slotKey = arg1.slotKey;
+        clientId = arg1.clientId;
+    }
+    if (!slotKey) return;
+
+    try {
+        const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+        const headers = {};
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        let url = `/api/v1/bookings/lock?slotKey=${encodeURIComponent(slotKey)}`;
+        if (clientId) {
+            url += `&clientId=${encodeURIComponent(clientId)}`;
+        }
+        fetch(url, {
+            method: "DELETE",
+            headers,
+            keepalive: true
+        }).catch(() => {});
+    } catch (e) {
+        console.warn("unlockSlotKeepAlive error:", e);
+    }
 };
 
 // Kiểm tra trạng thái lock của slot
 export const checkSlotLockApi = async (slotKey) => {
     const response = await api.get("/api/v1/bookings/lock", {
-        params: { slotKey }
+        params: { slotKey, _t: Date.now() },
+        headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
     });
     return response.data;
 };

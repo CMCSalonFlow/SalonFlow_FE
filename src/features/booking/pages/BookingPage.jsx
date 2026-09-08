@@ -6,7 +6,7 @@ import { getPublicBranchesApi } from "@/features/branch/api/branchApi";
 import { getPublicSalonsApi } from "@/features/salon/api/salonApi";
 import { getServicesByBranchApi, getBundlesByBranchApi } from "@/features/service/api/serviceApi";
 import { getStaffByBranchApi } from "@/features/staff/api/staffApi";
-import { getAvailabilityApi, createBookingApi, lockSlotApi, unlockSlotApi } from "../api/bookingApi";
+import { getAvailabilityApi, createBookingApi, lockSlotApi, unlockSlotApi, unlockSlotKeepAlive } from "../api/bookingApi";
 import { createPaymentUrlApi } from "@/features/payment/api/paymentApi";
 import { getAvailabilitySlots } from "@/features/shift/api/shiftApi";
 import { API_BASE_URL } from "@/core/api/endpoints";
@@ -28,6 +28,31 @@ const { useBreakpoint } = Grid;
 
 const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
 
+const CUSTOMER_BOOKING_CONTEXT_KEY = "salonflow_customer_booking_context";
+
+const getSavedBookingContext = () => {
+    try {
+        const raw = sessionStorage.getItem(CUSTOMER_BOOKING_CONTEXT_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+};
+
+const saveBookingContext = (context) => {
+    try {
+        sessionStorage.setItem(CUSTOMER_BOOKING_CONTEXT_KEY, JSON.stringify(context));
+    } catch (e) {
+        console.warn("Failed to save booking context:", e);
+    }
+};
+
+const clearBookingContext = () => {
+    try {
+        sessionStorage.removeItem(CUSTOMER_BOOKING_CONTEXT_KEY);
+    } catch {}
+};
+
 /**
  * Trang Đặt lịch hẹn dành cho Customer đã đăng nhập.
  */
@@ -35,10 +60,15 @@ export default function BookingPage() {
     const navigate = useNavigate();
     const screens = useBreakpoint();
 
-    const [currentStep, setCurrentStep] = useState(0);
+    const savedContextRef = useRef(getSavedBookingContext());
+    const initialContext = savedContextRef.current;
+
+    const [currentStep, setCurrentStep] = useState(
+        initialContext?.currentStep !== undefined ? initialContext.currentStep : 0
+    );
     const [loading, setLoading] = useState(false);
     const [loadingText, setLoadingText] = useState("Đang tải dữ liệu chi nhánh...");
-    const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
+    const [paymentMethod, setPaymentMethod] = useState(initialContext?.paymentMethod || "BANK_TRANSFER");
     const [systemOffDays, setSystemOffDays] = useState([]);
 
     // Tọa độ GPS của vị trí hiện tại khách hàng
@@ -73,9 +103,9 @@ export default function BookingPage() {
 
     // Dữ liệu nguồn
     const [salons, setSalons] = useState([]);
-    const [selectedSalonId, setSelectedSalonId] = useState(null);
+    const [selectedSalonId, setSelectedSalonId] = useState(initialContext?.salonId || null);
     const [branches, setBranches] = useState([]);
-    const [selectedBranchId, setSelectedBranchId] = useState(null);
+    const [selectedBranchId, setSelectedBranchId] = useState(initialContext?.branchId || null);
     const [services, setServices] = useState([]);
     const [bundles, setBundles] = useState([]);
     const [staffList, setStaffList] = useState([]);
@@ -83,12 +113,15 @@ export default function BookingPage() {
     // Lựa chọn của khách hàng
     const [selectedServices, setSelectedServices] = useState([]);
     const [selectedBundle, setSelectedBundle] = useState(null);
-    const [bookingType, setBookingType] = useState("service"); // "service" hoặc "bundle"
+    const [bookingType, setBookingType] = useState(initialContext?.bookingType || "service"); // "service" hoặc "bundle"
 
     const [selectedStaff, setSelectedStaff] = useState(null); // null = "Bất kỳ nhân viên"
-    const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(
+        initialContext?.date ? dayjs(initialContext.date) : null
+    );
+    // Khi F5: slot KHÔNG giữ lock mà để user chọn lại dễ dàng, các ô trở về màu xanh khả dụng
     const [selectedTime, setSelectedTime] = useState(null);
-    const [notes, setNotes] = useState("");
+    const [notes, setNotes] = useState(initialContext?.notes || "");
 
     // Khung giờ rảnh & Giữ chỗ (Yellow Slot Holding)
     const [availableTimes, setAvailableTimes] = useState([]);
@@ -152,18 +185,33 @@ export default function BookingPage() {
         return () => clearInterval(interval);
     }, [lockExpiresAt]);
 
-    // Giải phóng slot khi thoát trang hoặc đóng tab
+    // Khi component mount: nếu có slot đang lock dở từ phiên trước (trước khi F5), mở khóa ngay trên Redis
     useEffect(() => {
-        const handleBeforeUnload = () => {
+        const lastSlotKey = initialContext?.lastLockedSlotKey;
+        if (lastSlotKey) {
+            unlockSlotApi({ slotKey: lastSlotKey }).catch(() => {});
+            const ctx = getSavedBookingContext();
+            if (ctx) {
+                delete ctx.lastLockedSlotKey;
+                saveBookingContext(ctx);
+            }
+        }
+    }, []);
+
+    // Giải phóng slot khi reload trang (F5), chuyển trang hoặc đóng tab
+    useEffect(() => {
+        const handleUnload = () => {
             if (lockedSlotKeyRef.current) {
-                unlockSlotApi({ slotKey: lockedSlotKeyRef.current }).catch(() => {});
+                unlockSlotKeepAlive(lockedSlotKeyRef.current);
             }
         };
-        window.addEventListener("beforeunload", handleBeforeUnload);
+        window.addEventListener("beforeunload", handleUnload);
+        window.addEventListener("pagehide", handleUnload);
         return () => {
-            window.removeEventListener("beforeunload", handleBeforeUnload);
+            window.removeEventListener("beforeunload", handleUnload);
+            window.removeEventListener("pagehide", handleUnload);
             if (lockedSlotKeyRef.current) {
-                unlockSlotApi({ slotKey: lockedSlotKeyRef.current }).catch(() => {});
+                unlockSlotKeepAlive(lockedSlotKeyRef.current);
             }
         };
     }, []);
@@ -177,6 +225,25 @@ export default function BookingPage() {
             setSelectedTime(null);
         }
     }, [selectedBranchId, selectedDate, selectedStaff, bookingType, selectedBundle]);
+
+    // Tự động lưu ngữ cảnh đặt lịch vào sessionStorage (không lưu selectedTime/lockedSlotKey để F5 user chọn lại sạch sẽ)
+    useEffect(() => {
+        if (!selectedSalonId && !selectedBranchId) return;
+        const ctx = {
+            salonId: selectedSalonId,
+            branchId: selectedBranchId,
+            bookingType,
+            serviceIds: selectedServices.map(s => s.id),
+            bundleId: selectedBundle?.id || null,
+            staffId: selectedStaff?.id || null,
+            date: selectedDate ? (typeof selectedDate.format === "function" ? selectedDate.format("YYYY-MM-DD") : String(selectedDate)) : null,
+            currentStep,
+            notes,
+            paymentMethod,
+            lastLockedSlotKey: lockedSlotKey
+        };
+        saveBookingContext(ctx);
+    }, [selectedSalonId, selectedBranchId, bookingType, selectedServices, selectedBundle, selectedStaff, selectedDate, currentStep, notes, paymentMethod, lockedSlotKey]);
 
     useEffect(() => {
         const userId = localStorage.getItem("userId");
@@ -252,6 +319,8 @@ export default function BookingPage() {
     // ⚠️ Chỉ reconnect khi branchId thay đổi — date/staff dùng refs để tránh reconnect liên tục
     }, [selectedBranchId]);
 
+    const hasRestoredContextRef = useRef(false);
+
     // 1. Tải danh sách Salon khi vào trang
     useEffect(() => {
         const loadSalons = async () => {
@@ -266,6 +335,8 @@ export default function BookingPage() {
                 const querySalonId = searchParams.get("salonId");
                 if (querySalonId && data.some(s => String(s.id) === String(querySalonId))) {
                     setSelectedSalonId(Number(querySalonId));
+                } else if (!selectedSalonId && initialContext?.salonId && data.some(s => s.id === initialContext.salonId)) {
+                    setSelectedSalonId(initialContext.salonId);
                 }
             } catch {
                 message.error("Không thể tải danh sách Salon.");
@@ -292,6 +363,10 @@ export default function BookingPage() {
                 const queryBranchId = searchParams.get("branchId");
                 if (queryBranchId && data.some(b => String(b.id) === String(queryBranchId))) {
                     setSelectedBranchId(Number(queryBranchId));
+                } else if (selectedBranchId && data.some(b => b.id === selectedBranchId)) {
+                    // Giữ nguyên branchId hiện tại
+                } else if (initialContext?.branchId && data.some(b => b.id === initialContext.branchId)) {
+                    setSelectedBranchId(initialContext.branchId);
                 } else {
                     setSelectedBranchId(null);
                 }
@@ -313,13 +388,6 @@ export default function BookingPage() {
             try {
                 setLoadingText("Đang tải thông tin dịch vụ...");
                 setLoading(true);
-                // Reset các lựa chọn cũ
-                setSelectedServices([]);
-                setSelectedBundle(null);
-                setSelectedStaff(null);
-                setSelectedDate(null);
-                setSelectedTime(null);
-                setAvailableTimes([]);
 
                 const [servicesData, bundlesData, staffData] = await Promise.all([
                     getServicesByBranchApi(selectedBranchId),
@@ -331,6 +399,30 @@ export default function BookingPage() {
                 setServices(activeServices);
                 setBundles(bundlesData || []);
                 setStaffList(staffData || []);
+
+                // Khôi phục từ initialContext nếu cùng chi nhánh (sau F5)
+                if (!hasRestoredContextRef.current && initialContext && initialContext.branchId === selectedBranchId) {
+                    hasRestoredContextRef.current = true;
+                    if (initialContext.bookingType === "bundle" && initialContext.bundleId) {
+                        const matchedBundle = (bundlesData || []).find(b => b.id === initialContext.bundleId);
+                        if (matchedBundle) setSelectedBundle(matchedBundle);
+                    } else if (initialContext.serviceIds && initialContext.serviceIds.length > 0) {
+                        const matched = activeServices.filter(s => initialContext.serviceIds.includes(s.id));
+                        if (matched.length > 0) setSelectedServices(matched);
+                    }
+                    if (initialContext.staffId) {
+                        const matchedStaff = (staffData || []).find(s => s.id === initialContext.staffId || s.userId === initialContext.staffId);
+                        if (matchedStaff) setSelectedStaff(matchedStaff);
+                    }
+                } else if (hasRestoredContextRef.current) {
+                    // Nếu user chủ động đổi chi nhánh sau khi đã mount: reset lựa chọn
+                    setSelectedServices([]);
+                    setSelectedBundle(null);
+                    setSelectedStaff(null);
+                    setSelectedDate(null);
+                    setSelectedTime(null);
+                    setAvailableTimes([]);
+                }
 
                 // Auto-select service from URL query params if present
                 const searchParams = new URLSearchParams(window.location.search);
@@ -357,15 +449,6 @@ export default function BookingPage() {
 
         loadBranchData();
     }, [selectedBranchId]);
-
-    // Đồng bộ service đầu tiên cho đặt lịch định kỳ
-    useEffect(() => {
-        const timerId = window.setTimeout(() => {
-            setRecurringServiceId(selectedServices.length > 0 ? selectedServices[0].id : null);
-        }, 0);
-
-        return () => window.clearTimeout(timerId);
-    }, [selectedServices]);
 
     // Tải danh sách nhân viên làm việc vào ngày đã chọn
     useEffect(() => {
@@ -598,6 +681,12 @@ export default function BookingPage() {
 
     // Xử lý quay lại bước trước
     const handlePrev = () => {
+        if (lockedSlotKey) {
+            unlockSlotApi({ slotKey: lockedSlotKey }).catch(() => {});
+            setLockedSlotKey(null);
+            setLockExpiresAt(null);
+            setSelectedTime(null);
+        }
         setCurrentStep(currentStep - 1);
     };
 
@@ -636,6 +725,7 @@ export default function BookingPage() {
             }
 
             const res = await createBookingApi(selectedBranchId, payload);
+            clearBookingContext();
             setLockedSlotKey(null);
             setLockExpiresAt(null);
             const bookingDetail = {
@@ -701,9 +791,16 @@ export default function BookingPage() {
                                                 size="large"
                                                 value={selectedSalonId}
                                                 onChange={(val) => {
+                                                    clearBookingContext();
                                                     setSelectedSalonId(val);
                                                     setBranches([]);
                                                     setSelectedBranchId(null);
+                                                    setSelectedServices([]);
+                                                    setSelectedBundle(null);
+                                                    setSelectedStaff(null);
+                                                    setSelectedDate(null);
+                                                    setSelectedTime(null);
+                                                    setAvailableTimes([]);
                                                 }}
                                                 options={salons.map(s => ({ label: s.name, value: s.id }))}
                                             />
@@ -719,7 +816,16 @@ export default function BookingPage() {
                                                 size="large"
                                                 disabled={!selectedSalonId}
                                                 value={selectedBranchId}
-                                                onChange={setSelectedBranchId}
+                                                onChange={(val) => {
+                                                    clearBookingContext();
+                                                    setSelectedBranchId(val);
+                                                    setSelectedServices([]);
+                                                    setSelectedBundle(null);
+                                                    setSelectedStaff(null);
+                                                    setSelectedDate(null);
+                                                    setSelectedTime(null);
+                                                    setAvailableTimes([]);
+                                                }}
                                                 options={branches.map(b => ({ label: b.name, value: b.id }))}
                                             />
                                         </div>
