@@ -97,11 +97,7 @@ export default function StepTimeSlots({
             if (recs.length === 0) {
                 message.info("Không có gợi ý AI nào khả dụng cho tiêu chí đã chọn.");
             } else {
-                message.success(`AI đã phân tích và tìm thấy ${recs.length} khung giờ tối ưu nhất!`);
-                // Tự động phân công thợ & khung giờ Top 1 nếu chưa chọn
-                if (recs[0]) {
-                    handleSelectRecommendation(recs[0]);
-                }
+                message.success(`AI đã phân tích và tìm thấy ${recs.length} khung giờ tối ưu nhất! Hãy chọn khung giờ bạn mong muốn.`);
             }
         } catch (error) {
             console.error("Lỗi AI Smart Scheduling:", error);
