@@ -97,10 +97,26 @@ export default function BookingPage() {
     const [lockExpiresAt, setLockExpiresAt] = useState(null);
     const [countdownText, setCountdownText] = useState("");
     const lockedSlotKeyRef = useRef(lockedSlotKey);
+    // Refs để tránh stale closure trong WebSocket onmessage
+    const selectedBranchIdRef = useRef(selectedBranchId);
+    const selectedDateRef = useRef(selectedDate);
+    const selectedStaffRef = useRef(selectedStaff);
 
     useEffect(() => {
         lockedSlotKeyRef.current = lockedSlotKey;
     }, [lockedSlotKey]);
+
+    useEffect(() => {
+        selectedBranchIdRef.current = selectedBranchId;
+    }, [selectedBranchId]);
+
+    useEffect(() => {
+        selectedDateRef.current = selectedDate;
+    }, [selectedDate]);
+
+    useEffect(() => {
+        selectedStaffRef.current = selectedStaff;
+    }, [selectedStaff]);
 
     const [openTime, setOpenTime] = useState(null);
     const [closeTime, setCloseTime] = useState(null);
@@ -176,7 +192,9 @@ export default function BookingPage() {
     }, []);
 
     // WebSocket listener for real-time slot updates (bao gồm BOOKING_UPDATE, SLOT_LOCKED, SLOT_UNLOCKED)
+    // Dùng refs để tránh stale closure — WebSocket chỉ reconnect khi branchId thay đổi
     useEffect(() => {
+        if (!selectedBranchId) return;
         let socket = null;
         let reconnectTimer = null;
 
@@ -193,9 +211,15 @@ export default function BookingPage() {
                 try {
                     const msg = JSON.parse(event.data);
                     if (["BOOKING_UPDATE", "SLOT_LOCKED", "SLOT_UNLOCKED"].includes(msg.type)) {
-                        const matchBranch = String(msg.branchId) === String(selectedBranchId);
-                        const matchDate = selectedDate && msg.date === (typeof selectedDate.format === "function" ? selectedDate.format("YYYY-MM-DD") : String(selectedDate));
-                        const matchStaff = !selectedStaff || !msg.staffId || String(msg.staffId) === String(selectedStaff.id);
+                        // Dùng refs để đọc giá trị hiện tại (tránh stale closure)
+                        const curBranchId = selectedBranchIdRef.current;
+                        const curDate = selectedDateRef.current;
+                        const curStaff = selectedStaffRef.current;
+
+                        const matchBranch = String(msg.branchId) === String(curBranchId);
+                        const matchDate = !curDate || msg.date === (typeof curDate.format === "function" ? curDate.format("YYYY-MM-DD") : String(curDate));
+                        // Nếu user chưa chọn thợ -> nhận mọi update của bất kỳ thợ nào trong chi nhánh
+                        const matchStaff = !curStaff || !msg.staffId || String(msg.staffId) === String(curStaff.id || curStaff.userId);
 
                         if (matchBranch && matchDate && matchStaff) {
                             setRefreshCounter(prev => prev + 1);
@@ -225,7 +249,8 @@ export default function BookingPage() {
             }
             if (reconnectTimer) clearTimeout(reconnectTimer);
         };
-    }, [selectedBranchId, selectedDate, selectedStaff]);
+    // ⚠️ Chỉ reconnect khi branchId thay đổi — date/staff dùng refs để tránh reconnect liên tục
+    }, [selectedBranchId]);
 
     // 1. Tải danh sách Salon khi vào trang
     useEffect(() => {
@@ -427,6 +452,7 @@ export default function BookingPage() {
     const handleSelectSlot = async (time) => {
         if (!time) return;
         const normalizedTime = time.length === 5 ? `${time}:00` : time;
+        // Nếu slot đang chọn lại đúng slot cũ thì bỏ qua
         if (selectedTime === time && lockedSlotKey) return;
 
         const dateStr = typeof selectedDate.format === "function" ? selectedDate.format("YYYY-MM-DD") : String(selectedDate);
@@ -434,6 +460,14 @@ export default function BookingPage() {
             message.warning("Vui lòng chọn ngày trước khi chọn giờ.");
             return;
         }
+
+        // ✅ Reset UI ngay lập tức khi user chọn slot mới (trước khi API trả về)
+        // Dừng countdown cũ và bỏ trạng thái selected của slot cũ ngay tức thì
+        const prevSlotKey = lockedSlotKey;
+        setSelectedTime(null);
+        setLockedSlotKey(null);
+        setLockExpiresAt(null);
+        setCountdownText("");
 
         try {
             const { duration: totalDuration } = getBookingSummary();
@@ -443,7 +477,8 @@ export default function BookingPage() {
                 bookingDate: dateStr,
                 startTime: normalizedTime,
                 durationMinutes: totalDuration || 30,
-                previousSlotKey: lockedSlotKey || null
+                // Backend sẽ tự động unlock slot cũ khi nhận previousSlotKey (atomic unlock + lock)
+                previousSlotKey: prevSlotKey || null
             };
             if (bookingType === "service") {
                 payload.serviceIds = selectedServices.map(s => s.id);
@@ -452,6 +487,7 @@ export default function BookingPage() {
             }
 
             const res = await lockSlotApi(payload);
+            // ✅ Cập nhật state với thông tin slot mới được lock thành công
             setLockedSlotKey(res.slotKey);
             setLockExpiresAt(Date.now() + (res.ttlSeconds || 300) * 1000);
             setSelectedTime(time);
@@ -463,7 +499,12 @@ export default function BookingPage() {
                     setSelectedStaff(matchedStaff);
                 }
             }
+
+            // ✅ Trigger refresh để đồng bộ trạng thái slots ngay sau khi lock thành công
+            setRefreshCounter(prev => prev + 1);
         } catch (error) {
+            // ✅ Nếu lock thất bại, không khôi phục slot cũ (đã được unlock ngay trên UI)
+            // Trigger refresh để hiển thị trạng thái slots mới nhất từ server
             if (error.response?.status === 409) {
                 message.error("Khung giờ này vừa có khách khác giữ chỗ. Vui lòng chọn khung giờ khác!");
             } else {
