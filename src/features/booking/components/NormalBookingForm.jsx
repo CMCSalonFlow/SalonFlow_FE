@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { DatePicker, Divider, Spin, Card, Space, Avatar, Row, Col, Typography } from "antd";
 import { SmileOutlined, CalendarOutlined, InfoCircleOutlined, UserOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -17,8 +18,29 @@ export default function NormalBookingForm({
     selectedBundle = null,
     bookingType = "service",
     selectedTime = null,
-    setSelectedTime = null
+    setSelectedTime = null,
+    staffList = []
 }) {
+    // Xác định dịch vụ chính trong danh sách dịch vụ lẻ đang chọn (giá cao nhất / thời lượng dài nhất)
+    const primaryService = useMemo(() => {
+        if (!selectedServices || selectedServices.length === 0) return null;
+        const sorted = [...selectedServices].sort((a, b) => {
+            const priceDiff = Number(b.price || 0) - Number(a.price || 0);
+            if (priceDiff !== 0) return priceDiff;
+            return Number(b.durationMinutes || 0) - Number(a.durationMinutes || 0);
+        });
+        return sorted[0];
+    }, [selectedServices]);
+
+    // Kiểm tra xem chi nhánh có thợ nào làm được TẤT CẢ các dịch vụ lẻ đã chọn không
+    const hasAllRoundStaff = useMemo(() => {
+        if (bookingType !== "service" || selectedServices.length <= 1 || !staffList || staffList.length === 0) return true;
+        return staffList.some(staff => {
+            const allowedIds = (staff.services || []).map(s => s.id);
+            if (allowedIds.length === 0) return true; // Thợ đa năng làm được tất cả
+            return selectedServices.every(s => allowedIds.includes(s.id));
+        });
+    }, [bookingType, selectedServices, staffList]);
     const isDateDisabled = (current) => {
         if (!current) return false;
         // 1. Vô hiệu hóa tất cả các ngày trong quá khứ trước ngày hôm nay
@@ -95,6 +117,34 @@ export default function NormalBookingForm({
                 </div>
             ) : (
                 <div>
+                    {/* CẢNH BÁO THÔNG MINH KHI KHÔNG CÓ THỢ NÀO LÀM ĐƯỢC TẤT CẢ DỊCH VỤ (HƯỚNG B) */}
+                    {bookingType === "service" && !hasAllRoundStaff && primaryService && (
+                        <div style={{
+                            marginBottom: 20,
+                            padding: "14px 18px",
+                            backgroundColor: "#fff7e6",
+                            border: "1px solid #ffd591",
+                            borderRadius: 12,
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 12,
+                            boxShadow: "0 2px 8px rgba(250, 140, 22, 0.08)"
+                        }}>
+                            <InfoCircleOutlined style={{ color: "#fa8c16", fontSize: 20, marginTop: 2, flexShrink: 0 }} />
+                            <div>
+                                <div style={{ fontWeight: 700, color: "#d46b08", fontSize: 14 }}>
+                                    Gợi ý sắp xếp Thợ chính (Smart Scheduling)
+                                </div>
+                                <div style={{ color: "#8c6b00", fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
+                                    Bạn đang chọn các dịch vụ thuộc nhiều nhóm chuyên môn khác nhau (như Tóc & Móng). Hệ thống sẽ chọn <b>Thợ chính</b> theo dịch vụ <b>[{primaryService.name}]</b>, các dịch vụ còn lại sẽ được phối hợp thực hiện tại salon.
+                                </div>
+                                <div style={{ color: "#ad6800", fontSize: 12, marginTop: 4, fontStyle: "italic" }}>
+                                    💡 <i>Khuyên bạn nên tách làm 2 lịch hẹn để được phục vụ bởi thợ chuyên biệt cho từng dịch vụ.</i>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <label style={{ display: "block", marginBottom: 12, fontWeight: 600 }}>Chọn Nhân viên thực hiện</label>
                     <Row gutter={[16, 16]} style={{ display: "flex", flexWrap: "wrap" }}>
                         {/* Thẻ chọn "Bất kỳ ai" */}
