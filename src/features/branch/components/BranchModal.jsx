@@ -383,7 +383,7 @@ export default function BranchModal({
             console.error("Form validation failed:", errorInfo);
             if (errorInfo?.errorFields?.length > 0) {
                 const firstErrorFieldName = errorInfo.errorFields[0].name[0];
-                if (["name", "phone", "email", "address"].includes(firstErrorFieldName)) {
+                if (["name", "phone", "address"].includes(firstErrorFieldName)) {
                     setActiveTab("general");
                 } else if (["latitude", "longitude"].includes(firstErrorFieldName)) {
                     setActiveTab("location");
@@ -424,19 +424,6 @@ export default function BranchModal({
                         <Form.Item
                             label="Số điện thoại"
                             name="phone"
-                        >
-                            <Input size="large" />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Email"
-                            name="email"
-                            rules={[
-                                {
-                                    type: "email",
-                                    message: "Email không hợp lệ"
-                                }
-                            ]}
                         >
                             <Input size="large" />
                         </Form.Item>

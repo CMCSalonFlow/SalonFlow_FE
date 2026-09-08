@@ -39,12 +39,6 @@ export default function BranchTable({
             width: 130
         },
         {
-            title: "Email",
-            dataIndex: "email",
-            key: "email",
-            width: 180
-        },
-        {
             title: "Trạng thái",
             dataIndex: "isActive",
             width: 120,
