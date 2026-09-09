@@ -19,9 +19,7 @@ import {
     Tag,
     Typography,
     message,
-    Grid,
-    Segmented,
-    Pagination
+    Grid
 } from "antd";
 import {
     CheckCircleOutlined,
@@ -38,9 +36,7 @@ import {
     QrcodeOutlined,
     CameraOutlined,
     LinkOutlined,
-    DollarOutlined,
-    AppstoreOutlined,
-    TableOutlined
+    DollarOutlined
 } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
@@ -410,9 +406,6 @@ export default function OwnerBookingWorkflowPage() {
     const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
     const [checkoutBooking, setCheckoutBooking] = useState(null);
     const [actionLoadingKey, setActionLoadingKey] = useState("");
-    const [viewMode, setViewMode] = useState(() => (window.innerWidth < 768 ? "card" : "table"));
-    const [cardPage, setCardPage] = useState(1);
-    const cardPageSize = 10;
 
     const selectedBranch = useMemo(
         () => branches.find((branch) => String(branch.id) === String(branchId)),
@@ -525,15 +518,6 @@ export default function OwnerBookingWorkflowPage() {
             })
             .sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
     }, [bookings, searchText, statusFilter, dateRange]);
-
-    const paginatedBookings = useMemo(() => {
-        const start = (cardPage - 1) * cardPageSize;
-        return filteredBookings.slice(start, start + cardPageSize);
-    }, [filteredBookings, cardPage]);
-
-    useEffect(() => {
-        setCardPage(1);
-    }, [searchText, statusFilter, dateRange]);
 
     const summary = useMemo(() => {
         const total = bookings.length;
@@ -695,7 +679,7 @@ export default function OwnerBookingWorkflowPage() {
         {
             title: "Mã",
             dataIndex: "id",
-            width: 80,
+            width: screens.xs ? 65 : 85,
             sorter: (a, b) => Number(a?.id || 0) - Number(b?.id || 0),
             render: (value) => (
                 <Text strong style={{ color: "#1677ff" }}>
@@ -791,17 +775,27 @@ export default function OwnerBookingWorkflowPage() {
         },
         {
             title: "Thao tác",
-            width: screens.xs ? 150 : 170,
-            fixed: screens.xs ? false : "right",
+            width: screens.xs ? 120 : 175,
+            fixed: "right",
             render: (_, record) => {
                 const workflowAction = getWorkflowAction(record.status);
                 const isBusy = actionLoadingKey === `${record.id}-${workflowAction?.key}`;
 
                 return (
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                    <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: screens.xs ? 4 : 6,
+                        whiteSpace: "nowrap"
+                    }}>
                         <Button
                             size="small"
                             onClick={() => { setSelectedBooking(record); setDetailOpen(true); }}
+                            style={{
+                                fontSize: screens.xs ? 11 : 12,
+                                padding: screens.xs ? "0 5px" : "0 7px",
+                                height: screens.xs ? 24 : 28
+                            }}
                         >
                             Chi tiết
                         </Button>
@@ -812,6 +806,9 @@ export default function OwnerBookingWorkflowPage() {
                                 icon={isBusy ? <LoadingOutlined /> : workflowAction.icon}
                                 loading={isBusy}
                                 style={{
+                                    fontSize: screens.xs ? 11 : 12,
+                                    padding: screens.xs ? "0 5px" : "0 8px",
+                                    height: screens.xs ? 24 : 28,
                                     backgroundColor: workflowAction.bgColor,
                                     borderColor: workflowAction.borderColor,
                                     color: workflowAction.textColor
@@ -927,7 +924,7 @@ export default function OwnerBookingWorkflowPage() {
 
             <Card
                 style={{ borderRadius: 12 }}
-                bodyStyle={{ padding: screens.xs ? "10px 8px" : 16 }}
+                bodyStyle={{ padding: screens.xs ? "8px 4px" : 16 }}
                 title={
                     <Space size={6}>
                         <ShoppingOutlined />
@@ -935,163 +932,32 @@ export default function OwnerBookingWorkflowPage() {
                     </Space>
                 }
                 extra={
-                    <Space size={screens.xs ? 6 : 12}>
-                        <Segmented
-                            value={viewMode}
-                            onChange={setViewMode}
-                            size={screens.xs ? "small" : "middle"}
-                            options={[
-                                { value: "card", icon: <AppstoreOutlined />, label: screens.xs ? undefined : "Dạng thẻ" },
-                                { value: "table", icon: <TableOutlined />, label: screens.xs ? undefined : "Dạng bảng" }
-                            ]}
-                        />
-                        <Text type="secondary" style={{ fontSize: screens.xs ? 11 : 13 }}>
-                            {filteredBookings.length} / {bookings.length}
-                        </Text>
-                    </Space>
+                    <Text type="secondary" style={{ fontSize: screens.xs ? 12 : 14 }}>
+                        {filteredBookings.length} / {bookings.length} booking
+                    </Text>
                 }
             >
-                {viewMode === "card" ? (
-                    <div>
-                        {filteredBookings.length === 0 ? (
-                            <Empty description="Không có booking phù hợp với bộ lọc hiện tại." />
-                        ) : (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                                {paginatedBookings.map((record) => {
-                                    const workflowAction = getWorkflowAction(record.status);
-                                    const isBusy = actionLoadingKey === `${record.id}-${workflowAction?.key}`;
-                                    const meta = STATUS_META[record.status] || { label: record.status || "-", color: "default" };
-                                    const pred = record.noShowPrediction;
-
-                                    return (
-                                        <Card
-                                            key={record.id}
-                                            size="small"
-                                            style={{
-                                                borderRadius: 10,
-                                                border: "1px solid #f0f0f0",
-                                                boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
-                                            }}
-                                            bodyStyle={{ padding: "10px 12px" }}
-                                        >
-                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                                <Space size={6}>
-                                                    <Text strong style={{ color: "#1677ff", fontSize: 14 }}>
-                                                        #{record.id}
-                                                    </Text>
-                                                    <Tag color={meta.color} style={{ margin: 0, fontSize: 11, padding: "0 6px", borderRadius: 8 }}>
-                                                        {meta.label}
-                                                    </Tag>
-                                                    {pred && (
-                                                        <NoShowWarningBadge
-                                                            probabilityPercentage={pred.probabilityPercentage}
-                                                            riskLevel={pred.riskLevel}
-                                                            explanation={pred.explanation}
-                                                            features={pred.features}
-                                                            bookingId={record.id}
-                                                            smsSent={pred.smsSent}
-                                                        />
-                                                    )}
-                                                </Space>
-                                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                                    <ClockCircleOutlined style={{ marginRight: 4 }} />
-                                                    {formatTime(record.startTime)} • {formatDate(record.bookingDate)}
-                                                </Text>
-                                            </div>
-
-                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                                                <div>
-                                                    <Text strong style={{ fontSize: 13, display: "block" }}>
-                                                        <UserOutlined style={{ marginRight: 4, color: "#8c8c8c" }} />
-                                                        {record.customerName || record.customer?.name || "Khách lẻ"}
-                                                        {record.customerPhone && (
-                                                            <span style={{ color: "#8c8c8c", fontWeight: 400, marginLeft: 6, fontSize: 12 }}>
-                                                                ({record.customerPhone})
-                                                            </span>
-                                                        )}
-                                                    </Text>
-                                                    <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                                                        {record.assignedStaffName || record.staffName ? (
-                                                            <span><TeamOutlined style={{ marginRight: 4 }} />{record.assignedStaffName || record.staffName} • </span>
-                                                        ) : null}
-                                                        {Array.isArray(record.items) && record.items.length > 0
-                                                            ? record.items.map(it => it.serviceName || it.bundleName).filter(Boolean).join(", ")
-                                                            : "Chưa có dịch vụ"}
-                                                    </div>
-                                                </div>
-                                                <Text strong style={{ color: "#389e0d", fontSize: 13, whiteSpace: "nowrap", marginLeft: 8 }}>
-                                                    {formatCurrency(record.totalPrice || 0)} đ
-                                                </Text>
-                                            </div>
-
-                                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, paddingTop: 6, borderTop: "1px dashed #f0f0f0" }}>
-                                                <Button
-                                                    size="small"
-                                                    onClick={() => { setSelectedBooking(record); setDetailOpen(true); }}
-                                                    style={{ fontSize: 12 }}
-                                                >
-                                                    Chi tiết
-                                                </Button>
-                                                {workflowAction && (
-                                                    <Button
-                                                        size="small"
-                                                        type={workflowAction.type}
-                                                        icon={isBusy ? <LoadingOutlined /> : workflowAction.icon}
-                                                        loading={isBusy}
-                                                        style={{
-                                                            fontSize: 12,
-                                                            backgroundColor: workflowAction.bgColor,
-                                                            borderColor: workflowAction.borderColor,
-                                                            color: workflowAction.textColor
-                                                        }}
-                                                        onClick={() => runWorkflowAction(record, workflowAction.key)}
-                                                    >
-                                                        {workflowAction.label}
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </Card>
-                                    );
-                                })}
-
-                                {filteredBookings.length > cardPageSize && (
-                                    <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
-                                        <Pagination
-                                            size="small"
-                                            current={cardPage}
-                                            pageSize={cardPageSize}
-                                            total={filteredBookings.length}
-                                            onChange={setCardPage}
-                                            simple
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <Table
-                        size={screens.xs ? "small" : "middle"}
-                        rowKey="id"
-                        columns={columns}
-                        dataSource={filteredBookings}
-                        loading={loadingBookings}
-                        pagination={{
-                            pageSize: 10,
-                            showSizeChanger: !screens.xs,
-                            simple: screens.xs,
-                            pageSizeOptions: ["10", "20", "50"]
-                        }}
-                        scroll={{ x: 1180 }}
-                        locale={{
-                            emptyText: (
-                                <Empty
-                                    description="Không có booking phù hợp với bộ lọc hiện tại."
-                                />
-                            )
-                        }}
-                    />
-                )}
+                <Table
+                    size={screens.xs ? "small" : "middle"}
+                    rowKey="id"
+                    columns={columns}
+                    dataSource={filteredBookings}
+                    loading={loadingBookings}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: !screens.xs,
+                        simple: screens.xs,
+                        pageSizeOptions: ["10", "20", "50"]
+                    }}
+                    scroll={{ x: 1180 }}
+                    locale={{
+                        emptyText: (
+                            <Empty
+                                description="Không có booking phù hợp với bộ lọc hiện tại."
+                            />
+                        )
+                    }}
+                />
             </Card>
 
             <Modal
