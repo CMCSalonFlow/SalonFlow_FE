@@ -19,7 +19,9 @@ import {
     Tag,
     Typography,
     message,
-    Grid
+    Grid,
+    Segmented,
+    Pagination
 } from "antd";
 import {
     CheckCircleOutlined,
@@ -36,7 +38,9 @@ import {
     QrcodeOutlined,
     CameraOutlined,
     LinkOutlined,
-    DollarOutlined
+    DollarOutlined,
+    AppstoreOutlined,
+    TableOutlined
 } from "@ant-design/icons";
 import { getMyBranchesApi } from "@/features/branch/api/branchApi";
 import {
@@ -102,15 +106,51 @@ const buildSearchText = (booking) => [
 
 const getWorkflowAction = (status) => {
     if (status === "PENDING") {
-        return { key: "confirm", label: ACTION_TEXT.confirm, color: "blue", icon: <CheckOutlined /> };
+        return {
+            key: "confirm",
+            label: "Xác nhận",
+            bgColor: "#1677ff",
+            borderColor: "#1677ff",
+            textColor: "#ffffff",
+            icon: <CheckOutlined />,
+            type: "primary"
+        };
     }
 
     if (status === "CONFIRMED") {
-        return { key: "checkin", label: ACTION_TEXT.checkin, color: "gold", icon: <QrcodeOutlined /> };
+        return {
+            key: "manual_checkin",
+            label: "Check-in",
+            bgColor: "#13c2c2",
+            borderColor: "#13c2c2",
+            textColor: "#ffffff",
+            icon: <CheckCircleOutlined />,
+            type: "primary"
+        };
     }
 
     if (status === "CHECKED_IN") {
-        return { key: "complete", label: ACTION_TEXT.complete, color: "green", icon: <DollarOutlined /> };
+        return {
+            key: "complete",
+            label: "Thanh toán",
+            bgColor: "#52c41a",
+            borderColor: "#52c41a",
+            textColor: "#ffffff",
+            icon: <DollarOutlined />,
+            type: "primary"
+        };
+    }
+
+    if (status === "COMPLETED") {
+        return {
+            key: "view_invoice",
+            label: "Hóa đơn",
+            bgColor: "#ffffff",
+            borderColor: "#52c41a",
+            textColor: "#52c41a",
+            icon: <DollarOutlined />,
+            type: "default"
+        };
     }
 
     return null;
@@ -370,6 +410,9 @@ export default function OwnerBookingWorkflowPage() {
     const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
     const [checkoutBooking, setCheckoutBooking] = useState(null);
     const [actionLoadingKey, setActionLoadingKey] = useState("");
+    const [viewMode, setViewMode] = useState(() => (window.innerWidth < 768 ? "card" : "table"));
+    const [cardPage, setCardPage] = useState(1);
+    const cardPageSize = 10;
 
     const selectedBranch = useMemo(
         () => branches.find((branch) => String(branch.id) === String(branchId)),
@@ -483,6 +526,15 @@ export default function OwnerBookingWorkflowPage() {
             .sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
     }, [bookings, searchText, statusFilter, dateRange]);
 
+    const paginatedBookings = useMemo(() => {
+        const start = (cardPage - 1) * cardPageSize;
+        return filteredBookings.slice(start, start + cardPageSize);
+    }, [filteredBookings, cardPage]);
+
+    useEffect(() => {
+        setCardPage(1);
+    }, [searchText, statusFilter, dateRange]);
+
     const summary = useMemo(() => {
         const total = bookings.length;
         const confirmed = bookings.filter((booking) => booking.status === "CONFIRMED").length;
@@ -564,6 +616,28 @@ export default function OwnerBookingWorkflowPage() {
             return;
         }
 
+        if (actionKey === "view_invoice") {
+            if (booking?.invoiceUrl) {
+                (async () => {
+                    try {
+                        const url = await getInvoiceUrl(booking.invoiceUrl);
+                        if (url) {
+                            window.open(url, "_blank");
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("Lỗi lấy hóa đơn PDF:", e);
+                    }
+                    setCheckoutBooking(booking);
+                    setCheckoutModalOpen(true);
+                })();
+                return;
+            }
+            setCheckoutBooking(booking);
+            setCheckoutModalOpen(true);
+            return;
+        }
+
         const actionMap = {
             confirm: {
                 title: "Xác nhận lịch hẹn",
@@ -619,11 +693,11 @@ export default function OwnerBookingWorkflowPage() {
 
     const columns = [
         {
-            title: "Mã booking",
+            title: "Mã",
             dataIndex: "id",
-            width: 110,
+            width: 80,
             sorter: (a, b) => Number(a?.id || 0) - Number(b?.id || 0),
-            render: (value, record) => (
+            render: (value) => (
                 <Text strong style={{ color: "#1677ff" }}>
                     #{value}
                 </Text>
@@ -631,13 +705,13 @@ export default function OwnerBookingWorkflowPage() {
         },
         {
             title: "Khách hàng",
-            width: 220,
+            width: 190,
             render: (_, record) => {
                 const pred = record.noShowPrediction;
                 return (
                     <Space direction="vertical" size={2}>
-                        <Space>
-                            <UserOutlined />
+                        <Space size={4}>
+                            <UserOutlined style={{ color: "#8c8c8c" }} />
                             <Text strong>{record.customerName || record.customer?.name || "Khách hàng"}</Text>
                         </Space>
                         <Text type="secondary" style={{ fontSize: 12 }}>
@@ -659,6 +733,7 @@ export default function OwnerBookingWorkflowPage() {
         },
         {
             title: "Dịch vụ / Combo",
+            width: 200,
             render: (_, record) => {
                 const items = Array.isArray(record.items) ? record.items : [];
 
@@ -667,9 +742,9 @@ export default function OwnerBookingWorkflowPage() {
                 }
 
                 return (
-                    <Space wrap size={[0, 8]}>
+                    <Space wrap size={[0, 4]}>
                         {items.map((item, idx) => (
-                            <Tag color="blue" key={item.id || `${record.id}-${idx}`}>
+                            <Tag color="blue" key={item.id || `${record.id}-${idx}`} style={{ margin: "2px 4px 2px 0" }}>
                                 {item.serviceName || item.bundleName || "Dịch vụ"}
                             </Tag>
                         ))}
@@ -679,17 +754,17 @@ export default function OwnerBookingWorkflowPage() {
         },
         {
             title: "Nhân viên",
-            width: 180,
+            width: 150,
             render: (_, record) => (
-                <Space>
-                    <TeamOutlined />
+                <Space size={4}>
+                    <TeamOutlined style={{ color: "#8c8c8c" }} />
                     <Text>{record.assignedStaffName || record.staffName || "Tự động phân bổ"}</Text>
                 </Space>
             )
         },
         {
             title: "Giờ hẹn",
-            width: 180,
+            width: 150,
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
                     <Text>{formatTime(record.startTime)} - {formatTime(record.endTime)}</Text>
@@ -699,7 +774,7 @@ export default function OwnerBookingWorkflowPage() {
         },
         {
             title: "Tổng tiền",
-            width: 150,
+            width: 120,
             render: (_, record) => (
                 <Text strong style={{ color: "#389e0d" }}>
                     {formatCurrency(record.totalPrice || 0)} đ
@@ -708,7 +783,7 @@ export default function OwnerBookingWorkflowPage() {
         },
         {
             title: "Trạng thái",
-            width: 150,
+            width: 110,
             render: (_, record) => {
                 const meta = STATUS_META[record.status] || { label: record.status || "-", color: "default" };
                 return <Tag color={meta.color}>{meta.label}</Tag>;
@@ -716,70 +791,37 @@ export default function OwnerBookingWorkflowPage() {
         },
         {
             title: "Thao tác",
-            width: 240,
-            fixed: "right",
+            width: screens.xs ? 150 : 170,
+            fixed: screens.xs ? false : "right",
             render: (_, record) => {
                 const workflowAction = getWorkflowAction(record.status);
                 const isBusy = actionLoadingKey === `${record.id}-${workflowAction?.key}`;
 
                 return (
-                    <Space wrap>
-                        <Button size="small" onClick={() => { setSelectedBooking(record); setDetailOpen(true); }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                        <Button
+                            size="small"
+                            onClick={() => { setSelectedBooking(record); setDetailOpen(true); }}
+                        >
                             Chi tiết
                         </Button>
                         {workflowAction && (
                             <Button
                                 size="small"
-                                type="primary"
+                                type={workflowAction.type}
                                 icon={isBusy ? <LoadingOutlined /> : workflowAction.icon}
                                 loading={isBusy}
                                 style={{
-                                    backgroundColor: workflowAction.color === "green" ? "#52c41a" : (workflowAction.color === "gold" ? "#fa8c16" : undefined),
-                                    borderColor: workflowAction.color === "green" ? "#52c41a" : (workflowAction.color === "gold" ? "#fa8c16" : undefined)
+                                    backgroundColor: workflowAction.bgColor,
+                                    borderColor: workflowAction.borderColor,
+                                    color: workflowAction.textColor
                                 }}
                                 onClick={() => runWorkflowAction(record, workflowAction.key)}
                             >
                                 {workflowAction.label}
                             </Button>
                         )}
-                        {record.status === "CONFIRMED" && (
-                            <Button
-                                size="small"
-                                type="primary"
-                                icon={actionLoadingKey === `${record.id}-manual_checkin` ? <LoadingOutlined /> : <CheckCircleOutlined />}
-                                loading={actionLoadingKey === `${record.id}-manual_checkin`}
-                                style={{ backgroundColor: "#13c2c2", borderColor: "#13c2c2" }}
-                                onClick={() => runWorkflowAction(record, "manual_checkin")}
-                            >
-                                Check-in Thủ công
-                            </Button>
-                        )}
-                        {record.status === "COMPLETED" && (
-                                <Button
-                                    size="small"
-                                    type="default"
-                                    icon={<DollarOutlined />}
-                                    style={{ borderColor: "#52c41a", color: "#52c41a" }}
-                                    onClick={async () => {
-                                        if (record?.invoiceUrl) {
-                                            try {
-                                                const url = await getInvoiceUrl(record.invoiceUrl);
-                                                if (url) {
-                                                    window.open(url, "_blank");
-                                                    return;
-                                                }
-                                            } catch (e) {
-                                                console.error("Lỗi lấy hóa đơn PDF:", e);
-                                            }
-                                        }
-                                        setCheckoutBooking(record);
-                                        setCheckoutModalOpen(true);
-                                    }}
-                                >
-                                    Xem hóa đơn
-                                </Button>
-                            )}
-                    </Space>
+                    </div>
                 );
             }
         }
@@ -884,38 +926,172 @@ export default function OwnerBookingWorkflowPage() {
             </Card>
 
             <Card
+                style={{ borderRadius: 12 }}
+                bodyStyle={{ padding: screens.xs ? "10px 8px" : 16 }}
                 title={
-                    <Space>
+                    <Space size={6}>
                         <ShoppingOutlined />
                         <span>Danh sách booking</span>
                     </Space>
                 }
                 extra={
-                    <Text type="secondary">
-                        {filteredBookings.length} / {bookings.length} booking
-                    </Text>
+                    <Space size={screens.xs ? 6 : 12}>
+                        <Segmented
+                            value={viewMode}
+                            onChange={setViewMode}
+                            size={screens.xs ? "small" : "middle"}
+                            options={[
+                                { value: "card", icon: <AppstoreOutlined />, label: screens.xs ? undefined : "Dạng thẻ" },
+                                { value: "table", icon: <TableOutlined />, label: screens.xs ? undefined : "Dạng bảng" }
+                            ]}
+                        />
+                        <Text type="secondary" style={{ fontSize: screens.xs ? 11 : 13 }}>
+                            {filteredBookings.length} / {bookings.length}
+                        </Text>
+                    </Space>
                 }
             >
-                <Table
-                    rowKey="id"
-                    columns={columns}
-                    dataSource={filteredBookings}
-                    loading={loadingBookings}
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: !screens.xs,
-                        simple: screens.xs,
-                        pageSizeOptions: ["10", "20", "50"]
-                    }}
-                    scroll={{ x: 1450 }}
-                    locale={{
-                        emptyText: (
-                            <Empty
-                                description="Không có booking phù hợp với bộ lọc hiện tại."
-                            />
-                        )
-                    }}
-                />
+                {viewMode === "card" ? (
+                    <div>
+                        {filteredBookings.length === 0 ? (
+                            <Empty description="Không có booking phù hợp với bộ lọc hiện tại." />
+                        ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                {paginatedBookings.map((record) => {
+                                    const workflowAction = getWorkflowAction(record.status);
+                                    const isBusy = actionLoadingKey === `${record.id}-${workflowAction?.key}`;
+                                    const meta = STATUS_META[record.status] || { label: record.status || "-", color: "default" };
+                                    const pred = record.noShowPrediction;
+
+                                    return (
+                                        <Card
+                                            key={record.id}
+                                            size="small"
+                                            style={{
+                                                borderRadius: 10,
+                                                border: "1px solid #f0f0f0",
+                                                boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
+                                            }}
+                                            bodyStyle={{ padding: "10px 12px" }}
+                                        >
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                                <Space size={6}>
+                                                    <Text strong style={{ color: "#1677ff", fontSize: 14 }}>
+                                                        #{record.id}
+                                                    </Text>
+                                                    <Tag color={meta.color} style={{ margin: 0, fontSize: 11, padding: "0 6px", borderRadius: 8 }}>
+                                                        {meta.label}
+                                                    </Tag>
+                                                    {pred && (
+                                                        <NoShowWarningBadge
+                                                            probabilityPercentage={pred.probabilityPercentage}
+                                                            riskLevel={pred.riskLevel}
+                                                            explanation={pred.explanation}
+                                                            features={pred.features}
+                                                            bookingId={record.id}
+                                                            smsSent={pred.smsSent}
+                                                        />
+                                                    )}
+                                                </Space>
+                                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                                    <ClockCircleOutlined style={{ marginRight: 4 }} />
+                                                    {formatTime(record.startTime)} • {formatDate(record.bookingDate)}
+                                                </Text>
+                                            </div>
+
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                                                <div>
+                                                    <Text strong style={{ fontSize: 13, display: "block" }}>
+                                                        <UserOutlined style={{ marginRight: 4, color: "#8c8c8c" }} />
+                                                        {record.customerName || record.customer?.name || "Khách lẻ"}
+                                                        {record.customerPhone && (
+                                                            <span style={{ color: "#8c8c8c", fontWeight: 400, marginLeft: 6, fontSize: 12 }}>
+                                                                ({record.customerPhone})
+                                                            </span>
+                                                        )}
+                                                    </Text>
+                                                    <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                                                        {record.assignedStaffName || record.staffName ? (
+                                                            <span><TeamOutlined style={{ marginRight: 4 }} />{record.assignedStaffName || record.staffName} • </span>
+                                                        ) : null}
+                                                        {Array.isArray(record.items) && record.items.length > 0
+                                                            ? record.items.map(it => it.serviceName || it.bundleName).filter(Boolean).join(", ")
+                                                            : "Chưa có dịch vụ"}
+                                                    </div>
+                                                </div>
+                                                <Text strong style={{ color: "#389e0d", fontSize: 13, whiteSpace: "nowrap", marginLeft: 8 }}>
+                                                    {formatCurrency(record.totalPrice || 0)} đ
+                                                </Text>
+                                            </div>
+
+                                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, paddingTop: 6, borderTop: "1px dashed #f0f0f0" }}>
+                                                <Button
+                                                    size="small"
+                                                    onClick={() => { setSelectedBooking(record); setDetailOpen(true); }}
+                                                    style={{ fontSize: 12 }}
+                                                >
+                                                    Chi tiết
+                                                </Button>
+                                                {workflowAction && (
+                                                    <Button
+                                                        size="small"
+                                                        type={workflowAction.type}
+                                                        icon={isBusy ? <LoadingOutlined /> : workflowAction.icon}
+                                                        loading={isBusy}
+                                                        style={{
+                                                            fontSize: 12,
+                                                            backgroundColor: workflowAction.bgColor,
+                                                            borderColor: workflowAction.borderColor,
+                                                            color: workflowAction.textColor
+                                                        }}
+                                                        onClick={() => runWorkflowAction(record, workflowAction.key)}
+                                                    >
+                                                        {workflowAction.label}
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </Card>
+                                    );
+                                })}
+
+                                {filteredBookings.length > cardPageSize && (
+                                    <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
+                                        <Pagination
+                                            size="small"
+                                            current={cardPage}
+                                            pageSize={cardPageSize}
+                                            total={filteredBookings.length}
+                                            onChange={setCardPage}
+                                            simple
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <Table
+                        size={screens.xs ? "small" : "middle"}
+                        rowKey="id"
+                        columns={columns}
+                        dataSource={filteredBookings}
+                        loading={loadingBookings}
+                        pagination={{
+                            pageSize: 10,
+                            showSizeChanger: !screens.xs,
+                            simple: screens.xs,
+                            pageSizeOptions: ["10", "20", "50"]
+                        }}
+                        scroll={{ x: 1180 }}
+                        locale={{
+                            emptyText: (
+                                <Empty
+                                    description="Không có booking phù hợp với bộ lọc hiện tại."
+                                />
+                            )
+                        }}
+                    />
+                )}
             </Card>
 
             <Modal
@@ -939,12 +1115,13 @@ export default function OwnerBookingWorkflowPage() {
                     selectedBooking && getWorkflowAction(selectedBooking.status) ? (
                         <Button
                             key="workflow"
-                            type="primary"
+                            type={getWorkflowAction(selectedBooking.status)?.type || "primary"}
                             loading={actionLoadingKey === `${selectedBooking.id}-${getWorkflowAction(selectedBooking.status)?.key}`}
                             icon={getWorkflowAction(selectedBooking.status)?.icon}
                             style={{
-                                backgroundColor: getWorkflowAction(selectedBooking.status)?.color === "gold" ? "#fa8c16" : undefined,
-                                borderColor: getWorkflowAction(selectedBooking.status)?.color === "gold" ? "#fa8c16" : undefined
+                                backgroundColor: getWorkflowAction(selectedBooking.status)?.bgColor,
+                                borderColor: getWorkflowAction(selectedBooking.status)?.borderColor,
+                                color: getWorkflowAction(selectedBooking.status)?.textColor
                             }}
                             onClick={() => {
                                 const workflowAction = getWorkflowAction(selectedBooking.status);
@@ -955,19 +1132,7 @@ export default function OwnerBookingWorkflowPage() {
                         >
                             {getWorkflowAction(selectedBooking.status)?.label}
                         </Button>
-                    ) : null,
-                    selectedBooking?.status === "CONFIRMED" && (
-                        <Button
-                            key="manual_checkin"
-                            type="primary"
-                            loading={actionLoadingKey === `${selectedBooking.id}-manual_checkin`}
-                            icon={<CheckCircleOutlined />}
-                            style={{ backgroundColor: "#13c2c2", borderColor: "#13c2c2" }}
-                            onClick={() => runWorkflowAction(selectedBooking, "manual_checkin")}
-                        >
-                            Check-in Thủ công
-                        </Button>
-                    )
+                    ) : null
                 ]}
                 width={760}
             >
