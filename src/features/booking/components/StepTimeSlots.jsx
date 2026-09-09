@@ -90,7 +90,20 @@ export default function StepTimeSlots({
             }
 
             const res = await recommendSmartSlotsApi(payload);
-            const recs = Array.isArray(res) ? res : (res?.recommendations || []);
+            let recs = Array.isArray(res) ? res : (res?.recommendations || []);
+
+            // Lọc bỏ các slot đã qua nếu đặt lịch cho hôm nay
+            const isBookingToday = dateStr === dayjs().format("YYYY-MM-DD");
+            if (isBookingToday) {
+                const nowTimeString = dayjs().format("HH:mm:ss");
+                recs = recs.filter(rec => {
+                    if (!rec.startTime) return false;
+                    // startTime có thể là "HH:mm" hoặc "HH:mm:ss"
+                    const slotTime = rec.startTime.length === 5 ? rec.startTime + ":00" : rec.startTime;
+                    return slotTime > nowTimeString;
+                });
+            }
+
             setAiRecommendations(recs);
             setAiFetched(true);
 
@@ -157,7 +170,19 @@ export default function StepTimeSlots({
                             const badge = RANK_BADGES[index] || RANK_BADGES[2];
                             const timeStr = rec.startTime ? rec.startTime.substring(0, 5) : "";
                             const endTimeStr = rec.endTime ? rec.endTime.substring(0, 5) : "";
-                            
+
+                            // Kiểm tra slot AI có bị "đã qua" không (phòng trường hợp dữ liệu cũ)
+                            const isBookingToday = selectedDate && (
+                                typeof selectedDate.isSame === "function"
+                                    ? selectedDate.isSame(dayjs(), "day")
+                                    : String(selectedDate) === dayjs().format("YYYY-MM-DD")
+                            );
+                            const nowTimeString = dayjs().format("HH:mm:ss");
+                            const slotTimeFull = rec.startTime
+                                ? (rec.startTime.length === 5 ? rec.startTime + ":00" : rec.startTime)
+                                : "";
+                            const isRecPast = isBookingToday && slotTimeFull && slotTimeFull <= nowTimeString;
+
                             const isTimeMatched = selectedTime && (
                                 selectedTime === rec.startTime ||
                                 selectedTime === timeStr ||
@@ -165,20 +190,21 @@ export default function StepTimeSlots({
                                 selectedTime === (rec.startTime + ":00")
                             );
                             const isStaffMatched = !selectedStaff || (rec.staffId && Number(selectedStaff.id) === Number(rec.staffId));
-                            const isSelected = isTimeMatched && isStaffMatched;
+                            const isSelected = isTimeMatched && isStaffMatched && !isRecPast;
 
                             const staffName = rec.staffName || rec.assignedStaffName;
 
                             return (
                                 <div
                                     key={index}
-                                    onClick={() => handleSelectRecommendation(rec)}
+                                    onClick={() => !isRecPast && handleSelectRecommendation(rec)}
                                     style={{
                                         padding: "14px 16px",
                                         borderRadius: 12,
-                                        backgroundColor: isSelected ? "#f6ffed" : "#ffffff",
-                                        border: isSelected ? "2px solid #52c41a" : "1px solid #d9d9d9",
-                                        cursor: "pointer",
+                                        backgroundColor: isRecPast ? "#f5f5f5" : isSelected ? "#f6ffed" : "#ffffff",
+                                        border: isRecPast ? "1px solid #d9d9d9" : isSelected ? "2px solid #52c41a" : "1px solid #d9d9d9",
+                                        cursor: isRecPast ? "not-allowed" : "pointer",
+                                        opacity: isRecPast ? 0.5 : 1,
                                         transition: "all 0.25s ease",
                                         boxShadow: isSelected ? "0 4px 12px rgba(82, 196, 26, 0.2)" : "0 2px 6px rgba(0, 0, 0, 0.03)"
                                     }}
@@ -192,8 +218,10 @@ export default function StepTimeSlots({
                                         </span>
                                     </div>
 
-                                    <div style={{ fontSize: 20, fontWeight: 800, color: isSelected ? "#389e0d" : "#262626", marginBottom: 6 }}>
-                                        {timeStr} – {endTimeStr} {isSelected && <CheckCircleOutlined style={{ color: "#52c41a", fontSize: 18 }} />}
+                                    <div style={{ fontSize: 20, fontWeight: 800, color: isRecPast ? "#bfbfbf" : isSelected ? "#389e0d" : "#262626", marginBottom: 6 }}>
+                                        {timeStr} – {endTimeStr}
+                                        {isSelected && <CheckCircleOutlined style={{ color: "#52c41a", fontSize: 18 }} />}
+                                        {isRecPast && <span style={{ fontSize: 12, fontWeight: 500, color: "#8c8c8c", marginLeft: 8 }}>Đã qua</span>}
                                     </div>
 
                                     {staffName && (
