@@ -578,6 +578,7 @@ export default function GuestBookingPage() {
 
     // Lọc danh sách nhân viên có kỹ năng thực hiện dịch vụ và có làm việc trong ngày đã chọn
     // Đối với combo hoặc nhiều dịch vụ lẻ không có ai bao trọn: Áp dụng cơ chế Thợ chính (Primary Stylist)
+    const MANAGER_ROLES = ["MANAGER", "BRANCH_MANAGER", "SALON_OWNER", "SYSTEM_ADMIN"];
     const getQualifiedStaff = () => {
         const primaryServiceForMulti = !hasAllRoundStaffForServices ? getPrimaryService(selectedServices) : null;
         const primaryServiceId = bookingType === "bundle"
@@ -585,6 +586,9 @@ export default function GuestBookingPage() {
             : (primaryServiceForMulti ? primaryServiceForMulti.id : null);
 
         return staffList.filter(staff => {
+            // Loại bỏ quản lý / chủ salon khỏi danh sách thợ đặt lịch
+            if (staff.roleCode && MANAGER_ROLES.includes(staff.roleCode.toUpperCase())) return false;
+
             const allowedIds = (staff.services || []).map(s => s.id);
             // Nếu nhân viên chưa gán dịch vụ riêng -> Mặc định làm được tất cả dịch vụ
             if (allowedIds.length === 0) return true;
@@ -679,6 +683,19 @@ export default function GuestBookingPage() {
         setCurrentStep(currentStep - 1);
     };
 
+    // Xử lý click trực tiếp vào step đã hoàn thành để quay lại
+    const handleStepClick = (step) => {
+        if (step >= currentStep) return;
+        if (currentStep === 2 && lockedSlotKey) {
+            const clientId = getGuestClientId();
+            unlockSlotApi({ slotKey: lockedSlotKey, clientId }).catch(() => {});
+            setLockedSlotKey(null);
+            setLockExpiresAt(null);
+            setSelectedTime(null);
+        }
+        setCurrentStep(step);
+    };
+
     const handleConfirmBooking = async () => {
         if (!selectedTime) {
             message.warning("Vui lòng chọn giờ hẹn!");
@@ -771,10 +788,23 @@ export default function GuestBookingPage() {
                 direction="horizontal"
                 size={screens.xs ? "small" : "default"}
                 style={{ marginBottom: screens.xs ? 20 : 40 }}
+                onChange={handleStepClick}
                 items={[
-                    { title: screens.xs ? "Dịch vụ" : "Chọn dịch vụ", icon: <AppstoreOutlined /> },
-                    { title: screens.xs ? "Ngày & Thợ" : "Chọn nhân viên", icon: <TeamOutlined /> },
-                    { title: screens.xs ? "Giờ & Xong" : "Chọn giờ & hoàn tất", icon: <CalendarOutlined /> }
+                    {
+                        title: screens.xs ? "Dịch vụ" : "Chọn dịch vụ",
+                        icon: <AppstoreOutlined />,
+                        style: currentStep > 0 ? { cursor: "pointer" } : {}
+                    },
+                    {
+                        title: screens.xs ? "Ngày & Thợ" : "Chọn nhân viên",
+                        icon: <TeamOutlined />,
+                        style: currentStep > 1 ? { cursor: "pointer" } : {}
+                    },
+                    {
+                        title: screens.xs ? "Giờ & Xong" : "Chọn giờ & hoàn tất",
+                        icon: <CalendarOutlined />,
+                        style: { cursor: "default" }
+                    }
                 ]}
             />
 

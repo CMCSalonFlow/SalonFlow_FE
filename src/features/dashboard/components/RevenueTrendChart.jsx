@@ -28,16 +28,17 @@ export default function RevenueTrendChart({ timeline = [], period = 'daily', pea
 
     const isDaily = period === 'daily';
 
-    // Calculate chart bounds
-    const maxVal = Math.max(
+    // Calculate chart bounds with headroom so bars don't touch ceiling
+    const rawMaxVal = Math.max(
         ...timeline.flatMap((t) => [
             Number(t.currentRevenue || 0),
             Number(t.previousYearRevenue || 0)
         ]),
         100000
     );
+    const maxVal = rawMaxVal * 1.25;
 
-    const chartHeight = 220;
+    const chartHeight = 230;
     const itemMinWidth = 52; // Chiều rộng tối thiểu mỗi cột ngày (px)
     const isScrollable = timeline.length > 10;
     const chartContentWidth = isScrollable ? timeline.length * itemMinWidth : '100%';
@@ -162,14 +163,14 @@ export default function RevenueTrendChart({ timeline = [], period = 'daily', pea
                 )}
             </div>
 
-            {/* Scrollable Container Wrapper với Margin & Padding lề 24px thoải mái */}
+            {/* Scrollable Container Wrapper với Margin & Padding lề thoải mái */}
             <div
                 ref={scrollContainerRef}
                 style={{
                     width: '100%',
                     overflowX: 'auto',
                     overflowY: 'hidden',
-                    padding: '12px 16px 16px 16px',
+                    padding: '24px 16px 16px 16px',
                     scrollbarWidth: 'thin',
                     scrollbarColor: '#1890ff #f0f0f0'
                 }}
@@ -303,41 +304,52 @@ export default function RevenueTrendChart({ timeline = [], period = 'daily', pea
                         )}
 
                         {/* Smart Bounded Tooltip Overlay */}
-                        {hoveredPoint && (
-                            <div
-                                style={{
-                                    position: 'absolute',
-                                    bottom: `${chartHeight - hoveredPoint.currY + 14}px`,
-                                    left: `${(hoveredPoint.x / (typeof svgWidth === 'number' ? svgWidth : 700)) * 100}%`,
-                                    transform: getTooltipTransform(hoveredPoint.idx),
-                                    background: 'rgba(0, 0, 0, 0.92)',
-                                    color: '#fff',
-                                    fontSize: 12,
-                                    padding: '8px 12px',
-                                    borderRadius: 10,
-                                    whiteSpace: 'nowrap',
-                                    zIndex: 50,
-                                    pointerEvents: 'none',
-                                    boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
-                                    border: '1px solid rgba(255,255,255,0.15)'
-                                }}
-                            >
-                                <div style={{ fontWeight: 'bold', fontSize: 12, color: '#e6f7ff', marginBottom: 4 }}>
-                                    {hoveredPoint.item.label} {hoveredPoint.item.isPeakPeriod ? '👑 (Đỉnh)' : ''}
-                                </div>
-                                <div style={{ color: '#52c41a', fontWeight: 'bold' }}>
-                                    Kỳ này: {formatVND(hoveredPoint.currRev)}
-                                </div>
-                                <div style={{ color: '#bfbfbf', fontSize: 11 }}>
-                                    Năm ngoái: {formatVND(hoveredPoint.prevRev)}
-                                </div>
-                                {hoveredPoint.item.yoyGrowthRate !== null && (
-                                    <div style={{ fontSize: 11, marginTop: 2, color: hoveredPoint.item.yoyGrowthRate >= 0 ? '#73d13d' : '#ff7875' }}>
-                                        Tăng trưởng YoY: {hoveredPoint.item.yoyGrowthRate > 0 ? `+${hoveredPoint.item.yoyGrowthRate}%` : `${hoveredPoint.item.yoyGrowthRate}%`}
+                        {hoveredPoint && (() => {
+                            // Tọa độ đỉnh điểm/cột từ mép trên cùng (px)
+                            const pointTopY = isDaily
+                                ? chartHeight - 24 - ((hoveredPoint.currRev / maxVal) * (chartHeight - 24))
+                                : hoveredPoint.currY;
+
+                            // Chiều cao tooltip ~85px. Nếu đỉnh cột quá sát mép trên (< 95px) thì hiển thị bên dưới đỉnh cột để không bị khuất
+                            const isNearTop = pointTopY < 95;
+
+                            return (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: isNearTop ? `${pointTopY + 14}px` : undefined,
+                                        bottom: !isNearTop ? `${chartHeight - pointTopY + 14}px` : undefined,
+                                        left: `${(hoveredPoint.x / (typeof svgWidth === 'number' ? svgWidth : 700)) * 100}%`,
+                                        transform: getTooltipTransform(hoveredPoint.idx),
+                                        background: 'rgba(0, 0, 0, 0.92)',
+                                        color: '#fff',
+                                        fontSize: 12,
+                                        padding: '8px 12px',
+                                        borderRadius: 10,
+                                        whiteSpace: 'nowrap',
+                                        zIndex: 50,
+                                        pointerEvents: 'none',
+                                        boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+                                        border: '1px solid rgba(255,255,255,0.15)'
+                                    }}
+                                >
+                                    <div style={{ fontWeight: 'bold', fontSize: 12, color: '#e6f7ff', marginBottom: 4 }}>
+                                        {hoveredPoint.item.label} {hoveredPoint.item.isPeakPeriod ? '👑 (Đỉnh)' : ''}
                                     </div>
-                                )}
-                            </div>
-                        )}
+                                    <div style={{ color: '#52c41a', fontWeight: 'bold' }}>
+                                        Kỳ này: {formatVND(hoveredPoint.currRev)}
+                                    </div>
+                                    <div style={{ color: '#bfbfbf', fontSize: 11 }}>
+                                        Năm ngoái: {formatVND(hoveredPoint.prevRev)}
+                                    </div>
+                                    {hoveredPoint.item.yoyGrowthRate !== null && (
+                                        <div style={{ fontSize: 11, marginTop: 2, color: hoveredPoint.item.yoyGrowthRate >= 0 ? '#73d13d' : '#ff7875' }}>
+                                            Tăng trưởng YoY: {hoveredPoint.item.yoyGrowthRate > 0 ? `+${hoveredPoint.item.yoyGrowthRate}%` : `${hoveredPoint.item.yoyGrowthRate}%`}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {/* Full X-Axis Labels Grid (Rút gọn chỉ hiển thị Tuần XX) */}

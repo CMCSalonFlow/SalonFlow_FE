@@ -643,6 +643,7 @@ export default function BookingPage() {
 
     // Lọc danh sách nhân viên có đủ kỹ năng thực hiện các dịch vụ đã chọn và có lịch làm việc
     // Đối với combo hoặc nhiều dịch vụ lẻ không có ai bao trọn: Áp dụng cơ chế Thợ chính (Primary Stylist)
+    const MANAGER_ROLES = ["MANAGER", "BRANCH_MANAGER", "SALON_OWNER", "SYSTEM_ADMIN"];
     const getQualifiedStaff = () => {
         const primaryServiceForMulti = !hasAllRoundStaffForServices ? getPrimaryService(selectedServices) : null;
         const primaryServiceId = bookingType === "bundle"
@@ -650,6 +651,9 @@ export default function BookingPage() {
             : (primaryServiceForMulti ? primaryServiceForMulti.id : null);
 
         return staffList.filter(staff => {
+            // Loại bỏ quản lý / chủ salon khỏi danh sách thợ đặt lịch
+            if (staff.roleCode && MANAGER_ROLES.includes(staff.roleCode.toUpperCase())) return false;
+
             const allowedIds = (staff.services || []).map(s => s.id);
             // Nếu nhân viên chưa gán dịch vụ riêng -> Mặc định làm được tất cả dịch vụ
             if (allowedIds.length === 0) return true;
@@ -745,6 +749,21 @@ export default function BookingPage() {
         setCurrentStep(currentStep - 1);
     };
 
+    // Xử lý click trực tiếp vào step đã hoàn thành để quay lại
+    const handleStepClick = (step) => {
+        if (step >= currentStep) return; // Không cho nhảy về phía trước
+        if (step < currentStep) {
+            // Nếu đang ở step 2 (chọn giờ) và quay về bước trước -> giải phóng slot lock
+            if (currentStep === 2 && lockedSlotKey) {
+                unlockSlotApi({ slotKey: lockedSlotKey }).catch(() => {});
+                setLockedSlotKey(null);
+                setLockExpiresAt(null);
+                setSelectedTime(null);
+            }
+            setCurrentStep(step);
+        }
+    };
+
     // Gửi yêu cầu đặt lịch hẹn lên Backend
     const handleConfirmBooking = async () => {
         if (!customerPhone || !customerPhone.trim()) {
@@ -822,10 +841,23 @@ export default function BookingPage() {
                 direction="horizontal"
                 size={screens.xs ? "small" : "default"}
                 style={{ marginBottom: screens.xs ? 20 : 40 }}
+                onChange={handleStepClick}
                 items={[
-                    { title: screens.xs ? "Dịch vụ" : "Chọn dịch vụ", icon: <AppstoreOutlined /> },
-                    { title: screens.xs ? "Ngày & Thợ" : "Chọn ngày & nhân viên", icon: <TeamOutlined /> },
-                    { title: screens.xs ? "Giờ & Xong" : "Chọn giờ & hoàn tất", icon: <ClockCircleOutlined /> }
+                    {
+                        title: screens.xs ? "Dịch vụ" : "Chọn dịch vụ",
+                        icon: <AppstoreOutlined />,
+                        style: currentStep > 0 ? { cursor: "pointer" } : {}
+                    },
+                    {
+                        title: screens.xs ? "Ngày & Thợ" : "Chọn ngày & nhân viên",
+                        icon: <TeamOutlined />,
+                        style: currentStep > 1 ? { cursor: "pointer" } : {}
+                    },
+                    {
+                        title: screens.xs ? "Giờ & Xong" : "Chọn giờ & hoàn tất",
+                        icon: <ClockCircleOutlined />,
+                        style: { cursor: "default" }
+                    }
                 ]}
             />
 

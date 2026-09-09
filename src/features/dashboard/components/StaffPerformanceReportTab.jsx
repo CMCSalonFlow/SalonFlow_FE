@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, Row, Col, Typography, Button, Space, Tag, Spin, Alert, Table, Select, DatePicker, Avatar, Progress, Tooltip, Badge } from 'antd';
 import {
-  TrophyOutlined,
   CrownOutlined,
   WarningOutlined,
   StarFilled,
@@ -119,14 +118,11 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
       dataIndex: 'completedBookings',
       key: 'completedBookings',
       sorter: (a, b) => a.completedBookings - b.completedBookings,
-      render: (val, record) => (
-        <Space direction="vertical" size={2}>
-          <Text strong style={{ fontSize: 15, color: '#10b981' }}>
-            <CheckCircleOutlined style={{ marginRight: 6 }} />
-            {val} lịch
-          </Text>
-          <Tag color="green" style={{ fontSize: 11 }}>Hạng doanh số #{record.bookingRank}</Tag>
-        </Space>
+      render: (val) => (
+        <Text strong style={{ fontSize: 15, color: '#10b981' }}>
+          <CheckCircleOutlined style={{ marginRight: 6 }} />
+          {val} lịch
+        </Text>
       )
     },
     {
@@ -134,13 +130,10 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
       dataIndex: 'totalRevenue',
       key: 'totalRevenue',
       sorter: (a, b) => a.totalRevenue - b.totalRevenue,
-      render: (val, record) => (
-        <Space direction="vertical" size={2}>
-          <Text strong style={{ fontSize: 16, color: '#4f46e5' }}>
-            {Number(val || 0).toLocaleString('vi-VN')} đ
-          </Text>
-          <Tag color="purple" style={{ fontSize: 11 }}>Hạng doanh thu #{record.revenueRank}</Tag>
-        </Space>
+      render: (val) => (
+        <Text strong style={{ fontSize: 15, color: '#4f46e5' }}>
+          {Number(val || 0).toLocaleString('vi-VN')} đ
+        </Text>
       )
     },
     {
@@ -148,36 +141,29 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
       dataIndex: 'avgRating',
       key: 'avgRating',
       sorter: (a, b) => a.avgRating - b.avgRating,
-      render: (val, record) => {
-        const isLow = val < 3.5;
+      render: (val) => {
+        const numericVal = Number(val || 0);
+        const formattedRating = numericVal.toFixed(1);
+        const isLow = numericVal < 3.5;
         return (
-          <Space direction="vertical" size={2}>
-            <Space size={4}>
-              <StarFilled style={{ color: isLow ? '#ef4444' : '#f59e0b', fontSize: 16 }} />
-              <Text strong style={{ fontSize: 15, color: isLow ? '#ef4444' : '#1e293b' }}>
-                {val} / 5.0
-              </Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                ({record.totalReviewsCount} review)
-              </Text>
-            </Space>
-            <Tag color={isLow ? 'error' : 'warning'} style={{ fontSize: 11 }}>
-              Hạng rating #{record.ratingRank}
-            </Tag>
+          <Space size={6} align="center">
+            <StarFilled style={{ color: isLow ? '#ef4444' : '#f59e0b', fontSize: 16 }} />
+            <Text strong style={{ fontSize: 15, color: isLow ? '#ef4444' : '#1e293b' }}>
+              {formattedRating}/5
+            </Text>
           </Space>
         );
       }
     },
     {
-      title: 'Tỉ lệ Slot lấp đầy (Slot Full)',
+      title: 'Tỉ lệ Slot lấp đầy',
       dataIndex: 'slotOccupancyRate',
       key: 'slotOccupancyRate',
       sorter: (a, b) => a.slotOccupancyRate - b.slotOccupancyRate,
-      render: (rate, record) => (
+      render: (rate) => (
         <div style={{ width: 140 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+          <div style={{ marginBottom: 4 }}>
             <Text style={{ fontSize: 13, fontWeight: 600 }}>{rate}%</Text>
-            <Text type="secondary" style={{ fontSize: 11 }}>{record.bookedSlotsCount}/{record.totalAvailableSlots} slot</Text>
           </div>
           <Progress
             percent={rate}
@@ -196,19 +182,14 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
       <Card style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col>
-            <Space align="center" size="middle">
-              <div style={{ background: '#e0e7ff', padding: '10px 12px', borderRadius: 12, color: '#4f46e5' }}>
-                <TrophyOutlined style={{ fontSize: 24 }} />
-              </div>
-              <div>
-                <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
-                  Báo Cáo Hiệu Suất Nhân Viên
-                </Title>
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                  Theo dõi doanh thu, tổng lịch hẹn hoàn thành, rating đánh giá và tỉ lệ full slot làm việc
-                </Text>
-              </div>
-            </Space>
+            <div>
+              <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
+                Báo Cáo Hiệu Suất Nhân Viên
+              </Title>
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                Theo dõi doanh thu, tổng lịch hẹn hoàn thành, rating đánh giá và tỉ lệ full slot làm việc
+              </Text>
+            </div>
           </Col>
 
           <Col>
@@ -219,10 +200,10 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
                 style={{ width: 160, borderRadius: 8 }}
                 size="large"
               >
-                <Option value="this_month">📅 Tháng này</Option>
-                <Option value="last_month">🗓️ Tháng trước</Option>
-                <Option value="last_30_days">⏳ 30 ngày qua</Option>
-                <Option value="custom">🛠️ Tùy chọn ngày</Option>
+                <Option value="this_month">Tháng này</Option>
+                <Option value="last_month">Tháng trước</Option>
+                <Option value="last_30_days">30 ngày qua</Option>
+                <Option value="custom">Tùy chọn ngày</Option>
               </Select>
 
               {period === 'custom' && (
@@ -258,7 +239,7 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
           style={{ borderRadius: 12, border: '1px solid #fde68a', backgroundColor: '#fffbeb' }}
           message={
             <Text strong style={{ fontSize: 15, color: '#b45309' }}>
-              ⚠️ CẢNH BÁO CHẤT LƯỢNG: Có {warnings.length} nhân viên có điểm đánh giá trung bình &lt; 3.5 trong 30 ngày qua
+              CẢNH BÁO CHẤT LƯỢNG: Có {warnings.length} nhân viên có điểm đánh giá trung bình &lt; 3.5 trong 30 ngày qua
             </Text>
           }
           description={
@@ -267,7 +248,7 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
                 <div key={w.staffId} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Badge status="error" />
                   <Text style={{ fontSize: 13, color: '#78350f' }}>
-                    {w.warningMessage}
+                    {w.warningMessage ? w.warningMessage.replace(/^⚠️\s*/, '') : ''}
                   </Text>
                 </div>
               ))}
@@ -284,9 +265,9 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
         <Row gutter={[20, 20]}>
           {top3List.map((staff, idx) => {
             const colors = [
-              { bg: 'linear-gradient(135deg, #fef3c7 0%, #fff 100%)', border: '#fde047', badge: '🥇 Hạng 1 (Gold)', iconColor: '#f59e0b' },
-              { bg: 'linear-gradient(135deg, #f1f5f9 0%, #fff 100%)', border: '#cbd5e1', badge: '🥈 Hạng 2 (Silver)', iconColor: '#64748b' },
-              { bg: 'linear-gradient(135deg, #ffedd5 0%, #fff 100%)', border: '#fed7aa', badge: '🥉 Hạng 3 (Bronze)', iconColor: '#d97706' }
+              { bg: 'linear-gradient(135deg, #fef3c7 0%, #fff 100%)', border: '#fde047', badge: 'Hạng 1', iconColor: '#f59e0b' },
+              { bg: 'linear-gradient(135deg, #f1f5f9 0%, #fff 100%)', border: '#cbd5e1', badge: 'Hạng 2', iconColor: '#64748b' },
+              { bg: 'linear-gradient(135deg, #ffedd5 0%, #fff 100%)', border: '#fed7aa', badge: 'Hạng 3', iconColor: '#d97706' }
             ];
             const theme = colors[idx] || colors[0];
 
@@ -343,11 +324,11 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
                     <Col span={12}>
                       <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>Rating</Text>
                       <Text strong style={{ fontSize: 14, color: '#f59e0b' }}>
-                        ⭐ {staff.avgRating} / 5.0
+                        ⭐ {Number(staff.avgRating || 0).toFixed(1)}/5
                       </Text>
                     </Col>
                     <Col span={12}>
-                      <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>Tỉ lệ slot full</Text>
+                      <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>Tỉ lệ slot lấp đầy</Text>
                       <Text strong style={{ fontSize: 14, color: '#6366f1' }}>
                         ⚡ {staff.slotOccupancyRate}%
                       </Text>
@@ -364,7 +345,7 @@ export default function StaffPerformanceReportTab({ selectedBranchId }) {
       <Card style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
           <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
-            📊 Bảng Chi Tiết Hiệu Suất & Xếp Hạng Nhân Viên
+            Bảng Chi Tiết Hiệu Suất & Xếp Hạng Nhân Viên
           </Title>
 
           <input
